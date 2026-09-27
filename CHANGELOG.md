@@ -2,14 +2,6 @@
 
 ## 1.0.2
 
-- Light mode is properly colourful: brighter pastel cards, a stronger colour step on hover, and card photos that start mostly in colour and show their true colours on hover. Dark mode is unchanged.
-
-## 1.0.1
-
-- Light mode looks less washed out: richer card colours, deeper shadows and crisper greyscale images. Dark mode is unchanged.
-
-## 1.0.0
-
 First public release.
 
 - Index-card homepage: pastel cards at stable tilts, filing codes, hover straightening, reader overlay.
@@ -19,5 +11,5 @@ First public release.
 - Lightsaber colour-mode switch in the footer: 2-second reveal with crackling static, optional synthesised sound, customisable messages.
 - Footer: tag index (chips with "show more" on phones), optional note, second line and design credit.
 - Tables in posts and pages styled as clean rows; a Colophon page (URL `colophon`) gets small uppercase section labels.
-- Light, dark or automatic colour scheme; reduced-motion support throughout.
+- Light mode with bright pastel cards and photos in colour; dark mode; or automatic. Reduced-motion support throughout.
 - Interface text translatable through `locales/`.

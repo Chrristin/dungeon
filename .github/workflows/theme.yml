@@ -1,13 +1,12 @@
-# Checks the theme with Ghost's validator on every push and pull request.
-# When you publish a GitHub release, it also builds the theme zip and attaches it to the release.
+# On every push to main: check the theme with Ghost's validator.
+# If package.json has a version with no release yet, publish it automatically:
+# tag v<version>, build dungeon-v<version>.zip, and use that version's CHANGELOG.md section as notes.
 name: Theme
 
 on:
   push:
     branches: [main]
   pull_request:
-  release:
-    types: [published]
 
 jobs:
   check:
@@ -23,16 +22,37 @@ jobs:
           npx --yes gscan . --v6
 
   release:
-    if: github.event_name == 'release'
+    if: github.event_name == 'push'
     needs: check
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build zip
-        run: zip -r "dungeon-${{ github.event.release.tag_name }}.zip" . -x '.git/*' '.github/*' 'docs/*' '.gitignore'
-      - name: Attach zip to the release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "dungeon-${{ github.event.release.tag_name }}.zip" --clobber
+      - name: Read the version
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Skip if this version is already released
+        id: exists
+        run: |
+          if gh release view "v${{ steps.version.outputs.version }}" > /dev/null 2>&1; then
+            echo "Release v${{ steps.version.outputs.version }} already exists; nothing to do."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build the zip and release notes
+        if: steps.exists.outputs.released == 'false'
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          zip -r "dungeon-v$V.zip" . -x '.git/*' '.github/*' 'docs/*' '.gitignore'
+          awk -v v="$V" '$0 == "## " v {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "Dungeon $V" > notes.md
+          cat notes.md
+      - name: Publish the release
+        if: steps.exists.outputs.released == 'false'
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          gh release create "v$V" "dungeon-v$V.zip" --title "Dungeon $V" --notes-file notes.md --target "${{ github.sha }}"
