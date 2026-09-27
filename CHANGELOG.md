@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3
+
+- Dark mode gets the same colour treatment as light mode: brighter pastel cards, a stronger hover step, and photos in colour.
+- Releases now attach the theme as `dungeon.zip`, so updates install over the existing theme and keep its settings.
+
 ## 1.0.2
 
 First public release.

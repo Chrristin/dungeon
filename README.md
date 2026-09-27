@@ -2,7 +2,7 @@
 
 A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel index cards, each tilted at its own slight angle and stamped with a filing code. There's a floating menu, a month-by-month **Now** page, a **Scatter** wall of short notes, and a lightsaber in the footer that switches between light and dark.
 
-Version 1.0.2. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 1.0.3. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -36,7 +36,7 @@ Version 1.0.2. Works with Ghost 5 and 6. Built for [christingeorge.com](https://
 
 ## Installation
 
-1. Download the latest `dungeon-x.y.z.zip` from the [releases](../../releases).
+1. Download **`dungeon.zip`** from the [latest release](../../releases/latest). Keep that file name: Ghost names the theme after the zip, and theme settings belong to that name, so an update uploaded as `dungeon.zip` overwrites the theme and keeps your settings.
 2. Ghost Admin → **Settings → Design & branding → Change theme → Upload theme**, choose the zip, and activate it.
 3. Optional, but needed for the Now page and Scatter wall: upload [`docs/routes.yaml`](docs/routes.yaml) in **Settings → Labs → Routes**. Download your current file first as a backup.
 

@@ -1,6 +1,6 @@
 # On every push to main: check the theme with Ghost's validator.
 # If package.json has a version with no release yet, publish it automatically:
-# tag v<version>, build dungeon-v<version>.zip, and use that version's CHANGELOG.md section as notes.
+# tag v<version>, build dungeon.zip (the name Ghost uses for the theme), and use that version's CHANGELOG.md section as notes.
 name: Theme
 
 on:
@@ -47,7 +47,7 @@ jobs:
         if: steps.exists.outputs.released == 'false'
         run: |
           V="${{ steps.version.outputs.version }}"
-          zip -r "dungeon-v$V.zip" . -x '.git/*' '.github/*' 'docs/*' '.gitignore'
+          zip -r dungeon.zip . -x '.git/*' '.github/*' 'docs/*' '.gitignore'
           awk -v v="$V" '$0 == "## " v {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md
           [ -s notes.md ] || echo "Dungeon $V" > notes.md
           cat notes.md
@@ -55,4 +55,4 @@ jobs:
         if: steps.exists.outputs.released == 'false'
         run: |
           V="${{ steps.version.outputs.version }}"
-          gh release create "v$V" "dungeon-v$V.zip" --title "Dungeon $V" --notes-file notes.md --target "${{ github.sha }}"
+          gh release create "v$V" dungeon.zip --title "Dungeon $V" --notes-file notes.md --target "${{ github.sha }}"

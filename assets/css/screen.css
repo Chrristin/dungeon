@@ -37,15 +37,15 @@
     html[data-scheme="auto"] {
         --paper: #121418; --ink: #e8e9eb; --graphite: #9aa0a8;
         --rule: #2b2f36; --wash: #1b1e23; --led: #48c27d;
-        --card-rich: 0%; --card-shadow: 0 12px 26px -20px rgba(23, 25, 30, 0.55); --img-tone: contrast(1.08) brightness(1.06);
-        --rest-chroma: 1; --hover-chroma: 1; --hover-dl: 0; --img-grey: 1; --img-grey-hover: 0.25; --img-wash: 0.42; --img-wash-hover: 0.18; --img-blend-hover: multiply;
+        /* Dark mode shares light mode's card colours and photo treatment; only the shadow differs */
+        --card-shadow: 0 12px 26px -20px rgba(0, 0, 0, 0.7);
     }
 }
 html[data-scheme="dark"] {
     --paper: #121418; --ink: #e8e9eb; --graphite: #9aa0a8;
     --rule: #2b2f36; --wash: #1b1e23; --led: #48c27d;
-    --card-rich: 0%; --card-shadow: 0 12px 26px -20px rgba(23, 25, 30, 0.55); --img-tone: contrast(1.08) brightness(1.06);
-        --rest-chroma: 1; --hover-chroma: 1; --hover-dl: 0; --img-grey: 1; --img-grey-hover: 0.25; --img-wash: 0.42; --img-wash-hover: 0.18; --img-blend-hover: multiply;
+    /* Dark mode shares light mode's card colours and photo treatment; only the shadow differs */
+    --card-shadow: 0 12px 26px -20px rgba(0, 0, 0, 0.7);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
