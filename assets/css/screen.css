@@ -11,6 +11,18 @@
     --ink: #17191e;
     --graphite: #5e636c;
     --rule: #e4e5e1;
+    /* Light mode: richer cards, deeper shadows and crisper images, so nothing looks washed out */
+    --card-rich: 100%;
+    --rest-chroma: 1.15;   /* resting cards: a little more colour than their strong pastel */
+    --hover-chroma: 1.5;   /* hover: noticeably more colour */
+    --hover-dl: 0.03;      /* hover: slightly deeper */
+    --img-grey: 0.35;      /* photos start mostly in colour */
+    --img-grey-hover: 0;   /* and reach full colour on hover */
+    --img-wash: 0.12;
+    --img-wash-hover: 0;
+    --img-blend-hover: normal;
+    --card-shadow: 0 16px 30px -18px rgba(23, 25, 30, 0.42), 0 1px 2px rgba(23, 25, 30, 0.06);
+    --img-tone: contrast(1.16) brightness(0.98);
     --wash: #f1f2ef;
     --led: #1e8b4c;
     --sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -25,11 +37,15 @@
     html[data-scheme="auto"] {
         --paper: #121418; --ink: #e8e9eb; --graphite: #9aa0a8;
         --rule: #2b2f36; --wash: #1b1e23; --led: #48c27d;
+        --card-rich: 0%; --card-shadow: 0 12px 26px -20px rgba(23, 25, 30, 0.55); --img-tone: contrast(1.08) brightness(1.06);
+        --rest-chroma: 1; --hover-chroma: 1; --hover-dl: 0; --img-grey: 1; --img-grey-hover: 0.25; --img-wash: 0.42; --img-wash-hover: 0.18; --img-blend-hover: multiply;
     }
 }
 html[data-scheme="dark"] {
     --paper: #121418; --ink: #e8e9eb; --graphite: #9aa0a8;
     --rule: #2b2f36; --wash: #1b1e23; --led: #48c27d;
+    --card-rich: 0%; --card-shadow: 0 12px 26px -20px rgba(23, 25, 30, 0.55); --img-tone: contrast(1.08) brightness(1.06);
+        --rest-chroma: 1; --hover-chroma: 1; --hover-dl: 0; --img-grey: 1; --img-grey-hover: 0.25; --img-wash: 0.42; --img-wash-hover: 0.18; --img-blend-hover: multiply;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -176,9 +192,10 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
     gap: 0.55rem;
     padding: 0.8rem 0.8rem 0.85rem;
     color: var(--on-card);
-    background: var(--card);
+    background: color-mix(in srgb, var(--card-hi) var(--card-rich, 0%), var(--card));
+    background: oklch(from color-mix(in srgb, var(--card-hi) var(--card-rich, 0%), var(--card)) l calc(c * var(--rest-chroma, 1)) h);
     border-radius: 14px;
-    box-shadow: 0 12px 26px -20px rgba(23, 25, 30, 0.55);
+    box-shadow: var(--card-shadow, 0 12px 26px -20px rgba(23, 25, 30, 0.55));
     transform: rotate(var(--tilt));
     transition: transform 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
     isolation: isolate;
@@ -196,6 +213,7 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
 }
 .card:hover, .card:focus-within {
     --card: var(--card-hi);
+    background: oklch(from var(--card-hi) calc(l - var(--hover-dl, 0)) calc(c * var(--hover-chroma, 1)) h);
     transform: rotate(0deg) translateY(-3px);
     box-shadow: 0 18px 32px -20px rgba(23, 25, 30, 0.6);
     z-index: 2;
@@ -206,7 +224,7 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
     position: relative;
     border-radius: 10px;
     overflow: hidden;
-    background: var(--card);
+    background: color-mix(in srgb, var(--card-hi) var(--card-rich, 0%), var(--card));
     aspect-ratio: 16 / 10;
     transition: background-color 220ms ease;
 }
@@ -215,10 +233,10 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
     height: 100%;
     object-fit: cover;
     mix-blend-mode: multiply;
-    filter: grayscale(1) contrast(1.08) brightness(1.06);
+    filter: grayscale(var(--img-grey, 1)) var(--img-tone, contrast(1.08) brightness(1.06));
     transition: filter 260ms ease;
 }
-.card:hover .card-media img, .card:focus-within .card-media img { filter: grayscale(0.25) contrast(1.02); }
+.card:hover .card-media img, .card:focus-within .card-media img { filter: grayscale(var(--img-grey-hover, 0.25)) contrast(1.02); mix-blend-mode: var(--img-blend-hover, multiply); }
 /* A wash of the card colour lifts dark images (screenshots of dark apps) into the tint too */
 .card-media::after {
     content: "";
@@ -226,11 +244,11 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
     inset: 0;
     background: var(--card);
     mix-blend-mode: screen;
-    opacity: 0.42;
+    opacity: var(--img-wash, 0.42);
     pointer-events: none;
     transition: opacity 260ms ease;
 }
-.card:hover .card-media::after, .card:focus-within .card-media::after { opacity: 0.18; }
+.card:hover .card-media::after, .card:focus-within .card-media::after { opacity: var(--img-wash-hover, 0.18); }
 
 .card-head, .card-foot, .panel-meta {
     display: flex;
@@ -655,15 +673,15 @@ body.has-everything .colophon-secondary { display: none; }
 @media (hover: none) {
     .card {
         --f: var(--focus, 0);
-        background: color-mix(in srgb, var(--card-hi) calc(var(--f) * 100%), var(--card));
+        background: color-mix(in srgb, var(--card-hi) max(calc(var(--f) * 100%), var(--card-rich, 0%)), var(--card));
         transform: rotate(calc(var(--tilt) * (1 - var(--f)))) translateY(calc(var(--f) * -3px));
         transition: none;
     }
     .card-media img {
-        filter: grayscale(calc(1 - 0.75 * var(--f))) contrast(1.05) brightness(1.03);
+        filter: grayscale(calc(var(--img-grey, 1) - (var(--img-grey, 1) - var(--img-grey-hover, 0.25)) * var(--f))) var(--img-tone, contrast(1.05) brightness(1.03));
         transition: none;
     }
-    .card-media::after { opacity: calc(0.42 - 0.24 * var(--f)); transition: none; }
+    .card-media::after { opacity: calc(var(--img-wash, 0.42) - (var(--img-wash, 0.42) - var(--img-wash-hover, 0.18)) * var(--f)); transition: none; }
     /* A tap still gives the pressed feel */
     .card:active { transform: rotate(0deg) scale(0.985); }
 }

@@ -2,13 +2,13 @@
 
 A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel index cards, each tilted at its own slight angle and stamped with a filing code. There's a floating menu, a month-by-month **Now** page, a **Scatter** wall of short notes, and a lightsaber in the footer that switches between light and dark.
 
-Version 1.0.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 1.0.2. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
-<!-- Screenshots: add images to docs/screenshots/ and uncomment these lines.
-![Homepage](docs/screenshots/home.png)
-![Now page](docs/screenshots/now.png)
-![Scatter wall](docs/screenshots/scatter.png)
--->
+![Dungeon: homepage](docs/screenshots/home.jpg)
+
+<p align="center">
+  <img src="docs/screenshots/switch.gif" alt="The lightsaber switch changing the site from dark to light and back" width="840">
+</p>
 
 ## Features
 
@@ -23,6 +23,16 @@ Version 1.0.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://
 - **Calm when asked.** Every animation respects the visitor's reduced-motion setting.
 - **Privacy-minded.** Fonts are hosted by the theme. YouTube embeds show a thumbnail and only load YouTube's no-cookie player when a visitor presses play.
 - **Translatable.** All interface wording goes through Ghost's translation helper.
+
+## Screenshots
+
+| Now page | Scatter wall |
+|---|---|
+| ![Now page](docs/screenshots/now.jpg) | ![Scatter wall](docs/screenshots/scatter.jpg) |
+
+| Dark mode | On a phone |
+|---|---|
+| ![Homepage in dark mode](docs/screenshots/home-dark.jpg) | ![Homepage, Now page and Scatter wall on a phone](docs/screenshots/phone.jpg) |
 
 ## Installation
 

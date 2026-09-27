@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2
+
+- Light mode is properly colourful: brighter pastel cards, a stronger colour step on hover, and card photos that start mostly in colour and show their true colours on hover. Dark mode is unchanged.
+
+## 1.0.1
+
+- Light mode looks less washed out: richer card colours, deeper shadows and crisper greyscale images. Dark mode is unchanged.
+
 ## 1.0.0
 
 First public release.
