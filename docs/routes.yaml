@@ -1,0 +1,12 @@
+routes:
+
+collections:
+  /:
+    permalink: /{slug}/
+    template: index
+    # Now entries (#now) and short notes (#note) only appear on their own pages
+    filter: tag:-[hash-now,hash-note]
+
+taxonomies:
+  tag: /tag/{slug}/
+  author: /author/{slug}/

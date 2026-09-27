@@ -1,0 +1,1203 @@
+/* Dungeon: a catalogue-style theme for Notes from the Dungeon */
+
+@font-face { font-family: "Geist"; src: url("../fonts/geist-sans-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Geist"; src: url("../fonts/geist-sans-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Geist"; src: url("../fonts/geist-sans-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("../fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("../fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+
+:root {
+    --paper: #fcfcfa;
+    --ink: #17191e;
+    --graphite: #5e636c;
+    --rule: #e4e5e1;
+    --wash: #f1f2ef;
+    --led: #1e8b4c;
+    --sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --measure: 40rem;
+    --page: 92rem;
+    --gutter: clamp(1.25rem, 4vw, 3rem);
+    --rail: 12rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-scheme="auto"] {
+        --paper: #121418; --ink: #e8e9eb; --graphite: #9aa0a8;
+        --rule: #2b2f36; --wash: #1b1e23; --led: #48c27d;
+    }
+}
+html[data-scheme="dark"] {
+    --paper: #121418; --ink: #e8e9eb; --graphite: #9aa0a8;
+    --rule: #2b2f36; --wash: #1b1e23; --led: #48c27d;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; background: var(--paper); -webkit-tap-highlight-color: transparent; }
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--gh-font-body, var(--sans));
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration-color: var(--rule); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-color: var(--led); }
+:focus-visible { outline: 2px solid var(--led); outline-offset: 3px; border-radius: 2px; }
+
+img { max-width: 100%; height: auto; display: block; }
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: -999px; top: 0; background: var(--ink); color: var(--paper); padding: 0.5rem 1rem; z-index: 10; }
+.skip:focus { left: 1rem; top: 1rem; }
+
+h1, h2, h3, .statement-text, .panel-title, .card-title { font-family: var(--gh-font-heading, var(--sans)); }
+
+/* Masthead: the logo alone, centred */
+
+.masthead {
+    max-width: var(--page);
+    margin: 0 auto;
+    padding: 3.25rem var(--gutter) 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+.masthead-home { display: inline-flex; text-decoration: none; }
+.masthead-logo { height: 4.5rem; width: auto; }
+.masthead-name { font-weight: 600; font-size: 1.25rem; letter-spacing: -0.01em; }
+html[data-scheme="dark"][data-logo-invert="true"] .masthead-logo { filter: invert(1) brightness(1.15); }
+@media (prefers-color-scheme: dark) {
+    html[data-scheme="auto"][data-logo-invert="true"] .masthead-logo { filter: invert(1) brightness(1.15); }
+}
+.masthead-nav ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem 1.5rem; list-style: none; margin: 0; padding: 0; font-size: 0.95rem; }
+.masthead-nav a { text-decoration: none; color: var(--graphite); }
+.masthead-nav a:hover, .masthead-nav .nav-current a { color: var(--ink); }
+
+main { max-width: var(--page); margin: 0 auto; padding: 0 var(--gutter); overflow-x: clip; }
+/* At least a screen tall from the first frame, so the footer never starts high and gets pushed down */
+main { min-height: 100vh; min-height: 100svh; }
+
+/* The statement: the one loud element on the page */
+
+.statement { padding: clamp(3rem, 10vw, 7rem) 0 clamp(2.5rem, 7vw, 4.5rem); border-bottom: 1px solid var(--rule); }
+.statement-role { margin: 0 0 1.25rem; color: var(--graphite); max-width: 34rem; }
+.statement-text {
+    margin: 0;
+    font-size: clamp(2.4rem, 6.4vw, 5.2rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    font-weight: 500;
+    max-width: 16ch;
+    text-wrap: balance;
+}
+.statement--small .statement-text { font-size: clamp(2rem, 4.6vw, 3.6rem); max-width: 22ch; }
+.statement-desc { margin: 1.25rem 0 0; color: var(--graphite); max-width: 36rem; }
+
+.section-heading { font-size: 0.95rem; font-weight: 500; color: var(--graphite); margin: 0; padding: 1.5rem 0 0.75rem; }
+
+/* Series */
+
+.series { border-bottom: 1px solid var(--rule); padding-bottom: 1.75rem; }
+.series-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 0.5rem 2rem; }
+.series-list a { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid var(--rule); text-decoration: none; }
+.series-list a:hover .series-name { color: var(--led); }
+.series-name { font-weight: 500; }
+.series-count { font-family: var(--mono); font-size: 0.78rem; color: var(--graphite); }
+
+
+/* Ten pastels. --card is the resting colour, --card-hi the brighter hover colour. */
+.card, .post-panel { --card: #e3ecd6; --card-hi: #d2ebb4; }
+[data-hue="0"] { --card: #e3ecd6; --card-hi: #d2ebb4; }  /* pistachio */
+[data-hue="1"] { --card: #d4efe2; --card-hi: #b6ecd3; }  /* mint */
+[data-hue="2"] { --card: #d7e7f5; --card-hi: #bcdcf7; }  /* sky */
+[data-hue="3"] { --card: #dfdff7; --card-hi: #cacaf8; }  /* periwinkle */
+[data-hue="4"] { --card: #ecdff3; --card-hi: #e2c9f3; }  /* lilac */
+[data-hue="5"] { --card: #f6dde1; --card-hi: #f7c7cf; }  /* blush */
+[data-hue="6"] { --card: #f7e3d3; --card-hi: #f8d0b2; }  /* peach */
+[data-hue="7"] { --card: #f5edcc; --card-hi: #f6e3a3; }  /* butter */
+[data-hue="8"] { --card: #e1e6d9; --card-hi: #d0dcc2; }  /* sage */
+[data-hue="9"] { --card: #d5eded; --card-hi: #b9e7e7; }  /* seafoam */
+
+/* Pastel surfaces always carry dark ink, in light and dark mode alike */
+.card, .post-panel {
+    --on-card: #17191e;
+    --on-card-soft: rgba(23, 25, 30, 0.84);
+    --on-card-meta: rgba(23, 25, 30, 0.78);
+    --on-card-rule: rgba(23, 25, 30, 0.16);
+    --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Bold colours, chosen with a tag (#red, #tangerine, #sunflower, #cobalt, #emerald, #ink).
+   Dark ones switch the card's text to white; each pair passes 4.5:1 contrast at rest and on hover. */
+.card[data-hue="red"], .post-panel[data-hue="red"] { --card: #d0213a; --card-hi: #dc2a42; }
+.card[data-hue="tangerine"], .post-panel[data-hue="tangerine"] { --card: #f47a20; --card-hi: #ff8a2e; }
+.card[data-hue="sunflower"], .post-panel[data-hue="sunflower"] { --card: #ffcc2e; --card-hi: #ffd84f; }
+.card[data-hue="cobalt"], .post-panel[data-hue="cobalt"] { --card: #2349c9; --card-hi: #2b52d8; }
+.card[data-hue="emerald"], .post-panel[data-hue="emerald"] { --card: #0b7d52; --card-hi: #0b8455; }
+.card[data-hue="ink"], .post-panel[data-hue="ink"] { --card: #2a2e37; --card-hi: #353a45; }
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) {
+    --on-card: #ffffff;
+    --on-card-soft: rgba(255, 255, 255, 0.9);
+    --on-card-meta: rgba(255, 255, 255, 0.82);
+    --on-card-rule: rgba(255, 255, 255, 0.3);
+}
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) .card-line { background: rgba(255, 255, 255, 0.35); }
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) :is(code, pre) { background: rgba(255, 255, 255, 0.14); color: #fff; }
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) a { text-decoration-color: rgba(255, 255, 255, 0.7); }
+/* An ink card would disappear on the dark page: give it a faint outline there */
+html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 12px 26px -20px rgba(0, 0, 0, 0.8); }
+@media (prefers-color-scheme: dark) {
+    html[data-scheme="auto"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 12px 26px -20px rgba(0, 0, 0, 0.8); }
+}
+
+/* The log: pastel index cards, each set down at its own slight angle */
+
+.log { padding-bottom: 4rem; }
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: 2.75rem 2.25rem;
+    padding: 1.5rem 0.5rem 1rem;
+    align-items: start;
+}
+.card {
+    --tilt: 0deg;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.8rem 0.8rem 0.85rem;
+    color: var(--on-card);
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: 0 12px 26px -20px rgba(23, 25, 30, 0.55);
+    transform: rotate(var(--tilt));
+    transition: transform 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+    isolation: isolate;
+}
+.card::before, .post-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: var(--grain);
+    opacity: 0.22;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: -1;
+}
+.card:hover, .card:focus-within {
+    --card: var(--card-hi);
+    transform: rotate(0deg) translateY(-3px);
+    box-shadow: 0 18px 32px -20px rgba(23, 25, 30, 0.6);
+    z-index: 2;
+}
+
+/* Images take on the card's colour: greyscale, multiplied into the pastel */
+.card-media {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card);
+    aspect-ratio: 16 / 10;
+    transition: background-color 220ms ease;
+}
+.card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: multiply;
+    filter: grayscale(1) contrast(1.08) brightness(1.06);
+    transition: filter 260ms ease;
+}
+.card:hover .card-media img, .card:focus-within .card-media img { filter: grayscale(0.25) contrast(1.02); }
+/* A wash of the card colour lifts dark images (screenshots of dark apps) into the tint too */
+.card-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--card);
+    mix-blend-mode: screen;
+    opacity: 0.42;
+    pointer-events: none;
+    transition: opacity 260ms ease;
+}
+.card:hover .card-media::after, .card:focus-within .card-media::after { opacity: 0.18; }
+
+.card-head, .card-foot, .panel-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--on-card-meta);
+    white-space: nowrap;
+}
+.card-head { padding: 0.35rem 0.3rem 0; }
+.card-foot { margin-top: auto; padding: 0.45rem 0.3rem 0; }
+.card-line { flex: 1; height: 1px; background: rgba(23, 25, 30, 0.22); min-width: 1rem; }
+.card .code, .post-panel .code { color: var(--on-card); font-weight: 500; }
+.card-tag { text-transform: uppercase; letter-spacing: 0.08em; color: var(--on-card); }
+.card-title { margin: 0.2rem 0.3rem 0; font-size: 1.28rem; line-height: 1.2; letter-spacing: -0.02em; font-weight: 600; }
+.card-title a { text-decoration: none; color: inherit; }
+.card-title a::after { content: ""; position: absolute; inset: 0; border-radius: 14px; }
+.card-title a:focus-visible { outline: none; }
+.card:has(.card-title a:focus-visible) { outline: 2px solid var(--ink); outline-offset: 4px; }
+.card-excerpt { margin: 0 0.3rem; color: var(--on-card-soft); font-size: 0.96rem; line-height: 1.5; }
+.card.is-opening { cursor: progress; }
+
+@media (prefers-reduced-motion: reduce) {
+    .card, .card-media, .card-media img { transition: none; }
+}
+
+.chips { list-style: none; margin: 0.9rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chips a { display: inline-block; font-size: 0.8rem; padding: 0.15rem 0.55rem; background: var(--wash); border-radius: 999px; text-decoration: none; color: var(--graphite); }
+.chips a:hover { color: var(--ink); }
+
+.pager { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.5rem 0; border-top: 1px solid var(--rule); font-size: 0.95rem; }
+.pager-count { font-family: var(--mono); font-size: 0.78rem; color: var(--graphite); margin: 0 auto; }
+
+/* Post: one pastel panel holding the whole piece */
+
+.post-stage { padding: clamp(2rem, 6vw, 4rem) 0 1rem; }
+.post-panel {
+    position: relative;
+    isolation: isolate;
+    max-width: 47rem;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4.5vw, 3rem);
+    background: var(--card);
+    color: var(--on-card);
+    border-radius: 20px;
+}
+.panel-head { margin-bottom: 2rem; }
+.panel-meta { margin-bottom: 1.4rem; }
+.panel-title { margin: 0; font-size: clamp(2rem, 4.6vw, 3rem); line-height: 1.06; letter-spacing: -0.03em; font-weight: 600; text-wrap: balance; }
+.panel-sub { margin: 0.6rem 0 0; color: var(--on-card-soft); font-size: 1rem; }
+.panel-lede { margin: 1.2rem 0 0; font-size: 1.15rem; line-height: 1.5; }
+
+.post-panel img { border-radius: 12px; }
+.panel-image { margin: 0 0 2rem; }
+.panel-image img { width: 100%; }
+.post-panel figcaption { font-size: 0.85rem; color: var(--on-card-soft); margin-top: 0.6rem; }
+
+.panel-content { max-width: 40rem; font-size: 1.125rem; line-height: 1.65; }
+.panel-content > * + * { margin-top: 1.25em; }
+.panel-content h2 { font-size: 1.45rem; line-height: 1.2; letter-spacing: -0.02em; font-weight: 600; margin-top: 2.2em; }
+.panel-content h3 { font-size: 1.15rem; font-weight: 600; margin-top: 1.9em; }
+.panel-content h2 + *, .panel-content h3 + * { margin-top: 0.6em; }
+.panel-content a { color: var(--on-card); text-decoration-color: currentColor; text-decoration-thickness: 1px; }
+.panel-content a:hover { text-decoration-thickness: 2px; }
+.panel-content strong { font-weight: 600; }
+.panel-content blockquote { margin-left: 0; padding-left: 1.2rem; border-left: 2px solid var(--on-card); color: var(--on-card-soft); }
+.panel-content ul, .panel-content ol { padding-left: 1.3rem; }
+.panel-content li + li { margin-top: 0.4em; }
+.panel-content hr { border: 0; border-top: 1px solid var(--on-card-rule); margin: 2.5rem 0; }
+.panel-content code { font-family: var(--mono); font-size: 0.86em; background: rgba(255, 255, 255, 0.55); padding: 0.1em 0.35em; border-radius: 5px; }
+.panel-content pre { font-family: var(--mono); font-size: 0.85rem; line-height: 1.55; background: rgba(255, 255, 255, 0.6); padding: 1rem 1.2rem; border-radius: 12px; overflow-x: auto; }
+.panel-content pre code { background: none; padding: 0; font-size: inherit; }
+.panel-content table { border-collapse: collapse; width: 100%; font-size: 0.95rem; display: block; overflow-x: auto; }
+.panel-content th, .panel-content td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--on-card-rule); }
+
+.panel-tags { margin-top: 2.5rem; }
+.panel-tags a { background: rgba(255, 255, 255, 0.55); color: var(--on-card); }
+
+.post-comments { max-width: 47rem; margin: 2rem auto 0; }
+
+.post-next { max-width: 47rem; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2.5rem 0 3rem; }
+.post-next-link { text-decoration: none; display: flex; flex-direction: column; gap: 0.3rem; }
+.post-next-link--newer { text-align: right; grid-column: 2; }
+.post-next-label { font-family: var(--mono); font-size: 0.78rem; color: var(--graphite); }
+.post-next-title { font-weight: 500; font-size: 1.1rem; line-height: 1.3; }
+.post-next-link:hover .post-next-title { text-decoration: underline; text-decoration-color: var(--led); }
+
+/* Ghost editor cards (required by Ghost). Everything stays inside the panel. */
+
+.kg-width-wide, .kg-width-full { max-width: none; width: 100%; margin-left: 0; margin-right: 0; }
+.kg-image-card img, .kg-gallery-image img { margin: 0 auto; }
+.kg-gallery-container { display: flex; flex-direction: column; gap: 0.6rem; }
+.kg-gallery-row { display: flex; gap: 0.6rem; }
+.kg-gallery-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+.kg-embed-card { display: flex; justify-content: center; }
+.kg-embed-card iframe { border-radius: 12px; }
+.kg-video-card video { border-radius: 12px; }
+.kg-bookmark-card a.kg-bookmark-container { display: flex; text-decoration: none; background: rgba(255, 255, 255, 0.55); border-radius: 12px; overflow: hidden; color: var(--on-card); }
+.kg-bookmark-content { padding: 1rem; flex: 1; }
+.kg-bookmark-title { font-weight: 600; }
+.kg-bookmark-description, .kg-bookmark-metadata { color: var(--on-card-soft); font-size: 0.85rem; margin-top: 0.3rem; }
+.kg-bookmark-thumbnail { width: 30%; max-width: 12rem; }
+.kg-bookmark-thumbnail img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+.kg-bookmark-icon { width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 0.4rem; border-radius: 3px; }
+
+
+/* Desktop: the story panel is 50% wider. Images use the full width;
+   text stays in a centred column of comfortable length. */
+@media (min-width: 1100px) {
+    .post-panel { max-width: 70.5rem; }
+    .post-next, .post-comments { max-width: 70.5rem; }
+    .panel-head, .panel-tags { max-width: 60rem; margin-left: auto; margin-right: auto; }
+    .panel-image { margin-bottom: 2.5rem; }
+    .panel-content { max-width: none; }
+    .panel-content > * { max-width: 60rem; margin-left: auto; margin-right: auto; }
+    /* Images set to wide or full in the editor use the whole panel; regular ones match the text */
+    .panel-content > .kg-width-wide,
+    .panel-content > .kg-width-full,
+    .panel-content > .kg-gallery-card { max-width: none; }
+    .panel-content > .kg-width-wide img,
+    .panel-content > .kg-width-full img { width: 100%; }
+    .reader-body { padding-left: 2rem; padding-right: 2rem; }
+}
+
+
+/* Overlay reader: the post panel opened over the homepage */
+
+.reader {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    margin: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.reader::backdrop { background: rgba(12, 13, 16, 0.72); backdrop-filter: blur(6px); }
+.reader-body { padding: 4.5rem var(--gutter) 3rem; }
+.reader-body .post-panel { margin: 0 auto; }
+.reader-close {
+    position: sticky;
+    top: 1rem;
+    display: block;
+    margin: 1rem auto -3.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 0;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+}
+.reader-close:hover { background: rgba(255, 255, 255, 0.26); }
+.reader-close:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+html.reader-open { overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+    .reader[open] .post-panel { animation: reader-in 240ms ease-out; }
+    @keyframes reader-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+}
+
+
+/* Homepage opening: the statement beside the newest post as a large card */
+
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    gap: 2.5rem 3.5rem;
+    align-items: center;
+    padding: clamp(2.5rem, 7vw, 5rem) 0 clamp(3rem, 7vw, 5rem);
+    border-bottom: 1px solid var(--rule);
+}
+.hero .statement-text { font-size: clamp(2.5rem, 5.4vw, 5.6rem); max-width: 14ch; }
+.hero .statement-role { margin: 1.5rem 0 0; max-width: 32rem; }
+/* The statement and the line under it lean in opposite directions */
+.hero .statement-text { transform: rotate(-1.6deg); transform-origin: left center; }
+.hero .statement-role { transform: rotate(1.1deg); transform-origin: left center; }
+body[data-tilt="0"] .hero .statement-text, body[data-tilt="0"] .hero .statement-role { transform: none; }
+.hero-card { justify-self: end; width: 100%; max-width: 29rem; padding: 0.75rem; }
+.hero-card .card { padding: 0.9rem 0.9rem 1rem; }
+.hero-card .card-title { font-size: 1.55rem; }
+.hero-card .card-excerpt { font-size: 1rem; }
+
+.list-first { display: none; }
+
+/* Footer index: every tag with its filing-code letters */
+
+.tag-index { max-width: var(--page); margin: 0 auto; padding: 0.5rem var(--gutter) 1.5rem; }
+.tag-index .section-heading { padding-top: 1.25rem; }
+.tag-index-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    column-gap: 2rem;
+}
+.tag-index-list a {
+    display: grid;
+    grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+.tag-code, .tag-count { font-family: var(--mono); font-size: 0.75rem; color: var(--graphite); }
+.tag-code { color: var(--ink); font-weight: 500; }
+.tag-index-list a:hover .tag-name { text-decoration: underline; text-decoration-color: var(--led); }
+
+/* Inside posts: tags and images sit slightly askew; reading text stays level */
+
+.panel-tags li { transform: rotate(var(--tilt, 0deg)); }
+.panel-image, .panel-content .kg-image-card, .panel-content .kg-gallery-image {
+    transform: rotate(var(--tilt, 0deg));
+    transition: transform 220ms ease;
+}
+.panel-image:hover, .panel-content .kg-image-card:hover, .panel-content .kg-gallery-image:hover { transform: rotate(0deg); }
+.panel-image img, .panel-content .kg-image-card img { box-shadow: 0 10px 24px -18px rgba(23, 25, 30, 0.6); }
+@media (prefers-reduced-motion: reduce) {
+    .panel-image, .panel-content .kg-image-card, .panel-content .kg-gallery-image { transition: none; }
+}
+
+
+/* Floating navigation: a frosted pill at the bottom of the screen.
+   .dock handles position and sliding; .dock-pill carries the look, the tilt and the wobble. */
+
+.dock {
+    /* Sticky rather than fixed: it rides the bottom of the screen while reading,
+       then comes to rest in its own place just above the Index, so it never covers footer links. */
+    position: sticky;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    z-index: 30;
+    width: fit-content;
+    max-width: calc(100vw - 2rem);
+    margin: 2.5rem auto 0.75rem;
+    transition: transform 280ms ease, opacity 280ms ease;
+}
+.dock.is-hidden { transform: translateY(calc(100% + 2.5rem)); opacity: 0; }
+/* With the menu resting above the footer, the post list needs less space below it */
+body.has-dock .log { padding-bottom: 1rem; }
+body.has-dock .post-next { padding-bottom: 1rem; }
+.dock-pill {
+    --dock-tilt: 0deg;
+    rotate: var(--dock-tilt);
+    padding: 0.35rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--paper) 72%, transparent);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    backdrop-filter: blur(16px) saturate(1.3);
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    box-shadow: 0 14px 34px -18px rgba(12, 13, 16, 0.55);
+    transition: rotate 220ms ease;
+}
+.dock-pill:hover, .dock-pill:focus-within { rotate: 0deg; }
+.dock-pill.is-wobbling { animation: dock-wobble 520ms ease-out; }
+@keyframes dock-wobble {
+    0%   { rotate: var(--dock-tilt); }
+    18%  { rotate: calc(var(--dock-tilt) - 3.5deg); }
+    38%  { rotate: calc(var(--dock-tilt) + 2.6deg); }
+    58%  { rotate: calc(var(--dock-tilt) - 1.6deg); }
+    78%  { rotate: calc(var(--dock-tilt) + 0.7deg); }
+    100% { rotate: var(--dock-tilt); }
+}
+.dock ul {
+    display: flex;
+    gap: 0.15rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.dock ul::-webkit-scrollbar { display: none; }
+.dock-pill a, .dock-more a { rotate: var(--item-tilt, 0deg); }
+
+/* The "Everything" popup: secondary navigation above the pill.
+   It expands upward out of the pill and collapses back down into it. */
+.dock-more {
+    position: absolute;
+    left: var(--more-left, 0px);
+    bottom: calc(100% + 0.6rem);
+    width: max-content;
+    min-width: max(11rem, var(--more-min, 0px));
+    max-width: calc(100vw - 2rem);
+    max-height: min(60vh, 26rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Still scrollable if it ever overflows, but never shows a scrollbar
+       (the links sliding in used to flash one briefly) */
+    scrollbar-width: none;
+    padding: 0.35rem;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--paper) 82%, transparent);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    backdrop-filter: blur(16px) saturate(1.3);
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    box-shadow: 0 18px 40px -20px rgba(12, 13, 16, 0.6);
+    --more-tilt: 1deg;
+    /* Grows out of, and collapses back into, the Everything button */
+    transform-origin: var(--more-origin, 50%) 100%;
+    transform: translateY(0.6rem) rotate(var(--more-tilt)) scale(0.35, 0.15);
+    opacity: 0;
+    transition: transform 280ms cubic-bezier(0.3, 0.7, 0.2, 1), opacity 200ms ease;
+}
+.dock-more.is-open {
+    transform: translateY(0) rotate(var(--more-tilt)) scale(1, 1);
+    opacity: 1;
+}
+.dock-more::-webkit-scrollbar { display: none; }
+.dock-more ul { flex-direction: column; overflow: visible; gap: 0.4rem; }
+/* Compact rows: smaller than the pill's own buttons, evenly spaced */
+.dock-more a { padding: 0.45rem 0.85rem; font-size: 0.92em; line-height: 1.3; border-radius: 10px; }
+.dock-more li { opacity: 0; translate: 0 6px; transition: opacity 180ms ease, translate 180ms ease; }
+.dock-more.is-open li { opacity: 1; translate: 0 0; }
+.dock-more.is-open li:nth-child(2) { transition-delay: 40ms; }
+.dock-more.is-open li:nth-child(3) { transition-delay: 80ms; }
+.dock-more.is-open li:nth-child(4) { transition-delay: 120ms; }
+.dock-more.is-open li:nth-child(5) { transition-delay: 160ms; }
+.dock-more.is-open li:nth-child(n+6) { transition-delay: 190ms; }
+body[data-tilt="0"] .dock-more { --more-tilt: 0deg; }
+
+/* The + / − icon: two bars. Opening turns the vertical bar 90 degrees about its
+   centre so it lies on the horizontal one; closing turns it back upright. */
+.dock-icon {
+    position: relative;
+    display: inline-block;
+    width: 0.7em;
+    height: 0.7em;
+    margin-left: 0.45rem;
+    vertical-align: -0.05em;
+}
+.dock-icon::before, .dock-icon::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 2px;
+    margin-top: -1px;
+    border-radius: 2px;
+    background: currentColor;
+}
+.dock-icon::after {
+    rotate: 90deg;
+    transition: rotate 260ms cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+.dock-trigger[aria-expanded="true"] .dock-icon::after { rotate: 0deg; }
+
+/* When the Everything menu exists, its links live there instead of the footer */
+body.has-everything .colophon-secondary { display: none; }
+.colophon-secondary:empty { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .dock-more, .dock-more li, .dock-icon::after { transition: none; }
+}
+
+.dock a {
+    display: block;
+    padding: 0.6rem 1.1rem;
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 160ms ease;
+}
+.dock a:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.dock .nav-current a { background: var(--ink); color: var(--paper); }
+/* The Everything button is a menu, never "the current page" */
+.dock .nav-current a.dock-trigger { background: transparent; color: var(--ink); }
+.dock a.dock-trigger[aria-expanded="true"] { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+/* Inside the panel, the current page gets a light tint rather than the solid pill */
+.dock-more .nav-current a { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink); }
+.dock a:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+    .dock, .dock-pill { transition: none; }
+    .dock-pill.is-wobbling { animation: none; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .dock-pill { background: var(--paper); }
+}
+
+
+/* Pressed states: shaped feedback in place of the browser's rectangular tap flash */
+.dock a:active { background: color-mix(in srgb, var(--ink) 16%, transparent); }
+.dock .nav-current a:active:not(.dock-trigger) { background: color-mix(in srgb, var(--ink) 82%, transparent); }
+.card:active { transform: rotate(0deg) scale(0.985); transition-duration: 90ms; }
+.chips a:active { background: color-mix(in srgb, var(--ink) 16%, transparent); }
+.pager-link, .post-next-link, .colophon a { border-radius: 8px; }
+.tag-index-list a { border-radius: 0; }
+.pager-link:active, .post-next-link:active, .tag-index-list a:active { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.reader-close:active { background: rgba(255, 255, 255, 0.34); }
+@media (prefers-reduced-motion: reduce) { .card:active { transform: rotate(var(--tilt)); } }
+
+
+/* Everything panel: plain text rows, each leaning slightly; underline marks hover, press and the current page */
+.dock-more a,
+.dock-more a:hover,
+.dock-more a:active,
+.dock-more .nav-current a { background: transparent; }
+.dock-more a {
+    padding: 0.4rem 0.75rem;
+    border-radius: 0;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.3em;
+    transition: text-decoration-color 150ms ease;
+}
+.dock-more a:hover, .dock-more a:active, .dock-more .nav-current a { text-decoration-color: var(--led); }
+
+
+/* Touch devices: no hover, so each card's hover effect follows how much of it is on screen.
+   --focus runs from 0 (off screen) to 1 (fully in view) and is set by site.js while scrolling. */
+@media (hover: none) {
+    .card {
+        --f: var(--focus, 0);
+        background: color-mix(in srgb, var(--card-hi) calc(var(--f) * 100%), var(--card));
+        transform: rotate(calc(var(--tilt) * (1 - var(--f)))) translateY(calc(var(--f) * -3px));
+        transition: none;
+    }
+    .card-media img {
+        filter: grayscale(calc(1 - 0.75 * var(--f))) contrast(1.05) brightness(1.03);
+        transition: none;
+    }
+    .card-media::after { opacity: calc(0.42 - 0.24 * var(--f)); transition: none; }
+    /* A tap still gives the pressed feel */
+    .card:active { transform: rotate(0deg) scale(0.985); }
+}
+@media (hover: none) and (prefers-reduced-motion: reduce) {
+    .card { transform: rotate(var(--tilt)); }
+}
+
+
+/* Now page: a month-by-month timeline. Each month is a pastel card with a large faded label. */
+.now-head { border-bottom: 0; padding-top: clamp(1rem, 3vw, 2rem); padding-bottom: 1rem; }
+.now-intro { max-width: 62rem; margin-top: 1.25rem; color: var(--graphite); }
+.now-intro > * + * { margin-top: 1em; }
+.now-intro a { color: var(--ink); text-decoration-color: var(--led); }
+.now-timeline {
+    /* A whole number of cards always fits: 3 on laptops and larger (so widths stay similar), 2 on narrower windows */
+    --n: 2;
+    --gap: 3.5rem;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - (var(--n) - 1) * var(--gap)) / var(--n));
+    gap: var(--gap);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 1.25rem 0.75rem 0.5rem;
+    scroll-padding-inline: 0.75rem;
+    scrollbar-width: none;
+}
+.now-timeline::-webkit-scrollbar { display: none; }
+@media (min-width: 1100px) { .now-timeline { --n: 3; } }
+.now-controls { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0 0.75rem; }
+/* On wider screens the arrows sit beside the intro instead of taking a row of their own */
+@media (min-width: 1100px) { .now-controls { margin-top: -3rem; } .now-head { padding-bottom: 0.5rem; } }
+.now-controls[hidden] { display: none; }
+.now-step {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 150ms ease, opacity 150ms ease;
+}
+.now-step:hover { background: var(--wash); }
+.now-step:active { background: color-mix(in srgb, var(--ink) 12%, transparent); }
+.now-step:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+.now-step:disabled { opacity: 0.3; cursor: default; }
+.now-month { scroll-snap-align: start; display: flex; flex-direction: column; }
+.now-card { padding: 1.6rem 1.8rem 1.5rem; min-height: 9rem; flex: 1; cursor: pointer; }
+.now-card:focus-visible { outline: 2px solid var(--led); outline-offset: 4px; }
+.now-body { position: relative; max-height: var(--now-body-max, 10.5em); overflow: hidden; font-size: 0.97rem; line-height: 1.55; color: var(--on-card); }
+.now-body > * + * { margin-top: 0.8em; }
+.now-body a { color: var(--on-card); text-decoration-color: currentColor; }
+.now-body img { border-radius: 10px; }
+.now-body.is-clamped {
+    -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent);
+    mask-image: linear-gradient(to bottom, #000 72%, transparent);
+}
+.month-label {
+    margin: 0.6rem 0 0;
+    font-size: clamp(2.4rem, 4vw, 3.4rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-weight: 500;
+    color: color-mix(in srgb, var(--ink) 16%, transparent);
+    font-family: var(--gh-font-heading, var(--sans));
+    white-space: nowrap;
+}
+.now-empty { padding: 2rem 0; color: var(--graphite); }
+
+
+/* Scattered: a loose wall of short notes, newest first */
+.scatter {
+    /* Rows left to right, newest first; cards keep their natural height */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    gap: 2rem;
+    align-items: start;
+    padding: 1.5rem 0.75rem 2rem;
+}
+.scatter-card {
+    padding: 0.85rem 1rem 1rem;
+    gap: 0.5rem;
+}
+/* Wall layout (set by site.js): cards pack straight under each other in each column, no row gaps.
+   Each card spans as many 4px rows as its height needs, plus the gap. */
+.scatter.is-wall { grid-auto-rows: 4px; row-gap: 0; align-items: start; }
+.scatter-body { font-size: 1rem; line-height: 1.5; color: var(--on-card); }
+.scatter-body > * + * { margin-top: 0.6em; }
+.scatter-body p:first-child { margin-top: 0.1rem; }
+.scatter-body a { color: var(--on-card); text-decoration-color: var(--led); text-decoration-thickness: 2px; }
+.scatter-body pre {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    background: rgba(255, 255, 255, 0.55);
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    overflow-x: auto;
+}
+.scatter-body code { font-family: var(--mono); font-size: 0.86em; background: rgba(255, 255, 255, 0.55); padding: 0.05em 0.3em; border-radius: 4px; }
+.scatter-body pre code { background: none; padding: 0; }
+.scatter-body img { border-radius: 10px; }
+.scatter-card .card-head { padding: 0; }
+
+
+/* Browsers indent <figure> by 40px each side by default; Ghost's image and embed cards are figures */
+.gh-content figure { margin-left: 0; margin-right: 0; }
+
+/* Embeds sized to their container (notes, months and posts) */
+.scatter-body iframe, .now-body iframe, .panel-content iframe { max-width: 100%; border: 0; border-radius: 10px; }
+.scatter-body .kg-embed-card, .now-body .kg-embed-card { display: block; }
+.scatter-body .kg-embed-card iframe:not([src*="youtube"]) { width: 100%; }
+.scatter-body .kg-image-card img, .now-body .kg-image-card img { width: 100%; border-radius: 10px; }
+
+/* YouTube click-to-play: a thumbnail and play button until tapped */
+.yt-lite {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    padding: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #111 center / cover no-repeat;
+    cursor: pointer;
+}
+.yt-lite::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 3.4rem;
+    height: 3.4rem;
+    margin: -1.7rem 0 0 -1.7rem;
+    border-radius: 50%;
+    background: rgba(12, 13, 16, 0.72) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M9 7l8 5-8 5z' fill='white'/></svg>") center / 55% no-repeat;
+    transition: transform 160ms ease, background-color 160ms ease;
+}
+.yt-lite:hover::after, .yt-lite:focus-visible::after { transform: scale(1.08); background-color: rgba(12, 13, 16, 0.85); }
+.yt-lite:focus-visible { outline: 2px solid var(--led); outline-offset: 3px; }
+.yt-frame { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; border-radius: 10px; }
+
+
+/* Feature images on note and month cards */
+.scatter-media { margin: 0 0 0.35rem; }
+.scatter-media img { display: block; width: 100%; max-height: 22rem; object-fit: cover; border-radius: 10px; }
+.now-media { margin: 0 0 0.9em; }
+.now-media img { width: 100%; max-height: 16rem; object-fit: cover; border-radius: 10px; }
+
+
+/* Images on cards lean against their card: rotated relative to the card by 1.8x its tilt in the
+   other direction, so the photo ends up tipped the opposite way. Hovering lifts it slightly. */
+.card-media, .scatter-media, .now-media,
+.scatter-body .kg-image-card, .now-body .kg-image-card {
+    transform: rotate(calc(var(--tilt, 0deg) * -1.8));
+    transition: transform 260ms ease;
+}
+.card:hover :is(.card-media, .scatter-media, .now-media, .scatter-body .kg-image-card, .now-body .kg-image-card),
+.card:focus-within :is(.card-media, .scatter-media, .now-media, .scatter-body .kg-image-card, .now-body .kg-image-card) {
+    transform: rotate(calc(var(--tilt, 0deg) * -1.8)) translate(3px, -4px) scale(1.02);
+}
+@media (hover: none) {
+    .card-media, .scatter-media, .now-media,
+    .scatter-body .kg-image-card, .now-body .kg-image-card {
+        transform: rotate(calc(var(--tilt, 0deg) * -1.8)) translate(calc(var(--f, 0) * 3px), calc(var(--f, 0) * -4px)) scale(calc(1 + var(--f, 0) * 0.02));
+        transition: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .card:hover :is(.card-media, .scatter-media, .now-media, .scatter-body .kg-image-card, .now-body .kg-image-card),
+    .card:focus-within :is(.card-media, .scatter-media, .now-media, .scatter-body .kg-image-card, .now-body .kg-image-card) {
+        transform: rotate(calc(var(--tilt, 0deg) * -1.8));
+    }
+}
+
+
+/* Scatter Thoughts: on hover the photo zooms up and spills slightly past the card's edges */
+.scatter-media, .scatter-body .kg-image-card {
+    position: relative;
+    z-index: 1;
+    transition: transform 320ms cubic-bezier(0.2, 0.8, 0.25, 1.25);
+}
+.scatter-media img, .scatter-body .kg-image-card img { transition: box-shadow 320ms ease; }
+.scatter-card:hover :is(.scatter-media, .scatter-body .kg-image-card),
+.scatter-card:focus-within :is(.scatter-media, .scatter-body .kg-image-card) {
+    transform: rotate(calc(var(--tilt, 0deg) * -1.8)) translateY(-10px) scale(1.14);
+}
+.scatter-card:hover :is(.scatter-media, .scatter-body .kg-image-card) img,
+.scatter-card:focus-within :is(.scatter-media, .scatter-body .kg-image-card) img {
+    box-shadow: 0 22px 34px -16px rgba(12, 13, 16, 0.55);
+}
+.scatter-card:hover, .scatter-card:focus-within { z-index: 3; }
+@media (hover: none) {
+    .scatter-media, .scatter-body .kg-image-card {
+        transform: rotate(calc(var(--tilt, 0deg) * -1.8)) translateY(calc(var(--f, 0) * -6px)) scale(calc(1 + var(--f, 0) * 0.08));
+        transition: none;
+    }
+    .scatter-media img, .scatter-body .kg-image-card img {
+        box-shadow: 0 18px 30px -18px rgba(12, 13, 16, calc(var(--f, 0) * 0.5));
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .scatter-card:hover :is(.scatter-media, .scatter-body .kg-image-card),
+    .scatter-card:focus-within :is(.scatter-media, .scatter-body .kg-image-card) {
+        transform: rotate(calc(var(--tilt, 0deg) * -1.8));
+    }
+}
+
+
+/* Quote notes (#quote): the body is the quote, the title is the attribution */
+.scatter-card--quote { padding: 1.1rem 1.3rem 1.2rem; }
+.scatter-card--quote .scatter-body {
+    position: relative;
+    padding-top: 2.4rem;
+    font-family: var(--gh-font-heading, var(--sans));
+    font-size: 1.3rem;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+}
+.scatter-card--quote .scatter-body::before {
+    content: "\201C";
+    position: absolute;
+    top: -0.9rem;
+    left: -0.35rem;
+    font-size: 6.5rem;
+    line-height: 1;
+    font-family: var(--gh-font-heading, Georgia, serif);
+    color: color-mix(in srgb, var(--on-card) 30%, transparent);
+    pointer-events: none;
+}
+.scatter-card--quote .scatter-body blockquote { margin: 0; padding: 0; border: 0; color: inherit; font-style: normal; }
+.quote-by {
+    margin: 0.4rem 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--on-card-meta);
+}
+.quote-by::before { content: ""; width: 1.5rem; height: 1px; background: currentColor; flex: none; }
+
+
+/* Quote and lyric cards with a song link: a round play/stop button beside the attribution */
+.quote-by-text { flex: 1; }
+.quote-play {
+    flex: none;
+    width: 2.1rem;
+    height: 2.1rem;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: var(--on-card);
+    color: var(--card);
+    cursor: pointer;
+    transition: transform 160ms ease;
+}
+.quote-play svg { width: 0.8rem; height: 0.8rem; fill: currentColor; }
+.quote-play:hover { transform: scale(1.08); }
+.quote-play:active { transform: scale(0.94); }
+.quote-play:focus-visible { outline: 2px solid var(--led); outline-offset: 3px; }
+.quote-play.is-playing { background: var(--led); color: #fff; }
+.quote-player { margin-top: 0.4rem; }
+.quote-player iframe { display: block; width: 100%; aspect-ratio: 16 / 9; min-height: 200px; border: 0; border-radius: 10px; }
+
+
+/* Menu that adapts to narrow screens (site.js): tighter spacing first, then items move into
+   the Everything panel, and as a last resort Everything becomes just its + button. */
+.dock.is-compact .dock-pill a { padding: 0.55rem 0.72rem; font-size: 0.92em; }
+.dock.is-tight .dock-trigger-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.dock.is-tight .dock-trigger .dock-icon { margin-left: 0; width: 0.8rem; height: 0.8rem; }
+.dock-more .is-moved + .more-divider { list-style: none; height: 1px; margin: 0.3rem 0.6rem; background: color-mix(in srgb, var(--ink) 14%, transparent); }
+
+
+/* Tables in posts and pages: list-style rows, name on the left, a quieter description on the right.
+   A header row with empty cells (common in two-column Markdown tables) is hidden. */
+.gh-content table { display: table; width: 100%; table-layout: fixed; border-collapse: collapse; margin: 0.4em 0 2em; font-size: 0.95em; }
+.gh-content thead tr:has(> th:first-child:empty):has(> th:last-child:empty) { display: none; }
+.gh-content th { text-align: left; font-weight: 600; padding: 0.7em 1em 0.7em 0; border-bottom: 1px solid var(--on-card-rule, var(--rule)); }
+.gh-content td { padding: 0.85em 1em 0.85em 0; border-bottom: 1px solid var(--on-card-rule, var(--rule)); vertical-align: top; }
+/* Inside a pastel panel, use the panel's text colours (they stay dark in dark mode) */
+.gh-content tr > :first-child { width: 45%; color: var(--on-card, var(--ink)); }
+.gh-content td:not(:first-child) { color: var(--on-card-meta, var(--graphite)); font-size: 0.92em; }
+.gh-content td strong { font-weight: 500; }
+.gh-content table + h4, .gh-content table + p { margin-top: 2.2em; }
+/* Colophon page: section labels as small uppercase headings */
+.page-colophon .gh-content h4 {
+    margin: 2.4em 0 0.4em;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--on-card-meta, var(--graphite));
+}
+@media (max-width: 600px) { .gh-content tr > :first-child { width: 48%; } }
+
+/* The index's "+N more" chip only exists on phones and tablets */
+.tag-more-item { display: none; }
+
+
+/* Index "+N more": chips pop in one after another, and fade out together when collapsing */
+@keyframes tag-pop { from { opacity: 0; transform: translateY(6px) scale(0.92); } to { opacity: 1; transform: none; } }
+.tag-extra.tag-pop { animation: tag-pop 220ms cubic-bezier(0.2, 0.8, 0.3, 1.2) both; }
+.tag-extra.tag-fade { transition: opacity 140ms ease; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .tag-extra.tag-pop { animation: none; } .tag-extra.tag-fade { transition: none; } }
+
+/* Scatter wall: notes drop in one by one, in a random order, as they come into view.
+   Uses opacity/translate/scale so it never fights the notes' tilt (transform). */
+@keyframes scatter-in { from { opacity: 0; translate: 0 14px; scale: 0.96; } to { opacity: 1; translate: 0 0; scale: 1; } }
+.scatter.is-staged .scatter-card:not(.is-in) { opacity: 0; }
+.scatter-card.is-in { animation: scatter-in 520ms cubic-bezier(0.2, 0.8, 0.3, 1.15) both; animation-delay: var(--in-delay, 0ms); }
+@media (prefers-reduced-motion: reduce) { .scatter.is-staged .scatter-card:not(.is-in) { opacity: 1; } .scatter-card.is-in { animation: none; } }
+
+/* The footer fades in once the page has settled (site.js adds .is-ready).
+   Safety net: if the script never runs, the footer appears after 2 seconds anyway. */
+@keyframes colophon-failsafe { to { opacity: 1; } }
+.js .colophon { opacity: 0; animation: colophon-failsafe 0s linear 2s forwards; }
+.js.is-ready .colophon { opacity: 1; animation: none; transition: opacity 0.3s ease; }
+@media (prefers-reduced-motion: reduce) { .js.is-ready .colophon { transition: none; } }
+
+/* Now page: cards stay hidden until the script has sized them (no flicker), then fade in.
+   Same 2-second safety net as the footer. */
+.js .now-timeline { opacity: 0; animation: colophon-failsafe 0s linear 2s forwards; }
+.js.is-ready .now-timeline { opacity: 1; animation: none; }
+/* Months arrive in order, first to third, then the rest together */
+@keyframes now-in { from { opacity: 0; translate: 0 16px; } to { opacity: 1; translate: 0 0; } }
+.js.is-ready .now-month { animation: now-in 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.1) both; animation-delay: calc(var(--i, 0) * 130ms); }
+@media (prefers-reduced-motion: reduce) { .js.is-ready .now-month { animation: none; } }
+/* Etched botanical sprigs filling the empty space at the bottom of a Now card */
+.now-card { position: relative; }
+.now-flora { position: absolute; pointer-events: none; color: var(--on-card); opacity: 0.3; overflow: hidden; }
+.now-flora path, .now-flora ellipse { fill: none; stroke: currentColor; stroke-width: 0.9; stroke-linecap: round; stroke-linejoin: round; }
+.now-flora .seed { fill: currentColor; stroke: none; }
+
+/* Lightsaber colour-mode switch: red in dark mode, blue in light mode */
+.saber-wrap { position: relative; display: inline-flex; align-items: center; gap: 0.6rem; }
+.saber { position: relative; --saber: #ff2b2b; --saber-glow: #ff1a1a; padding: 0.2rem; border: 0; background: none; cursor: pointer; line-height: 0; border-radius: 8px; }
+.saber:focus-visible { outline: 2px solid var(--led); outline-offset: 3px; }
+.saber svg { width: 7.2rem; height: auto; overflow: visible; }
+.saber.is-blue { --saber: #3aa8ff; --saber-glow: #1f8fff; }
+.saber-hilt rect { fill: #8a8f98; }
+.saber-hilt .saber-emitter { fill: #b9bec6; }
+.saber-hilt .saber-button { fill: #d0213a; }
+.saber.is-blue .saber-hilt .saber-button { fill: #2f7de0; }
+.saber-hilt path { stroke: #4a4f57; stroke-width: 1.4; }
+.saber-blade { transform-box: fill-box; transform-origin: left center; transition: transform 0.24s ease-in; }
+.saber.is-off .saber-blade { transform: scaleX(0); }
+.saber.is-igniting .saber-blade { transition: transform 2s cubic-bezier(0.45, 0, 0.2, 1); }
+.saber-aura { fill: var(--saber-glow); opacity: 0.85; animation: saber-hum 1.3s ease-in-out infinite; }
+.saber-core { fill: #fff; }
+.saber-sparks polyline { fill: none; stroke: var(--saber); stroke-width: 0.9; stroke-linejoin: round; opacity: 0; }
+@keyframes saber-hum { 0%, 100% { opacity: 0.85; } 40% { opacity: 0.7; } 42% { opacity: 0.95; } 70% { opacity: 0.8; } }
+.colophon-inspire { display: flex; flex-direction: column; align-items: flex-start; gap: 0.7rem; }
+/* Desktop footer: a two-row grid, so the saber sits under the credit and the fonts line
+   shares its row, on the left. Phones keep the single stacked column. */
+@media (min-width: 761px) {
+    .colophon .colophon-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto 1fr auto;
+        column-gap: 2rem;
+        row-gap: 0.9rem;
+        align-items: center;
+    }
+    .colophon-inspire { display: contents; }
+    .colophon-name { grid-area: 1 / 1; }
+    .colophon-subscribe { grid-area: 1 / 3; }
+    .colophon-credit { grid-area: 1 / 5; }
+    .colophon-fonts { grid-area: 2 / 1; }
+    .colophon-inspire .saber-wrap { grid-area: 2 / 5; justify-self: start; }
+    .colophon-secondary { grid-column: 1 / -1; grid-row: 3; }
+}
+/* The toast sits to the right of the saber, in the empty space under the credit line */
+.saber-toast {
+    position: absolute; left: 100%; top: 50%; margin-left: 0.5rem; white-space: nowrap;
+    font-size: 0.8rem; color: var(--ink);
+    opacity: 0; translate: 6px -50%; pointer-events: none;
+    transition: opacity 0.25s ease, translate 0.25s ease;
+}
+.saber-toast.is-on { opacity: 1; translate: 0 -50%; }
+@media (prefers-reduced-motion: reduce) { .saber-aura { animation: none; } .saber-blade, .saber.is-igniting .saber-blade, .saber-toast { transition: none; } }
+
+/* Changing colour mode takes 2 seconds: the new mode spreads out from the saber in a growing
+   circle (View Transitions), or, where that isn't supported, all colours blend across. */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+/* The new mode shows through a circle with a soft, blurred edge; its size is driven from site.js */
+::view-transition-new(root) {
+    z-index: 2;
+    -webkit-mask-image: radial-gradient(circle at var(--vt-x, 50%) var(--vt-y, 50%), #000 calc(var(--vt-r, 0px) - 80px), transparent var(--vt-r, 0px));
+    mask-image: radial-gradient(circle at var(--vt-x, 50%) var(--vt-y, 50%), #000 calc(var(--vt-r, 0px) - 80px), transparent var(--vt-r, 0px));
+}
+/* The crackling static on the edge gets its own layer above both old and new views */
+.saber-edge { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 2147483000; view-transition-name: saber-edge; }
+::view-transition-group(saber-edge) { animation: none; z-index: 10; }
+::view-transition-old(saber-edge) { display: none; }
+::view-transition-new(saber-edge) { animation: none; }
+html.is-theming, html.is-theming * {
+    transition: background-color 2s ease, color 2s ease, border-color 2s ease, fill 2s ease, stroke 2s ease, box-shadow 2s ease !important;
+}
+
+/* Colophon and the now ticker */
+
+.colophon { margin-top: 2rem; }
+.now {
+    max-width: var(--page);
+    margin: 0 auto;
+    padding: 1rem var(--gutter);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    overflow: hidden;
+}
+.now-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--led); flex: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--led) 20%, transparent); }
+.now-label { font-family: var(--mono); font-size: 0.78rem; color: var(--graphite); flex: none; }
+.now-track { display: flex; overflow: hidden; min-width: 0; flex: 1; -webkit-mask-image: linear-gradient(90deg, transparent, #000 2rem, #000 calc(100% - 2rem), transparent); mask-image: linear-gradient(90deg, transparent, #000 2rem, #000 calc(100% - 2rem), transparent); }
+.now-text { margin: 0; white-space: nowrap; }
+.now-list { list-style: none; margin: 0; padding: 0 2.5rem 0 0; display: flex; gap: 2.5rem; flex: none; white-space: nowrap; }
+.now-track--moving .now-list { animation: now-scroll 45s linear infinite; }
+.now:hover .now-list { animation-play-state: paused; }
+@keyframes now-scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) {
+    .now-track { -webkit-mask-image: none; mask-image: none; }
+    .now-list { flex-wrap: wrap; white-space: normal; gap: 0.25rem 2rem; }
+}
+
+.colophon-row { max-width: var(--page); margin: 0 auto; padding: 1.5rem var(--gutter) 2.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem 2rem; font-size: 0.85rem; color: var(--graphite); }
+.colophon-row p { margin: 0; }
+.colophon-name a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.colophon-subscribe {
+    color: var(--ink) !important;
+    border: 0;
+    border-radius: 0;
+    text-decoration: underline;
+    text-decoration-color: var(--led);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.3em;
+}
+.colophon-subscribe:hover { text-decoration-thickness: 3px; }
+.colophon-row ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 1.25rem; }
+.colophon-row a { color: var(--graphite); }
+
+/* Small screens: the rail collapses above the content */
+
+@media (max-width: 760px) {
+    .cards { grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-inline: 0.25rem; }
+    .hero { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+    .hero .statement-text { transform: rotate(-1.2deg); }
+    .hero .statement-role { transform: rotate(0.8deg); }
+    .hero-card { justify-self: stretch; max-width: none; padding: 0.25rem; }
+    .masthead { padding-top: 2.25rem; }
+    .masthead-logo { height: 3.5rem; }
+    .post-panel { border-radius: 16px; }
+    .post-next { grid-template-columns: 1fr; }
+    .post-next-link--newer { text-align: left; grid-column: 1; }
+    .reader-body { padding: 4rem 0.75rem 2rem; }
+}
+
+/* Phones and small tablets: everything in one column. Touch devices up to
+   tablet-landscape width stack too, since many phones report widths above
+   the usual phone breakpoint. */
+@media (max-width: 900px), (pointer: coarse) and (max-width: 1100px) {
+    .now-controls, .now-controls[hidden] { display: none; }
+    .now-timeline { scroll-snap-type: none; }
+    .scatter { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; padding-inline: 0.5rem; }
+    /* Now page: months stack vertically, newest first */
+    .now-timeline { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: minmax(0, 1fr); overflow-x: visible; gap: 1.75rem; padding-inline: 0.5rem; }
+    .month-label { font-size: 3.2rem; }
+    /* The first card sits straight on phones and tablets */
+    .cards > .list-first .card, .cards > .card:first-child { --tilt: 0deg !important; }
+    /* Phones and tablets: 70% of the earlier 125% scale */
+    html { font-size: 87.5%; }
+    .masthead-logo { height: 2.9rem; }
+    .hero { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 1.75rem 0 2.75rem; }
+    .hero .statement-text, .hero .statement-role { max-width: none; }
+    .hero .statement-text { font-size: clamp(2.6rem, 11vw, 5rem); line-height: 1.02; }
+    .hero .statement-role { font-size: 1.15rem; line-height: 1.55; margin-top: 1.4rem; }
+    .hero-card { display: none; }
+    .list-first { display: block; }
+    .cards { grid-template-columns: minmax(0, 1fr); gap: 3.25rem; padding: 2.5rem 0.5rem 1rem; }
+    .cards > .card, .cards > .list-first { max-width: 34rem; width: 100%; justify-self: center; }
+    /* Phones and tablets: the index becomes wrapping chips, most-used first; site.js shows
+       the top few and adds a "+N more" chip that expands the rest in place. */
+    .tag-index-list { display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; }
+    .tag-index-list > li { border: 0; }
+    .tag-index-list a {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.4rem;
+        padding: 0.3rem 0.2rem;
+        border: 0;
+        border-radius: 0;
+        font-size: 0.9rem;
+    }
+    .tag-index-list .tag-code { font-size: 0.72rem; }
+    .tag-index-list .tag-count { font-size: 0.72rem; color: var(--graphite); }
+    .tag-index.is-collapsed .tag-extra { display: none; }
+    .tag-more-item { display: inline-flex; }
+    .tag-more {
+        padding: 0.3rem 0.2rem;
+        border: 0;
+        border-radius: 0;
+        text-decoration: underline;
+        text-decoration-color: var(--rule);
+        text-underline-offset: 0.3em;
+        background: none;
+        color: var(--ink);
+        font: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+    .tag-more:active { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+    .tag-more:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+    .post-next { grid-template-columns: 1fr; }
+    .post-next-link--newer { text-align: left; grid-column: 1; }
+    .post-panel { padding: 1.5rem 1.15rem 2rem; }
+    .panel-content { font-size: 1.1rem; line-height: 1.65; }
+    .panel-lede { font-size: 1.1rem; }
+    .panel-sub { font-size: 0.9rem; }
+    .post-panel figcaption { font-size: 0.8rem; }
+    .panel-content pre { font-size: 0.75rem; }
+}
