@@ -1,0 +1,32 @@
+{{!< default}}
+
+{{#post}}
+<section class="statement statement--small now-head">
+    <h1 class="statement-text">{{title}}</h1>
+    {{#if custom_excerpt}}<p class="statement-desc">{{custom_excerpt}}</p>{{/if}}
+    <div class="now-intro gh-content">{{content}}</div>
+</section>
+{{/post}}
+
+{{!-- Each month is a post tagged with the internal tag #now; newest first --}}
+{{#get "posts" filter="tag:hash-now" include="tags" limit="60" order="published_at desc"}}
+<div class="now-controls" hidden>
+    <button class="now-step" type="button" data-dir="-1" aria-label="{{t "Newer months"}}">&larr;</button>
+    <button class="now-step" type="button" data-dir="1" aria-label="{{t "Older months"}}">&rarr;</button>
+</div>
+<section class="now-timeline" aria-label="{{t "Month by month"}}" data-filler="{{@custom.now_filler}}">
+    {{#foreach posts}}
+    <article class="now-month">
+        <div class="card now-card" data-key="{{slug}}" data-color="{{#has tag="#pistachio"}}0{{else has tag="#mint"}}1{{else has tag="#sky"}}2{{else has tag="#periwinkle"}}3{{else has tag="#lilac"}}4{{else has tag="#blush"}}5{{else has tag="#peach"}}6{{else has tag="#butter"}}7{{else has tag="#sage"}}8{{else has tag="#seafoam"}}9{{else has tag="#red"}}red{{else has tag="#tangerine"}}tangerine{{else has tag="#sunflower"}}sunflower{{else has tag="#cobalt"}}cobalt{{else has tag="#emerald"}}emerald{{else has tag="#ink"}}ink{{/has}}" data-filler="{{#has tag="#filler-floral"}}floral{{/has}}{{#has tag="#filler-circuit"}}circuit{{/has}}{{#has tag="#filler-city"}}city{{/has}}{{#has tag="#filler-topo"}}topo{{/has}}{{#has tag="#filler-none"}}none{{/has}}" data-month="{{date format="MMMM YYYY"}}" role="button" tabindex="0" aria-label="Read {{date format="MMMM YYYY"}}">
+            <div class="now-body gh-content">
+                {{#if feature_image}}<figure class="kg-card kg-image-card now-media"><img src="{{img_url feature_image size="m"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}" loading="lazy"></figure>{{/if}}
+                {{content}}
+            </div>
+        </div>
+        <p class="month-label"><time datetime="{{date format="YYYY-MM"}}">{{date format="MMM [']YY"}}</time></p>
+    </article>
+    {{else}}
+    <p class="now-empty">{{t "Nothing logged yet. Add a post with the internal tag"}} <code>#now</code> {{t "and it appears here."}}</p>
+    {{/foreach}}
+</section>
+{{/get}}

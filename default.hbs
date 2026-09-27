@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="{{@site.locale}}" data-logo-invert="{{#if @custom.logo_invert_dark}}true{{else}}false{{/if}}" data-scheme="{{#match @custom.color_scheme "Light"}}light{{else match @custom.color_scheme "Dark"}}dark{{else}}auto{{/match}}">
+<head>
+    <script>document.documentElement.classList.add('js');try{var s=localStorage.getItem('dungeon-scheme');if(s==='light'||s==='dark')document.documentElement.setAttribute('data-scheme',s);}catch(e){}</script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{meta_title}}</title>
+    <link rel="preload" href="{{asset "fonts/geist-sans-latin-400-normal.woff2"}}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=1.0.0">
+    {{ghost_head}}
+</head>
+<body class="{{body_class}}{{#if @custom.floating_nav}}{{#if @site.navigation}} has-dock{{/if}}{{/if}}" data-tilt="{{#match @custom.card_tilt "None"}}0{{else match @custom.card_tilt "Playful"}}5{{else match @custom.card_tilt "Wild"}}10{{else}}2.5{{/match}}">
+
+<a class="skip" href="#main">{{t "Skip to content"}}</a>
+
+<header class="masthead">
+    <a class="masthead-home" href="{{@site.url}}">
+        {{#if @site.logo}}
+            <img class="masthead-logo" src="{{@site.logo}}" alt="{{@site.title}}">
+        {{else}}
+            <span class="masthead-name">{{@site.title}}</span>
+        {{/if}}
+    </a>
+    {{#unless @custom.floating_nav}}
+    {{#if @site.navigation}}
+    <nav class="masthead-nav" aria-label="{{t "Main"}}">{{navigation}}</nav>
+    {{/if}}
+    {{/unless}}
+</header>
+
+<main id="main">
+    {{{body}}}
+</main>
+
+<dialog class="reader" aria-label="{{t "Post"}}">
+    <button class="reader-close" type="button" aria-label="{{t "Close post"}}">&times;</button>
+    <div class="reader-body"></div>
+</dialog>
+
+{{#if @custom.floating_nav}}
+{{#if @site.navigation}}
+<nav class="dock" aria-label="{{t "Main"}}">
+    {{#if @site.secondary_navigation}}
+    <div class="dock-more" id="dock-more" hidden>{{navigation type="secondary"}}</div>
+    {{/if}}
+    <div class="dock-pill">{{navigation}}</div>
+</nav>
+{{/if}}
+{{/if}}
+
+<footer class="colophon">
+    {{#if @custom.show_index}}
+    {{#get "tags" limit="40" include="count.posts" order="count.posts desc" filter="visibility:public"}}
+    {{#if tags}}
+    <section class="tag-index" aria-labelledby="tag-index-heading">
+        <h2 id="tag-index-heading" class="section-heading">{{t "Index"}}</h2>
+        <ul class="tag-index-list">
+            {{#foreach tags}}
+            <li><a href="{{url}}"><span class="tag-code" data-tag="{{slug}}"></span><span class="tag-name">{{name}}</span><span class="tag-count">{{count.posts}}</span></a></li>
+            {{/foreach}}
+        </ul>
+    </section>
+    {{/if}}
+    {{/get}}
+    {{/if}}
+    {{#if @custom.now_items}}
+    <div class="now" data-now="{{@custom.now_items}}">
+        <span class="now-dot" aria-hidden="true"></span>
+        <span class="now-label">{{t "Now"}}</span>
+        <div class="now-track"><p class="now-text">{{@custom.now_items}}</p></div>
+    </div>
+    {{/if}}
+    <div class="colophon-row">
+        <p class="colophon-name"><a href="{{@site.url}}">{{#if @custom.footer_name}}{{@custom.footer_name}}{{else}}{{@site.title}}{{/if}}</a>{{#if @custom.footer_note}}. {{@custom.footer_note}}{{/if}}</p>
+        {{#if @site.members_enabled}}
+            {{#unless @member}}
+                <a class="colophon-subscribe" href="#/portal/signup" data-portal="signup">{{t "Subscribe by email"}}</a>
+            {{else}}
+                <a class="colophon-subscribe" href="#/portal/account" data-portal="account">{{t "Your account"}}</a>
+            {{/unless}}
+        {{/if}}
+        <div class="colophon-secondary">{{navigation type="secondary"}}</div>
+        <div class="colophon-inspire">
+            {{#if @custom.show_credit}}<p class="colophon-credit">{{t "Design inspired by"}} <a href="https://www.jake.design/">Jake Przespo</a>{{#if @custom.floating_nav}}; {{t "floating navigation inspired by"}} <a href="https://hiran.in">Hiran</a>{{/if}}.</p>{{/if}}
+            {{#if @custom.scheme_switch}}
+            <div class="saber-wrap">
+                <button class="saber" type="button" aria-label="{{t "Switch colour mode"}}" data-light-msg="{{@custom.saber_light_message}}" data-dark-msg="{{@custom.saber_dark_message}}" data-sound="{{#if @custom.saber_sound}}on{{else}}off{{/if}}">
+                    <svg viewBox="0 0 132 28" aria-hidden="true">
+                        <defs><filter id="saber-glow" x="-20%" y="-150%" width="140%" height="400%"><feGaussianBlur stdDeviation="3"/></filter></defs>
+                        <g class="saber-blade">
+                            <rect class="saber-aura" x="31" y="9" width="96" height="10" rx="5" filter="url(#saber-glow)"/>
+                            <rect class="saber-core" x="31" y="11.5" width="95" height="5" rx="2.5"/>
+                            <g class="saber-sparks"><polyline/><polyline/><polyline/></g>
+                        </g>
+                        <g class="saber-hilt">
+                            <rect x="3" y="9" width="27" height="10" rx="2"/>
+                            <rect class="saber-emitter" x="26" y="8" width="5" height="12" rx="1.5"/>
+                            <path d="M8 9v10M12 9v10M16 9v10M20 9v10"/>
+                            <rect class="saber-button" x="10" y="6.5" width="5" height="2.5" rx="1"/>
+                        </g>
+                    </svg>
+                </button>
+                <span class="saber-toast" role="status" aria-live="polite"></span>
+            </div>
+            {{/if}}
+        </div>
+        {{#if @custom.footer_line_two}}<p class="colophon-fonts">{{@custom.footer_line_two}}</p>{{/if}}
+    </div>
+</footer>
+
+
+<script src="{{asset "js/site.js"}}&r=1.0.0" defer></script>
+{{ghost_foot}}
+</body>
+</html>

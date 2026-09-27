@@ -1,0 +1,18 @@
+{{!< default}}
+
+{{#tag}}
+<section class="statement statement--small">
+    <p class="statement-role">Series, {{plural ../pagination.total empty="no posts" singular="% post" plural="% posts"}}</p>
+    <h1 class="statement-text">{{name}}</h1>
+    {{#if description}}<p class="statement-desc">{{description}}</p>{{/if}}
+</section>
+{{/tag}}
+
+<section class="log" aria-label="{{t "Posts"}}">
+    <div class="cards">
+    {{#foreach posts}}
+        {{> "post-row"}}
+    {{/foreach}}
+    </div>
+    {{pagination}}
+</section>
