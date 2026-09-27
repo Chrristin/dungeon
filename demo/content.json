@@ -3,7 +3,9 @@
     "title": "Dungeon",
     "description": "Index cards for your Ghost site.",
     "timezone": "Etc/UTC",
-    "accent_color": "#2f7de0"
+    "accent_color": "#2f7de0",
+    "logo": "dungeon-logo.png",
+    "icon": "dungeon-icon.png"
   },
   "navigation": [
     {

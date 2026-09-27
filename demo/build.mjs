@@ -92,7 +92,15 @@ async function uploadImages() {
     const r = await api('POST', '/images/upload/', fileForm('file', path.join(HERE, 'images', name), name, { purpose: 'image' }), { form: true });
     map[name] = r.images[0].url;
   }
-  log(`uploaded ${Object.keys(map).length} images`);
+  // The header logo and the browser-tab icon (Ghost checks icons separately: square PNG)
+  const s = content.site;
+  if (s.logo) map.__logo = (await api('POST', '/images/upload/', fileForm('file', path.join(HERE, 'images', s.logo), s.logo, { purpose: 'image' }), { form: true })).images[0].url;
+  if (s.icon) map.__icon = (await api('POST', '/images/upload/', fileForm('file', path.join(HERE, 'images', s.icon), s.icon, { purpose: 'icon' }), { form: true })).images[0].url;
+  const brand = [];
+  if (map.__logo) brand.push({ key: 'logo', value: map.__logo });
+  if (map.__icon) brand.push({ key: 'icon', value: map.__icon });
+  if (brand.length) await api('PUT', '/settings/', { settings: brand });
+  log(`uploaded ${content.images.length} images${brand.length ? ' plus the logo and icon' : ''}`);
   return map;
 }
 
@@ -171,7 +179,7 @@ function refsIn(text, base, type) {
 async function crawl() {
   fs.rmSync(OUT, { recursive: true, force: true });
   fs.mkdirSync(OUT, { recursive: true });
-  const start = ['/', '/now/', '/scatter/', '/about/', '/colophon/', '/sitemap.xml', '/robots.txt', '/favicon.ico', '/rss/'];
+  const start = ['/', '/now/', '/scatter/', '/about/', '/colophon/', '/sitemap.xml', '/robots.txt', '/favicon.ico', '/favicon.png', '/rss/'];
   const queue = [...start], seen = new Set(), failed = [];
   while (queue.length) {
     const ref = queue.shift();
