@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.4
+
+- Fixed: the Older and Newer links at the bottom of a post could point at a Now month or a Scatter note, which have no page of their own. They now skip those.
+- A live demo site, rebuilt automatically after every release.
+
 ## 1.0.3
 
 - Dark mode gets the same colour treatment as light mode: brighter pastel cards, a stronger hover step, and photos in colour.

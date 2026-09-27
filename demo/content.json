@@ -1,0 +1,330 @@
+{
+  "site": {
+    "title": "Dungeon",
+    "description": "Index cards for your Ghost site.",
+    "timezone": "Etc/UTC",
+    "accent_color": "#2f7de0"
+  },
+  "navigation": [
+    {
+      "label": "Everything",
+      "url": "#everything"
+    },
+    {
+      "label": "Now",
+      "url": "/now/"
+    },
+    {
+      "label": "Scatter",
+      "url": "/scatter/"
+    },
+    {
+      "label": "About",
+      "url": "/about/"
+    }
+  ],
+  "secondary_navigation": [
+    {
+      "label": "Colophon",
+      "url": "/colophon/"
+    },
+    {
+      "label": "Guides",
+      "url": "/tag/guide/"
+    },
+    {
+      "label": "Design",
+      "url": "/tag/design/"
+    },
+    {
+      "label": "Get the theme",
+      "url": "https://github.com/Chrristin/dungeon"
+    }
+  ],
+  "theme_settings": {
+    "role_line": "A demo of Dungeon, a free theme for Ghost. Every post, note and month here is sample content.",
+    "now_items": "Trying every colour tag | Pinning notes to the Scatter wall | Switching the lights with a saber",
+    "list_heading": "Everything so far",
+    "footer_name": "Dungeon demo",
+    "footer_note": "Sample content, real theme.",
+    "footer_line_two": "Set in Geist and JetBrains Mono, both hosted by the theme.",
+    "color_scheme": "Auto",
+    "card_tilt": "Subtle",
+    "now_filler": "Floral",
+    "saber_sound": true
+  },
+  "images": [
+    "index-cards.jpg",
+    "circuit.jpg",
+    "topographic.jpg",
+    "city.jpg",
+    "blade.jpg"
+  ],
+  "pages": [
+    {
+      "slug": "about",
+      "title": "About",
+      "html": "<p>This is the demo site for <strong>Dungeon</strong>, a free theme for <a href=\"https://ghost.org\">Ghost</a>. It's rebuilt from scratch every time a new version is released, so what you see is always the latest theme.</p><p>Every post, month and note here is sample content, written to show a feature. The theme itself is exactly what you'd install.</p><p>Dungeon was designed for <a href=\"https://christingeorge.com\">christingeorge.com</a>, a blog served from a NAS in a cupboard. The design is inspired by <a href=\"https://www.jake.design/\">Jake Przespo</a>, and the floating menu by <a href=\"https://hiran.in\">Hiran Venugopalan</a>.</p><p>Get it, free under the MIT licence, from <a href=\"https://github.com/Chrristin/dungeon\">GitHub</a>.</p>"
+    },
+    {
+      "slug": "colophon",
+      "title": "Colophon",
+      "html": "<p>How this demo is made. On a page with the URL <code>colophon</code>, level-4 headings become small labels like the ones below.</p><h4>Built with</h4><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Publishing</td><td>Ghost</td></tr><tr><td>Theme</td><td>Dungeon</td></tr><tr><td>Hosting</td><td>A static copy on Cloudflare Pages, rebuilt on every release</td></tr></tbody></table><h4>Typefaces</h4><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Text</td><td>Geist</td></tr><tr><td>Codes and labels</td><td>JetBrains Mono</td></tr></tbody></table><h4>Thanks</h4><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Design</td><td>Jake Przespo</td></tr><tr><td>Floating menu</td><td>Hiran Venugopalan</td></tr></tbody></table>"
+    },
+    {
+      "slug": "now",
+      "title": "Now",
+      "html": "<p>A month-by-month log, in the spirit of a <a href=\"https://nownownow.com/about\">now page</a>. Each card is a post with the internal tag <code>#now</code>.</p>"
+    },
+    {
+      "slug": "scatter",
+      "title": "Scatter",
+      "custom_template": "custom-scattered",
+      "html": "<p>Small things: reading, building, thinking. One or two lines at a time. Each note is a post with the internal tag <code>#note</code>.</p>"
+    }
+  ],
+  "posts": [
+    {
+      "title": "Welcome to Dungeon",
+      "slug": "welcome-to-dungeon",
+      "date": "2026-09-26T09:00:00Z",
+      "tags": [
+        "Guide"
+      ],
+      "feature_image": "index-cards.jpg",
+      "excerpt": "Posts as pastel index cards, a floating menu, a Now page, a Scatter wall and a saber for a light switch. Here's the tour.",
+      "html": "<p>Dungeon lays your posts out as index cards. Each one gets its own pastel, sits at its own slight angle, and straightens up when you hover over it, as if you'd picked it up to read.</p><p>Here's what to look for as you click around:</p><ul><li><strong>Cards and filing codes.</strong> Every post gets a code from its first tag and its date. This one is <code>#GU260926</code>.</li><li><strong>The reader.</strong> Click a card and the post opens over the page. Links to posts still work as normal pages too.</li><li><strong>The floating menu.</strong> <em>Everything +</em> opens a panel with more links. On a phone, the menu hides while you scroll down.</li><li><strong>The <a href=\"/now/\">Now page</a>.</strong> One card per month, with an etched pattern in the empty space.</li><li><strong>The <a href=\"/scatter/\">Scatter wall</a>.</strong> Short notes, quotes and finds, pinned to a board.</li><li><strong>The saber.</strong> It's in the footer. Click it.</li></ul><p>Dungeon is free under the MIT licence. <a href=\"https://github.com/Chrristin/dungeon\">Get it on GitHub</a>.</p>"
+    },
+    {
+      "title": "How the filing codes work",
+      "slug": "how-the-filing-codes-work",
+      "date": "2026-09-24T09:00:00Z",
+      "tags": [
+        "Guide"
+      ],
+      "excerpt": "Two letters from the first tag, then the date. A library catalogue for a blog nobody asked to be catalogued.",
+      "html": "<p>Each card carries a filing code, like <code>#GU260924</code>. The letters come from the post's first tag (<em>Guide</em> becomes <code>GU</code>), and the numbers are the publish date: year, month, day.</p><p>Notes on the Scatter wall use their kind instead, with the time added, so <code>#TH260926·1745</code> is a thought from a quarter to six on 26 September.</p><p>There's nothing to set up. Tag your posts and the codes appear.</p>"
+    },
+    {
+      "title": "Setting up the Now page",
+      "slug": "setting-up-the-now-page",
+      "date": "2026-09-21T09:00:00Z",
+      "tags": [
+        "Guide"
+      ],
+      "feature_image": "topographic.jpg",
+      "excerpt": "One post per month with the internal tag #now. The theme does the rest, including the patterns.",
+      "html": "<p>The <a href=\"/now/\">Now page</a> is a page with the URL <code>now</code>. Each month on it is a post with the internal tag <code>#now</code>; its publish date becomes the month's label.</p><p>Empty space at the bottom of a card gets an etched pattern. Pick one for the whole site in the theme settings, or give a single month its own with a tag:</p><ul><li><code>#filler-floral</code>: botanical sprigs</li><li><code>#filler-circuit</code>: a circuit board</li><li><code>#filler-city</code>: a skyline</li><li><code>#filler-topo</code>: contour lines</li><li><code>#filler-none</code>: nothing</li></ul><p>A colour tag like <code>#cobalt</code> fixes a month's colour. Otherwise each month picks its own.</p>"
+    },
+    {
+      "title": "Pinning notes to the Scatter wall",
+      "slug": "pinning-notes-to-the-scatter-wall",
+      "date": "2026-09-18T09:00:00Z",
+      "tags": [
+        "Guide"
+      ],
+      "excerpt": "Thoughts, reading notes, code, finds and quotes. The kind tag sets the label; the cards pack themselves.",
+      "html": "<p>The <a href=\"/scatter/\">Scatter wall</a> is a page using the <em>Scattered</em> template. Each note is a post with the internal tag <code>#note</code>, and its kind comes from one more tag:</p><table><thead><tr><th>Tag</th><th>Label</th></tr></thead><tbody><tr><td><code>#thought</code></td><td>Thought</td></tr><tr><td><code>#reading</code></td><td>Reading</td></tr><tr><td><code>#code</code></td><td>Code</td></tr><tr><td><code>#found</code></td><td>Found</td></tr><tr><td><code>#quote</code></td><td>Quote</td></tr><tr><td><code>#lyric</code></td><td>Lyric</td></tr></tbody></table><p>For quotes and lyrics, the body is the quote and the title is who said it. Paste a YouTube link into a lyric and it becomes a small play button.</p>"
+    },
+    {
+      "title": "Colour tags, from pistachio to ink",
+      "slug": "colour-tags-from-pistachio-to-ink",
+      "date": "2026-09-15T09:00:00Z",
+      "tags": [
+        "Design"
+      ],
+      "excerpt": "Ten pastels for everyday, six bold colours for when a note needs to shout.",
+      "html": "<p>Cards pick a pastel on their own, the same one every time. To choose, add a colour tag to a note or a month.</p><p><strong>Pastels:</strong> <code>#pistachio</code> <code>#mint</code> <code>#sky</code> <code>#periwinkle</code> <code>#lilac</code> <code>#blush</code> <code>#peach</code> <code>#butter</code> <code>#sage</code> <code>#seafoam</code></p><p><strong>Bold:</strong> <code>#red</code> <code>#tangerine</code> <code>#sunflower</code> <code>#cobalt</code> <code>#emerald</code> <code>#ink</code></p><p>On bold cards, text and patterns switch to white by themselves. The red quote on the Scatter wall is one.</p>"
+    },
+    {
+      "title": "A light switch with a blade",
+      "slug": "a-light-switch-with-a-blade",
+      "date": "2026-09-12T09:00:00Z",
+      "tags": [
+        "Design"
+      ],
+      "feature_image": "blade.jpg",
+      "excerpt": "Red for dark mode, blue for light. Two seconds, some static, and an optional hum.",
+      "html": "<p>The switch between light and dark mode lives in the footer, and it's a glowing blade. Red means dark mode, blue means light.</p><p>Click it and the blade powers down, the new mode spreads across the page from the hilt with static crackling along its edge, and a blade of the other colour ignites. It takes two seconds, which is about a second and a half longer than a light switch needs.</p><p>The messages that appear beside it, and an optional synthesised sound, are theme settings. Visitors who prefer reduced motion get an instant switch instead.</p>"
+    },
+    {
+      "title": "Tables, for good measure",
+      "slug": "tables-for-good-measure",
+      "date": "2026-09-09T09:00:00Z",
+      "tags": [
+        "Design"
+      ],
+      "excerpt": "Clean rows, a quiet header and a label column. No borders shouting at you.",
+      "html": "<p>Tables in posts and pages are styled as clean rows. The first column reads as the label; the rest are quieter.</p><table><thead><tr><th>Feature</th><th>Where</th><th>Setting</th></tr></thead><tbody><tr><td>Card tilt</td><td>Everywhere</td><td>None, Subtle, Playful or Wild</td></tr><tr><td>Hero card</td><td>Homepage</td><td>On or off</td></tr><tr><td>Now patterns</td><td>Now page</td><td>Five choices</td></tr><tr><td>Saber switch</td><td>Footer</td><td>On or off, with sound</td></tr></tbody></table><p>A two-column table with an empty header row shows no header at all, which is handy for simple lists of facts.</p>"
+    },
+    {
+      "title": "Photos that come alive",
+      "slug": "photos-that-come-alive",
+      "date": "2026-09-06T09:00:00Z",
+      "tags": [
+        "Photos"
+      ],
+      "feature_image": "city.jpg",
+      "excerpt": "Card photos start softly tinted and bloom into full colour when you hover.",
+      "html": "<p>Feature images on cards start slightly muted and tinted with the card's colour, so a wall of cards stays calm. Hover over a card, or scroll one into view on a phone, and the photo shows its true colours.</p><figure class=\"kg-card kg-image-card\"><img src=\"circuit.jpg\" alt=\"An abstract circuit board in gold on green\"></figure><p>Inside a post, images sit at a slight tilt of their own, like photos tucked into a notebook.</p>"
+    }
+  ],
+  "now": [
+    {
+      "date": "2026-09-15T09:00:00Z",
+      "tags": [
+        "#now"
+      ],
+      "html": "<p>Finished the theme and released it, then rebuilt this demo so it updates itself with every release. The saber took longer than everything else combined.</p><ul><li><strong>Built:</strong> a saber that switches the lights, with static on the edge</li><li><strong>Shipped:</strong> version 1.0, free on GitHub</li><li><strong>Automated:</strong> releases, installs and this demo</li><li><strong>Learned:</strong> Ghost names a theme after its zip file</li><li><strong>Reading:</strong> the Ghost theme docs, twice</li></ul><p>Next month: fewer features, more writing.</p>"
+    },
+    {
+      "date": "2026-08-15T09:00:00Z",
+      "tags": [
+        "#now",
+        "#filler-circuit"
+      ],
+      "html": "<p>A month of wiring things together. Every service got a health check, and every health check found something.</p>"
+    },
+    {
+      "date": "2026-07-15T09:00:00Z",
+      "tags": [
+        "#now",
+        "#filler-city",
+        "#periwinkle"
+      ],
+      "html": "<p>Travelled for work and wrote on trains. Cities look better from a window seat.</p>"
+    },
+    {
+      "date": "2026-06-15T09:00:00Z",
+      "tags": [
+        "#now",
+        "#filler-topo"
+      ],
+      "html": "<p>Walked more than I wrote, and tracked a few hills.</p>"
+    },
+    {
+      "date": "2026-05-15T09:00:00Z",
+      "tags": [
+        "#now",
+        "#butter"
+      ],
+      "html": "<p>Started the blog. Picked a default theme and promised to fix it later, which is how every theme starts.</p><ul><li><strong>Posts written:</strong> three</li><li><strong>Posts published:</strong> one</li><li><strong>Themes tried:</strong> five</li><li><strong>Themes kept:</strong> none</li><li><strong>Index cards bought:</strong> a pack of two hundred</li></ul><p>The index cards turned out to matter.</p>"
+    },
+    {
+      "date": "2026-04-15T09:00:00Z",
+      "tags": [
+        "#now",
+        "#filler-floral",
+        "#blush"
+      ],
+      "html": "<p>A quiet month. Nothing to report, which is its own kind of report.</p>"
+    }
+  ],
+  "notes": [
+    {
+      "date": "2026-09-26T17:45:00Z",
+      "tags": [
+        "#note",
+        "#thought"
+      ],
+      "html": "<p>Monitoring tells you what was never working.</p>"
+    },
+    {
+      "date": "2026-09-26T12:10:00Z",
+      "tags": [
+        "#note",
+        "#quote",
+        "#red"
+      ],
+      "title": "Henry David Thoreau, Walden",
+      "html": "<p>Our life is frittered away by detail. Simplify, simplify.</p>"
+    },
+    {
+      "date": "2026-09-25T21:30:00Z",
+      "tags": [
+        "#note",
+        "#reading"
+      ],
+      "html": "<p>Rereading an old favourite and noticing everything I skimmed the first time.</p>"
+    },
+    {
+      "date": "2026-09-25T09:15:00Z",
+      "tags": [
+        "#note",
+        "#code"
+      ],
+      "html": "<p>Today's favourite line of config:</p><pre><code>restart: unless-stopped</code></pre><p>One line, three fewer late nights.</p>"
+    },
+    {
+      "date": "2026-09-24T18:40:00Z",
+      "tags": [
+        "#note",
+        "#found",
+        "#butter"
+      ],
+      "html": "<p>A browser's secure DNS setting will quietly skip your VPN's DNS. Found that one the hard way.</p>"
+    },
+    {
+      "date": "2026-09-24T08:05:00Z",
+      "tags": [
+        "#note",
+        "#thought",
+        "#mint"
+      ],
+      "html": "<p>A now page is a better cover letter than a cover letter.</p>"
+    },
+    {
+      "date": "2026-09-23T20:20:00Z",
+      "tags": [
+        "#note",
+        "#reading"
+      ],
+      "feature_image": "topographic.jpg",
+      "html": "<p>Two chapters in and the narrator has already made three decisions I'd argue with.</p>"
+    },
+    {
+      "date": "2026-09-23T11:00:00Z",
+      "tags": [
+        "#note",
+        "#quote"
+      ],
+      "title": "Jane Austen, Pride and Prejudice",
+      "html": "<p>It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.</p>"
+    },
+    {
+      "date": "2026-09-22T19:30:00Z",
+      "tags": [
+        "#note",
+        "#thought",
+        "#cobalt"
+      ],
+      "html": "<p>Every home lab is a museum of past mistakes with the lights still on.</p>"
+    },
+    {
+      "date": "2026-09-22T07:50:00Z",
+      "tags": [
+        "#note",
+        "#found"
+      ],
+      "feature_image": "index-cards.jpg",
+      "html": "<p>Index cards are still the best planning tool ever made.</p>"
+    },
+    {
+      "date": "2026-09-21T22:10:00Z",
+      "tags": [
+        "#note",
+        "#code",
+        "#sage"
+      ],
+      "html": "<p>If a fix needs a comment explaining why, write the comment first.</p>"
+    },
+    {
+      "date": "2026-09-21T13:25:00Z",
+      "tags": [
+        "#note",
+        "#thought"
+      ],
+      "html": "<p>Small websites are having a moment. Good.</p>"
+    }
+  ]
+}

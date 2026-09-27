@@ -42,8 +42,9 @@
     {{/if}}
 
     <nav class="post-next" aria-label="{{t "More posts"}}">
-        {{#prev_post}}<a class="post-next-link" href="{{url}}"><span class="post-next-label">{{t "Older"}}</span><span class="post-next-title">{{title}}</span></a>{{/prev_post}}
-        {{#next_post}}<a class="post-next-link post-next-link--newer" href="{{url}}"><span class="post-next-label">{{t "Newer"}}</span><span class="post-next-title">{{title}}</span></a>{{/next_post}}
+        {{!-- Neighbouring posts, skipping Now months (#now) and Scatter notes (#note), which have no page of their own. Ghost's prev_post/next_post would link to them. --}}
+        {{#get "posts" filter="published_at:<'{{published_at}}'+tag:-hash-now+tag:-hash-note+id:-{{id}}" order="published_at desc" limit="1"}}{{#foreach posts}}<a class="post-next-link" href="{{url}}"><span class="post-next-label">{{t "Older"}}</span><span class="post-next-title">{{title}}</span></a>{{/foreach}}{{/get}}
+        {{#get "posts" filter="published_at:>'{{published_at}}'+tag:-hash-now+tag:-hash-note+id:-{{id}}" order="published_at asc" limit="1"}}{{#foreach posts}}<a class="post-next-link post-next-link--newer" href="{{url}}"><span class="post-next-label">{{t "Newer"}}</span><span class="post-next-title">{{title}}</span></a>{{/foreach}}{{/get}}
     </nav>
 </div>
 {{/post}}

@@ -2,7 +2,9 @@
 
 A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel index cards, each tilted at its own slight angle and stamped with a filing code. There's a floating menu, a month-by-month **Now** page, a **Scatter** wall of short notes, and a lightsaber in the footer that switches between light and dark.
 
-Version 1.0.3. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+**[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
+
+Version 1.0.4. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -121,6 +123,10 @@ Tables in posts and pages are styled as clean rows, with the first column as the
 ## routes.yaml
 
 [`docs/routes.yaml`](docs/routes.yaml) keeps `#now` and `#note` posts off your homepage, so they appear only on their own pages. The theme also skips them on the homepage as a safety net.
+
+## The demo site
+
+The [demo](https://dungeon-demo.pages.dev) is rebuilt automatically after every release: GitHub starts a throwaway Ghost, installs the new theme, loads the sample content in [`demo/content.json`](demo/content.json), and publishes a static copy to Cloudflare Pages. Static means search, sign-ups and comments are switched off there; everything else is exactly what you'd install. The build lives in [`demo/build.mjs`](demo/build.mjs).
 
 ## Translations
 
