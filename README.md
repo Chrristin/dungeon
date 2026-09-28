@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 1.0.5. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 1.0.6. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -119,6 +119,18 @@ Add one of these internal tags to a Scatter note or a Now month to fix its colou
 ## Tables and a Colophon page
 
 Tables in posts and pages are styled as clean rows, with the first column as the label and the rest quieter. Two-column Markdown tables with an empty header row show no header at all. On a page with the URL **`colophon`**, level-4 headings (`####`) become small uppercase section labels, handy for a "how this site is made" page.
+
+## A row of people
+
+For a thank-you section, put round faces in a row; each shows a small card with a name and a line on hover, or on tap on a phone. In a Markdown or HTML card:
+
+```html
+<div class="people">
+<span class="person" tabindex="0"><span class="person-initials">AB</span><span class="person-note"><a href="https://example.com">Their Name</a>Why they're here</span></span>
+</div>
+```
+
+Use `<img src="..." alt="Their Name">` in place of the initials span for a photo.
 
 ## routes.yaml
 

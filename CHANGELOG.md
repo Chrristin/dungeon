@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.6
+
+- A people row for thank-you sections: round faces (photos or initials) that show a name and a line on hover, focus or tap.
+
 ## 1.0.5
 
 - Tables are more compact: tighter rows, a narrower label column, and labels aligned with their descriptions.
