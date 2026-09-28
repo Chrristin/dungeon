@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7
+
+- Dark mode: the floating menu and the Everything panel no longer cast a smudgy shadow; they get a faint highlight along the top edge instead.
+
 ## 1.0.6
 
 - A people row for thank-you sections: round faces (photos or initials) that show a name and a line on hover, focus or tap.
