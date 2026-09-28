@@ -237,7 +237,8 @@ function checkLinks() {
     if (!/\.(html|css)$/.test(p)) return;
     const t = fs.readFileSync(p, 'utf8');
     const base = DEMO + '/' + path.relative(OUT, p).replace(/\\/g, '/');
-    const re = /(?:href|src)="([^"]+)"|url\(\s*['"]?([^'")]+)['"]?\s*\)/g;
+    // Pages link with href/src and url(); stylesheets only with url() (their comments may show example markup)
+    const re = p.endsWith('.css') ? /()url\(\s*['"]?([^'")]+)['"]?\s*\)/g : /(?:href|src)="([^"]+)"|url\(\s*['"]?([^'")]+)['"]?\s*\)/g;
     for (const m of t.matchAll(re)) {
       const raw = (m[1] || m[2] || '').replace(/&amp;/g, '&');
       if (!raw || /^(data:|mailto:|#|%23|javascript:)/i.test(raw)) continue;
