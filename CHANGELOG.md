@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5
+
+- Tables are more compact: tighter rows, a narrower label column, and labels aligned with their descriptions.
+
 ## 1.0.4
 
 - Fixed: the Older and Newer links at the bottom of a post could point at a Now month or a Scatter note, which have no page of their own. They now skip those.
