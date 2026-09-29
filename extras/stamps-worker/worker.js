@@ -13,6 +13,7 @@
 //   GET|POST /moderate?id=&a=approve|delete&exp=&sig=   signed, expiring links used by ntfy
 //   POST   /telegram                              Telegram button presses (webhook)
 //   GET    /telegram/setup?key=<MOD_SECRET>       finds your chat and connects the bot, once
+//   GET    /whoami   (Authorization: GhostMember <pass from /members/api/session>)   checks a member's pass
 //
 // Bindings: DB (D1 database with schema.sql), SITE (variable, e.g. https://christingeorge.com).
 // For stickies, as secrets: TURNSTILE_SECRET, MOD_SECRET (any long random text), NTFY_TOPIC,
@@ -34,7 +35,7 @@ function cors(env, request) {
   const origin = request.headers.get('Origin') || '';
   const ok = [site, site.replace(/^https:/, 'http:')].includes(origin);
   return { 'Access-Control-Allow-Origin': ok ? origin : site, 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-           'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '86400', Vary: 'Origin' };
+           'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Access-Control-Max-Age': '86400', Vary: 'Origin' };
 }
 const json = (data, status, headers) =>
   new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers } });
@@ -90,6 +91,7 @@ export default {
     try {
       const path = new URL(request.url).pathname;
       if (path === '/moderate' || path === '/telegram' || path === '/telegram/setup') return await moderation(request, env, ctx);
+      if (path === '/whoami') return json(await whoami(request, env), 200, headers);
       if (path.startsWith('/stickies/')) return await stickies(request, env, headers, ctx);
       return await handle(request, env, headers);
     } catch (e) {
@@ -246,7 +248,7 @@ async function stickies(request, env, headers, ctx) {
     if (body.name && String(body.name).trim()) { name = cleanName(body.name); if (!name) return json({ error: 'name not allowed' }, 400, headers); }
     if (!(await turnstileOk(env, body.turnstile, ip))) return json({ error: 'spam check failed' }, 403, headers);
     const token = crypto.randomUUID() + crypto.randomUUID();
-    const colour = Number.isInteger(body.colour) && body.colour >= 0 && body.colour <= 5 ? body.colour : null; // the paper it was written on
+    const colour = Number.isInteger(body.colour) && body.colour >= 0 && body.colour <= 11 ? body.colour : null; // the paper it was written on: 0-5 pastel, 6-11 bold
     const r = await env.DB.prepare('INSERT INTO stickies (post, body, name, colour, token_hash) VALUES (?, ?, ?, ?, ?)').bind(slug, text, name, colour, await sha256(token)).run();
     const sticky = { id: r.meta.last_row_id, post: slug, body: text, name };
     const base = url.origin;
@@ -319,4 +321,50 @@ async function moderation(request, env, ctx) {
     return new Response('ok');
   }
   return new Response('not found', { status: 404 });
+}
+
+// ---------------------------------------------------------------- members
+// A signed-in Ghost member's browser can get a short-lived signed pass (a JWT) from the site's
+// /members/api/session. The Worker checks it against the site's public keys, so it knows the member's
+// email for certain, without handling any passwords. This is an undocumented Ghost feature: anything
+// unexpected means "not a member", and the sticky goes the normal way (spam check and approval).
+let keys = null;
+const b64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
+async function siteKeys(env, refresh) {
+  if (keys && !refresh && Date.now() - keys.at < 6 * 3600 * 1000) return keys.list;
+  const r = await fetch(`${env.SITE.replace(/\/+$/, '')}/members/.well-known/jwks.json`, { headers: { Accept: 'application/json' } });
+  if (!r.ok) throw new Error('keys: ' + r.status);
+  keys = { list: (await r.json()).keys || [], at: Date.now() };
+  return keys.list;
+}
+async function memberFromPass(env, pass) {
+  const parts = String(pass || '').split('.');
+  if (parts.length !== 3) return { ok: false, reason: 'no pass' };
+  let head, claims;
+  try { head = JSON.parse(new TextDecoder().decode(b64u(parts[0]))); claims = JSON.parse(new TextDecoder().decode(b64u(parts[1]))); } catch { return { ok: false, reason: 'unreadable pass' }; }
+  const hash = { RS256: 'SHA-256', RS384: 'SHA-384', RS512: 'SHA-512' }[head.alg];
+  if (!hash) return { ok: false, reason: 'unexpected algorithm ' + head.alg };
+  let list = await siteKeys(env), jwk = list.find((k) => !head.kid || k.kid === head.kid);
+  if (!jwk) { list = await siteKeys(env, true); jwk = list.find((k) => !head.kid || k.kid === head.kid); } // the site may have new keys
+  if (!jwk) return { ok: false, reason: 'no matching key' };
+  const bits = jwk.n ? b64u(jwk.n).length * 8 : 0;
+  let key;
+  try { key = await crypto.subtle.importKey('jwk', { kty: 'RSA', n: jwk.n, e: jwk.e }, { name: 'RSASSA-PKCS1-v1_5', hash }, false, ['verify']); }
+  catch (e) { return { ok: false, reason: 'the site key could not be used here (' + bits + '-bit): ' + String(e.message || e) }; }
+  const good = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64u(parts[2]), new TextEncoder().encode(parts[0] + '.' + parts[1]));
+  if (!good) return { ok: false, reason: 'signature does not match' };
+  const now = Date.now() / 1000;
+  if (!claims.exp || claims.exp < now - 30) return { ok: false, reason: 'pass expired' };
+  const site = env.SITE.replace(/\/+$/, ''), issuer = String(claims.iss || claims.aud || '');
+  if (issuer && !issuer.replace(/^http:/, 'https:').startsWith(site.replace(/^http:/, 'https:'))) return { ok: false, reason: 'pass is for another site' };
+  const email = String(claims.sub || '').trim().toLowerCase();
+  if (!email.includes('@')) return { ok: false, reason: 'no email in pass' };
+  return { ok: true, email, author: !!env.AUTHOR_EMAIL && email === String(env.AUTHOR_EMAIL).trim().toLowerCase(), bits, alg: head.alg, expiresIn: Math.round(claims.exp - now) };
+}
+async function whoami(request, env) {
+  const auth = request.headers.get('Authorization') || '', pass = auth.replace(/^GhostMember\s+/i, '');
+  let m;
+  try { m = await memberFromPass(env, pass); } catch (e) { m = { ok: false, reason: String(e.message || e) }; }
+  if (!m.ok) return { member: false, reason: m.reason };
+  return { member: true, author: m.author, key: m.bits + '-bit ' + m.alg, passExpiresInSeconds: m.expiresIn, emailHash: (await sha256(m.email)).slice(0, 10) }; // never the email itself
 }

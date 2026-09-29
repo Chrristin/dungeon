@@ -1382,7 +1382,17 @@
   var myStickies = function (el) { try { return JSON.parse(localStorage.getItem(mineKey(el)) || '[]'); } catch (e) { return []; } };
   var saveMyStickies = function (el, list) { try { localStorage.setItem(mineKey(el), JSON.stringify(list.slice(-20))); } catch (e) {} };
   var pinnedNow = function (id) { try { return sessionStorage.getItem('dungeon-sticky-now:' + id) === '1'; } catch (e) { return false; } };
-  var paperOf = function (s) { return String(s.colour === 0 || s.colour > 0 ? s.colour : Math.abs(Number(s.id)) % 6); };
+  // Sticky papers: 0-5 pastel (yellow, pink, mint, sky, lilac, peach), 6-11 bold (red, tangerine, sunflower,
+  // cobalt, emerald, ink). Stickies avoid the paper closest to the post's own colour.
+  var NEAR = { '0': [2], '1': [2], '2': [3], '3': [3], '4': [4], '5': [1], '6': [5], '7': [0], '8': [2], '9': [2],
+    red: [6, 1], tangerine: [7, 5], sunflower: [8, 0], cobalt: [9, 3], emerald: [10, 2], ink: [11] };
+  var DARK_PAPER = { '6': 1, '9': 1, '10': 1, '11': 1 };
+  var avoidFor = function (el) { var panel = el.closest('.post-panel') || document.querySelector('.post-panel'); return NEAR[(panel && panel.getAttribute('data-hue')) || ''] || []; };
+  var paperOf = function (s, el) {
+    var c = s.colour === 0 || s.colour > 0 ? Number(s.colour) : Math.abs(Number(s.id)) % 6, avoid = el ? avoidFor(el) : [];
+    for (var step = 0; step < 6 && avoid.indexOf(c) >= 0; step++) c = c < 6 ? (c + 1) % 6 : 6 + (c - 5) % 6; // the next paper in the same family
+    return String(c);
+  };
   var stickyDate = function (iso) { var d = new Date(iso); if (isNaN(d)) d = new Date(); return String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()]; };
   // Seeded randomness. The seed is scrambled first: consecutive sticky numbers otherwise start out with
   // near-identical values, so neighbours picked the same tape (or doodle) far too often.
@@ -1407,7 +1417,7 @@
   function stickyNode(el, s, waiting) {
     var n = document.createElement('div');
     n.className = 'sticky' + (waiting ? ' is-waiting' : ''); n.setAttribute('role', 'listitem'); n.tabIndex = 0;
-    n.setAttribute('data-id', s.id); n.setAttribute('data-c', paperOf(s));
+    n.setAttribute('data-id', s.id); n.setAttribute('data-c', paperOf(s, el));
     var paper = document.createElement('div'); paper.className = 'sticky-paper'; paper.style.setProperty('--fray', frayClip(s.id));
     if (waiting) { var w = document.createElement('span'); w.className = 'sticky-waiting'; w.textContent = el.getAttribute('data-waiting'); paper.appendChild(w); }
     var p = document.createElement('p'); p.className = 'sticky-text'; p.textContent = s.body; paper.appendChild(p);
@@ -1498,7 +1508,7 @@
     var rand = seeded(Math.abs(Number(s.id)) * 31 + 5), set = doodleSet(el);
     var region = { x: paper.clientWidth * 0.06, y: p.offsetTop + used + 6, w: paper.clientWidth * 0.88, h: free - 8 };
     var main = Math.min(region.h / 1.25, region.w * 0.42, 58); if (main < 22) return;
-    var pen = rand(), ink = pen < 0.12 ? 'rgba(38, 72, 170, 0.62)' : pen < 0.2 ? 'rgba(182, 38, 52, 0.55)' : 'rgba(35, 37, 43, 0.46)';
+    var pen = rand(), ink = DARK_PAPER[n.getAttribute('data-c')] ? 'rgba(251, 245, 232, 0.55)' : pen < 0.12 ? 'rgba(38, 72, 170, 0.62)' : pen < 0.2 ? 'rgba(182, 38, 52, 0.55)' : 'rgba(35, 37, 43, 0.46)';
     var list = [{ d: set[Math.floor(rand() * set.length)], size: main }];
     var extra = Math.min(3, Math.floor(region.w * region.h / (main * main * 1.9)));
     for (var k = 0; k < extra; k++) list.push({ d: rand() < 0.7 ? SCRIBBLES[Math.floor(rand() * SCRIBBLES.length)](rand) : DOODLES.any[Math.floor(rand() * DOODLES.any.length)], size: main * (0.34 + rand() * 0.3) });
@@ -1537,6 +1547,7 @@
   // Lay out the pile. Oldest first, each sticky takes the emptiest of 30 random spots (seeded, so the
   // pile looks the same on every visit and only changes as stickies are added).
   function layoutStickies(el) {
+    el._focus = null; el.classList.remove('has-focus');
     var board = el.querySelector('.stickies-board'), list = el.querySelector('.stickies-list');
     var approved = (el._stickies || []).slice(), mine = myStickies(el).filter(function (m) { return m.status === 'pending'; });
     var shownIds = {}; approved.forEach(function (s) { shownIds[s.id] = true; });
@@ -1546,7 +1557,7 @@
     el.classList.toggle('is-empty', !all.length);
     if (!all.length) return;
     all.slice().reverse().forEach(function (item) { // the list: newest first
-      var d = document.createElement('div'); d.setAttribute('role', 'listitem'); d.setAttribute('data-c', paperOf(item.s));
+      var d = document.createElement('div'); d.setAttribute('role', 'listitem'); d.setAttribute('data-c', paperOf(item.s, el));
       d.style.setProperty('--fray', frayClip(item.s.id));
       if (item.waiting) d.className = 'is-waiting';
       d.appendChild(document.createTextNode(item.s.body));
@@ -1620,7 +1631,37 @@
     var under = function () { return items.some(function (d) { var r = d.getBoundingClientRect(); return r.left < cr.right + 12 && r.right > cr.left - 12 && r.top < cr.bottom + 12 && r.bottom > cr.top; }); };
     for (var rows = 1; rows <= 40; rows++) { sp.style.gridRow = '1 / span ' + rows; if (!under()) break; } // as many rows as it takes
   }
-  function sendStickyBack(el, n) {
+  // Two steps: tapping a sticky lifts it, larger, towards the middle of the stickies, to read. Escape, a tap
+  // anywhere else, or a tap on it sends it back to the bottom of the pile; tapping another sticky sends
+  // the first back and lifts the new one.
+  function focusSticky(el, n) {
+    if (n.getAttribute('data-moving')) return;
+    var rot = n.style.getPropertyValue('--rot'), r = n.getBoundingClientRect(), br = el.querySelector('.stickies-board').getBoundingClientRect();
+    var w = n.offsetWidth, h = n.offsetHeight, s = Math.max(1, Math.min(1.5, (innerWidth - 32) / w, (innerHeight - 64) / h));
+    var tx = Math.max(w * s / 2 + 16, Math.min(innerWidth - w * s / 2 - 16, br.left + br.width / 2));
+    var ty = Math.max(h * s / 2 + 32, Math.min(innerHeight - h * s / 2 - 32, br.top + br.height / 2));
+    el._focus = n; n.setAttribute('data-focus', '1'); el.classList.add('has-focus');
+    n._z = n.style.zIndex; n.style.zIndex = 9999;
+    n._lift = n.animate([
+      { transform: rot + ' translate(0,0) scale(1)' },
+      { transform: 'translate(' + (tx - (r.left + r.width / 2)).toFixed(1) + 'px,' + (ty - (r.top + r.height / 2)).toFixed(1) + 'px) rotate(-0.6deg) scale(' + s.toFixed(3) + ')' }
+    ], { duration: 420, easing: 'cubic-bezier(.2,.8,.25,1)', fill: 'forwards' });
+  }
+  function dismissSticky(el, next) {
+    var n = el._focus; if (!n) return;
+    el._focus = null; n.removeAttribute('data-focus');
+    var now = getComputedStyle(n).transform; // where it is, enlarged
+    if (n._lift) { n._lift.cancel(); n._lift = null; }
+    n.style.zIndex = n._z;
+    sendStickyBack(el, n, now);
+    if (next && next !== n) focusSticky(el, next);
+  }
+  function tapSticky(el, n) {
+    if (el._focus === n) dismissSticky(el);
+    else if (el._focus) dismissSticky(el, n);
+    else focusSticky(el, n);
+  }
+  function sendStickyBack(el, n, from) {
     if (n.getAttribute('data-moving')) return;
     var board = el.querySelector('.stickies-board'), notes = [].slice.call(board.children);
     var min = Math.min.apply(null, notes.map(function (x) { return +x.style.zIndex; }));
@@ -1642,7 +1683,7 @@
     }
     var T = 1050, swap = 0.46;
     var move = n.animate([
-      { transform: rot + ' translate(0,0) scale(1)', filter: 'brightness(1)', offset: 0, easing: 'cubic-bezier(.25,.8,.35,1)' },
+      { transform: from && from !== 'none' ? from : rot + ' translate(0,0) scale(1)', filter: 'brightness(1)', offset: 0, easing: 'cubic-bezier(.25,.8,.35,1)' },
       { transform: rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.05)', filter: 'brightness(1)', offset: swap, easing: 'cubic-bezier(.45,0,.3,1)' },
       { transform: rot + ' translate(0,0) scale(1)', filter: 'brightness(.96)', offset: 1 }
     ], { duration: T, fill: 'forwards' });
@@ -1674,7 +1715,7 @@
       ], { duration: T, easing: 'ease-in-out' });
       x.style.filter = '';
     });
-    move.onfinish = function () { move.cancel(); n.style.transform = rot; n.style.filter = 'brightness(.96)'; n.removeAttribute('data-moving'); };
+    move.onfinish = function () { move.cancel(); n.style.transform = rot; n.style.filter = 'brightness(.96)'; n.removeAttribute('data-moving'); if (!el._focus) el.classList.remove('has-focus'); };
   }
   var turnstileLoading = null;
   function loadTurnstile() {
@@ -1688,8 +1729,8 @@
   }
   // The writing sticky is always there. It gets a random paper colour, and the pinned sticky keeps it.
   function newPaper(el) {
-    var form = el.querySelector('.stickies-compose'), prev = form.getAttribute('data-c'), c;
-    do { c = String(Math.floor(Math.random() * 6)); } while (c === prev);
+    var form = el.querySelector('.stickies-compose'), prev = form.getAttribute('data-c'), avoid = avoidFor(el), c;
+    do { c = String(Math.random() < 0.25 ? 6 + Math.floor(Math.random() * 6) : Math.floor(Math.random() * 6)); } while (c === prev || avoid.indexOf(Number(c)) >= 0); // 1 in 4 bold
     form.setAttribute('data-c', c);
   }
   // Cloudflare's spam check loads only when someone starts writing, not on every visit.
@@ -1846,10 +1887,19 @@
       if (!on) layoutStickies(el); else listAroundComposer(el);
       return;
     }
-    var n = ev.target.closest('.sticky'); if (n) sendStickyBack(el, n);
+    var n = ev.target.closest('.sticky'); if (n && n.getAttribute('aria-hidden') !== 'true') tapSticky(el, n);
+  });
+  document.addEventListener('click', function (ev) { // a tap anywhere else puts a lifted sticky back
+    [].forEach.call(document.querySelectorAll('.stickies'), function (s) {
+      if (s._focus && !(s.contains(ev.target) && ev.target.closest('.sticky'))) dismissSticky(s);
+    });
   });
   document.addEventListener('keydown', function (ev) {
     var compose = ev.target.closest && ev.target.closest('.stickies-compose');
+    if (ev.key === 'Escape' && !document.querySelector('.reader[open]')) { // a lifted sticky goes back first
+      var lifted = [].filter.call(document.querySelectorAll('.stickies'), function (s) { return s._focus; });
+      if (lifted.length) { ev.preventDefault(); lifted.forEach(function (s) { dismissSticky(s); }); return; }
+    }
     if (ev.key === 'Escape' && !document.querySelector('.reader[open]')) { // on the page (the overlay's cancel handler does its own)
       var pageSticky = document.querySelector('.stickies:not([hidden]) .stickies-compose');
       var busyElsewhere = ev.target.closest && !ev.target.closest('.stickies-compose') && /^(input|textarea|select)$/i.test(ev.target.tagName || '');
@@ -1859,7 +1909,7 @@
       }
     }
     var n = ev.target.closest && ev.target.closest('.sticky');
-    if (n && ev.target === n && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); sendStickyBack(n.closest('.stickies'), n); }
+    if (n && ev.target === n && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); tapSticky(n.closest('.stickies'), n); }
   });
   document.addEventListener('submit', function (ev) {
     var form = ev.target.closest && ev.target.closest('.stickies-compose'); if (!form) return;
@@ -1882,6 +1932,8 @@
   // In the overlay, the browser closes the dialog on Escape by itself. If the blank sticky has writing
   // on it, Escape clears that first and keeps the overlay open; pressed again, it closes as usual.
   if (reader) reader.addEventListener('cancel', function (e) {
+    var liftedHere = document.querySelector('.reader .stickies');
+    if (liftedHere && liftedHere._focus) { e.preventDefault(); dismissSticky(liftedHere); return; } // a lifted sticky goes back first
     var written = document.querySelector('.reader .stickies-compose');
     if (written && (written.querySelector('textarea').value || written.querySelector('input').value)) { e.preventDefault(); throwComposer(written.closest('.stickies')); }
   });

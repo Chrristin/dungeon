@@ -1231,6 +1231,8 @@ body.has-everything .colophon-secondary { display: none; }
 /* deeper versions of the six paper colours, for the pin */
 .stickies-compose[data-c="0"] { --deep: #d9a400; } .stickies-compose[data-c="1"] { --deep: #d8436e; } .stickies-compose[data-c="2"] { --deep: #23975d; }
 .stickies-compose[data-c="3"] { --deep: #2b6fd1; } .stickies-compose[data-c="4"] { --deep: #6f4fd6; } .stickies-compose[data-c="5"] { --deep: #e8691d; }
+.stickies-compose[data-c="6"] { --deep: #8f1426; } .stickies-compose[data-c="7"] { --deep: #b8520c; } .stickies-compose[data-c="8"] { --deep: #c99700; }
+.stickies-compose[data-c="9"] { --deep: #162f8a; } .stickies-compose[data-c="10"] { --deep: #07573a; } .stickies-compose[data-c="11"] { --deep: #0f1115; }
 .stickies :focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
 
 /* the composer: a blank sticky to write on */
@@ -1281,7 +1283,7 @@ body.has-everything .colophon-secondary { display: none; }
 .stickies-board { position: relative; height: 12rem; max-height: 31rem; }
 .stickies-hint { margin: 0.6rem 0 0; font: 0.72rem var(--mono); color: var(--graphite); }
 .stickies.is-empty .stickies-hint, .stickies.is-list .stickies-hint,
-.stickies:not(.is-crowded) .stickies-hint { display: none; }
+
 /* A sticky is two layers: the outer one is placed, tilted, casts the shadow and holds the tape; the paper
    inside has the colour and the frayed edge (a cut edge would otherwise cut the shadow too). Inside the
    paper, three rows that never overlap: the waiting label, the text (shrinks to fit), and name with x. */
@@ -1303,11 +1305,26 @@ body.has-everything .colophon-secondary { display: none; }
 .sticky.is-waiting .sticky-paper { outline: 2px dashed rgba(35, 37, 43, 0.35); outline-offset: -6px; }
 .sticky.is-waiting::before { display: none; } /* no tape until it's pinned */
 .sticky.is-landing { animation: sticky-land 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
-@media (hover: hover) { .sticky:not([data-moving]):hover { animation: sticky-wobble 0.55s ease-in-out; } }
+@media (hover: hover) { .sticky:not([data-moving]):not([data-focus]):hover { animation: sticky-wobble 0.55s ease-in-out; } }
+.sticky[data-focus] { filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)); cursor: zoom-out; }
+.stickies.has-focus .stickies-stage { overflow: visible; } /* a lifted sticky isn't clipped by the pile's edges */
 @keyframes sticky-wobble { 20% { rotate: 2.2deg; } 45% { rotate: -1.8deg; } 70% { rotate: 1deg; } 100% { rotate: 0deg; } }
 @keyframes sticky-land { from { scale: 1.25; opacity: 0; translate: 0 -14px; } to { scale: 1; opacity: 1; translate: 0 0; } }
 [data-c="0"] { --paper: #fbe9a0; } [data-c="1"] { --paper: #f6cfd8; } [data-c="2"] { --paper: #c9ecd9; }
 [data-c="3"] { --paper: #cfe0f5; } [data-c="4"] { --paper: #dcd3f3; } [data-c="5"] { --paper: #fbd9b8; }
+/* the bold papers, from the theme's bold colours; the four dark ones take light, cream writing */
+[data-c="6"] { --paper: #d0213a; --deep: #8f1426; } [data-c="7"] { --paper: #f47a20; --deep: #b8520c; } [data-c="8"] { --paper: #ffcc2e; --deep: #c99700; }
+[data-c="9"] { --paper: #2349c9; --deep: #162f8a; } [data-c="10"] { --paper: #0b7d52; --deep: #07573a; } [data-c="11"] { --paper: #2a2e37; --deep: #0f1115; }
+:is(.sticky, .stickies-list > div, .stickies-compose):is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]) { --on-paper: #fbf5e8; --on-paper-soft: rgba(251, 245, 232, 0.72); }
+:is(.sticky, .stickies-list > div):is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]) .sticky-paper,
+.stickies-list > div:is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]) { color: var(--on-paper); }
+:is(.sticky, .stickies-list > div):is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]) :is(.sticky-by, .sticky-waiting, .sticky-remove, span) { color: var(--on-paper-soft); }
+.sticky:is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]).is-waiting .sticky-paper { outline-color: rgba(251, 245, 232, 0.5); }
+.stickies-compose:is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]) { color: var(--on-paper); }
+.stickies-compose:is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]) :is(textarea, input)::placeholder { color: rgba(251, 245, 232, 0.55); }
+.stickies-compose:is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]) :is(.stickies-left, .stickies-note, .stickies-throw) { color: var(--on-paper-soft); }
+.stickies-compose:is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]) .stickies-compose-row { border-top-color: rgba(251, 245, 232, 0.35); }
+.stickies-compose:is([data-c="6"], [data-c="9"], [data-c="10"], [data-c="11"]) .stickies-msg.is-hand { color: #ffd7dc; }
 
 /* read as a list: every sticky, newest first, plain */
 .stickies-list[hidden] { display: none; }

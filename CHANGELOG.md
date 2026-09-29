@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.7
+
+- Tap a sticky to read it: it lifts, half again as large, to the middle of the stickies. Tap it again, tap elsewhere or press Escape to put it back at the bottom of the pile; tapping another sticky swaps them.
+- Bold stickies: about one in four blank stickies is one of the theme's bold colours, with light writing on the dark ones. Needs the latest Worker.
+- Stickies avoid the colour closest to the post's own, on the blank sticky and when showing existing ones.
+- Stickies Worker: a /whoami check for Ghost member sign-in, the groundwork for member stickies.
+
 ## 1.3.6
 
 - Older and Newer, below every post, are now horizontal cards like the homepage ones: image on the left (or an etched pattern if the post has none), title and excerpt on the right. They stack on phones.
