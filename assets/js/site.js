@@ -1104,7 +1104,7 @@
       var url = box.getAttribute('data-url') || location.href, title = box.getAttribute('data-title') || document.title;
       var e = encodeURIComponent;
       var links = {
-        x: 'https://twitter.com/intent/tweet?url=' + e(url) + '&text=' + e(title),
+        twitter: 'https://twitter.com/intent/tweet?url=' + e(url) + '&text=' + e(title),
         linkedin: 'https://www.linkedin.com/sharing/share-offsite/?url=' + e(url),
         whatsapp: 'https://wa.me/?text=' + e(title + ' ' + url),
         email: 'mailto:?subject=' + e(title) + '&body=' + e(url)
@@ -1123,17 +1123,26 @@
     if (shareBtn) {
       var box = shareBtn.closest('.post-actions');
       var url = box.getAttribute('data-url') || location.href, title = box.getAttribute('data-title') || document.title;
-      if (navigator.share && window.matchMedia('(pointer: coarse)').matches) { navigator.share({ title: title, url: url }).catch(function () {}); return; }
       var menu = shareBtn.parentNode.querySelector('.post-share-menu');
+      var opening = menu.hidden;
+      if (opening && !calmStamps) { // the paper plane takes off
+        shareBtn.classList.remove('is-launching'); void shareBtn.offsetWidth; shareBtn.classList.add('is-launching');
+        setTimeout(function () { shareBtn.classList.remove('is-launching'); }, 650);
+      }
+      if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
+        setTimeout(function () { navigator.share({ title: title, url: url }).catch(function () {}); }, calmStamps ? 0 : 280);
+        return;
+      }
       closeShareMenus(menu);
       menu.hidden = !menu.hidden; shareBtn.setAttribute('aria-expanded', String(!menu.hidden));
+      if (!menu.hidden && !calmStamps) { menu.classList.remove('is-rising'); void menu.offsetWidth; menu.classList.add('is-rising'); } // pulled up behind the plane
       return;
     }
     var copy = ev.target.closest('[data-share="copy"]');
     if (copy) {
       var link = copy.closest('.post-actions').getAttribute('data-url') || location.href;
-      var label = copy.textContent;
-      var done = function () { copy.textContent = copy.getAttribute('data-copied') || 'Link copied'; setTimeout(function () { copy.textContent = label; closeShareMenus(); }, 1400); };
+      var copyLabel = copy.querySelector('span') || copy, label = copyLabel.textContent;
+      var done = function () { copyLabel.textContent = copy.getAttribute('data-copied') || 'Link copied'; setTimeout(function () { copyLabel.textContent = label; closeShareMenus(); }, 1400); };
       if (navigator.clipboard) navigator.clipboard.writeText(link).then(done, done); else done();
       return;
     }
@@ -1156,11 +1165,20 @@
     return withYear ? s + ' ' + d.getUTCFullYear() : s;
   };
   function setCount(el, n) { el.querySelector('.stamp-count').textContent = n > 0 ? n : ''; }
+  // The name field is exactly as wide as its text (or the prompt), so typing starts at the cursor
+  function sizeName(input) {
+    var prompt = input.parentNode.querySelector('.stamp-prompt');
+    input.style.setProperty('--n', Math.max(input.value.length + 1, prompt ? prompt.textContent.length : 10));
+  }
+  // Names signed in this browser session can be taken back; after that they stay
+  var signedNow = function (el, mine) { try { return !!mine && sessionStorage.getItem('dungeon-signed:' + el.getAttribute('data-slug')) === String(mine.id); } catch (e) { return false; } };
   function showMark(el, mine, fresh) {
     var mark = el.querySelector('.stamp-mark'), nameBox = mark.querySelector('.stamp-name');
     mark.querySelector('.stamp-date').textContent = stampDate(mine.date, true);
     mark.classList.toggle('is-signed', !!mine.name);
     mark.querySelector('.stamp-signed').textContent = mine.name || '';
+    mark.querySelector('.stamp-unsign').hidden = !(mine.name && signedNow(el, mine));
+    var nameInput = mark.querySelector('.stamp-name input'); if (!mine.name) { nameInput.value = ''; nameBox.classList.remove('has-value'); } sizeName(nameInput);
     mark.classList.toggle('name-gone', !mine.name && !fresh);
     mark.hidden = false; el.classList.add('is-stamped');
     if (!fresh || calmStamps) return;
@@ -1187,7 +1205,12 @@
       var row = document.createElement('div'); row.className = 'stamp-list-row';
       var b = document.createElement('b'); b.textContent = stampDate(n.date, false);
       var s = document.createElement('span'); s.textContent = n.name;
-      row.appendChild(b); row.appendChild(s); rows.appendChild(row);
+      row.appendChild(b); row.appendChild(s);
+      if (mine && n.id === mine.id && signedNow(el, mine)) { // your own name, signed this session
+        var x = document.createElement('button'); x.type = 'button'; x.className = 'stamp-list-unsign'; x.innerHTML = '&times;';
+        x.setAttribute('aria-label', el.querySelector('.stamp-list').getAttribute('data-remove') || 'Remove my name'); row.appendChild(x);
+      }
+      rows.appendChild(row);
     });
     var more = el.querySelector('.stamp-more');
     var rest = d.more - (mine && !mine.name ? 1 : 0); // your own unsigned stamp already has its row
@@ -1234,6 +1257,7 @@
         el._signing = false;
         if (res.ok || res.status === 409) {
           mine.name = name; saveStamp(el, mine);
+          if (res.ok) { try { sessionStorage.setItem('dungeon-signed:' + el.getAttribute('data-slug'), String(mine.id)); } catch (e) {} }
           if (res.ok) el._stamps = { count: res.d.count, names: res.d.names, more: res.d.more };
           clearTimeout(el._nameTimer); if (awaitingName === el) awaitingName = null; showMark(el, mine, false); renderList(el); input.blur();
         } else {
@@ -1242,7 +1266,23 @@
         }
       }, function () { el._signing = false; });
   }
+  function unsignStamp(el) {
+    var mine = myStamp(el); if (!mine || !mine.name || el._signing) return;
+    el._signing = true;
+    fetch(stampApi(el) + '/' + mine.id, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: mine.token }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        el._signing = false;
+        try { sessionStorage.removeItem('dungeon-signed:' + el.getAttribute('data-slug')); } catch (e) {}
+        if (!res.ok) { showMark(el, mine, false); renderList(el); return; } // too late: the name stays, the x goes
+        delete mine.name; saveStamp(el, mine);
+        el._stamps = { count: res.d.count, names: res.d.names, more: res.d.more };
+        showMark(el, mine, true); renderList(el); // the name line comes back, ready for a new name
+      }, function () { el._signing = false; });
+  }
   document.addEventListener('click', function (ev) {
+    var unsign = ev.target.closest('.stamp-unsign, .stamp-list-unsign');
+    if (unsign) { unsignStamp(unsign.closest('.stamp')); return; }
     var btn = ev.target.closest('.stamp-btn');
     if (btn) {
       var el = btn.closest('.stamp');
@@ -1250,13 +1290,14 @@
       var list = el.querySelector('.stamp-list'); closeStampLists(list);
       if (list.hidden) renderList(el);
       list.hidden = !list.hidden; btn.setAttribute('aria-expanded', String(!list.hidden));
+      if (!list.hidden && !calmStamps) { list.classList.remove('is-opening'); void list.offsetWidth; list.classList.add('is-opening'); }
       if (!list.hidden) { var i = list.querySelector('input'); if (i && window.matchMedia('(pointer: fine)').matches) i.focus(); }
       return;
     }
     if (!ev.target.closest('.stamp-list')) closeStampLists();
   });
   document.addEventListener('input', function (ev) {
-    if (ev.target.matches('.stamp-name input')) ev.target.parentNode.classList.toggle('has-value', !!ev.target.value);
+    if (ev.target.matches('.stamp-name input')) { ev.target.closest('.stamp-name').classList.toggle('has-value', !!ev.target.value); sizeName(ev.target); }
   });
   document.addEventListener('keydown', function (ev) {
     // Just stamped, name line showing: the first letters typed go straight into it, no click needed.
@@ -1270,6 +1311,7 @@
         ev.preventDefault();
         nameInput.focus({ preventScroll: true });
         if (nameInput.value.length < nameInput.maxLength) nameInput.value += ev.key;
+        sizeName(nameInput);
         nameInput.dispatchEvent(new Event('input', { bubbles: true }));
         clearTimeout(awaitingName._nameTimer);
         return;

@@ -1003,11 +1003,21 @@ body.has-everything .colophon-secondary { display: none; }
     border: 1px solid rgba(23, 25, 30, 0.18); border-radius: 999px; background: rgba(255, 255, 255, 0.35);
     color: #17191e; font: 500 0.85rem/1 var(--mono); cursor: pointer;
     transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease; }
-/* Share is icon-only: a round button the same height as the stamp */
-.post-share-button { width: 2.4rem; padding: 0; justify-content: center; }
+/* Share is icon-only: a round button the same height as the stamp, slightly tilted like the cards */
+.post-share-button { position: relative; width: 2.4rem; padding: 0; justify-content: center; rotate: 3deg; transition: background 0.18s ease, border-color 0.18s ease, rotate 0.25s ease; }
+.post-share-button:hover, .post-share-button[aria-expanded="true"] { rotate: 0deg; }
 .post-share-button:hover { background: rgba(255, 255, 255, 0.65); border-color: rgba(23, 25, 30, 0.3); }
 .post-share-button:focus-visible, .post-share-menu :focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
-.post-share-button svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.post-share-button svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: opacity 0.22s ease, transform 0.25s ease; }
+/* Hover turns the arrow into a paper plane, nose up; clicking launches it, pulling the menu up with it */
+.share-plane { position: absolute; opacity: 0; transform: scale(0.6) rotate(-20deg); }
+@media (hover: hover) {
+    .post-share-button:hover .share-arrow { opacity: 0; transform: translateY(-3px) scale(0.7); }
+    .post-share-button:hover .share-plane { opacity: 1; transform: none; }
+}
+.post-share-button.is-launching .share-arrow { opacity: 0; transition: none; }
+.post-share-button.is-launching .share-plane { opacity: 1; animation: plane-launch 0.6s cubic-bezier(0.5, 0, 0.75, 0) forwards; }
+@keyframes plane-launch { 0% { transform: none; opacity: 1; } 25% { transform: translateY(2px) scale(0.95); } 100% { transform: translateY(-44px) scale(0.7); opacity: 0; } }
 .post-actions { position: relative; min-height: 5.6rem; }
 
 /* Stamps: "I was here". One button with the count; stamping brings the stamp down, leaves a
@@ -1020,8 +1030,9 @@ body.has-everything .colophon-secondary { display: none; }
 .stamp-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; height: 2.4rem; min-width: 2.4rem; padding: 0 0.8rem;
     border: 1px solid rgba(23, 25, 30, 0.18); border-radius: 999px; background: rgba(255, 255, 255, 0.35);
-    color: #17191e; font: 500 0.85rem/1 var(--mono); cursor: pointer; transition: background 0.18s ease, border-color 0.18s ease; }
+    color: #17191e; font: 500 0.85rem/1 var(--mono); cursor: pointer; rotate: -4deg; transition: background 0.18s ease, border-color 0.18s ease, rotate 0.25s ease; }
 .stamp-btn:has(.stamp-count:empty) { padding: 0; }
+.stamp-btn:hover, .stamp-btn[aria-expanded="true"] { rotate: 0deg; }
 .stamp-btn:hover { background: rgba(255, 255, 255, 0.65); border-color: rgba(23, 25, 30, 0.3); }
 .stamp-btn:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
 .stamp-btn svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; overflow: visible; transform-origin: 50% 90%; transform: translate(16%, -7.6%) rotate(-24deg); } /* the nudge centres the stamp's ink, not its outline: optical centring */
@@ -1053,17 +1064,28 @@ body.has-everything .colophon-secondary { display: none; }
 .stamp-seen { font-weight: 600; font-size: 0.82rem; line-height: 1.15; letter-spacing: 0.16em; text-transform: uppercase; }
 .stamp-date { font-size: 0.56rem; line-height: 1.2; letter-spacing: 0.2em; }
 .stamp-name {
-    position: relative; min-width: 7rem; max-height: 1.3rem; margin-top: 0.14rem; padding-top: 0.12rem; overflow: hidden;
+    position: relative; display: flex; align-items: center; justify-content: center; gap: 0.3rem;
+    min-width: 7rem; max-height: 1.25rem; margin-top: 0.1rem; padding-top: 0.06rem; overflow: hidden;
     border-top: 1px dashed color-mix(in srgb, var(--ink) 50%, transparent); text-align: center;
     transition: opacity 0.6s ease, max-height 0.5s ease 0.3s, margin 0.5s ease 0.3s, padding 0.5s ease 0.3s, border-color 0.4s ease; }
+.stamp-field { position: relative; display: inline-flex; align-items: center; }
+/* exactly as wide as the name (or the prompt), so typing starts where the prompt's cursor is */
 .stamp-name input {
-    all: unset; box-sizing: border-box; width: 100%; text-align: center; color: var(--ink); caret-color: var(--ink);
+    all: unset; box-sizing: content-box; width: calc(var(--n, 10) * (1ch + 0.06em)); text-align: left; color: var(--ink); caret-color: var(--ink);
     font: 600 0.68rem/1.2 var(--mono); letter-spacing: 0.06em; }
-.stamp-prompt { position: absolute; inset: 0.12rem 0 0; pointer-events: none; font: 0.68rem/1.3 var(--mono); letter-spacing: 0.08em; color: color-mix(in srgb, var(--ink) 60%, transparent); }
-.stamp-prompt::after { content: ""; display: inline-block; width: 1px; height: 0.8rem; margin-left: 2px; vertical-align: -2px; background: currentColor; animation: stamp-caret 1s steps(1) infinite; }
+.stamp-prompt { position: absolute; left: 0; top: 50%; translate: 0 -50%; white-space: nowrap; pointer-events: none; font: 0.68rem/1.2 var(--mono); letter-spacing: 0.06em; color: color-mix(in srgb, var(--ink) 60%, transparent); }
+.stamp-prompt::before { content: ""; position: absolute; left: -2px; top: 0.2em; width: 1.5px; height: 0.9em; background: var(--ink); animation: stamp-caret 1s steps(1) infinite; }
 @keyframes stamp-caret { 50% { opacity: 0; } }
-.stamp-name:focus-within .stamp-prompt, .stamp-name.has-value .stamp-prompt { display: none; }
-.stamp-signed { display: none; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; }
+.stamp-name.has-value .stamp-prompt { display: none; }
+/* once the field has focus, the real cursor blinks at the same spot, so the pretend one steps aside */
+.stamp-name:focus-within .stamp-prompt::before { display: none; }
+.stamp-signed { display: none; font: 600 0.68rem/1.2 var(--mono); letter-spacing: 0.06em; }
+/* Remove your own name: only offered in the same browser session */
+.stamp-unsign, .stamp-list-unsign { all: unset; cursor: pointer; padding: 0 0.15rem; font: 600 0.75rem/1 var(--mono); color: var(--ink); opacity: 0.6; }
+.stamp-list-unsign { color: #c42b3c; justify-self: end; }
+.stamp-unsign:hover, .stamp-list-unsign:hover { opacity: 1; }
+.stamp-unsign:focus-visible, .stamp-list-unsign:focus-visible { outline: 2px solid var(--led); outline-offset: 1px; border-radius: 3px; }
+.stamp-unsign[hidden] { display: none; }
 .stamp-mark.is-signed .stamp-name input, .stamp-mark.is-signed .stamp-prompt { display: none; }
 .stamp-mark.is-signed .stamp-signed { display: inline; }
 .stamp-mark.name-gone .stamp-name { opacity: 0; max-height: 0; margin-top: 0; padding-top: 0; border-color: transparent; pointer-events: none; }
@@ -1073,10 +1095,12 @@ body.has-everything .colophon-secondary { display: none; }
 /* Who was here: a short list under the button */
 .stamp-list {
     position: absolute; left: 0; top: calc(100% - 0.4rem); z-index: 10; min-width: 15rem; padding: 0.4rem 0.8rem 0.5rem;
-    border-radius: 12px; background: #fdfcf8; color: #17191e; font: 0.8rem/1.3 var(--mono);
+    border-radius: 12px; background: #fdfcf8; color: #17191e; font: 0.8rem/1.3 var(--mono); rotate: -1.5deg; transform-origin: 1.5rem 0;
     box-shadow: 0 0 0 1px rgba(23, 25, 30, 0.1), 0 16px 30px -16px rgba(0, 0, 0, 0.5); }
 .stamp-list[hidden] { display: none; }
-.stamp-list-row { display: grid; grid-template-columns: 4.6rem 1fr; gap: 0.5rem; align-items: baseline; padding: 0.4rem 0; border-bottom: 1px solid rgba(23, 25, 30, 0.08); }
+.stamp-list.is-opening { animation: list-wobble 0.6s cubic-bezier(0.3, 0.8, 0.3, 1); }
+@keyframes list-wobble { 0% { rotate: -7deg; translate: 0 -8px; opacity: 0; } 40% { rotate: 2deg; opacity: 1; } 65% { rotate: -3deg; } 85% { rotate: -0.8deg; } 100% { rotate: -1.5deg; translate: 0 0; } }
+.stamp-list-row { display: grid; grid-template-columns: 4.6rem 1fr auto; gap: 0.5rem; align-items: baseline; padding: 0.4rem 0; border-bottom: 1px solid rgba(23, 25, 30, 0.08); }
 .stamp-list-row b { color: #c42b3c; font-weight: 500; letter-spacing: 0.05em; }
 .stamp-list-row input { all: unset; width: 100%; border-bottom: 1.5px dashed #9a9ca3; color: #17191e; font: 0.8rem var(--mono); }
 .stamp-list-row input::placeholder { color: #9a9ca3; }
@@ -1099,7 +1123,7 @@ body.has-everything .colophon-secondary { display: none; }
    The card's own padding, so the text area (sized by site.js) stops above it. */
 .now-card:has(.stamp) { padding-bottom: 4.6rem; }
 @media (prefers-reduced-motion: reduce) {
-    .stamp.is-going .stamp-btn svg, .stamp .stamp-btn:hover svg, .stamp-mark.is-landing, .stamp-count.is-bumping, .stamp-prompt::after, .stamp-name.is-invalid { animation: none; }
+    .stamp.is-going .stamp-btn svg, .stamp .stamp-btn:hover svg, .stamp-list.is-opening, .post-share-menu.is-rising, .post-share-button.is-launching .share-plane, .stamp-mark.is-landing, .stamp-count.is-bumping, .stamp-prompt::after, .stamp-name.is-invalid { animation: none; }
     .stamp-name { transition: none; } }
 .post-share { position: relative; }
 .post-share-menu {
@@ -1107,10 +1131,13 @@ body.has-everything .colophon-secondary { display: none; }
     display: flex; flex-direction: column; border-radius: 14px; background: #fdfcf8; color: #17191e;
     box-shadow: 0 0 0 1px rgba(23, 25, 30, 0.1), 0 16px 32px -18px rgba(0, 0, 0, 0.55); rotate: -1deg; }
 .post-share-menu[hidden] { display: none; }
+.post-share-menu.is-rising { animation: share-rise 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.15); }
+@keyframes share-rise { from { translate: 0 22px; scale: 0.94; opacity: 0; } 60% { opacity: 1; } to { translate: 0 0; scale: 1; } }
 .post-share-menu a, .post-share-menu button {
-    display: block; width: 100%; padding: 0.55rem 0.75rem; border: 0; border-radius: 10px; background: none;
+    display: flex; align-items: center; gap: 0.65rem; width: 100%; padding: 0.55rem 0.75rem; border: 0; border-radius: 10px; background: none;
     color: inherit; font: 0.88rem/1.2 var(--sans, inherit); text-align: left; text-decoration: none; cursor: pointer; }
 .post-share-menu a:hover, .post-share-menu button:hover { background: rgba(23, 25, 30, 0.07); }
+.post-share-menu svg { flex: none; width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: 0.8; }
 
 /* People row: round faces (photo or initials) that show a small card on hover, focus or tap.
    <div class="people"><span class="person" tabindex="0"><img src="..." alt="Name"> or <span class="person-initials">AB</span>

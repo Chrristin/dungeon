@@ -3,6 +3,7 @@
 //   GET  /stamps/<slug>              -> { count, names: [{date, name}], more }
 //   POST /stamps/<slug>              -> { count, id, token }        (stamp it)
 //   PUT  /stamps/<slug>/<id>         { token, name } -> { ok, names, more }   (sign your own stamp)
+//   DELETE /stamps/<slug>/<id>       { token }       -> { ok, names, more }   (remove your own name, within a day)
 //
 // Bindings: DB (D1 database with schema.sql), SITE (variable, e.g. https://christingeorge.com).
 // Only slugs that exist on the site can be stamped: posts from the sitemap, Now months from the
@@ -20,7 +21,7 @@ function cors(env, request) {
   const site = (env.SITE || '').replace(/\/+$/, '');
   const origin = request.headers.get('Origin') || '';
   const ok = [site, site.replace(/^https:/, 'http:')].includes(origin);
-  return { 'Access-Control-Allow-Origin': ok ? origin : site, 'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+  return { 'Access-Control-Allow-Origin': ok ? origin : site, 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
            'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '86400', Vary: 'Origin' };
 }
 const json = (data, status, headers) =>
@@ -60,8 +61,8 @@ function cleanName(raw) {
 }
 async function summary(env, slug) {
   const count = (await env.DB.prepare('SELECT COUNT(*) AS n FROM stamps WHERE post = ? AND hidden = 0').bind(slug).first()).n;
-  const rows = (await env.DB.prepare("SELECT created_at, name FROM stamps WHERE post = ? AND hidden = 0 AND name IS NOT NULL AND name <> '' ORDER BY id DESC LIMIT ?").bind(slug, SHOW_NAMES).all()).results;
-  const names = rows.map((r) => ({ date: r.created_at.slice(0, 10), name: r.name }));
+  const rows = (await env.DB.prepare("SELECT id, created_at, name FROM stamps WHERE post = ? AND hidden = 0 AND name IS NOT NULL AND name <> '' ORDER BY id DESC LIMIT ?").bind(slug, SHOW_NAMES).all()).results;
+  const names = rows.map((r) => ({ id: r.id, date: r.created_at.slice(0, 10), name: r.name }));
   return { count, names, more: Math.max(0, count - names.length) };
 }
 
@@ -76,6 +77,7 @@ export default {
     } catch (e) {
       const msg = String(e && e.message || e);
       if (/no such table/i.test(msg)) return json({ error: 'setup: the stamps table is missing. Run schema.sql in the D1 console.' }, 500, headers);
+      if (/no such column: named_at/i.test(msg)) return json({ error: 'setup: the database needs updating for 1.2.3. Run migrate-1.2.3.sql in the D1 console.' }, 500, headers);
       return json({ error: 'unexpected: ' + msg }, 500, headers);
     }
   },
@@ -110,7 +112,17 @@ async function handle(request, env, headers) {
       const row = await env.DB.prepare('SELECT token_hash, name FROM stamps WHERE id = ? AND post = ? AND hidden = 0').bind(id, slug).first();
       if (!row || row.token_hash !== (await sha256(String(body.token || '')))) return json({ error: 'not your stamp' }, 403, headers);
       if (row.name) return json({ error: 'already signed' }, 409, headers);
-      await env.DB.prepare('UPDATE stamps SET name = ? WHERE id = ?').bind(name, id).run();
+      await env.DB.prepare("UPDATE stamps SET name = ?, named_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?").bind(name, id).run();
+      return json({ ok: true, ...(await summary(env, slug)) }, 200, headers);
+    }
+    if (request.method === 'DELETE' && id !== null) {
+      let body = {}; try { body = await request.json(); } catch {}
+      const row = await env.DB.prepare('SELECT token_hash, name, named_at FROM stamps WHERE id = ? AND post = ? AND hidden = 0').bind(id, slug).first();
+      if (!row || row.token_hash !== (await sha256(String(body.token || '')))) return json({ error: 'not your stamp' }, 403, headers);
+      if (!row.name) return json({ ok: true, ...(await summary(env, slug)) }, 200, headers);
+      // A name can be taken back for a day; after that it stays (you can still remove it yourself)
+      if (!row.named_at || Date.now() - Date.parse(row.named_at) > 24 * 60 * 60 * 1000) return json({ error: 'too late to remove' }, 403, headers);
+      await env.DB.prepare('UPDATE stamps SET name = NULL, named_at = NULL WHERE id = ?').bind(id).run();
       return json({ ok: true, ...(await summary(env, slug)) }, 200, headers);
     }
     return json({ error: 'method not allowed' }, 405, headers);

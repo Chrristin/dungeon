@@ -6,7 +6,7 @@ Readers can stamp a post or a Now month ("I was here") and sign the stamp with a
 
 - One row per stamp: the post or month, the date, and an optional name.
 - Only posts in your sitemap and months on your Now page can be stamped.
-- A stamp is final. The reader's browser gets a private key for their stamp, and only that key can add a name to it, once. Keys are stored hashed.
+- A stamp is final. The reader's browser gets a private key for their stamp, and only that key can add a name to it. The reader can remove their name again for up to a day after signing. Keys are stored hashed.
 - Names: letters in any language, spaces, full stops, hyphens and apostrophes, up to 24 characters; no links or markup; a short blocked-word list.
 - Each visitor can stamp a few times a minute. Visitor addresses are used only in memory for that limit, never stored.
 
@@ -24,6 +24,10 @@ The free plan allows 100,000 D1 row writes a day.
 8. **Ghost → Settings → Design & branding → Customise → Stamps endpoint:** paste the Worker's address and save.
 
 Use the Worker's own `workers.dev` address rather than a route on your domain: it keeps working if your site is down, and isn't affected by local DNS tricks such as a Pi-hole pointing your domain at a home server.
+
+## Upgrading from before 1.2.3
+
+In the D1 **Console**, run [`migrate-1.2.3.sql`](migrate-1.2.3.sql) once (it adds one column), then deploy the new `worker.js`. Until you do, signing a name shows a message saying the database needs updating.
 
 ## Removing a stamp or a name
 

@@ -1,13 +1,17 @@
 # Changelog
 
+## 1.2.3
+
+- The internal tag `#hide-image` keeps a post's feature image off the post itself, while it still shows on the card and in social previews.
+- Stamps: the name line sits closer under the date, and its field is exactly as wide as the name, so the blinking cursor sits right where typing starts.
+- Stamps: a reader can remove their own name during the same browser visit, with a small x beside it in the stamp and in the list. The Worker refuses removals more than a day after signing. Existing stamps databases need one update: run `extras/stamps-worker/migrate-1.2.3.sql` in the D1 console.
+- The stamp and Share buttons are slightly tilted, and straighten on hover. The list of names opens tilted, with a wobble.
+- Share: hovering turns the arrow into a paper plane, and clicking launches it as the menu rises. The menu has icons, "X" is "Twitter" again, and "Copy link" is "Copy Link".
+
 ## 1.2.2
 
 - The stamp icon is centred by its ink, not its outline, so it looks centred in its button.
 - Hovering over the stamp makes it rock back and forth, like picking up a rubber stamp.
-
-## 1.2.1
-
-- The stamp icon sits in the centre of its button when there is no count yet.
 - Just after stamping, typing goes straight into the stamp's name line, with no click needed (on computers with a keyboard). Shortcuts are left alone.
 
 ## 1.2.0

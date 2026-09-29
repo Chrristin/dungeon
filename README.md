@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 1.2.2. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 1.2.3. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -117,15 +117,19 @@ Add one of these internal tags to a Scatter note or a Now month to fix its colou
 - **Pastels:** `#pistachio` `#mint` `#sky` `#periwinkle` `#lilac` `#blush` `#peach` `#butter` `#sage` `#seafoam`
 - **Bold:** `#red` `#tangerine` `#sunflower` `#cobalt` `#emerald` `#ink` (text and patterns switch to white automatically)
 
+## Hiding a post's feature image
+
+Add the internal tag **`#hide-image`** to a post to keep its feature image off the post itself. The image still shows on the post's card and in social previews. To hide a feature image everywhere, remove it and set the sharing images in the post's **Social** settings instead. Pages don't need the tag: Ghost's page settings have their own "Show title and feature image" switch, which the theme follows.
+
 ## Tables and a Colophon page
 
 Tables in posts and pages are styled as clean rows, with the first column as the label and the rest quieter. Two-column Markdown tables with an empty header row show no header at all. On a page with the URL **`colophon`**, level-4 headings (`####`) become small uppercase section labels, handy for a "how this site is made" page.
 
 ## Stamps and sharing
 
-Every post ends with a round **Share** button: the phone's own share sheet on phones, and a small menu on desktop with Copy link, X, LinkedIn, WhatsApp and Email. It needs no setup and loads nothing from those services.
+Every post ends with a round **Share** button. Hovering turns its arrow into a paper plane, and clicking launches it: on phones it opens the phone's own share sheet, and on desktop it pulls up a small menu with Copy Link, Twitter, LinkedIn, WhatsApp and Email. It needs no setup and loads nothing from those services.
 
-**Stamps** are the "I was here" of this theme, on posts and on Now cards. One stamp button shows how many readers have stamped. Stamping brings the stamp down with a small animation and leaves a red SEEN impression with the date, and a name line inside the stamp invites a signature for a few seconds. Tapping the stamp again lists the latest names.
+**Stamps** are the "I was here" of this theme, on posts and on Now cards. One stamp button shows how many readers have stamped. Stamping brings the stamp down with a small animation and leaves a red SEEN impression with the date, and a name line inside the stamp invites a signature for a few seconds: just start typing. Tapping the stamp again lists the latest names. A reader can take their own name back during the same browser visit, and for up to a day after signing.
 
 Stamps need a small counter you run yourself on Cloudflare's free plan, because a Ghost theme can't store anything. Follow [`extras/stamps-worker`](extras/stamps-worker/README.md), then paste the Worker's address into the **Stamps endpoint** setting. Until then the stamps stay hidden.
 
