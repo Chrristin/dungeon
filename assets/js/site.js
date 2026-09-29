@@ -1145,6 +1145,7 @@
   // Stamps: "I was here", on posts and Now cards. Needs the stamps Worker (theme setting).
   // A stamp is final. This browser keeps the stamp's private key, which is the only way to sign it.
   var calmStamps = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var awaitingName = null; // the stamp whose name line is showing, if any
   var stampApi = function (el) { return el.getAttribute('data-endpoint').replace(/\/+$/, '') + '/stamps/' + encodeURIComponent(el.getAttribute('data-slug')); };
   var myStamp = function (el) { try { return JSON.parse(localStorage.getItem('dungeon-stamp:' + el.getAttribute('data-slug')) || 'null'); } catch (e) { return null; } };
   var saveStamp = function (el, s) { try { localStorage.setItem('dungeon-stamp:' + el.getAttribute('data-slug'), JSON.stringify(s)); } catch (e) {} };
@@ -1165,10 +1166,11 @@
     if (!fresh || calmStamps) return;
     mark.classList.remove('is-landing'); void mark.offsetWidth; mark.classList.add('is-landing');
     if (mine.name) return;
+    awaitingName = el; // typing now goes straight into this stamp's name line
     clearTimeout(el._nameTimer);
     el._nameTimer = setTimeout(function () { // the name line fades unless they've started signing
       var input = nameBox.querySelector('input');
-      if (document.activeElement !== input && !input.value) mark.classList.add('name-gone');
+      if (document.activeElement !== input && !input.value) { mark.classList.add('name-gone'); if (awaitingName === el) awaitingName = null; }
     }, 5000);
   }
   function renderList(el) {
@@ -1233,7 +1235,7 @@
         if (res.ok || res.status === 409) {
           mine.name = name; saveStamp(el, mine);
           if (res.ok) el._stamps = { count: res.d.count, names: res.d.names, more: res.d.more };
-          clearTimeout(el._nameTimer); showMark(el, mine, false); renderList(el); input.blur();
+          clearTimeout(el._nameTimer); if (awaitingName === el) awaitingName = null; showMark(el, mine, false); renderList(el); input.blur();
         } else {
           var box = input.closest('.stamp-name, .stamp-list-row'); input.title = el.getAttribute('data-bad-name') || 'Name not allowed';
           box.classList.remove('is-invalid'); void box.offsetWidth; box.classList.add('is-invalid');
@@ -1257,6 +1259,22 @@
     if (ev.target.matches('.stamp-name input')) ev.target.parentNode.classList.toggle('has-value', !!ev.target.value);
   });
   document.addEventListener('keydown', function (ev) {
+    // Just stamped, name line showing: the first letters typed go straight into it, no click needed.
+    // Only plain characters, only when nothing else is being typed into, and never shortcuts.
+    if (awaitingName && ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey && !ev.altKey && ev.key !== ' ') {
+      var active = document.activeElement;
+      var typingElsewhere = active && (active.isContentEditable || /^(input|textarea|select)$/i.test(active.tagName));
+      var mk = awaitingName.querySelector('.stamp-mark');
+      if (!typingElsewhere && !mk.hidden && !mk.classList.contains('name-gone') && !mk.classList.contains('is-signed')) {
+        var nameInput = mk.querySelector('.stamp-name input');
+        ev.preventDefault();
+        nameInput.focus({ preventScroll: true });
+        if (nameInput.value.length < nameInput.maxLength) nameInput.value += ev.key;
+        nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+        clearTimeout(awaitingName._nameTimer);
+        return;
+      }
+    }
     if (ev.key === 'Escape') { closeStampLists(); return; }
     if (ev.key === 'Enter' && ev.target.matches('.stamp-name input, .stamp-list-input')) { ev.preventDefault(); signStamp(ev.target.closest('.stamp'), ev.target); }
   });
@@ -1264,7 +1282,7 @@
     if (!ev.target.matches || !ev.target.matches('.stamp-name input')) return;
     var el = ev.target.closest('.stamp'), input = ev.target;
     if (input.value.trim()) { signStamp(el, input); return; }
-    clearTimeout(el._nameTimer); el._nameTimer = setTimeout(function () { if (!input.value) el.querySelector('.stamp-mark').classList.add('name-gone'); }, 2500);
+    clearTimeout(el._nameTimer); el._nameTimer = setTimeout(function () { if (!input.value) { el.querySelector('.stamp-mark').classList.add('name-gone'); if (awaitingName === el) awaitingName = null; } }, 2500);
   });
   initStamps(document);
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.2
+
+- The stamp icon is centred by its ink, not its outline, so it looks centred in its button.
+- Hovering over the stamp makes it rock back and forth, like picking up a rubber stamp.
+
+## 1.2.1
+
+- The stamp icon sits in the centre of its button when there is no count yet.
+- Just after stamping, typing goes straight into the stamp's name line, with no click needed (on computers with a keyboard). Shortcuts are left alone.
+
 ## 1.2.0
 
 - Stamps replace the heart: "I was here", on posts and Now cards. One button with the count; stamping leaves a red SEEN impression with the date and a name line to sign, and tapping again lists the latest names. Counted by a small Cloudflare Worker with a D1 database that you run yourself (`extras/stamps-worker`), set in the new **Stamps endpoint** setting.
