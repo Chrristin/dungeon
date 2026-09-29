@@ -399,11 +399,13 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
 .reader::backdrop { background: rgba(12, 13, 16, 0.72); backdrop-filter: blur(6px); }
 .reader-body { padding: 4.5rem var(--gutter) 3rem; }
 .reader-body .post-panel { margin: 0 auto; }
-.reader-body .stickies { margin-left: auto; margin-right: auto; }
-/* In the overlay there's no page behind the stickies, only the dimmed page underneath, so they get a
-   plain sheet in the page's own colour: they sit on "the page" there too. No border, no pattern. */
-.reader-body .stickies:not([hidden]) { background: var(--paper); border-radius: 18px; padding-left: 1.4rem; padding-right: 1.4rem; padding-bottom: 1.6rem; }
-@media (max-width: 899px) { .reader-body .stickies:not([hidden]) { padding-top: 1.2rem; } }
+/* In the overlay the stickies sit inside the story's card, so card and stickies are one piece. Their
+   moving area stays within the card's margins, so nothing pokes out past its edge. */
+.post-panel .stickies { max-width: none; margin: 1.4rem 0 0; }
+.post-panel .stickies-stage { margin: -1.2rem; padding: 1.2rem; }
+.post-panel .stickies-hint { color: var(--on-card-meta, var(--graphite)); }
+.post-panel .stickies-toggle { border-color: rgba(23, 25, 30, 0.2); color: #17191e; }
+@media (min-width: 900px) { .post-panel .stickies-compose { right: -0.6rem; } }
 .reader-close {
     position: sticky;
     top: 1rem;
@@ -1268,6 +1270,7 @@ body.has-everything .colophon-secondary { display: none; }
 .sticky-by { flex: 1; min-width: 0; font-size: 1.05rem; color: #5a5d64; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sticky-remove, .stickies-list .sticky-remove { all: unset; flex: none; padding: 0.05rem 0.25rem; font: 600 0.9rem/1 var(--mono); color: #5a5d64; cursor: pointer; opacity: 0.7; }
 .sticky-remove:hover, .stickies-list .sticky-remove:hover { opacity: 1; color: #c42b3c; }
+.sticky-doodle { position: absolute; pointer-events: none; fill: none; stroke: rgba(35, 37, 43, 0.42); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .sticky.is-waiting .sticky-paper { outline: 2px dashed rgba(35, 37, 43, 0.35); outline-offset: -6px; }
 .sticky.is-waiting::before { display: none; } /* no tape until it's pinned */
 .sticky.is-landing { animation: sticky-land 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2); }

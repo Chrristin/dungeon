@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.4
+
+- Doodles: a sticky with empty paper gets a small line drawing there, matched to the post's tags where possible (music, homelab, design, F1, books, health, product) and a random one otherwise. Each sticky keeps the same doodle, and doodles never touch the writing or the name.
+- In the reader overlay, the stickies now sit inside the story's card, so the story and its stickies are one piece.
+
 ## 1.3.3
 
 - Stickies in the reader overlay: when a post opens over the homepage, its stickies come with it, working as on the post page, on a plain sheet in the page's colour. A thrown sticky flies inside the overlay.

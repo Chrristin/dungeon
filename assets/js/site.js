@@ -1401,6 +1401,60 @@
     n.setAttribute('aria-label', s.body + (s.name ? ', ' + s.name : '') + '. ' + el.getAttribute('data-send-back'));
     return n;
   }
+  // Doodles: a short sticky leaves empty paper, so it gets a small line drawing there. If the post's tags
+  // match a topic, the doodle fits it; otherwise it's a random one. Each sticky keeps the same doodle.
+  var DOODLES = {
+    music: ['M17 34a4 3 0 1 1-8 0a4 3 0 1 1 8 0zM35 30a4 3 0 1 1-8 0a4 3 0 1 1 8 0zM17 34V12l18-4v22M17 18l18-4',
+            'M10 30v-4a14 14 0 0 1 28 0v4M10 28h5v11h-5zM33 28h5v11h-5z',
+            'M30 8l10 10M34 12l-9 9M22 22c-4-3-10-2-12 2c-2 3 0 5-2 8c-2 4 2 9 7 8c3-1 3-4 7-5c4-1 6-6 3-10zM16 32a2 2 0 1 0 4 0a2 2 0 1 0-4 0'],
+    lab: ['M10 10h28v10H10zM10 24h28v10H10zM14 15h2M14 29h2M22 15h12M22 29h12M18 38v4M30 38v4M14 42h20',
+          'M18 8v8M30 8v8M14 16h20v6a10 10 0 0 1-20 0zM24 32v10',
+          'M8 12h32v24H8zM14 20l5 4-5 4M22 29h8'],
+    ghost: ['M14 40V22a10 10 0 0 1 20 0v18l-3.3-3-3.3 3-3.4-3-3.3 3-3.4-3zM20 24h.01M28 24h.01',
+            'M12 36l4 4 22-22-4-4zM12 36l-2 6 6-2M30 14l4 4'],
+    f1: ['M12 42V8M12 9h24v16H12M12 17h24M20 9v16M28 9v16',
+         'M24 8a16 16 0 1 1 0 32a16 16 0 1 1 0-32M24 16a8 8 0 1 1 0 16a8 8 0 1 1 0-16M24 8v8M24 32v8M8 24h8M32 24h8'],
+    books: ['M24 14c-4-3-10-4-16-3v24c6-1 12 0 16 3c4-3 10-4 16-3V11c-6-1-12 0-16 3zM24 14v24',
+            'M38 8C24 10 14 22 12 38M38 8c-2 10-10 18-20 22M16 30l6 1'],
+    health: ['M12 18h20v12a8 8 0 0 1-8 8h-4a8 8 0 0 1-8-8zM32 21h3a4 4 0 0 1 0 8h-3M18 8c-2 3 2 5 0 8M24 8c-2 3 2 5 0 8',
+             'M14 30c-3 0-4-4-4-8s2-8 4-8 4 4 4 8-1 8-4 8zM32 22c-3 0-4-4-4-8s2-8 4-8 4 4 4 8-1 8-4 8zM14 35h.01M32 27h.01',
+             'M24 16c-6-4-14 0-13 9 1 10 7 15 13 12 6 3 12-2 13-12 1-9-7-13-13-9zM24 16c0-4 2-7 5-8'],
+    product: ['M18 30c-4-3-6-7-5-12a11 11 0 0 1 22 0c1 5-1 9-5 12v4H18zM19 38h10M21 42h6',
+              'M24 17a7 7 0 1 1 0 14a7 7 0 1 1 0-14M24 6v5M24 37v5M6 24h5M37 24h5M11 11l4 4M33 33l4 4M37 11l-4 4M15 33l-4 4',
+              'M8 8v32h32M14 32l8-8 6 5 10-13M33 16h5v5'],
+    any: ['M24 8l4.7 10 11 1.3-8.2 7.5 2.2 10.9L24 32.3 14.3 37.7l2.2-10.9L8.3 19.3l11-1.3z',
+          'M24 38S10 30 10 20a7 7 0 0 1 14-3 7 7 0 0 1 14 3c0 10-14 18-14 18z',
+          'M24 8a16 16 0 1 1 0 32a16 16 0 1 1 0-32M18 20h.01M30 20h.01M17 28c4 5 10 5 14 0',
+          'M24 24c0-2 3-2 3 0 0 4-6 4-6 0 0-6 9-6 9 0 0 8-12 8-12 0 0-10 15-10 15 0',
+          'M24 17a7 7 0 1 1 0 14a7 7 0 1 1 0-14M24 6v5M24 37v5M6 24h5M37 24h5M11 11l3.5 3.5M33.5 33.5L37 37M37 11l-3.5 3.5M14.5 33.5L11 37',
+          'M24 21a3 3 0 1 0 0 6a3 3 0 1 0 0-6M24 21c-3-6 0-12 0-12s3 6 0 12M27 24c6-3 12 0 12 0s-6 3-12 0M24 27c3 6 0 12 0 12s-3-6 0-12M21 24c-6 3-12 0-12 0s6-3 12 0',
+          'M8 24l32-14-10 30-6-12zM24 28l16-18']
+  };
+  var TOPICS = [['music', /music|linkin|concert|song|album/], ['lab', /homelab|self-host|docker|nas|raspberry|pi-hole|server|asustor|network/],
+    ['ghost', /ghost|design|theme/], ['f1', /(^|-)f1($|-)|formula|racing/], ['books', /book|reading|fantasy|tolkien|comic/],
+    ['health', /health|walking|nutri|fitness|food|coffee/], ['product', /product|agile|platform|(^|-)ai($|-)|b2b|saas|habit/]];
+  function doodleSet(el) {
+    var tags = (el.getAttribute('data-topics') || '').split(/\s+/).filter(Boolean), sets = [];
+    TOPICS.forEach(function (t) { if (tags.some(function (tag) { return t[1].test(tag); })) sets.push(t[0]); });
+    return sets.length ? sets.reduce(function (all, s) { return all.concat(DOODLES[s]); }, []) : DOODLES.any;
+  }
+  function addDoodle(el, n, s) {
+    var p = n.querySelector('.sticky-text'), paper = n.querySelector('.sticky-paper');
+    if (!p || n.style.height) return; // a sticky that had to grow has no room to spare
+    var box = p.clientHeight; p.style.flex = 'none'; var used = p.offsetHeight; p.style.flex = ''; // the text's own height, untilted
+    var free = box - used; if (free < box * 0.4) return;
+    var size = Math.min((free - 12) / 1.25, p.clientWidth * 0.5, 64); if (size < 28) return; // room for it tilted, plus a gap
+    var rand = seeded(Math.abs(Number(s.id)) * 31 + 5), set = doodleSet(el), path = set[Math.floor(rand() * set.length)];
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 48 48'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('class', 'sticky-doodle');
+    var d = document.createElementNS('http://www.w3.org/2000/svg', 'path'); d.setAttribute('d', path); svg.appendChild(d);
+    var left = paper.clientWidth * 0.1 + rand() * Math.max(0, paper.clientWidth * 0.8 - size);
+    var tilted = size * 1.25, spare = Math.max(0, free - 12 - tilted); // a tilted doodle needs a bigger square
+    var top = p.offsetTop + used + 8 + (tilted - size) / 2 + spare * (0.25 + rand() * 0.5);
+    svg.style.width = size + 'px'; svg.style.height = size + 'px'; svg.style.left = left + 'px'; svg.style.top = top + 'px';
+    svg.style.transform = 'rotate(' + ((rand() - 0.5) * 24).toFixed(1) + 'deg)';
+    paper.appendChild(svg);
+  }
   // Longer stickies are written smaller, like on a real sticky note, down to a readable minimum; a sticky
   // that still doesn't fit grows taller rather than letting its text run over the name.
   function fitSticky(n) {
@@ -1476,7 +1530,7 @@
       n.style.setProperty('--rot', rot); n.style.transform = rot;
       n.style.left = best.x + 'px'; n.style.top = best.y + 'px'; n.style.zIndex = i + 1;
       if (item.s.id === el._landing) n.classList.add('is-landing');
-      board.appendChild(n); fitSticky(n);
+      board.appendChild(n); fitSticky(n); addDoodle(el, n, item.s);
     });
     el._landing = null;
   }
@@ -1681,8 +1735,8 @@
         var panel = doc.querySelector('.post-panel');
         if (!panel) { location.href = url; return; }
         body.replaceChildren(document.importNode(panel, true));
-        var stickiesHere = doc.querySelector('.stickies'); // the stickies come across too
-        if (stickiesHere) body.appendChild(document.importNode(stickiesHere, true));
+        var stickiesHere = doc.querySelector('.stickies'); // the stickies come across too, inside the card: one piece
+        if (stickiesHere) body.querySelector('.post-panel').appendChild(document.importNode(stickiesHere, true));
         decorate(body);
         initPostActions(body);
         initStamps(body);
