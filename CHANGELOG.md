@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.4
+
+- Share: the paper plane and the menu icons are redrawn with smooth curves and rounded ends, instead of sharp points.
+- Share: on hover the plane idles, shuddering like an engine revving. On click, the button's circle shatters and the plane takes off with flight lines behind it, climbing past the rising menu in its own lane and fading just above it, while the button re-forms and a new arrow draws itself in.
+- Share: the menu opens beside the plane's flight path, and each option's icon takes on its colour and wobbles on hover.
+
 ## 1.2.3
 
 - The internal tag `#hide-image` keeps a post's feature image off the post itself, while it still shows on the card and in social previews.

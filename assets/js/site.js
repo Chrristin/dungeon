@@ -1112,6 +1112,29 @@
       box.querySelectorAll('a[data-share]').forEach(function (a) { a.href = links[a.getAttribute('data-share')] || '#'; });
     });
   }
+  // The share button's take-off: the circle shatters, the plane climbs with flight lines behind it,
+  // and the button re-forms with a freshly drawn arrow.
+  function launchPlane(btn, climb) {
+    var box = btn.parentNode, cx = btn.offsetLeft + btn.offsetWidth / 2, cy = btn.offsetTop + btn.offsetHeight / 2;
+    var made = [];
+    for (var i = 0; i < 12; i++) {
+      var s = document.createElement('span'); s.className = 'share-shard';
+      s.style.setProperty('--cx', cx + 'px'); s.style.setProperty('--cy', cy + 'px');
+      s.style.setProperty('--a', (i * 30 + Math.random() * 14 - 7) + 'deg');
+      s.style.setProperty('--d', (8 + Math.random() * 12) + 'px');
+      s.style.setProperty('--spin', (Math.random() * 240 - 120) + 'deg');
+      box.appendChild(s); made.push(s);
+    }
+    var fly = document.createElement('span'); fly.className = 'share-flight';
+    fly.style.setProperty('--cx', cx + 'px'); fly.style.setProperty('--cy', cy + 'px'); fly.style.setProperty('--fly', (-climb) + 'px');
+    var plane = btn.querySelector('.share-plane');
+    fly.innerHTML = '<svg class="share-trail" viewBox="0 0 22 28" aria-hidden="true"><path d="M7 2v12M11 4v20M15 2v12"/></svg>' + (plane ? plane.outerHTML.replace('class="share-plane"', '') : '');
+    box.appendChild(fly); made.push(fly);
+    btn.classList.remove('is-forming'); btn.classList.add('is-launching', 'just-launched');
+    btn.addEventListener('mouseleave', function off() { btn.classList.remove('just-launched'); btn.removeEventListener('mouseleave', off); });
+    setTimeout(function () { btn.classList.remove('is-launching'); btn.classList.add('is-forming'); }, 380);
+    setTimeout(function () { btn.classList.remove('is-forming'); made.forEach(function (m) { m.remove(); }); }, 1150);
+  }
   function closeShareMenus(except) {
     document.querySelectorAll('.post-share-menu:not([hidden])').forEach(function (m) {
       if (m === except) return; m.hidden = true;
@@ -1125,17 +1148,17 @@
       var url = box.getAttribute('data-url') || location.href, title = box.getAttribute('data-title') || document.title;
       var menu = shareBtn.parentNode.querySelector('.post-share-menu');
       var opening = menu.hidden;
-      if (opening && !calmStamps) { // the paper plane takes off
-        shareBtn.classList.remove('is-launching'); void shareBtn.offsetWidth; shareBtn.classList.add('is-launching');
-        setTimeout(function () { shareBtn.classList.remove('is-launching'); }, 650);
-      }
       if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
-        setTimeout(function () { navigator.share({ title: title, url: url }).catch(function () {}); }, calmStamps ? 0 : 280);
+        if (!calmStamps) launchPlane(shareBtn, 130);
+        setTimeout(function () { navigator.share({ title: title, url: url }).catch(function () {}); }, calmStamps ? 0 : 600);
         return;
       }
       closeShareMenus(menu);
       menu.hidden = !menu.hidden; shareBtn.setAttribute('aria-expanded', String(!menu.hidden));
-      if (!menu.hidden && !calmStamps) { menu.classList.remove('is-rising'); void menu.offsetWidth; menu.classList.add('is-rising'); } // pulled up behind the plane
+      if (opening && !calmStamps) {
+        launchPlane(shareBtn, menu.offsetHeight + 110); // climbs past the menu, fading just above it
+        menu.classList.remove('is-rising'); void menu.offsetWidth; menu.classList.add('is-rising'); // pulled up behind the plane
+      }
       return;
     }
     var copy = ev.target.closest('[data-share="copy"]');

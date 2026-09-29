@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 1.2.3. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 1.2.4. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -127,7 +127,7 @@ Tables in posts and pages are styled as clean rows, with the first column as the
 
 ## Stamps and sharing
 
-Every post ends with a round **Share** button. Hovering turns its arrow into a paper plane, and clicking launches it: on phones it opens the phone's own share sheet, and on desktop it pulls up a small menu with Copy Link, Twitter, LinkedIn, WhatsApp and Email. It needs no setup and loads nothing from those services.
+Every post ends with a round **Share** button. Hovering turns its arrow into a paper plane that idles, ready for take-off; clicking shatters the button's circle and launches the plane: on phones it opens the phone's own share sheet, and on desktop the plane climbs past a small menu with Copy Link, Twitter, LinkedIn, WhatsApp and Email. It needs no setup and loads nothing from those services.
 
 **Stamps** are the "I was here" of this theme, on posts and on Now cards. One stamp button shows how many readers have stamped. Stamping brings the stamp down with a small animation and leaves a red SEEN impression with the date, and a name line inside the stamp invites a signature for a few seconds: just start typing. Tapping the stamp again lists the latest names. A reader can take their own name back during the same browser visit, and for up to a day after signing.
 
