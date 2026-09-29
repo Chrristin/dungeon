@@ -40,6 +40,16 @@ Short notes readers leave under posts, pinned once you approve them. They live i
 
 Approve and Delete buttons use signed links that expire after 7 days. To remove a sticky later by hand: `UPDATE stickies SET status = 'deleted' WHERE id = 123;` in the D1 Console.
 
+## Upgrading from before 1.3.8
+
+In the D1 **Console**, run [`migrate-1.3.8.sql`](migrate-1.3.8.sql) once (it marks members' and the author's stickies), then deploy the new `worker.js`. For the Author stamp, add the variable `AUTHOR_EMAIL` with the email you sign in to your site with. To check member sign-in works on your site, sign in as a member and run this in the browser console on your site (with your Worker's address):
+
+```
+fetch('/members/api/session').then(r=>r.text()).then(t=>fetch('https://<your-worker>/whoami',{headers:{Authorization:'GhostMember '+t}})).then(r=>r.text())
+```
+
+It should show `"member":true` (and `"author":true` when signed in with `AUTHOR_EMAIL`).
+
 ## Upgrading from before 1.3.2
 
 In the D1 **Console**, run [`migrate-1.3.2.sql`](migrate-1.3.2.sql) once (it lets stickies keep the colour they were written on), then deploy the new `worker.js`. Until you do, the stickies area stays hidden and the Worker says the table needs updating.

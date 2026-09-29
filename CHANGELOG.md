@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.8
+
+- Member stickies: signed-in Ghost members pin straight away, with no spam check or approval, under their Ghost account name, marked as a member's. They can take their stickies back any time, from any device. You still get a notification, with a Delete button.
+- The author's stickies carry a small Author stamp and send no notification. Set the Worker's `AUTHOR_EMAIL` to the email you sign in with.
+- Visitors see "Sign in to skip the wait" on the blank sticky, when the site has members switched on.
+- Stickies Worker: run `extras/stamps-worker/migrate-1.3.8.sql` once, then deploy the latest `worker.js`. Member sign-in is checked with Ghost's own signed pass; anything unexpected falls back to the normal route.
+
 ## 1.3.7
 
 - Tap a sticky to read it: it lifts, half again as large, to the middle of the stickies. Tap it again, tap elsewhere or press Escape to put it back at the bottom of the pile; tapping another sticky swaps them.

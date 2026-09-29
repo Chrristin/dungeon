@@ -1422,8 +1422,9 @@
     if (waiting) { var w = document.createElement('span'); w.className = 'sticky-waiting'; w.textContent = el.getAttribute('data-waiting'); paper.appendChild(w); }
     var p = document.createElement('p'); p.className = 'sticky-text'; p.textContent = s.body; paper.appendChild(p);
     var foot = document.createElement('div'); foot.className = 'sticky-foot';
-    var by = document.createElement('span'); by.className = 'sticky-by'; by.textContent = s.name || ''; foot.appendChild(by);
-    if (pinnedNow(s.id)) { var x = document.createElement('button'); x.type = 'button'; x.className = 'sticky-remove'; x.innerHTML = '&times;'; x.setAttribute('aria-label', el.getAttribute('data-remove')); foot.appendChild(x); }
+    var by = document.createElement('span'); by.className = 'sticky-by'; by.textContent = s.name || (s.role === 'member' ? el.getAttribute('data-a-member') : ''); foot.appendChild(by);
+    if (s.role) { var role = document.createElement('span'); role.className = 'sticky-role sticky-role--' + s.role; role.textContent = el.getAttribute(s.role === 'author' ? 'data-author-label' : 'data-member-label'); foot.appendChild(role); }
+    if (isOwn(el, s.id)) { var x = document.createElement('button'); x.type = 'button'; x.className = 'sticky-remove'; x.innerHTML = '&times;'; x.setAttribute('aria-label', el.getAttribute('data-remove')); foot.appendChild(x); }
     paper.appendChild(foot); n.appendChild(paper);
     n.setAttribute('aria-label', s.body + (s.name ? ', ' + s.name : '') + '. ' + el.getAttribute('data-send-back'));
     return n;
@@ -1562,9 +1563,9 @@
       if (item.waiting) d.className = 'is-waiting';
       d.appendChild(document.createTextNode(item.s.body));
       var meta = document.createElement('span');
-      meta.textContent = (item.s.name || el.getAttribute('data-anonymous')) + ' · ' + stickyDate(item.s.date || item.s.created) + (item.waiting ? ' · ' + el.getAttribute('data-waiting') : '');
+      meta.textContent = (item.s.name || el.getAttribute(item.s.role === 'member' ? 'data-a-member' : 'data-anonymous')) + (item.s.role ? ' · ' + el.getAttribute(item.s.role === 'author' ? 'data-author-label' : 'data-member-label') : '') + ' · ' + stickyDate(item.s.date || item.s.created) + (item.waiting ? ' · ' + el.getAttribute('data-waiting') : '');
       d.appendChild(meta);
-      if (pinnedNow(item.s.id)) { var x = document.createElement('button'); x.type = 'button'; x.className = 'sticky-remove'; x.setAttribute('data-id', item.s.id); x.innerHTML = '&times;'; x.setAttribute('aria-label', el.getAttribute('data-remove')); d.appendChild(x); }
+      if (isOwn(el, item.s.id)) { var x = document.createElement('button'); x.type = 'button'; x.className = 'sticky-remove'; x.setAttribute('data-id', item.s.id); x.innerHTML = '&times;'; x.setAttribute('aria-label', el.getAttribute('data-remove')); d.appendChild(x); }
       list.appendChild(d);
     });
     var W = board.clientWidth;
@@ -1822,15 +1823,26 @@
   function waitForToken(el, ms) {
     return new Promise(function (res) { var t0 = Date.now(); (function poll() { if (el._ts || Date.now() - t0 > ms) res(el._ts || null); else setTimeout(poll, 200); })(); });
   }
+  var isMember = function (el) { return el.getAttribute('data-member') === '1'; };
+  function memberPass() { // a short-lived signed pass from Ghost, proving who the signed-in member is
+    return fetch('/members/api/session', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (t) { t = (t || '').trim(); return t.split('.').length === 3 ? t : ''; }).catch(function () { return ''; });
+  }
+  var isOwn = function (el, id) { return pinnedNow(id) || (el._own || []).indexOf(Number(id)) >= 0; };
   function pinSticky(el) {
     var form = el.querySelector('.stickies-compose'), text = form.querySelector('textarea'), nameIn = form.querySelector('input'), msg = form.querySelector('.stickies-msg'), btn = form.querySelector('.stickies-pin');
     var body = text.value.trim();
     if (!body) { msg.textContent = el.getAttribute('data-err-empty'); msg.classList.add('is-hand'); text.focus(); return; }
     msg.classList.remove('is-hand');
-    btn.disabled = true; msg.textContent = el._ts ? '' : el.getAttribute('data-checking');
-    waitForToken(el, 10000).then(function (token) {
-      return fetch(stickyApi(el), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: body, name: nameIn.value.trim(), colour: Number(form.getAttribute('data-c')), turnstile: token }) })
-        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); });
+    btn.disabled = true;
+    var name = isMember(el) ? (el.getAttribute('data-member-name') || '') : nameIn.value.trim();
+    (isMember(el) ? memberPass() : Promise.resolve('')).then(function (pass) {
+      if (!pass) { msg.textContent = el._ts ? '' : el.getAttribute('data-checking'); startSpamCheck(el); } // a visitor, or a member whose pass didn't come
+      return (pass ? Promise.resolve(null) : waitForToken(el, 10000)).then(function (token) {
+        var h = { 'Content-Type': 'application/json' }; if (pass) h.Authorization = 'GhostMember ' + pass;
+        return fetch(stickyApi(el), { method: 'POST', headers: h, body: JSON.stringify({ body: body, name: name, colour: Number(form.getAttribute('data-c')), turnstile: token }) })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); });
+      });
     }).then(function (res) {
       btn.disabled = false; el._ts = null;
       if (el._widget !== null && el._widget !== undefined && window.turnstile) { try { window.turnstile.reset(el._widget); } catch (e) {} }
@@ -1839,17 +1851,26 @@
         msg.textContent = res.status === 429 ? el.getAttribute('data-err-slow') : /spam/.test(e) ? el.getAttribute('data-err-spam') : /name/.test(e) ? el.getAttribute('data-err-name') : el.getAttribute('data-err-other');
         return;
       }
-      var mine = myStickies(el); mine.push({ id: res.d.id, token: res.d.token, body: body, name: nameIn.value.trim() || null, colour: Number(form.getAttribute('data-c')), created: new Date().toISOString(), status: 'pending' });
-      saveMyStickies(el, mine);
+      var entry = { id: res.d.id, token: res.d.token, body: body, name: name || null, colour: Number(form.getAttribute('data-c')), created: new Date().toISOString(), status: res.d.status || 'pending', role: res.d.role || null };
+      var mine = myStickies(el); mine.push(entry); saveMyStickies(el, mine);
+      if (entry.status === 'approved') { // a member's goes straight up
+        el._stickies = [{ id: entry.id, date: entry.created.slice(0, 10), body: body, name: entry.name, colour: entry.colour, role: entry.role }].concat(el._stickies || []);
+        el._count = (el._count || 0) + 1; el._own = (el._own || []).concat([entry.id]);
+      }
       try { sessionStorage.setItem('dungeon-sticky-now:' + res.d.id, '1'); } catch (e2) {}
       clearComposer(el); restick(el); el._landing = res.d.id; layoutStickies(el);
     }, function () { btn.disabled = false; msg.textContent = el.getAttribute('data-err-other'); });
   }
   function takeBackSticky(el, id) {
-    var mine = myStickies(el), m = mine.filter(function (x) { return String(x.id) === String(id); })[0]; if (!m) return;
-    fetch(stickyApi(el) + '/' + m.id, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: m.token }) })
-      .then(function (r) { if (!r.ok) throw r; }).then(function () {
+    var mine = myStickies(el), m = mine.filter(function (x) { return String(x.id) === String(id); })[0];
+    var viaPass = isMember(el) && (el._own || []).indexOf(Number(id)) >= 0;
+    if (!m && !viaPass) return;
+    (viaPass ? memberPass() : Promise.resolve('')).then(function (pass) {
+      var h = { 'Content-Type': 'application/json' }; if (pass) h.Authorization = 'GhostMember ' + pass;
+      return fetch(stickyApi(el) + '/' + id, { method: 'DELETE', headers: h, body: JSON.stringify({ token: m ? m.token : '' }) });
+    }).then(function (r) { if (!r.ok) throw r; }).then(function () {
         saveMyStickies(el, mine.filter(function (x) { return x !== m; }));
+        el._own = (el._own || []).filter(function (x) { return String(x) !== String(id); });
         if ((el._stickies || []).some(function (s) { return String(s.id) === String(id); })) { el._stickies = el._stickies.filter(function (s) { return String(s.id) !== String(id); }); el._count = Math.max(0, (el._count || 1) - 1); }
         layoutStickies(el);
       }, function () {});
@@ -1859,14 +1880,17 @@
       if (el.getAttribute('data-ready')) return; el.setAttribute('data-ready', '1');
       newPaper(el);
       var api = stickyApi(el), mine = myStickies(el);
-      var statuses = mine.length ? fetch(api + '/mine', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: mine.map(function (m) { return { id: m.id, token: m.token }; }) }) })
-        .then(function (r) { return r.ok ? r.json() : { items: [] }; }).catch(function () { return { items: [] }; }) : Promise.resolve({ items: [] });
+      var statuses = (mine.length || isMember(el)) ? (isMember(el) ? memberPass() : Promise.resolve('')).then(function (pass) {
+        var h = { 'Content-Type': 'application/json' }; if (pass) h.Authorization = 'GhostMember ' + pass;
+        return fetch(api + '/mine', { method: 'POST', headers: h, body: JSON.stringify({ items: mine.map(function (m) { return { id: m.id, token: m.token }; }) }) });
+      }).then(function (r) { return r.ok ? r.json() : { items: [] }; }).catch(function () { return { items: [] }; }) : Promise.resolve({ items: [] });
       // Load the handwriting before laying out, so each sticky's text is measured in the real font:
       // measured in the fallback, which is wider, long stickies were shrunk and stretched needlessly.
       var hand = document.fonts && document.fonts.load ? Promise.all([document.fonts.load('400 1rem "Caveat"'), document.fonts.load('600 1rem "Caveat"')]).catch(function () {}) : Promise.resolve();
       Promise.all([fetch(api).then(function (r) { if (!r.ok) throw r; return r.json(); }), statuses, hand]).then(function (out) {
         el._stickies = out[0].stickies || []; el._count = out[0].count || 0;
         var st = {}; (out[1].items || []).forEach(function (i) { st[i.id] = i.status; });
+        el._own = out[1].own || []; // a signed-in member's own stickies, wherever they were written
         saveMyStickies(el, mine.filter(function (m) { return st[m.id] === 'pending' || st[m.id] === 'approved' || st[m.id] === undefined; })
           .map(function (m) { if (st[m.id]) m.status = st[m.id]; return m; }));
         el.hidden = false; layoutStickies(el); // only shown once the Worker answers
@@ -1917,7 +1941,7 @@
   });
   document.addEventListener('focusin', function (ev) {
     var compose = ev.target.closest && ev.target.closest('.stickies-compose');
-    if (compose && !ev.target.matches('.stickies-throw')) startSpamCheck(compose.closest('.stickies'));
+    if (compose && !ev.target.matches('.stickies-throw') && !isMember(compose.closest('.stickies'))) startSpamCheck(compose.closest('.stickies'));
   });
   document.addEventListener('input', function (ev) {
     if (!ev.target.matches || !ev.target.matches('.stickies-compose textarea')) return;

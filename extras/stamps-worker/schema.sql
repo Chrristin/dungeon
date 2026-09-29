@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS stickies (
   token_hash  TEXT    NOT NULL,                 -- lets the writer (only) take it back
   status      TEXT    NOT NULL DEFAULT 'pending', -- pending, approved, deleted (by you), removed (by the writer)
   member_hash TEXT,                             -- for the members layer, later
-  colour      INTEGER,                          -- 0 to 5: the paper it was written on
+  colour      INTEGER,                          -- the paper it was written on: 0-5 pastel, 6-11 bold
+  role        TEXT,                             -- 'member' or 'author' for signed-in stickies
   created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
   decided_at  TEXT
 );

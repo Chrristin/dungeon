@@ -68,7 +68,7 @@
         data-waiting="{{t "waiting to be pinned"}}" data-remove="{{t "Take back my sticky"}}" data-send-back="{{t "Select to read it"}}"
         data-err-spam="{{t "The spam check didn't pass. Please try again."}}" data-err-name="{{t "That name isn't allowed. Try another, or leave it empty."}}"
         data-err-slow="{{t "That's a lot of stickies at once. Try again in a minute."}}" data-err-other="{{t "Couldn't pin that right now. Please try again."}}"
-        data-checking="{{t "One moment, checking you're not a bot..."}}" data-anonymous="{{t "anonymous"}}" data-err-empty="{{t "Write something first."}}" aria-labelledby="stickies-title-{{id}}" hidden>
+        data-checking="{{t "One moment, checking you're not a bot..."}}" data-anonymous="{{t "anonymous"}}" data-err-empty="{{t "Write something first."}}" data-member="{{#if @member}}1{{/if}}" data-member-name="{{@member.name}}" data-a-member="{{t "a member"}}" data-member-label="{{t "member"}}" data-author-label="{{t "Author"}}" aria-labelledby="stickies-title-{{id}}" hidden>
         <h2 class="visually-hidden" id="stickies-title-{{id}}">{{t "Stickies"}}</h2>
         {{!-- The writing sticky: always open, stuck on the post card's corner (below it on phones). The x crumples it and throws it away. --}}
         <form class="stickies-compose" novalidate>
@@ -76,16 +76,23 @@
             <label class="visually-hidden" for="sticky-text-{{id}}">{{t "Your sticky"}}</label>
             <textarea id="sticky-text-{{id}}" maxlength="200" rows="4" placeholder="{{t "Write something short..."}}" required></textarea>
             <div class="stickies-compose-row">
+                {{#if @member}}
+                {{!-- Signed in: the name comes from their Ghost account --}}
+                <span class="stickies-as">{{t "as"}} {{#if @member.name}}{{@member.name}}{{else}}{{t "a member"}}{{/if}}</span>
+                <input type="hidden" value="">
+                {{else}}
                 <label class="visually-hidden" for="sticky-name-{{id}}">{{t "Your name (optional)"}}</label>
                 <input id="sticky-name-{{id}}" type="text" maxlength="24" autocomplete="nickname" placeholder="{{t "Your name (optional)"}}">
+                {{/if}}
                 <span class="stickies-left" aria-live="polite">200</span>
             </div>
             <div class="stickies-turnstile"></div>
             <div class="stickies-compose-actions">
-                <span class="stickies-note">{{t "Stickies appear once approved."}}</span>
+                <span class="stickies-note">{{#if @member}}{{t "Pinned straight away."}}{{else}}{{t "Stickies appear once approved."}}{{/if}}</span>
                 <button class="stickies-pin" type="submit" aria-label="{{t "Pin it"}}" title="{{t "Pin it"}}"><svg viewBox="0 0 32 32" aria-hidden="true"><g transform="rotate(35 16 16)"><path class="pin-head" d="M11 5.5h10a1.5 1.5 0 0 1 0 3h-1.2l1.4 7.2c2.6 1 4.3 2.9 4.3 4.8H6.5c0-1.9 1.7-3.8 4.3-4.8l1.4-7.2H11a1.5 1.5 0 0 1 0-3z"/><path class="pin-shine" d="M13.2 9.3l-1 6.1"/><path class="pin-needle" d="M16 20.6v8.4"/></g></svg></button>
             </div>
             <p class="stickies-msg" aria-live="polite"></p>
+            {{#if @site.members_enabled}}{{#unless @member}}<a class="stickies-signin" href="#/portal/signin" data-portal="signin">{{t "Sign in to skip the wait"}}</a>{{/unless}}{{/if}}
         </form>
         <div class="stickies-head">
             <button class="stickies-toggle" type="button" aria-pressed="false" aria-label="{{t "Read as a list"}}" title="{{t "Read as a list"}}" data-list="{{t "Read as a list"}}" data-pile="{{t "Back to the pile"}}">

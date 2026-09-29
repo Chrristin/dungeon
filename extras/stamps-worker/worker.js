@@ -6,7 +6,9 @@
 //   DELETE /stamps/<slug>/<id>       { token }       -> { ok, names, more }   (remove your own name, within a day)
 //
 // Stickies (1.3.0), short notes under posts, pinned once approved:
-//   GET    /stickies/<slug>                       -> { count, stickies: [{id, date, body, name, colour}] }   (approved only)
+//   GET    /stickies/<slug>                       -> { count, stickies: [{id, date, body, name, colour, role}] }   (approved only)
+//   Signed-in Ghost members send "Authorization: GhostMember <pass>": no spam check, no approval, and they
+//   can take their stickies back any time; the author's (AUTHOR_EMAIL) are marked as the author's.
 //   POST   /stickies/<slug>  { body, name, colour, turnstile } -> { id, token, status: "pending" }
 //   POST   /stickies/<slug>/mine  { items: [{id, token}] } -> { items: [{id, status}] }   (your own stickies)
 //   DELETE /stickies/<slug>/<id>  { token }       -> { ok }   (take your own back, within a day)
@@ -97,6 +99,7 @@ export default {
     } catch (e) {
       const msg = String(e && e.message || e);
       if (/no such table/i.test(msg)) return json({ error: 'setup: the stamps table is missing. Run schema.sql in the D1 console.' }, 500, headers);
+      if (/no such column: role/i.test(msg)) return json({ error: 'setup: the stickies table needs updating for 1.3.8. Run migrate-1.3.8.sql in the D1 console.' }, 500, headers);
       if (/no such column: colour/i.test(msg)) return json({ error: 'setup: the stickies table needs updating for 1.3.2. Run migrate-1.3.2.sql in the D1 console.' }, 500, headers);
       if (/no such table: stickies/i.test(msg)) return json({ error: 'setup: the stickies table is missing. Run migrate-1.3.0.sql in the D1 console.' }, 500, headers);
       if (/no such column: named_at/i.test(msg)) return json({ error: 'setup: the database needs updating for 1.2.3. Run migrate-1.2.3.sql in the D1 console.' }, 500, headers);
@@ -193,21 +196,21 @@ async function decide(env, id, action) {
 }
 async function notify(env, base, sticky) {
   const site = (env.SITE || '').replace(/\/+$/, ''), postUrl = `${site}/${sticky.post}/`;
-  const who = sticky.name ? sticky.name : 'someone';
+  const who = (sticky.name ? sticky.name : 'someone') + (sticky.role === 'member' ? ' (member, already pinned)' : '');
   const jobs = [];
   if (env.NTFY_TOPIC) {
     const [yes, no] = await Promise.all([modLink(env, base, sticky.id, 'approve'), modLink(env, base, sticky.id, 'delete')]);
     jobs.push(fetch(`${(env.NTFY_URL || 'https://ntfy.sh').replace(/\/+$/, '')}/${env.NTFY_TOPIC}`, {
       method: 'POST', body: sticky.body,
       headers: { Title: `New sticky from ${who}`, Tags: 'memo', Click: postUrl,
-        Actions: `http, Approve, ${yes}, method=POST, clear=true; http, Delete, ${no}, method=POST, clear=true; view, Open post, ${postUrl}` } }));
+        Actions: (sticky.role ? '' : `http, Approve, ${yes}, method=POST, clear=true; `) + `http, Delete, ${no}, method=POST, clear=true; view, Open post, ${postUrl}` } }));
   }
   if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
     const text = `New sticky from ${who} on /${sticky.post}/\n\n${sticky.body}`;
     jobs.push(fetch(`${env.TELEGRAM_API || 'https://api.telegram.org'}/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text, disable_web_page_preview: true,
-        reply_markup: { inline_keyboard: [[{ text: 'Approve', callback_data: `approve:${sticky.id}` }, { text: 'Delete', callback_data: `delete:${sticky.id}` }], [{ text: 'Open post', url: postUrl }]] } }) }));
+        reply_markup: { inline_keyboard: [(sticky.role ? [] : [{ text: 'Approve', callback_data: `approve:${sticky.id}` }]).concat([{ text: 'Delete', callback_data: `delete:${sticky.id}` }]), [{ text: 'Open post', url: postUrl }]] } }) }));
   }
   await Promise.allSettled(jobs);
 }
@@ -221,11 +224,14 @@ async function stickies(request, env, headers, ctx) {
   let slugs;
   try { slugs = await stampable(env); } catch { return json({ error: 'site unavailable' }, 503, headers); }
   if (!slugs.posts || !slugs.posts.has(slug)) return json({ error: 'unknown post' }, 404, headers); // posts only
+  let member = null; // a signed-in member, if their pass checks out; anything else is treated as a visitor
+  const pass = (request.headers.get('Authorization') || '').replace(/^GhostMember\s+/i, '');
+  if (pass) { try { const m = await memberFromPass(env, pass); if (m.ok) member = { hash: await sha256(m.email), author: m.author }; } catch {} }
 
   if (request.method === 'GET' && !sub) {
     const count = (await env.DB.prepare("SELECT COUNT(*) AS n FROM stickies WHERE post = ? AND status = 'approved'").bind(slug).first()).n;
-    const rows = (await env.DB.prepare("SELECT id, created_at, body, name, colour FROM stickies WHERE post = ? AND status = 'approved' ORDER BY id DESC LIMIT ?").bind(slug, STICKY_WALL).all()).results;
-    return json({ count, stickies: rows.map((r) => ({ id: r.id, date: r.created_at.slice(0, 10), body: r.body, name: r.name || null, colour: r.colour === null || r.colour === undefined ? null : r.colour })) }, 200, headers);
+    const rows = (await env.DB.prepare("SELECT id, created_at, body, name, colour, role FROM stickies WHERE post = ? AND status = 'approved' ORDER BY id DESC LIMIT ?").bind(slug, STICKY_WALL).all()).results;
+    return json({ count, stickies: rows.map((r) => ({ id: r.id, date: r.created_at.slice(0, 10), body: r.body, name: r.name || null, colour: r.colour === null || r.colour === undefined ? null : r.colour, role: r.role || null })) }, 200, headers);
   }
   let body = {}; try { body = await request.json(); } catch {}
 
@@ -237,7 +243,9 @@ async function stickies(request, env, headers, ctx) {
       if (row && row.token_hash === (await sha256(String(it.token || '')))) out.push({ id: Number(it.id), status: row.status });
       else out.push({ id: Number(it.id), status: 'gone' });
     }
-    return json({ items: out }, 200, headers);
+    let ownIds = [];
+    if (member) ownIds = (await env.DB.prepare("SELECT id FROM stickies WHERE post = ? AND member_hash = ? AND status IN ('pending', 'approved')").bind(slug, member.hash).all()).results.map((r) => r.id);
+    return json({ items: out, member: !!member, own: ownIds }, 200, headers);
   }
   if (request.method === 'POST' && !sub) {
     const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
@@ -246,21 +254,25 @@ async function stickies(request, env, headers, ctx) {
     if (!text) return json({ error: 'a sticky needs 1 to 200 characters' }, 400, headers);
     let name = null;
     if (body.name && String(body.name).trim()) { name = cleanName(body.name); if (!name) return json({ error: 'name not allowed' }, 400, headers); }
-    if (!(await turnstileOk(env, body.turnstile, ip))) return json({ error: 'spam check failed' }, 403, headers);
+    if (!member && !(await turnstileOk(env, body.turnstile, ip))) return json({ error: 'spam check failed' }, 403, headers);
     const token = crypto.randomUUID() + crypto.randomUUID();
     const colour = Number.isInteger(body.colour) && body.colour >= 0 && body.colour <= 11 ? body.colour : null; // the paper it was written on: 0-5 pastel, 6-11 bold
-    const r = await env.DB.prepare('INSERT INTO stickies (post, body, name, colour, token_hash) VALUES (?, ?, ?, ?, ?)').bind(slug, text, name, colour, await sha256(token)).run();
-    const sticky = { id: r.meta.last_row_id, post: slug, body: text, name };
-    const base = url.origin;
-    const sending = notify(env, base, sticky);
-    if (ctx && ctx.waitUntil) ctx.waitUntil(sending); else await sending;
-    return json({ id: sticky.id, token, status: 'pending' }, 200, headers);
+    const role = member ? (member.author ? 'author' : 'member') : null, status = member ? 'approved' : 'pending';
+    const r = await env.DB.prepare("INSERT INTO stickies (post, body, name, colour, token_hash, status, role, member_hash, decided_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 'approved' THEN strftime('%Y-%m-%dT%H:%M:%SZ', 'now') END)")
+      .bind(slug, text, name, colour, await sha256(token), status, role, member ? member.hash : null, status).run();
+    const sticky = { id: r.meta.last_row_id, post: slug, body: text, name, role };
+    if (role !== 'author') { // your own stickies need no notification
+      const sending = notify(env, url.origin, sticky);
+      if (ctx && ctx.waitUntil) ctx.waitUntil(sending); else await sending;
+    }
+    return json({ id: sticky.id, token, status, role }, 200, headers);
   }
   if (request.method === 'DELETE' && sub && sub !== 'mine') {
-    const row = await env.DB.prepare('SELECT token_hash, status, created_at FROM stickies WHERE id = ? AND post = ?').bind(Number(sub), slug).first();
-    if (!row || row.token_hash !== (await sha256(String(body.token || '')))) return json({ error: 'not your sticky' }, 403, headers);
+    const row = await env.DB.prepare('SELECT token_hash, status, created_at, member_hash FROM stickies WHERE id = ? AND post = ?').bind(Number(sub), slug).first();
+    const byMember = !!(row && member && row.member_hash && row.member_hash === member.hash); // members: their own, any time, any device
+    if (!row || (!byMember && row.token_hash !== (await sha256(String(body.token || ''))))) return json({ error: 'not your sticky' }, 403, headers);
     if (row.status === 'removed' || row.status === 'deleted') return json({ ok: true }, 200, headers);
-    if (Date.now() - Date.parse(row.created_at) > 24 * 60 * 60 * 1000) return json({ error: 'too late to remove' }, 403, headers);
+    if (!byMember && Date.now() - Date.parse(row.created_at) > 24 * 60 * 60 * 1000) return json({ error: 'too late to remove' }, 403, headers);
     await env.DB.prepare("UPDATE stickies SET status = 'removed', decided_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?").bind(Number(sub)).run();
     return json({ ok: true }, 200, headers);
   }
