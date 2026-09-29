@@ -399,6 +399,11 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
 .reader::backdrop { background: rgba(12, 13, 16, 0.72); backdrop-filter: blur(6px); }
 .reader-body { padding: 4.5rem var(--gutter) 3rem; }
 .reader-body .post-panel { margin: 0 auto; }
+.reader-body .stickies { margin-left: auto; margin-right: auto; }
+/* In the overlay there's no page behind the stickies, only the dimmed page underneath, so they get a
+   plain sheet in the page's own colour: they sit on "the page" there too. No border, no pattern. */
+.reader-body .stickies:not([hidden]) { background: var(--paper); border-radius: 18px; padding-left: 1.4rem; padding-right: 1.4rem; padding-bottom: 1.6rem; }
+@media (max-width: 899px) { .reader-body .stickies:not([hidden]) { padding-top: 1.2rem; } }
 .reader-close {
     position: sticky;
     top: 1rem;

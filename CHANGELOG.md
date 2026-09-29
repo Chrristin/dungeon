@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.3
+
+- Stickies in the reader overlay: when a post opens over the homepage, its stickies come with it, working as on the post page, on a plain sheet in the page's colour. A thrown sticky flies inside the overlay.
+- In the overlay, Escape clears the blank sticky if you've written on it; pressed again, it closes the overlay as usual.
+- Fixed: clicking into the stickies no longer closes the overlay.
+
 ## 1.3.2
 
 - The blank sticky is always there, stuck at an angle on the post card's bottom-right corner (just below the card on phones), ready to write on. No button to open it.

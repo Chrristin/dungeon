@@ -1557,7 +1557,7 @@
     if (calmStamps || !document.body.animate) { restick(el); return; }
     var ball = document.createElement('div'); ball.className = 'sticky-ball'; ball.setAttribute('data-c', form.getAttribute('data-c'));
     ball.style.left = r.left + 'px'; ball.style.top = r.top + 'px'; ball.style.width = r.width + 'px'; ball.style.height = r.height + 'px';
-    document.body.appendChild(ball);
+    (form.closest('dialog') || document.body).appendChild(ball); // inside the overlay when thrown from there
     form.style.visibility = 'hidden';
     var cx = r.left + r.width / 2, cy = r.top + r.height / 2, a = Math.random() * Math.PI * 2;
     var reach = Math.max(innerWidth, innerHeight) * 0.9, dx = Math.cos(a) * reach, dy = Math.sin(a) * reach;
@@ -1642,7 +1642,10 @@
   });
   document.addEventListener('keydown', function (ev) {
     var compose = ev.target.closest && ev.target.closest('.stickies-compose');
-    if (compose && ev.key === 'Escape') { ev.preventDefault(); clearComposer(compose.closest('.stickies')); return; }
+    if (compose && ev.key === 'Escape' && !compose.closest('dialog')) { // in the overlay, its cancel handler does this
+      var hasText = compose.querySelector('textarea').value || compose.querySelector('input').value;
+      if (hasText) { ev.preventDefault(); clearComposer(compose.closest('.stickies')); return; }
+    }
     var n = ev.target.closest && ev.target.closest('.sticky');
     if (n && ev.target === n && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); sendStickyBack(n.closest('.stickies'), n); }
   });
@@ -1662,6 +1665,12 @@
   initStickies(document);
 
   function closeReader() { if (reader && reader.open) reader.close(); }
+  // In the overlay, the browser closes the dialog on Escape by itself. If the blank sticky has writing
+  // on it, Escape clears that first and keeps the overlay open; pressed again, it closes as usual.
+  if (reader) reader.addEventListener('cancel', function (e) {
+    var a = document.activeElement, comp = a && a.closest && a.closest('.stickies-compose');
+    if (comp && (comp.querySelector('textarea').value || comp.querySelector('input').value)) { e.preventDefault(); clearComposer(comp.closest('.stickies')); }
+  });
 
   function openPost(url, card) {
     if (card) card.classList.add('is-opening');
@@ -1672,12 +1681,15 @@
         var panel = doc.querySelector('.post-panel');
         if (!panel) { location.href = url; return; }
         body.replaceChildren(document.importNode(panel, true));
+        var stickiesHere = doc.querySelector('.stickies'); // the stickies come across too
+        if (stickiesHere) body.appendChild(document.importNode(stickiesHere, true));
         decorate(body);
         initPostActions(body);
         initStamps(body);
         liteYouTube(body);
         document.documentElement.classList.add('reader-open');
         reader.showModal();
+        initStickies(body); // after it's open, so the pile can be measured
         reader.scrollTop = 0;
         document.title = doc.title || baseTitle;
         baseUrl = location.href;
@@ -1701,7 +1713,7 @@
     reader.querySelector('.reader-close').addEventListener('click', closeReader);
     // Any click that is not on the story panel itself closes the overlay.
     reader.addEventListener('click', function (e) {
-      if (!e.target.closest('.post-panel') && !e.target.closest('.reader-close')) closeReader();
+      if (!e.target.closest('.post-panel') && !e.target.closest('.stickies') && !e.target.closest('.reader-close')) closeReader(); // the stickies belong to the post
     });
     reader.addEventListener('close', function () {
       document.documentElement.classList.remove('reader-open');
