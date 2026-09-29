@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.6
+
+- Older and Newer, below every post, are now horizontal cards like the homepage ones: image on the left (or an etched pattern if the post has none), title and excerpt on the right. They stack on phones.
+- Doodles look hand-drawn: wobbly strokes, the odd overshoot or doubled line, and two or three per sticky, a main doodle with scribbles around it (squiggles, arrows, dots, hatching). One pen per sticky, mostly pencil, sometimes blue or red biro.
+- The crumple folds the sticky in pieces, each at its own angle and light, around deeper-coloured crevices.
+- Pinning an empty sticky writes "Write something first." on the sticky, instead of the browser's pop-up.
+- The list and pile switch sits at the top left, on its own line, with new icons.
+- In list view, stickies no longer sit under the blank sticky.
+- Tape is plain white again.
+
 ## 1.3.5
 
 - The crumple looks like paper: the sticky crushes into an uneven, lumpy ball, different every time, with creases, light and shade appearing as it crumples, and a shadow that follows its shape.

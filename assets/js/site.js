@@ -816,26 +816,31 @@
 
   // Etched botanical sprigs in the empty space below a Now card's text. Random but stable:
   // each card's pattern is seeded from its URL, so a month always draws the same sprigs.
-  function drawFlora(card) {
-    var old = card.querySelector('.now-flora');
+  // box (optional): { target, W, H, kind, key } draws the pattern into any element, e.g. an image-less card's image spot
+  function drawFlora(card, box) {
+    var old = (box ? box.target : card).querySelector('.now-flora');
     if (old) old.remove();
+    var W, H, padL = 0, padB = 0, kind, seed = 0, key;
+    if (box) { W = box.W; H = box.H; kind = box.kind; key = box.key; }
+    else {
     if (stacked.matches) return;
     var body = card.querySelector('.now-body');
     if (!body) return;
     // Measure in the card's own (un-tilted) frame: on-screen boxes of tilted cards are inflated
-    var padL = px(card, 'paddingLeft'), padR = px(card, 'paddingRight'), padB = px(card, 'paddingBottom');
+    padL = px(card, 'paddingLeft'); var padR = px(card, 'paddingRight'); padB = px(card, 'paddingBottom');
     var textBottom = 0;
     [].forEach.call(card.children, function (el) { if (el.classList.contains('now-flora')) return; textBottom = Math.max(textBottom, el.offsetTop + el.offsetHeight); });
-    var W = Math.round(card.clientWidth - padL - padR), H = Math.round(card.clientHeight - textBottom - padB - 16);
+    W = Math.round(card.clientWidth - padL - padR); H = Math.round(card.clientHeight - textBottom - padB - 16);
     // The pattern's structure comes only from the seed; the size just scales positions,
     // so a 1px difference between loads can't add or remove anything.
     if (W < 80 || H < 70) return;
     // Which pattern: a month's #filler-… tag wins, otherwise the theme setting
     var SETTING = { 'floral': 'floral', 'circuit board': 'circuit', 'cityscape': 'city', 'topographic': 'topo', 'none': 'none' };
     var timeline = card.closest('.now-timeline');
-    var kind = card.getAttribute('data-filler') || SETTING[((timeline && timeline.getAttribute('data-filler')) || 'floral').toLowerCase()] || 'floral';
+    kind = card.getAttribute('data-filler') || SETTING[((timeline && timeline.getAttribute('data-filler')) || 'floral').toLowerCase()] || 'floral';
     if (kind === 'none') return;
-    var seed = 0, key = card.getAttribute('data-key') || card.getAttribute('data-month') || 'now';
+    key = card.getAttribute('data-key') || card.getAttribute('data-month') || 'now';
+    }
     for (var i = 0; i < key.length; i++) seed = Math.imul(seed ^ key.charCodeAt(i), 2654435761) >>> 0;
     var rnd = function () { seed = (seed + 0x6D2B79F5) >>> 0; var t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
     var parts = [];
@@ -945,10 +950,20 @@
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('width', W); svg.setAttribute('height', H);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-    svg.style.left = padL + 'px'; svg.style.bottom = padB + 'px';
+    if (!box) { svg.style.left = padL + 'px'; svg.style.bottom = padB + 'px'; }
     svg.innerHTML = parts.join('');
-    card.appendChild(svg);
+    (box ? box.target : card).appendChild(svg);
   }
+  // Older and Newer cards without an image: the image spot gets one of the etched patterns, by post
+  function fillCards(root) {
+    root.querySelectorAll('.card-fill').forEach(function (f) {
+      var key = f.getAttribute('data-key') || 'post', h = 0;
+      for (var i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 2654435761) >>> 0;
+      var W = Math.round(f.clientWidth), H = Math.round(f.clientHeight);
+      if (W > 40 && H > 40) drawFlora(null, { target: f, W: W, H: H, kind: ['floral', 'circuit', 'city', 'topo'][h % 4], key: key });
+    });
+  }
+  fillCards(document);
   function fitMainHeight() {
     if (!mainEl) return;
     mainEl.style.minHeight = '';
@@ -1367,11 +1382,6 @@
   var myStickies = function (el) { try { return JSON.parse(localStorage.getItem(mineKey(el)) || '[]'); } catch (e) { return []; } };
   var saveMyStickies = function (el, list) { try { localStorage.setItem(mineKey(el), JSON.stringify(list.slice(-20))); } catch (e) {} };
   var pinnedNow = function (id) { try { return sessionStorage.getItem('dungeon-sticky-now:' + id) === '1'; } catch (e) { return false; } };
-  var TAPES = ['#8fd3c1', '#f4a3b8', '#b9b3f0', '#f2b48a', '#f6d36b', '#9cc6f2', 'rgba(255, 255, 255, 0.75)',
-    'repeating-linear-gradient(90deg, #f6d36b 0 6px, #fbe6a4 6px 12px)', 'repeating-linear-gradient(45deg, #9cc6f2 0 5px, #cfe2f8 5px 10px)',
-    'repeating-linear-gradient(45deg, #f4a3b8 0 5px, #fbd3de 5px 10px)', 'repeating-linear-gradient(90deg, #8fd3c1 0 4px, #c9ece2 4px 8px)',
-    'repeating-linear-gradient(-45deg, #b9b3f0 0 4px, #e0ddf8 4px 8px)'];
-  var tapeFor = function (node, rand) { node.style.setProperty('--tape', TAPES[Math.floor(rand() * TAPES.length)]); node.style.setProperty('--tape-tilt', ((rand() - 0.5) * 12).toFixed(1) + 'deg'); };
   var paperOf = function (s) { return String(s.colour === 0 || s.colour > 0 ? s.colour : Math.abs(Number(s.id)) % 6); };
   var stickyDate = function (iso) { var d = new Date(iso); if (isNaN(d)) d = new Date(); return String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()]; };
   // Seeded randomness. The seed is scrambled first: consecutive sticky numbers otherwise start out with
@@ -1399,7 +1409,6 @@
     n.className = 'sticky' + (waiting ? ' is-waiting' : ''); n.setAttribute('role', 'listitem'); n.tabIndex = 0;
     n.setAttribute('data-id', s.id); n.setAttribute('data-c', paperOf(s));
     var paper = document.createElement('div'); paper.className = 'sticky-paper'; paper.style.setProperty('--fray', frayClip(s.id));
-    tapeFor(n, seeded(Math.abs(Number(s.id)) * 53 + 11));
     if (waiting) { var w = document.createElement('span'); w.className = 'sticky-waiting'; w.textContent = el.getAttribute('data-waiting'); paper.appendChild(w); }
     var p = document.createElement('p'); p.className = 'sticky-text'; p.textContent = s.body; paper.appendChild(p);
     var foot = document.createElement('div'); foot.className = 'sticky-foot';
@@ -1446,22 +1455,72 @@
     TOPICS.forEach(function (t) { if (tags.some(function (tag) { return t[1].test(tag); })) sets.push(t[0]); });
     return sets.length ? sets.reduce(function (all, s) { return all.concat(DOODLES[s]); }, []) : DOODLES.any;
   }
+  // Hand-drawn look: each stroke is redrawn as a slightly wavering line with a little shake, and open
+  // lines can overshoot. Baked into the shape when drawn, so it costs nothing while scrolling.
+  var NS = 'http://www.w3.org/2000/svg', ruler = null;
+  function wobbly(d, rand, amt) {
+    if (!ruler) { ruler = document.createElementNS(NS, 'svg'); ruler.setAttribute('width', '0'); ruler.setAttribute('height', '0'); ruler.setAttribute('aria-hidden', 'true'); ruler.style.position = 'absolute'; ruler.style.visibility = 'hidden'; document.body.appendChild(ruler); }
+    var out = [];
+    d.split(/(?=M)/).forEach(function (sub) {
+      if (!sub.trim()) return;
+      var p = document.createElementNS(NS, 'path'); p.setAttribute('d', sub); ruler.appendChild(p);
+      var L = 0; try { L = p.getTotalLength(); } catch (e) {}
+      if (L < 0.5) { ruler.removeChild(p); out.push(sub); return; } // a dot stays a dot
+      var steps = Math.max(5, Math.round(L / 2.2)), ph = rand() * 6.28, ph2 = rand() * 6.28, fr = 0.18 + rand() * 0.22, pts = [];
+      for (var i = 0; i <= steps; i++) {
+        var pt = p.getPointAtLength(L * i / steps);
+        pts.push([pt.x + Math.sin(i * fr + ph) * amt + (rand() - 0.5) * amt * 0.5, pt.y + Math.cos(i * fr * 1.3 + ph2) * amt + (rand() - 0.5) * amt * 0.5]);
+      }
+      ruler.removeChild(p);
+      var a0 = pts[0], z = pts[pts.length - 1], b0 = pts[pts.length - 2];
+      if (Math.hypot(a0[0] - z[0], a0[1] - z[1]) > 2 && rand() < 0.5) { var o = 1 + rand() * 2.2, dx = z[0] - b0[0], dy = z[1] - b0[1], dl = Math.hypot(dx, dy) || 1; pts.push([z[0] + dx / dl * o, z[1] + dy / dl * o]); } // overshoot
+      out.push('M' + pts.map(function (q) { return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('L'));
+    });
+    return out.join('');
+  }
+  // Scribbles that sit around a main doodle: squiggles, arrows, dots, hatching, swooshes
+  var SCRIBBLES = [
+    function (r) { var s = 'M6 24'; for (var x = 9; x <= 42; x += 3) s += 'L' + x + ' ' + (24 + Math.sin(x * 0.55 + r() * 2) * 6).toFixed(1); return s; },
+    function (r) { return 'M8 34C16 30 24 18 36 14M36 14l-7 1M36 14l-1.5 7'; },
+    function (r) { var s = ''; for (var k = 0; k < 4 + Math.floor(r() * 3); k++) s += 'M' + (10 + r() * 28).toFixed(0) + ' ' + (10 + r() * 28).toFixed(0) + 'h.01'; return s; },
+    function (r) { var s = ''; for (var k = 0; k < 5; k++) s += 'M' + (10 + k * 5) + ' 34L' + (18 + k * 5) + ' 14'; return s; },
+    function (r) { return 'M6 30c9 -7 27 -7 36 -1'; },
+    function (r) { return 'M24 24c0-2 3-2 3 0 0 4-6 4-6 0 0-6 9-6 9 0 0 8-12 8-12 0'; },
+    function (r) { return 'M10 18l4 4M14 18l-4 4M30 12l4 4M34 12l-4 4M22 32l4 4M26 32l-4 4'; }
+  ];
+  // Several doodles per sticky, where the text leaves room: one main doodle (by topic) and a few scribbles,
+  // scattered at different sizes and tilts, never on each other, the writing or the name. One pen per sticky.
   function addDoodle(el, n, s) {
     var p = n.querySelector('.sticky-text'), paper = n.querySelector('.sticky-paper');
-    if (!p || n.style.height) return; // a sticky that had to grow has no room to spare
-    var box = p.clientHeight; p.style.flex = 'none'; var used = p.offsetHeight; p.style.flex = ''; // the text's own height, untilted
-    var free = box - used; if (free < box * 0.4) return;
-    var size = Math.min((free - 12) / 1.25, p.clientWidth * 0.5, 64); if (size < 28) return; // room for it tilted, plus a gap
-    var rand = seeded(Math.abs(Number(s.id)) * 31 + 5), set = doodleSet(el), path = set[Math.floor(rand() * set.length)];
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 48 48'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('class', 'sticky-doodle');
-    var d = document.createElementNS('http://www.w3.org/2000/svg', 'path'); d.setAttribute('d', path); svg.appendChild(d);
-    var left = paper.clientWidth * 0.1 + rand() * Math.max(0, paper.clientWidth * 0.8 - size);
-    var tilted = size * 1.25, spare = Math.max(0, free - 12 - tilted); // a tilted doodle needs a bigger square
-    var top = p.offsetTop + used + 8 + (tilted - size) / 2 + spare * (0.25 + rand() * 0.5);
-    svg.style.width = size + 'px'; svg.style.height = size + 'px'; svg.style.left = left + 'px'; svg.style.top = top + 'px';
-    svg.style.transform = 'rotate(' + ((rand() - 0.5) * 24).toFixed(1) + 'deg)';
-    paper.appendChild(svg);
+    if (!p || n.style.height) return;
+    var box = p.clientHeight; p.style.flex = 'none'; var used = p.offsetHeight; p.style.flex = '';
+    var free = box - used; if (free < box * 0.35) return;
+    var rand = seeded(Math.abs(Number(s.id)) * 31 + 5), set = doodleSet(el);
+    var region = { x: paper.clientWidth * 0.06, y: p.offsetTop + used + 6, w: paper.clientWidth * 0.88, h: free - 8 };
+    var main = Math.min(region.h / 1.25, region.w * 0.42, 58); if (main < 22) return;
+    var pen = rand(), ink = pen < 0.12 ? 'rgba(38, 72, 170, 0.62)' : pen < 0.2 ? 'rgba(182, 38, 52, 0.55)' : 'rgba(35, 37, 43, 0.46)';
+    var list = [{ d: set[Math.floor(rand() * set.length)], size: main }];
+    var extra = Math.min(3, Math.floor(region.w * region.h / (main * main * 1.9)));
+    for (var k = 0; k < extra; k++) list.push({ d: rand() < 0.7 ? SCRIBBLES[Math.floor(rand() * SCRIBBLES.length)](rand) : DOODLES.any[Math.floor(rand() * DOODLES.any.length)], size: main * (0.34 + rand() * 0.3) });
+    var placed = [];
+    list.forEach(function (item) {
+      var t = item.size * 1.25, spot = null; // room for it tilted
+      for (var tries = 0; tries < 30 && !spot; tries++) {
+        var x = region.x + rand() * Math.max(0, region.w - t), y = region.y + rand() * Math.max(0, region.h - t);
+        if (!placed.some(function (q) { return x < q.x + q.t + 4 && x + t + 4 > q.x && y < q.y + q.t + 4 && y + t + 4 > q.y; })) spot = { x: x, y: y, t: t };
+      }
+      if (!spot) return;
+      placed.push(spot);
+      var svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('viewBox', '0 0 48 48'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('class', 'sticky-doodle');
+      svg.style.width = item.size + 'px'; svg.style.height = item.size + 'px';
+      svg.style.left = (spot.x + (t - item.size) / 2) + 'px'; svg.style.top = (spot.y + (t - item.size) / 2) + 'px';
+      svg.style.transform = 'rotate(' + ((rand() - 0.5) * 40).toFixed(1) + 'deg)'; svg.style.stroke = ink;
+      var w = (1.2 + rand() * 0.8).toFixed(2), path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', wobbly(item.d, rand, 0.9)); path.style.strokeWidth = w; svg.appendChild(path);
+      if (rand() < 0.22) { var again = document.createElementNS(NS, 'path'); again.setAttribute('d', wobbly(item.d, rand, 1.3)); again.style.strokeWidth = (w * 0.7).toFixed(2); again.style.opacity = '0.6'; svg.appendChild(again); } // gone over twice
+      paper.appendChild(svg);
+    });
   }
   // Longer stickies are written smaller, like on a real sticky note, down to a readable minimum; a sticky
   // that still doesn't fit grows taller rather than letting its text run over the name.
@@ -1545,6 +1604,22 @@
   // Sending a sticky to the back, as one motion: it's pulled out just far enough to clear its neighbours
   // (so passing beneath them never "pops"), slides back underneath, and the neighbours react: nudged
   // aside as it pulls away, lifting a touch to let it under, then settling.
+  function listAroundComposer(el) {
+    var list = el.querySelector('.stickies-list'), form = el.querySelector('.stickies-compose');
+    var old = list.querySelector('.stickies-list-spacer'); if (old) old.remove();
+    if (list.hidden || getComputedStyle(form).position !== 'absolute') return;
+    var cr = form.getBoundingClientRect(), lr = list.getBoundingClientRect(); if (cr.bottom + 12 <= lr.top) return;
+    var cols = getComputedStyle(list).gridTemplateColumns.split(' ').filter(Boolean).map(parseFloat), gap = parseFloat(getComputedStyle(list).columnGap) || 0;
+    var x = lr.left, first = 0, last = 0;
+    cols.forEach(function (w, i) { if (x < cr.right + 12 && x + w > cr.left - 12) { if (!first) first = i + 1; last = i + 1; } x += w + gap; });
+    if (!first) return;
+    var sp = document.createElement('div'); sp.className = 'stickies-list-spacer'; sp.setAttribute('aria-hidden', 'true');
+    sp.style.gridColumn = first + ' / ' + (last + 1);
+    list.insertBefore(sp, list.firstChild);
+    var items = [].filter.call(list.children, function (d) { return d !== sp; });
+    var under = function () { return items.some(function (d) { var r = d.getBoundingClientRect(); return r.left < cr.right + 12 && r.right > cr.left - 12 && r.top < cr.bottom + 12 && r.bottom > cr.top; }); };
+    for (var rows = 1; rows <= 40; rows++) { sp.style.gridRow = '1 / span ' + rows; if (!under()) break; } // as many rows as it takes
+  }
   function sendStickyBack(el, n) {
     if (n.getAttribute('data-moving')) return;
     var board = el.querySelector('.stickies-board'), notes = [].slice.call(board.children);
@@ -1615,7 +1690,7 @@
   function newPaper(el) {
     var form = el.querySelector('.stickies-compose'), prev = form.getAttribute('data-c'), c;
     do { c = String(Math.floor(Math.random() * 6)); } while (c === prev);
-    form.setAttribute('data-c', c); tapeFor(form, Math.random);
+    form.setAttribute('data-c', c);
   }
   // Cloudflare's spam check loads only when someone starts writing, not on every visit.
   function startSpamCheck(el) {
@@ -1645,52 +1720,62 @@
     var form = el.querySelector('.stickies-compose'), r = form.getBoundingClientRect();
     clearComposer(el);
     if (calmStamps || !document.body.animate) { restick(el); return; }
-    // outer: the flight and a shadow that follows the crushed shape; inner: the paper, whose outline
-    // morphs from the sticky's rectangle into a random lumpy ball, with creases and shading.
-    var ball = document.createElement('div'); ball.className = 'sticky-ball';
-    var paper = document.createElement('div'); paper.className = 'sticky-ball-paper'; paper.setAttribute('data-c', form.getAttribute('data-c'));
+    // The sheet is cut into 16 irregular pieces sharing their corners (so it starts as one flat sticky).
+    // Crumpling folds each piece in towards the middle, tipped at its own angle so it catches the light
+    // differently; a darker core shows through the gaps like crevices, and a couple of corners stay out
+    // like curled edges. Then the ball is thrown off the page.
+    var ball = document.createElement('div'), c = form.getAttribute('data-c');
+    ball.className = 'sticky-ball'; ball.style.setProperty('--deep', getComputedStyle(form).getPropertyValue('--deep') || '#b08a00');
     ball.style.left = r.left + 'px'; ball.style.top = r.top + 'px'; ball.style.width = r.width + 'px'; ball.style.height = r.height + 'px';
-    var ph1 = Math.random() * 6.28, ph2 = Math.random() * 6.28, ph3 = Math.random() * 6.28;
-    var N = 32, rect = [], half = [], crushed = [], cr = function (a, rad) { return (50 + Math.cos(a) * rad).toFixed(1) + '% ' + (50 + Math.sin(a) * rad).toFixed(1) + '%'; };
-    for (var i = 0; i < N; i++) { // points round the rectangle's edge, matched to points round the ball
-      var t = i / N, per = t * 4, x, y;
-      if (per < 1) { x = per * 100; y = 0; } else if (per < 2) { x = 100; y = (per - 1) * 100; } else if (per < 3) { x = 100 - (per - 2) * 100; y = 100; } else { x = 0; y = 100 - (per - 3) * 100; }
-      rect.push(x.toFixed(1) + '% ' + y.toFixed(1) + '%');
-      var ang = Math.atan2(y - 50, x - 50);
-      // lumpy, not spiky: a couple of broad bulges, small irregularities, the odd dent or corner
-      var lump = 3.5 * Math.sin(2 * ang + ph1) + 2.5 * Math.sin(3 * ang + ph2) + 1.5 * Math.sin(5 * ang + ph3);
-      var odd = Math.random() < 0.14 ? -4.5 : (Math.random() < 0.12 ? 3 : 0);
-      half.push(cr(ang, 36 + lump * 1.4 + (Math.random() - 0.5) * 7)); // half-crushed: ragged and uneven
-      crushed.push(cr(ang, 28 + lump + odd + (Math.random() - 0.5) * 2.5)); // crushed: a lumpy ball with facets
+    var core = document.createElement('div'); core.className = 'sticky-ball-core'; core.setAttribute('data-c', c);
+    var blob = [];
+    for (var q = 0; q < 14; q++) { var aa = q / 14 * Math.PI * 2, rr = 22 + Math.random() * 7; blob.push((50 + Math.cos(aa) * rr).toFixed(1) + '% ' + (50 + Math.sin(aa) * rr * 0.95).toFixed(1) + '%'); }
+    core.style.clipPath = 'polygon(' + blob.join(',') + ')';
+    ball.appendChild(core);
+    var G = 4, P = [];
+    for (var i = 0; i <= G; i++) { P[i] = []; for (var jj = 0; jj <= G; jj++) {
+      var x = i * 100 / G, y = jj * 100 / G, inner = i > 0 && i < G && jj > 0 && jj < G;
+      P[i][jj] = [x + (inner ? (Math.random() - 0.5) * 14 : 0), y + (inner ? (Math.random() - 0.5) * 14 : 0)];
+    } }
+    var pieces = [], corners = [[0, 0], [G - 1, 0], [0, G - 1], [G - 1, G - 1]].sort(function () { return Math.random() - 0.5; }).slice(0, 2);
+    for (i = 0; i < G; i++) for (jj = 0; jj < G; jj++) {
+      var poly = [P[i][jj], P[i + 1][jj], P[i + 1][jj + 1], P[i][jj + 1]];
+      var cx = (poly[0][0] + poly[1][0] + poly[2][0] + poly[3][0]) / 4, cy = (poly[0][1] + poly[1][1] + poly[2][1] + poly[3][1]) / 4;
+      var curl = corners.some(function (k) { return k[0] === i && k[1] === jj; });
+      var pc = document.createElement('div'); pc.className = 'sticky-ball-piece'; pc.setAttribute('data-c', c);
+      pc.style.clipPath = 'polygon(' + poly.map(function (v) { return (cx + (v[0] - cx) * 1.05).toFixed(1) + '% ' + (cy + (v[1] - cy) * 1.05).toFixed(1) + '%'; }).join(',') + ')'; // overlap a touch: no seams
+      pc.style.transformOrigin = cx.toFixed(1) + '% ' + cy.toFixed(1) + '%';
+      var light = document.createElement('div'); light.className = 'sticky-ball-light';
+      var lit = Math.random(); light.style.background = 'linear-gradient(' + Math.round(Math.random() * 360) + 'deg, rgba(255,255,255,' + (0.15 + lit * 0.45).toFixed(2) + '), color-mix(in srgb, var(--deep) ' + Math.round(14 + (1 - lit) * 34) + '%, transparent))'; // shade in a deeper version of its own colour
+      pc.appendChild(light); ball.appendChild(pc);
+      var pull = curl ? 0.44 + Math.random() * 0.08 : 0.62 + Math.random() * 0.12;
+      pieces.push({ el: pc, light: light, tx: (50 - cx) / 100 * r.width * pull, ty: (50 - cy) / 100 * r.height * pull,
+        rz: (Math.random() - 0.5) * (curl ? 80 : 60), ax: (Math.random() - 0.5).toFixed(2), ay: (Math.random() - 0.5).toFixed(2),
+        a3: (curl ? 45 : 22) + Math.random() * 32, s: curl ? 0.86 : 0.74 + Math.random() * 0.12, b: (0.9 + Math.random() * 0.2).toFixed(2), z: Math.floor(Math.random() * 20) + (curl ? 20 : 1) });
     }
-    var creases = '';
-    for (var k = 0; k < 9; k++) { // fold lines, some catching light, some in shadow
-      var x1 = 20 + Math.random() * 60, y1 = 20 + Math.random() * 60, x2 = 20 + Math.random() * 60, y2 = 20 + Math.random() * 60, mx = (x1 + x2) / 2 + (Math.random() - 0.5) * 20, my = (y1 + y2) / 2 + (Math.random() - 0.5) * 20;
-      creases += '<path d="M' + x1.toFixed(0) + ' ' + y1.toFixed(0) + 'L' + mx.toFixed(0) + ' ' + my.toFixed(0) + 'L' + x2.toFixed(0) + ' ' + y2.toFixed(0) + '" stroke="' + (k % 3 ? 'rgba(0,0,0,.28)' : 'rgba(255,255,255,.6)') + '"/>';
-    }
-    paper.innerHTML = '<div class="sticky-ball-shade"></div><svg class="sticky-ball-folds" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + creases + '</svg>';
-    ball.appendChild(paper);
     (form.closest('dialog') || document.body).appendChild(ball); // inside the overlay when thrown from there
     form.style.visibility = 'hidden';
-    var cx = r.left + r.width / 2, cy = r.top + r.height / 2, a = Math.random() * Math.PI * 2;
-    var reach = Math.max(innerWidth, innerHeight) * 0.9, dx = Math.cos(a) * reach, dy = Math.sin(a) * reach;
-    var spin = (Math.random() < 0.5 ? -1 : 1) * (540 + Math.random() * 360), sq = 0.55 + Math.random() * 0.2;
-    paper.animate([
-      { clipPath: 'polygon(' + rect.join(',') + ')', filter: 'brightness(1)' },
-      { clipPath: 'polygon(' + half.join(',') + ')', filter: 'brightness(0.97)', offset: 0.14 },
-      { clipPath: 'polygon(' + crushed.join(',') + ')', filter: 'brightness(0.94)', offset: 0.3 },
-      { clipPath: 'polygon(' + crushed.join(',') + ')', filter: 'brightness(0.94)' }
-    ], { duration: 1200, easing: 'ease-out', fill: 'forwards' });
-    paper.querySelector('svg').animate([{ opacity: 0 }, { opacity: 0.9, offset: 0.28 }, { opacity: 0.9 }], { duration: 1200, fill: 'forwards' });
-    paper.querySelector('.sticky-ball-shade').animate([{ opacity: 0 }, { opacity: 1, offset: 0.3 }, { opacity: 1 }], { duration: 1200, fill: 'forwards' }); // light and shade appear as it crushes
+    var CR = 440;
+    pieces.forEach(function (p) {
+      p.el.style.zIndex = p.z;
+      p.el.animate([
+        { transform: 'none', filter: 'brightness(1)' },
+        { transform: 'translate(' + (p.tx * 0.45).toFixed(1) + 'px,' + (p.ty * 0.45).toFixed(1) + 'px) rotate(' + (p.rz * 0.4).toFixed(1) + 'deg) rotate3d(' + p.ax + ',' + p.ay + ',0,' + (p.a3 * 0.5).toFixed(0) + 'deg) scale(' + ((1 + p.s) / 2).toFixed(2) + ')', filter: 'brightness(' + ((1 + +p.b) / 2).toFixed(2) + ')', offset: 0.45 },
+        { transform: 'translate(' + p.tx.toFixed(1) + 'px,' + p.ty.toFixed(1) + 'px) rotate(' + p.rz.toFixed(1) + 'deg) rotate3d(' + p.ax + ',' + p.ay + ',0,' + p.a3.toFixed(0) + 'deg) scale(' + p.s + ')', filter: 'brightness(' + p.b + ')' }
+      ], { duration: CR, easing: 'cubic-bezier(.3,.6,.3,1)', fill: 'forwards' });
+      p.light.animate([{ opacity: 0 }, { opacity: 1 }], { duration: CR, fill: 'forwards' });
+    });
+    core.animate([{ opacity: 0, transform: 'scale(1.3)' }, { opacity: 1, transform: 'scale(1)' }], { duration: CR, fill: 'forwards' });
+    var a = Math.random() * Math.PI * 2, reach = Math.max(innerWidth, innerHeight) * 0.9, dx = Math.cos(a) * reach, dy = Math.sin(a) * reach;
+    var spin = (Math.random() < 0.5 ? -1 : 1) * (420 + Math.random() * 300), T = 1350, k0 = CR / T;
     var fly = ball.animate([
       { transform: 'rotate(-3deg) scale(1)' },
-      { transform: 'rotate(18deg) scale(' + (sq + 0.1) + ',' + (sq - 0.05) + ')', offset: 0.14 },
-      { transform: 'rotate(70deg) scale(0.34)', offset: 0.3 },
-      { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 90) + 'px) rotate(' + (spin * 0.5) + 'deg) scale(0.3)', offset: 0.62 },
-      { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + spin + 'deg) scale(0.27)' }
-    ], { duration: 1200, easing: 'cubic-bezier(.3,.55,.45,1)', fill: 'forwards' });
-    setTimeout(function () { form.style.visibility = ''; restick(el); }, 400);
+      { transform: 'rotate(8deg) scale(0.92)', offset: k0 * 0.6 },
+      { transform: 'rotate(12deg) scale(0.86)', offset: k0 },
+      { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 90) + 'px) rotate(' + (spin * 0.5) + 'deg) scale(0.62)', offset: 0.68 },
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + spin + 'deg) scale(0.5)' }
+    ], { duration: T, easing: 'cubic-bezier(.3,.55,.45,1)', fill: 'forwards' });
+    setTimeout(function () { form.style.visibility = ''; restick(el); }, CR);
     fly.onfinish = function () { ball.remove(); };
   }
   function waitForToken(el, ms) {
@@ -1698,7 +1783,9 @@
   }
   function pinSticky(el) {
     var form = el.querySelector('.stickies-compose'), text = form.querySelector('textarea'), nameIn = form.querySelector('input'), msg = form.querySelector('.stickies-msg'), btn = form.querySelector('.stickies-pin');
-    var body = text.value.trim(); if (!body) { text.focus(); return; }
+    var body = text.value.trim();
+    if (!body) { msg.textContent = el.getAttribute('data-err-empty'); msg.classList.add('is-hand'); text.focus(); return; }
+    msg.classList.remove('is-hand');
     btn.disabled = true; msg.textContent = el._ts ? '' : el.getAttribute('data-checking');
     waitForToken(el, 10000).then(function (token) {
       return fetch(stickyApi(el), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: body, name: nameIn.value.trim(), colour: Number(form.getAttribute('data-c')), turnstile: token }) })
@@ -1743,7 +1830,7 @@
           .map(function (m) { if (st[m.id]) m.status = st[m.id]; return m; }));
         el.hidden = false; layoutStickies(el); // only shown once the Worker answers
       }).catch(function () {});
-      var resizeT; window.addEventListener('resize', function () { clearTimeout(resizeT); resizeT = setTimeout(function () { if (!el.hidden) layoutStickies(el); }, 200); });
+      var resizeT; window.addEventListener('resize', function () { clearTimeout(resizeT); resizeT = setTimeout(function () { if (!el.hidden) { layoutStickies(el); listAroundComposer(el); } }, 200); });
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (!el.hidden) layoutStickies(el); });
     });
   }
@@ -1756,7 +1843,7 @@
     if (tog) {
       var on = el.classList.toggle('is-list'); el.querySelector('.stickies-list').hidden = !on;
       tog.setAttribute('aria-pressed', String(on)); var lbl = tog.getAttribute(on ? 'data-pile' : 'data-list'); tog.setAttribute('aria-label', lbl); tog.title = lbl;
-      if (!on) layoutStickies(el);
+      if (!on) layoutStickies(el); else listAroundComposer(el);
       return;
     }
     var n = ev.target.closest('.sticky'); if (n) sendStickyBack(el, n);
@@ -1784,6 +1871,8 @@
   });
   document.addEventListener('input', function (ev) {
     if (!ev.target.matches || !ev.target.matches('.stickies-compose textarea')) return;
+    var hand = ev.target.closest('.stickies-compose').querySelector('.stickies-msg.is-hand'); // "write something first" goes once you do
+    if (hand) { hand.textContent = ''; hand.classList.remove('is-hand'); }
     var left = 200 - [...ev.target.value].length, c = ev.target.closest('.stickies-compose').querySelector('.stickies-left');
     c.textContent = left; c.classList.toggle('is-low', left < 20);
   });
