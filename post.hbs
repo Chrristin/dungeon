@@ -37,11 +37,12 @@
         {{/if}}
 
         <div class="post-actions" data-slug="{{slug}}" data-url="{{url absolute="true"}}" data-title="{{title}}">
-            {{#if @custom.likes_endpoint}}
-            <button class="post-like" type="button" data-endpoint="{{@custom.likes_endpoint}}" aria-pressed="false" hidden>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.4-4.5-9.1-9.1C1.8 8.1 3.7 4.9 7 4.9c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.3 0 5.2 3.2 4.1 6.3-1.7 4.6-9.1 9.1-9.1 9.1z"/></svg>
-                <span class="post-like-count"></span><span class="visually-hidden">{{t "Like this post"}}</span>
-            </button>
+            {{#if @custom.stamps_endpoint}}
+            <div class="stamp" data-endpoint="{{@custom.stamps_endpoint}}" data-slug="{{slug}}" data-bad-name="{{t "Name not allowed"}}" hidden>
+                <button class="stamp-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="{{t "Stamp: I was here"}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6l-.8 7h-4.4z"/><path d="M5 13.5h14v3H5z"/><path d="M4 20.5h16"/><path d="M10 10.5v3M14 10.5v3"/></svg><span class="stamp-count"></span></button>
+                <div class="stamp-mark" hidden><span class="stamp-seen">{{t "Seen"}}</span><span class="stamp-date"></span><span class="stamp-name"><input type="text" maxlength="24" autocomplete="off" aria-label="{{t "Leave your name"}}"><span class="stamp-prompt" aria-hidden="true">{{t "leave name"}}</span><span class="stamp-signed"></span></span></div>
+                <div class="stamp-list" hidden><div class="stamp-list-rows"></div><p class="stamp-more" data-word="{{t "more"}}"></p></div>
+            </div>
             {{/if}}
             <div class="post-share">
                 <button class="post-share-button" type="button" aria-expanded="false" aria-haspopup="true" aria-label="{{t "Share"}}" title="{{t "Share"}}">

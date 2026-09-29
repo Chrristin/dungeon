@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 1.1.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 1.2.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -66,7 +66,7 @@ Found in **Settings → Design & branding → Customise**.
 | **Saber light message** | Text shown briefly when switching to light mode. |
 | **Saber dark message** | Text shown briefly when switching to dark mode. |
 | **Saber sound** | A synthesised saber sound on switching. Off by default. It only ever plays when a visitor clicks the saber. |
-| **Likes endpoint** | The address of your likes Worker. Empty hides the heart; share always shows. See [Likes and sharing](#likes-and-sharing). |
+| **Stamps endpoint** | The address of your stamps Worker. Empty hides the stamps; share always shows. See [Stamps and sharing](#stamps-and-sharing). |
 
 ## Navigation
 
@@ -121,11 +121,13 @@ Add one of these internal tags to a Scatter note or a Now month to fix its colou
 
 Tables in posts and pages are styled as clean rows, with the first column as the label and the rest quieter. Two-column Markdown tables with an empty header row show no header at all. On a page with the URL **`colophon`**, level-4 headings (`####`) become small uppercase section labels, handy for a "how this site is made" page.
 
-## Likes and sharing
+## Stamps and sharing
 
-Every post ends with a **Share** button: the phone's own share sheet on phones, and a small menu on desktop with Copy link, X, LinkedIn, WhatsApp and Email. It needs no setup and loads nothing from those services.
+Every post ends with a round **Share** button: the phone's own share sheet on phones, and a small menu on desktop with Copy link, X, LinkedIn, WhatsApp and Email. It needs no setup and loads nothing from those services.
 
-The **heart** needs a tiny counter you run yourself on Cloudflare's free plan, because a Ghost theme can't store anything. Follow [`extras/likes-worker`](extras/likes-worker/README.md), then paste the Worker's address into the **Likes endpoint** setting. Until then the heart stays hidden.
+**Stamps** are the "I was here" of this theme, on posts and on Now cards. One stamp button shows how many readers have stamped. Stamping brings the stamp down with a small animation and leaves a red SEEN impression with the date, and a name line inside the stamp invites a signature for a few seconds. Tapping the stamp again lists the latest names.
+
+Stamps need a small counter you run yourself on Cloudflare's free plan, because a Ghost theme can't store anything. Follow [`extras/stamps-worker`](extras/stamps-worker/README.md), then paste the Worker's address into the **Stamps endpoint** setting. Until then the stamps stay hidden.
 
 ## A row of people
 

@@ -386,8 +386,9 @@
   }
 
   document.querySelectorAll('.now-card').forEach(function (card) {
-    card.addEventListener('click', function (e) { if (!e.target.closest('a, .yt-lite, iframe')) openMonth(card); });
+    card.addEventListener('click', function (e) { if (!e.target.closest('a, .yt-lite, iframe, .stamp')) openMonth(card); });
     card.addEventListener('keydown', function (e) {
+      if (e.target !== card) return; // keys pressed inside the card (on the stamp, say) are not for the card
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMonth(card); }
     });
   });
@@ -1097,8 +1098,7 @@
   var baseUrl = location.href;
   var pushed = false;
 
-  // End of a post: heart and share. The heart needs a likes Worker (theme setting); a like is
-  // final and remembered in this browser. Share uses the phone's share sheet, or a small menu.
+  // End of a post: share. Uses the phone's share sheet, or a small menu on desktop.
   function initPostActions(root) {
     root.querySelectorAll('.post-actions').forEach(function (box) {
       var url = box.getAttribute('data-url') || location.href, title = box.getAttribute('data-title') || document.title;
@@ -1110,34 +1110,6 @@
         email: 'mailto:?subject=' + e(title) + '&body=' + e(url)
       };
       box.querySelectorAll('a[data-share]').forEach(function (a) { a.href = links[a.getAttribute('data-share')] || '#'; });
-      var like = box.querySelector('.post-like');
-      if (!like || like.getAttribute('data-ready')) return;
-      like.setAttribute('data-ready', '1');
-      var slug = box.getAttribute('data-slug'), api = like.getAttribute('data-endpoint').replace(/\/+$/, '') + '/likes/' + encodeURIComponent(slug);
-      var liked = false; try { liked = localStorage.getItem('dungeon-liked:' + slug) === '1'; } catch (err) {}
-      like.setAttribute('aria-pressed', String(liked));
-      fetch(api).then(function (r) { if (!r.ok) throw r; return r.json(); }).then(function (d) {
-        like.querySelector('.post-like-count').textContent = d.count > 0 ? d.count : '';
-        like.hidden = false; // only shown once the Worker has answered
-      }).catch(function () {});
-    });
-  }
-  function likeClicked(like) {
-    var box = like.closest('.post-actions'), slug = box.getAttribute('data-slug');
-    var count = like.querySelector('.post-like-count');
-    if (like.getAttribute('aria-pressed') === 'true') { // already liked: just a little pulse
-      like.classList.remove('is-pulsing'); void like.offsetWidth; like.classList.add('is-pulsing'); return;
-    }
-    var before = parseInt(count.textContent, 10) || 0;
-    like.setAttribute('aria-pressed', 'true'); count.textContent = before + 1;
-    like.classList.remove('is-popping'); void like.offsetWidth; like.classList.add('is-popping');
-    try { localStorage.setItem('dungeon-liked:' + slug, '1'); } catch (err) {}
-    var api = like.getAttribute('data-endpoint').replace(/\/+$/, '') + '/likes/' + encodeURIComponent(slug);
-    fetch(api, { method: 'POST' }).then(function (r) { if (!r.ok) throw r; return r.json(); }).then(function (d) {
-      count.textContent = d.count > 0 ? d.count : '';
-    }).catch(function () { // undo if the Worker refused or is unreachable
-      like.setAttribute('aria-pressed', 'false'); count.textContent = before > 0 ? before : '';
-      try { localStorage.removeItem('dungeon-liked:' + slug); } catch (err) {}
     });
   }
   function closeShareMenus(except) {
@@ -1147,8 +1119,6 @@
     });
   }
   document.addEventListener('click', function (ev) {
-    var like = ev.target.closest('.post-like');
-    if (like) { likeClicked(like); return; }
     var shareBtn = ev.target.closest('.post-share-button');
     if (shareBtn) {
       var box = shareBtn.closest('.post-actions');
@@ -1172,6 +1142,132 @@
   document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeShareMenus(); });
   initPostActions(document);
 
+  // Stamps: "I was here", on posts and Now cards. Needs the stamps Worker (theme setting).
+  // A stamp is final. This browser keeps the stamp's private key, which is the only way to sign it.
+  var calmStamps = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var stampApi = function (el) { return el.getAttribute('data-endpoint').replace(/\/+$/, '') + '/stamps/' + encodeURIComponent(el.getAttribute('data-slug')); };
+  var myStamp = function (el) { try { return JSON.parse(localStorage.getItem('dungeon-stamp:' + el.getAttribute('data-slug')) || 'null'); } catch (e) { return null; } };
+  var saveStamp = function (el, s) { try { localStorage.setItem('dungeon-stamp:' + el.getAttribute('data-slug'), JSON.stringify(s)); } catch (e) {} };
+  var MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  var stampDate = function (iso, withYear) { // always "29 SEP 2026", like a real date stamp
+    var d = new Date(iso); if (isNaN(d)) d = new Date();
+    var s = String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()];
+    return withYear ? s + ' ' + d.getUTCFullYear() : s;
+  };
+  function setCount(el, n) { el.querySelector('.stamp-count').textContent = n > 0 ? n : ''; }
+  function showMark(el, mine, fresh) {
+    var mark = el.querySelector('.stamp-mark'), nameBox = mark.querySelector('.stamp-name');
+    mark.querySelector('.stamp-date').textContent = stampDate(mine.date, true);
+    mark.classList.toggle('is-signed', !!mine.name);
+    mark.querySelector('.stamp-signed').textContent = mine.name || '';
+    mark.classList.toggle('name-gone', !mine.name && !fresh);
+    mark.hidden = false; el.classList.add('is-stamped');
+    if (!fresh || calmStamps) return;
+    mark.classList.remove('is-landing'); void mark.offsetWidth; mark.classList.add('is-landing');
+    if (mine.name) return;
+    clearTimeout(el._nameTimer);
+    el._nameTimer = setTimeout(function () { // the name line fades unless they've started signing
+      var input = nameBox.querySelector('input');
+      if (document.activeElement !== input && !input.value) mark.classList.add('name-gone');
+    }, 5000);
+  }
+  function renderList(el) {
+    var d = el._stamps || { names: [], more: 0 }, mine = myStamp(el);
+    var rows = el.querySelector('.stamp-list-rows'); rows.textContent = '';
+    if (mine && !mine.name) {
+      var row = document.createElement('div'); row.className = 'stamp-list-row';
+      var b = document.createElement('b'); b.textContent = stampDate(mine.date, false);
+      var input = document.createElement('input'); input.type = 'text'; input.maxLength = 24;
+      input.placeholder = el.querySelector('.stamp-prompt').textContent; input.setAttribute('aria-label', input.placeholder);
+      input.className = 'stamp-list-input'; row.appendChild(b); row.appendChild(input); rows.appendChild(row);
+    }
+    d.names.forEach(function (n) {
+      var row = document.createElement('div'); row.className = 'stamp-list-row';
+      var b = document.createElement('b'); b.textContent = stampDate(n.date, false);
+      var s = document.createElement('span'); s.textContent = n.name;
+      row.appendChild(b); row.appendChild(s); rows.appendChild(row);
+    });
+    var more = el.querySelector('.stamp-more');
+    var rest = d.more - (mine && !mine.name ? 1 : 0); // your own unsigned stamp already has its row
+    more.textContent = rest > 0 ? '+ ' + rest + ' ' + (more.getAttribute('data-word') || 'more') : '';
+  }
+  function closeStampLists(except) {
+    document.querySelectorAll('.stamp-list:not([hidden])').forEach(function (l) {
+      if (l === except) return; l.hidden = true;
+      var b = l.parentNode.querySelector('.stamp-btn'); if (b) b.setAttribute('aria-expanded', 'false');
+    });
+  }
+  function initStamps(root) {
+    root.querySelectorAll('.stamp').forEach(function (el) {
+      if (el.getAttribute('data-ready')) return;
+      el.setAttribute('data-ready', '1');
+      fetch(stampApi(el)).then(function (r) { if (!r.ok) throw r; return r.json(); }).then(function (d) {
+        el._stamps = d; setCount(el, d.count); el.hidden = false; // only shown once the Worker answers
+        var mine = myStamp(el); if (mine) showMark(el, mine, false);
+      }).catch(function () {});
+    });
+  }
+  function stampIt(el) {
+    var before = (el._stamps && el._stamps.count) || 0, btn = el.querySelector('.stamp-btn');
+    el.classList.remove('is-going'); void btn.offsetWidth;
+    if (!calmStamps) el.classList.add('is-going');
+    var pressed = new Promise(function (res) { setTimeout(res, calmStamps ? 0 : 700); }).then(function () {
+      setCount(el, before + 1); var c = el.querySelector('.stamp-count'); c.classList.remove('is-bumping'); void c.offsetWidth; c.classList.add('is-bumping');
+    });
+    var landed = new Promise(function (res) { setTimeout(res, calmStamps ? 0 : 900); });
+    var sent = fetch(stampApi(el), { method: 'POST' }).then(function (r) { if (!r.ok) throw r; return r.json(); });
+    Promise.all([sent, pressed, landed]).then(function (out) {
+      var d = out[0]; el._stamps = { count: d.count, names: d.names, more: d.more }; setCount(el, d.count);
+      var mine = { id: d.id, token: d.token, date: new Date().toISOString() }; saveStamp(el, mine);
+      el.classList.remove('is-going'); showMark(el, mine, true);
+    }, function () { el.classList.remove('is-going'); setCount(el, before); }); // refused or unreachable: undo
+  }
+  function signStamp(el, input) {
+    var name = input.value.replace(/\s+/g, ' ').trim(), mine = myStamp(el);
+    if (!name || !mine || mine.name || el._signing) return;
+    el._signing = true;
+    fetch(stampApi(el) + '/' + mine.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: mine.token, name: name }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); })
+      .then(function (res) {
+        el._signing = false;
+        if (res.ok || res.status === 409) {
+          mine.name = name; saveStamp(el, mine);
+          if (res.ok) el._stamps = { count: res.d.count, names: res.d.names, more: res.d.more };
+          clearTimeout(el._nameTimer); showMark(el, mine, false); renderList(el); input.blur();
+        } else {
+          var box = input.closest('.stamp-name, .stamp-list-row'); input.title = el.getAttribute('data-bad-name') || 'Name not allowed';
+          box.classList.remove('is-invalid'); void box.offsetWidth; box.classList.add('is-invalid');
+        }
+      }, function () { el._signing = false; });
+  }
+  document.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('.stamp-btn');
+    if (btn) {
+      var el = btn.closest('.stamp');
+      if (!myStamp(el)) { closeStampLists(); stampIt(el); return; }
+      var list = el.querySelector('.stamp-list'); closeStampLists(list);
+      if (list.hidden) renderList(el);
+      list.hidden = !list.hidden; btn.setAttribute('aria-expanded', String(!list.hidden));
+      if (!list.hidden) { var i = list.querySelector('input'); if (i && window.matchMedia('(pointer: fine)').matches) i.focus(); }
+      return;
+    }
+    if (!ev.target.closest('.stamp-list')) closeStampLists();
+  });
+  document.addEventListener('input', function (ev) {
+    if (ev.target.matches('.stamp-name input')) ev.target.parentNode.classList.toggle('has-value', !!ev.target.value);
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') { closeStampLists(); return; }
+    if (ev.key === 'Enter' && ev.target.matches('.stamp-name input, .stamp-list-input')) { ev.preventDefault(); signStamp(ev.target.closest('.stamp'), ev.target); }
+  });
+  document.addEventListener('focusout', function (ev) {
+    if (!ev.target.matches || !ev.target.matches('.stamp-name input')) return;
+    var el = ev.target.closest('.stamp'), input = ev.target;
+    if (input.value.trim()) { signStamp(el, input); return; }
+    clearTimeout(el._nameTimer); el._nameTimer = setTimeout(function () { if (!input.value) el.querySelector('.stamp-mark').classList.add('name-gone'); }, 2500);
+  });
+  initStamps(document);
+
   function closeReader() { if (reader && reader.open) reader.close(); }
 
   function openPost(url, card) {
@@ -1185,6 +1281,7 @@
         body.replaceChildren(document.importNode(panel, true));
         decorate(body);
         initPostActions(body);
+        initStamps(body);
         liteYouTube(body);
         document.documentElement.classList.add('reader-open');
         reader.showModal();

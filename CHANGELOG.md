@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0
+
+- Stamps replace the heart: "I was here", on posts and Now cards. One button with the count; stamping leaves a red SEEN impression with the date and a name line to sign, and tapping again lists the latest names. Counted by a small Cloudflare Worker with a D1 database that you run yourself (`extras/stamps-worker`), set in the new **Stamps endpoint** setting.
+- The **Likes endpoint** setting and the likes Worker are gone; they were never needed.
+
 ## 1.1.0
 
 - Share at the end of every post, as a round icon button: the phone's share sheet on phones, a menu with Copy link, X, LinkedIn, WhatsApp and Email on desktop.
