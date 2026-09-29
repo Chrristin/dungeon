@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.0
+
+- Share at the end of every post, as a round icon button: the phone's share sheet on phones, a menu with Copy link, X, LinkedIn, WhatsApp and Email on desktop.
+- A heart for posts, counted by a small Cloudflare Worker you run yourself (in `extras/likes-worker`). A like is final, and each reader's like is remembered in their browser. Hidden until the new **Likes endpoint** setting is filled in.
+
+## 1.0.9
+
+- The floating menu makes an entrance: on the first page of a visit it shows just Everything, gives a shake, then grows to its fitted width as the other items slide in. Later pages, and visitors who prefer reduced motion, get the finished menu straight away.
+- Fixed: the menu's wobble when it hides and returns on scroll had stopped working in 1.0.8.
+
+## 1.0.8
+
+- On phones, the floating menu no longer visibly changes width while the page loads: it appears once it has been fitted to the screen with the real fonts.
+- Demo build: the link check no longer mistakes example markup in stylesheet comments for links.
+
 ## 1.0.7
 
 - Dark mode: the floating menu and the Everything panel no longer cast a smudgy shadow; they get a faint highlight along the top edge instead.

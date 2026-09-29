@@ -515,6 +515,14 @@ body.has-dock .post-next { padding-bottom: 1rem; }
     transition: rotate 220ms ease;
 }
 .dock-pill:hover, .dock-pill:focus-within { rotate: 0deg; }
+/* Loading. First page of a visit: only the Everything item shows (it always fits), and site.js then
+   shakes the pill and grows it to its fitted width. Other pages, reduced motion, or no Everything item:
+   the pill stays hidden until fitted, then fades in (shown after 2s regardless). site.js adds .is-fitted. */
+.js:not(.dock-seen) .dock:has(.dock-pill a[href$="#everything"]):not(.is-fitted) .dock-pill li:not(:has(> a[href$="#everything"])) { display: none; }
+.js.dock-seen .dock:not(.is-fitted) .dock-pill,
+.js .dock:not(:has(.dock-pill a[href$="#everything"])):not(.is-fitted) .dock-pill { opacity: 0; animation: colophon-failsafe 0s linear 2s forwards; }
+.js .dock.is-fitted .dock-pill { opacity: 1; transition: rotate 220ms ease, opacity 0.25s ease; }
+@media (prefers-reduced-motion: reduce) { .js .dock.is-fitted .dock-pill { transition: none; } }
 .dock-pill.is-wobbling { animation: dock-wobble 520ms ease-out; }
 @keyframes dock-wobble {
     0%   { rotate: var(--dock-tilt); }
@@ -987,6 +995,42 @@ body.has-everything .colophon-secondary { display: none; }
 .gh-content td:not(:first-child) { color: var(--on-card-meta, var(--graphite)); font-size: 0.92em; }
 .gh-content td strong { font-weight: 500; }
 .gh-content table + h4, .gh-content table + p { margin-top: 1.8em; }
+/* End of a post: a heart (when a likes Worker is set up) and a share menu.
+   Post panels are pastel in both modes, so colours are fixed rather than themed. */
+.post-actions { display: flex; align-items: center; gap: 0.6rem; margin-top: 1.6rem; padding-top: 1.1rem; border-top: 1px solid var(--on-card-rule, var(--rule)); }
+.post-like, .post-share-button {
+    display: inline-flex; align-items: center; gap: 0.45rem; height: 2.4rem; padding: 0 0.95rem;
+    border: 1px solid rgba(23, 25, 30, 0.18); border-radius: 999px; background: rgba(255, 255, 255, 0.35);
+    color: #17191e; font: 500 0.85rem/1 var(--mono); cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease; }
+/* Share is icon-only: a round button the same height as the heart */
+.post-share-button { width: 2.4rem; padding: 0; justify-content: center; }
+.post-like:hover, .post-share-button:hover { background: rgba(255, 255, 255, 0.65); border-color: rgba(23, 25, 30, 0.3); }
+.post-like:focus-visible, .post-share-button:focus-visible, .post-share-menu :focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+.post-like svg, .post-share-button svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.post-like { position: relative; }
+.post-like-count:empty { display: none; }
+.post-like[aria-pressed="true"] svg { fill: #e0314b; stroke: #e0314b; }
+.post-like.is-popping svg { animation: like-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.4); }
+.post-like.is-popping::after {
+    content: ""; position: absolute; left: 0.95rem; top: 50%; width: 1.15rem; height: 1.15rem; margin-top: -0.575rem;
+    border-radius: 50%; border: 2px solid #e0314b; animation: like-burst 0.5s ease-out forwards; pointer-events: none; }
+.post-like.is-pulsing svg { animation: like-pulse 0.35s ease; }
+@keyframes like-pop { 0% { transform: scale(1); } 35% { transform: scale(1.4); } 100% { transform: scale(1); } }
+@keyframes like-burst { from { transform: scale(0.6); opacity: 0.9; } to { transform: scale(2.4); opacity: 0; } }
+@keyframes like-pulse { 50% { transform: scale(1.15); } }
+.post-share { position: relative; }
+.post-share-menu {
+    position: absolute; left: 0; bottom: calc(100% + 0.5rem); z-index: 10; min-width: 11rem; padding: 0.35rem;
+    display: flex; flex-direction: column; border-radius: 14px; background: #fdfcf8; color: #17191e;
+    box-shadow: 0 0 0 1px rgba(23, 25, 30, 0.1), 0 16px 32px -18px rgba(0, 0, 0, 0.55); rotate: -1deg; }
+.post-share-menu[hidden] { display: none; }
+.post-share-menu a, .post-share-menu button {
+    display: block; width: 100%; padding: 0.55rem 0.75rem; border: 0; border-radius: 10px; background: none;
+    color: inherit; font: 0.88rem/1.2 var(--sans, inherit); text-align: left; text-decoration: none; cursor: pointer; }
+.post-share-menu a:hover, .post-share-menu button:hover { background: rgba(23, 25, 30, 0.07); }
+@media (prefers-reduced-motion: reduce) { .post-like.is-popping svg, .post-like.is-popping::after, .post-like.is-pulsing svg { animation: none; } }
+
 /* People row: round faces (photo or initials) that show a small card on hover, focus or tap.
    <div class="people"><span class="person" tabindex="0"><img src="..." alt="Name"> or <span class="person-initials">AB</span>
    <span class="person-note"><a href="...">Name</a> Reason</span></span> ... </div> */

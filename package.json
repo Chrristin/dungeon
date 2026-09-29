@@ -1,7 +1,7 @@
 {
   "name": "dungeon",
   "description": "A playful Ghost theme of tilted pastel index cards, a floating menu, a Now page, a Scatter wall and a lightsaber colour switch.",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "license": "MIT",
   "author": {
     "name": "Christin Emmanuel George",
@@ -134,6 +134,11 @@
         "type": "boolean",
         "default": true,
         "description": "Show the design credit in the footer"
+      },
+      "likes_endpoint": {
+        "type": "text",
+        "default": "",
+        "description": "Address of your likes Worker (see extras/likes-worker). Empty hides the heart"
       }
     }
   },

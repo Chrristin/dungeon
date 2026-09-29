@@ -52,7 +52,7 @@ jobs:
         if: steps.exists.outputs.released == 'false'
         run: |
           V="${{ steps.version.outputs.version }}"
-          zip -r dungeon.zip . -x '.git/*' '.github/*' 'docs/*' 'demo/*' '.gitignore'
+          zip -r dungeon.zip . -x '.git/*' '.github/*' 'docs/*' 'demo/*' 'extras/*' '.gitignore'
           awk -v v="$V" '$0 == "## " v {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md
           [ -s notes.md ] || echo "Dungeon $V" > notes.md
           cat notes.md
@@ -94,7 +94,7 @@ jobs:
           echo "Ghost did not start"; docker logs ghost | tail -50; exit 1
       - name: Build the demo site
         run: |
-          zip -qr dungeon.zip . -x '.git/*' '.github/*' 'docs/*' 'demo/*' '.gitignore'
+          zip -qr dungeon.zip . -x '.git/*' '.github/*' 'docs/*' 'demo/*' 'extras/*' '.gitignore'
           GHOST_URL=http://localhost:2368 THEME_ZIP=dungeon.zip OUT_DIR=demo-site node demo/build.mjs
       - name: Keep a copy of the built demo
         uses: actions/upload-artifact@v4

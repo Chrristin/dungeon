@@ -246,7 +246,48 @@
       closeMore(false);
       fitPill();
     });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitPill);
+    // Reveal the menu once it has been fitted with the real fonts (after 1.5s regardless).
+    // First page of a visit: it has been showing only Everything; it shakes, then grows to its
+    // fitted width while the other items slide in. The final layout is worked out and the
+    // starting state restored in one go, so no in-between size is ever painted.
+    var revealDock = function () {
+      if (dock.classList.contains('is-fitted')) { fitPill(); return; }
+      var intro = trigger && pillList && !document.documentElement.classList.contains('dock-seen');
+      if (!intro) { fitPill(); dock.classList.add('is-fitted'); return; }
+      var triggerLi = trigger.closest('li');
+      var startW = pill.offsetWidth;            // Everything alone
+      dock.classList.add('is-fitted');          // every item back in the pill...
+      fitPill();                                // ...then fitted for this screen
+      var endW = pill.offsetWidth;
+      var arriving = [].filter.call(pillList.children, function (li) { return li !== triggerLi && !li.classList.contains('more-divider'); });
+      try { sessionStorage.setItem('dungeon-dock-intro', '1'); } catch (e) {}
+      if (!arriving.length || endW <= startW) return;
+      // Back to the starting look before anything is painted
+      pill.style.boxSizing = 'border-box';
+      pill.style.width = startW + 'px';
+      pillList.style.overflow = 'hidden';
+      arriving.forEach(function (li) { li.style.opacity = '0'; li.style.translate = '-12px 0'; });
+      requestAnimationFrame(function () {
+        wobble();
+        setTimeout(function () {
+          pill.style.transition = 'width 520ms cubic-bezier(0.25, 1.25, 0.4, 1), rotate 220ms ease';
+          pill.style.width = endW + 'px';
+          arriving.forEach(function (li, i) {
+            var delay = 140 + i * 90;
+            li.style.transition = 'opacity 260ms ease ' + delay + 'ms, translate 360ms cubic-bezier(0.2, 0.9, 0.3, 1.25) ' + delay + 'ms';
+            li.style.opacity = '1';
+            li.style.translate = '0 0';
+          });
+          setTimeout(function () {
+            ['boxSizing', 'width', 'transition'].forEach(function (p) { pill.style[p] = ''; });
+            pillList.style.overflow = '';
+            arriving.forEach(function (li) { li.style.transition = ''; li.style.opacity = ''; li.style.translate = ''; });
+          }, 520 + 140 + arriving.length * 90 + 400);
+        }, 380);
+      });
+    };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(revealDock); else revealDock();
+    setTimeout(function () { if (!dock.classList.contains('is-fitted')) revealDock(); }, 1500);
 
     var lastY = window.scrollY, ticking = false;
     window.addEventListener('scroll', function () {
@@ -1056,6 +1097,81 @@
   var baseUrl = location.href;
   var pushed = false;
 
+  // End of a post: heart and share. The heart needs a likes Worker (theme setting); a like is
+  // final and remembered in this browser. Share uses the phone's share sheet, or a small menu.
+  function initPostActions(root) {
+    root.querySelectorAll('.post-actions').forEach(function (box) {
+      var url = box.getAttribute('data-url') || location.href, title = box.getAttribute('data-title') || document.title;
+      var e = encodeURIComponent;
+      var links = {
+        x: 'https://twitter.com/intent/tweet?url=' + e(url) + '&text=' + e(title),
+        linkedin: 'https://www.linkedin.com/sharing/share-offsite/?url=' + e(url),
+        whatsapp: 'https://wa.me/?text=' + e(title + ' ' + url),
+        email: 'mailto:?subject=' + e(title) + '&body=' + e(url)
+      };
+      box.querySelectorAll('a[data-share]').forEach(function (a) { a.href = links[a.getAttribute('data-share')] || '#'; });
+      var like = box.querySelector('.post-like');
+      if (!like || like.getAttribute('data-ready')) return;
+      like.setAttribute('data-ready', '1');
+      var slug = box.getAttribute('data-slug'), api = like.getAttribute('data-endpoint').replace(/\/+$/, '') + '/likes/' + encodeURIComponent(slug);
+      var liked = false; try { liked = localStorage.getItem('dungeon-liked:' + slug) === '1'; } catch (err) {}
+      like.setAttribute('aria-pressed', String(liked));
+      fetch(api).then(function (r) { if (!r.ok) throw r; return r.json(); }).then(function (d) {
+        like.querySelector('.post-like-count').textContent = d.count > 0 ? d.count : '';
+        like.hidden = false; // only shown once the Worker has answered
+      }).catch(function () {});
+    });
+  }
+  function likeClicked(like) {
+    var box = like.closest('.post-actions'), slug = box.getAttribute('data-slug');
+    var count = like.querySelector('.post-like-count');
+    if (like.getAttribute('aria-pressed') === 'true') { // already liked: just a little pulse
+      like.classList.remove('is-pulsing'); void like.offsetWidth; like.classList.add('is-pulsing'); return;
+    }
+    var before = parseInt(count.textContent, 10) || 0;
+    like.setAttribute('aria-pressed', 'true'); count.textContent = before + 1;
+    like.classList.remove('is-popping'); void like.offsetWidth; like.classList.add('is-popping');
+    try { localStorage.setItem('dungeon-liked:' + slug, '1'); } catch (err) {}
+    var api = like.getAttribute('data-endpoint').replace(/\/+$/, '') + '/likes/' + encodeURIComponent(slug);
+    fetch(api, { method: 'POST' }).then(function (r) { if (!r.ok) throw r; return r.json(); }).then(function (d) {
+      count.textContent = d.count > 0 ? d.count : '';
+    }).catch(function () { // undo if the Worker refused or is unreachable
+      like.setAttribute('aria-pressed', 'false'); count.textContent = before > 0 ? before : '';
+      try { localStorage.removeItem('dungeon-liked:' + slug); } catch (err) {}
+    });
+  }
+  function closeShareMenus(except) {
+    document.querySelectorAll('.post-share-menu:not([hidden])').forEach(function (m) {
+      if (m === except) return; m.hidden = true;
+      var b = m.parentNode.querySelector('.post-share-button'); if (b) b.setAttribute('aria-expanded', 'false');
+    });
+  }
+  document.addEventListener('click', function (ev) {
+    var like = ev.target.closest('.post-like');
+    if (like) { likeClicked(like); return; }
+    var shareBtn = ev.target.closest('.post-share-button');
+    if (shareBtn) {
+      var box = shareBtn.closest('.post-actions');
+      var url = box.getAttribute('data-url') || location.href, title = box.getAttribute('data-title') || document.title;
+      if (navigator.share && window.matchMedia('(pointer: coarse)').matches) { navigator.share({ title: title, url: url }).catch(function () {}); return; }
+      var menu = shareBtn.parentNode.querySelector('.post-share-menu');
+      closeShareMenus(menu);
+      menu.hidden = !menu.hidden; shareBtn.setAttribute('aria-expanded', String(!menu.hidden));
+      return;
+    }
+    var copy = ev.target.closest('[data-share="copy"]');
+    if (copy) {
+      var link = copy.closest('.post-actions').getAttribute('data-url') || location.href;
+      var label = copy.textContent;
+      var done = function () { copy.textContent = copy.getAttribute('data-copied') || 'Link copied'; setTimeout(function () { copy.textContent = label; closeShareMenus(); }, 1400); };
+      if (navigator.clipboard) navigator.clipboard.writeText(link).then(done, done); else done();
+      return;
+    }
+    if (!ev.target.closest('.post-share-menu')) closeShareMenus();
+  });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeShareMenus(); });
+  initPostActions(document);
+
   function closeReader() { if (reader && reader.open) reader.close(); }
 
   function openPost(url, card) {
@@ -1068,6 +1184,7 @@
         if (!panel) { location.href = url; return; }
         body.replaceChildren(document.importNode(panel, true));
         decorate(body);
+        initPostActions(body);
         liteYouTube(body);
         document.documentElement.classList.add('reader-open');
         reader.showModal();
