@@ -6,8 +6,8 @@
 //   DELETE /stamps/<slug>/<id>       { token }       -> { ok, names, more }   (remove your own name, within a day)
 //
 // Stickies (1.3.0), short notes under posts, pinned once approved:
-//   GET    /stickies/<slug>                       -> { count, stickies: [{id, date, body, name}] }   (approved only)
-//   POST   /stickies/<slug>  { body, name, turnstile } -> { id, token, status: "pending" }
+//   GET    /stickies/<slug>                       -> { count, stickies: [{id, date, body, name, colour}] }   (approved only)
+//   POST   /stickies/<slug>  { body, name, colour, turnstile } -> { id, token, status: "pending" }
 //   POST   /stickies/<slug>/mine  { items: [{id, token}] } -> { items: [{id, status}] }   (your own stickies)
 //   DELETE /stickies/<slug>/<id>  { token }       -> { ok }   (take your own back, within a day)
 //   GET|POST /moderate?id=&a=approve|delete&exp=&sig=   signed, expiring links used by ntfy
@@ -95,6 +95,7 @@ export default {
     } catch (e) {
       const msg = String(e && e.message || e);
       if (/no such table/i.test(msg)) return json({ error: 'setup: the stamps table is missing. Run schema.sql in the D1 console.' }, 500, headers);
+      if (/no such column: colour/i.test(msg)) return json({ error: 'setup: the stickies table needs updating for 1.3.2. Run migrate-1.3.2.sql in the D1 console.' }, 500, headers);
       if (/no such table: stickies/i.test(msg)) return json({ error: 'setup: the stickies table is missing. Run migrate-1.3.0.sql in the D1 console.' }, 500, headers);
       if (/no such column: named_at/i.test(msg)) return json({ error: 'setup: the database needs updating for 1.2.3. Run migrate-1.2.3.sql in the D1 console.' }, 500, headers);
       return json({ error: 'unexpected: ' + msg }, 500, headers);
@@ -221,8 +222,8 @@ async function stickies(request, env, headers, ctx) {
 
   if (request.method === 'GET' && !sub) {
     const count = (await env.DB.prepare("SELECT COUNT(*) AS n FROM stickies WHERE post = ? AND status = 'approved'").bind(slug).first()).n;
-    const rows = (await env.DB.prepare("SELECT id, created_at, body, name FROM stickies WHERE post = ? AND status = 'approved' ORDER BY id DESC LIMIT ?").bind(slug, STICKY_WALL).all()).results;
-    return json({ count, stickies: rows.map((r) => ({ id: r.id, date: r.created_at.slice(0, 10), body: r.body, name: r.name || null })) }, 200, headers);
+    const rows = (await env.DB.prepare("SELECT id, created_at, body, name, colour FROM stickies WHERE post = ? AND status = 'approved' ORDER BY id DESC LIMIT ?").bind(slug, STICKY_WALL).all()).results;
+    return json({ count, stickies: rows.map((r) => ({ id: r.id, date: r.created_at.slice(0, 10), body: r.body, name: r.name || null, colour: r.colour === null || r.colour === undefined ? null : r.colour })) }, 200, headers);
   }
   let body = {}; try { body = await request.json(); } catch {}
 
@@ -245,7 +246,8 @@ async function stickies(request, env, headers, ctx) {
     if (body.name && String(body.name).trim()) { name = cleanName(body.name); if (!name) return json({ error: 'name not allowed' }, 400, headers); }
     if (!(await turnstileOk(env, body.turnstile, ip))) return json({ error: 'spam check failed' }, 403, headers);
     const token = crypto.randomUUID() + crypto.randomUUID();
-    const r = await env.DB.prepare('INSERT INTO stickies (post, body, name, token_hash) VALUES (?, ?, ?, ?)').bind(slug, text, name, await sha256(token)).run();
+    const colour = Number.isInteger(body.colour) && body.colour >= 0 && body.colour <= 5 ? body.colour : null; // the paper it was written on
+    const r = await env.DB.prepare('INSERT INTO stickies (post, body, name, colour, token_hash) VALUES (?, ?, ?, ?, ?)').bind(slug, text, name, colour, await sha256(token)).run();
     const sticky = { id: r.meta.last_row_id, post: slug, body: text, name };
     const base = url.origin;
     const sending = notify(env, base, sticky);

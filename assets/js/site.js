@@ -1367,6 +1367,7 @@
   var myStickies = function (el) { try { return JSON.parse(localStorage.getItem(mineKey(el)) || '[]'); } catch (e) { return []; } };
   var saveMyStickies = function (el, list) { try { localStorage.setItem(mineKey(el), JSON.stringify(list.slice(-20))); } catch (e) {} };
   var pinnedNow = function (id) { try { return sessionStorage.getItem('dungeon-sticky-now:' + id) === '1'; } catch (e) { return false; } };
+  var paperOf = function (s) { return String(s.colour === 0 || s.colour > 0 ? s.colour : Math.abs(Number(s.id)) % 6); };
   var stickyDate = function (iso) { var d = new Date(iso); if (isNaN(d)) d = new Date(); return String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()]; };
   function seeded(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
@@ -1389,7 +1390,7 @@
   function stickyNode(el, s, waiting) {
     var n = document.createElement('div');
     n.className = 'sticky' + (waiting ? ' is-waiting' : ''); n.setAttribute('role', 'listitem'); n.tabIndex = 0;
-    n.setAttribute('data-id', s.id); n.setAttribute('data-c', String(Math.abs(Number(s.id)) % 6));
+    n.setAttribute('data-id', s.id); n.setAttribute('data-c', paperOf(s));
     var paper = document.createElement('div'); paper.className = 'sticky-paper'; paper.style.setProperty('--fray', frayClip(s.id));
     if (waiting) { var w = document.createElement('span'); w.className = 'sticky-waiting'; w.textContent = el.getAttribute('data-waiting'); paper.appendChild(w); }
     var p = document.createElement('p'); p.className = 'sticky-text'; p.textContent = s.body; paper.appendChild(p);
@@ -1422,11 +1423,9 @@
     board.textContent = ''; list.textContent = '';
     var all = approved.slice().reverse().map(function (s) { return { s: s, waiting: false }; }).concat(mine.map(function (m) { return { s: m, waiting: true }; }));
     el.classList.toggle('is-empty', !all.length);
-    el.querySelector('.stickies-empty').hidden = !!all.length;
-    var count = el._count || 0; el.querySelector('.stickies-count').textContent = count > 0 ? count : '';
     if (!all.length) return;
     all.slice().reverse().forEach(function (item) { // the list: newest first
-      var d = document.createElement('div'); d.setAttribute('role', 'listitem'); d.setAttribute('data-c', String(Math.abs(Number(item.s.id)) % 6));
+      var d = document.createElement('div'); d.setAttribute('role', 'listitem'); d.setAttribute('data-c', paperOf(item.s));
       d.style.setProperty('--fray', frayClip(item.s.id));
       if (item.waiting) d.className = 'is-waiting';
       d.appendChild(document.createTextNode(item.s.body));
@@ -1442,18 +1441,33 @@
     var nw = probe.offsetWidth, nh = probe.offsetHeight; board.removeChild(probe);
     // The area grows with the pile: as many rows as the stickies need, up to the maximum height.
     var maxH = parseFloat(getComputedStyle(board).maxHeight) || 496;
-    var perRow = Math.max(1, Math.floor(W / (nw * 1.12))), rows = Math.ceil(all.length / perRow);
-    var need = rows * nh * 1.1 + 24, crowded = need > maxH, H = Math.max(nh + 24, Math.min(maxH, need));
+    // Off-limits: where the writing sticky and the list icon hang over the board (wide screens only)
+    var br = board.getBoundingClientRect(), keepOut = [];
+    ['.stickies-compose', '.stickies-head'].forEach(function (sel) {
+      var e = el.querySelector(sel); if (!e || getComputedStyle(e).position !== 'absolute') return;
+      var r = e.getBoundingClientRect(); if (!r.width) return;
+      keepOut.push({ x1: r.left - br.left - 14, y1: r.top - br.top - 14, x2: r.right - br.left + 14, y2: r.bottom - br.top + 14 });
+    });
+    var clashes = function (x, y) { return keepOut.some(function (k) { return x < k.x2 && x + nw > k.x1 && y < k.y2 && y + nh > k.y1; }); };
+    var perRow = Math.max(1, Math.floor(W / (nw * 1.12))), gapX = (W - perRow * nw) / perRow, slots = [];
+    for (var sIdx = 0; slots.length < all.length && sIdx < 400; sIdx++) {
+      var sc = sIdx % perRow, sr = Math.floor(sIdx / perRow), sx = sc * (nw + gapX) + gapX / 2, sy = sr * nh * 1.1 + 10;
+      if (!clashes(sx, sy)) slots.push({ x: sx, y: sy });
+    }
+    var lastRow = slots.length ? slots[slots.length - 1].y : 10;
+    var need = lastRow + nh * 1.1 + 14, crowded = need > maxH, H = Math.max(nh + 24, Math.min(maxH, need));
     board.style.height = H + 'px'; el.classList.toggle('is-crowded', crowded);
-    var rand = seeded(7), placed = [], gapX = (W - perRow * nw) / perRow;
+    var rand = seeded(7), placed = [];
     all.forEach(function (item, i) {
       var best = null, bestD = -1;
       if (!crowded) { // room for everyone: loose rows, each sticky a little off its spot
-        var col = i % perRow, row = Math.floor(i / perRow);
-        best = { x: Math.max(0, Math.min(W - nw, col * (nw + gapX) + gapX / 2 + (rand() - 0.5) * gapX * 0.6)), y: Math.max(0, Math.min(H - nh, row * nh * 1.1 + 10 + (rand() - 0.5) * 12)) };
+        var slot = slots[i], jx = (rand() - 0.5) * gapX * 0.6, jy = (rand() - 0.5) * 12;
+        best = { x: Math.max(0, Math.min(W - nw, slot.x + jx)), y: Math.max(0, Math.min(H - nh, slot.y + jy)) };
+        if (clashes(best.x, best.y)) best = { x: slot.x, y: slot.y };
       } else for (var k = 0; k < 30; k++) { // crowded: each takes the emptiest of 30 spots, and the pile builds up
         var x = rand() * Math.max(1, W - nw), y = rand() * Math.max(1, H - nh), d = 1e9;
         for (var q = 0; q < placed.length; q++) d = Math.min(d, Math.hypot(placed[q].x - x, placed[q].y - y));
+        if (clashes(x, y)) d = -1; // never under the writing sticky
         if (d > bestD) { bestD = d; best = { x: x, y: y }; }
       }
       placed.push(best);
@@ -1477,6 +1491,9 @@
     var under = document.elementsFromPoint(cx, cy).map(function (e) { return e.closest && e.closest('.sticky'); }).filter(function (x) { return x && x !== n; })[0];
     var b = board.getBoundingClientRect(), dx = cx - (b.left + b.width / 2), dy = cy - (b.top + b.height / 2), len = Math.hypot(dx, dy) || 1;
     var ox = dx / len * 150, oy = dy / len * 95;
+    var stage = el.querySelector('.stickies-stage').getBoundingClientRect(), m = 6; // keep the pulled-out sticky inside the moving area
+    ox = Math.max(stage.left + m - r.left, Math.min(stage.right - m - r.right, ox));
+    oy = Math.max(stage.top + m - r.top, Math.min(stage.bottom - m - r.bottom, oy));
     var out = n.animate([
       { transform: rot + ' translate(0,0) scale(1)' },
       { transform: rot + ' translate(0,-6px) scale(1.06)', offset: 0.3 },
@@ -1504,23 +1521,56 @@
     });
     return turnstileLoading;
   }
-  function openComposer(el) {
-    var form = el.querySelector('.stickies-compose'); form.hidden = false;
-    el.querySelector('.stickies-add').hidden = true;
-    form.querySelector('textarea').focus();
-    if (el._widget === undefined) {
-      el._widget = null;
-      loadTurnstile().then(function () {
-        el._widget = window.turnstile.render(form.querySelector('.stickies-turnstile'), {
-          sitekey: el.getAttribute('data-sitekey'), appearance: 'interaction-only', theme: 'light',
-          callback: function (t) { el._ts = t; }, 'expired-callback': function () { el._ts = null; }, 'error-callback': function () { el._ts = null; }
-        });
-      }, function () {});
-    }
+  // The writing sticky is always there. It gets a random paper colour, and the pinned sticky keeps it.
+  function newPaper(el) {
+    var form = el.querySelector('.stickies-compose'), prev = form.getAttribute('data-c'), c;
+    do { c = String(Math.floor(Math.random() * 6)); } while (c === prev);
+    form.setAttribute('data-c', c);
   }
-  function closeComposer(el) {
-    var form = el.querySelector('.stickies-compose'); form.hidden = true;
-    el.querySelector('.stickies-add').hidden = false; form.querySelector('.stickies-msg').textContent = '';
+  // Cloudflare's spam check loads only when someone starts writing, not on every visit.
+  function startSpamCheck(el) {
+    if (el._widget !== undefined) return;
+    el._widget = null;
+    var form = el.querySelector('.stickies-compose');
+    loadTurnstile().then(function () {
+      el._widget = window.turnstile.render(form.querySelector('.stickies-turnstile'), {
+        sitekey: el.getAttribute('data-sitekey'), appearance: 'interaction-only', theme: 'light',
+        callback: function (t) { el._ts = t; }, 'expired-callback': function () { el._ts = null; }, 'error-callback': function () { el._ts = null; }
+      });
+    }, function () {});
+  }
+  function clearComposer(el) {
+    var form = el.querySelector('.stickies-compose');
+    form.querySelector('textarea').value = ''; form.querySelector('input').value = '';
+    var left = form.querySelector('.stickies-left'); left.textContent = '200'; left.classList.remove('is-low');
+    form.querySelector('.stickies-msg').textContent = '';
+  }
+  function restick(el) {
+    var form = el.querySelector('.stickies-compose');
+    newPaper(el); form.classList.remove('is-restuck'); void form.offsetWidth; form.classList.add('is-restuck');
+  }
+  // The x: the sticky is crumpled into a ball and thrown off the page in a random direction,
+  // and a fresh one is stuck in its place.
+  function throwComposer(el) {
+    var form = el.querySelector('.stickies-compose'), r = form.getBoundingClientRect();
+    clearComposer(el);
+    if (calmStamps || !document.body.animate) { restick(el); return; }
+    var ball = document.createElement('div'); ball.className = 'sticky-ball'; ball.setAttribute('data-c', form.getAttribute('data-c'));
+    ball.style.left = r.left + 'px'; ball.style.top = r.top + 'px'; ball.style.width = r.width + 'px'; ball.style.height = r.height + 'px';
+    document.body.appendChild(ball);
+    form.style.visibility = 'hidden';
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2, a = Math.random() * Math.PI * 2;
+    var reach = Math.max(innerWidth, innerHeight) * 0.9, dx = Math.cos(a) * reach, dy = Math.sin(a) * reach;
+    var spin = (Math.random() < 0.5 ? -1 : 1) * (540 + Math.random() * 360);
+    var fly = ball.animate([
+      { transform: 'rotate(-3deg) scale(1)', borderRadius: '7px', boxShadow: '0 0 0 rgba(0,0,0,0)' },
+      { transform: 'rotate(30deg) scale(0.62, 0.5)', borderRadius: '38%', boxShadow: 'inset -8px -10px 18px rgba(0,0,0,.22), inset 6px 6px 12px rgba(255,255,255,.45)', offset: 0.16 },
+      { transform: 'rotate(110deg) scale(0.3)', borderRadius: '50%', boxShadow: 'inset -10px -12px 16px rgba(0,0,0,.28), inset 6px 6px 10px rgba(255,255,255,.5)', offset: 0.3 },
+      { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 90) + 'px) rotate(' + (spin * 0.5) + 'deg) scale(0.27)', borderRadius: '50%', offset: 0.62 },
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + spin + 'deg) scale(0.24)', borderRadius: '50%' }
+    ], { duration: 1150, easing: 'cubic-bezier(.3,.55,.45,1)', fill: 'forwards' });
+    setTimeout(function () { form.style.visibility = ''; restick(el); }, 380);
+    fly.onfinish = function () { ball.remove(); };
   }
   function waitForToken(el, ms) {
     return new Promise(function (res) { var t0 = Date.now(); (function poll() { if (el._ts || Date.now() - t0 > ms) res(el._ts || null); else setTimeout(poll, 200); })(); });
@@ -1530,7 +1580,7 @@
     var body = text.value.trim(); if (!body) { text.focus(); return; }
     btn.disabled = true; msg.textContent = el._ts ? '' : el.getAttribute('data-checking');
     waitForToken(el, 10000).then(function (token) {
-      return fetch(stickyApi(el), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: body, name: nameIn.value.trim(), turnstile: token }) })
+      return fetch(stickyApi(el), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: body, name: nameIn.value.trim(), colour: Number(form.getAttribute('data-c')), turnstile: token }) })
         .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); });
     }).then(function (res) {
       btn.disabled = false; el._ts = null;
@@ -1540,11 +1590,10 @@
         msg.textContent = res.status === 429 ? el.getAttribute('data-err-slow') : /spam/.test(e) ? el.getAttribute('data-err-spam') : /name/.test(e) ? el.getAttribute('data-err-name') : el.getAttribute('data-err-other');
         return;
       }
-      var mine = myStickies(el); mine.push({ id: res.d.id, token: res.d.token, body: body, name: nameIn.value.trim() || null, created: new Date().toISOString(), status: 'pending' });
+      var mine = myStickies(el); mine.push({ id: res.d.id, token: res.d.token, body: body, name: nameIn.value.trim() || null, colour: Number(form.getAttribute('data-c')), created: new Date().toISOString(), status: 'pending' });
       saveMyStickies(el, mine);
       try { sessionStorage.setItem('dungeon-sticky-now:' + res.d.id, '1'); } catch (e2) {}
-      text.value = ''; form.querySelector('.stickies-left').textContent = '200';
-      closeComposer(el); el._landing = res.d.id; layoutStickies(el);
+      clearComposer(el); restick(el); el._landing = res.d.id; layoutStickies(el);
     }, function () { btn.disabled = false; msg.textContent = el.getAttribute('data-err-other'); });
   }
   function takeBackSticky(el, id) {
@@ -1559,6 +1608,7 @@
   function initStickies(root) {
     root.querySelectorAll('.stickies').forEach(function (el) {
       if (el.getAttribute('data-ready')) return; el.setAttribute('data-ready', '1');
+      newPaper(el);
       var api = stickyApi(el), mine = myStickies(el);
       var statuses = mine.length ? fetch(api + '/mine', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: mine.map(function (m) { return { id: m.id, token: m.token }; }) }) })
         .then(function (r) { return r.ok ? r.json() : { items: [] }; }).catch(function () { return { items: [] }; }) : Promise.resolve({ items: [] });
@@ -1580,24 +1630,29 @@
     var el = ev.target.closest && ev.target.closest('.stickies'); if (!el) return;
     var rm = ev.target.closest('.sticky-remove');
     if (rm) { ev.stopPropagation(); takeBackSticky(el, rm.getAttribute('data-id') || rm.closest('.sticky').getAttribute('data-id')); return; }
-    if (ev.target.closest('.stickies-add')) { openComposer(el); return; }
-    if (ev.target.closest('.stickies-cancel')) { closeComposer(el); return; }
+    if (ev.target.closest('.stickies-throw')) { throwComposer(el); return; }
     var tog = ev.target.closest('.stickies-toggle');
     if (tog) {
       var on = el.classList.toggle('is-list'); el.querySelector('.stickies-list').hidden = !on;
-      tog.setAttribute('aria-pressed', String(on)); tog.textContent = tog.getAttribute(on ? 'data-pile' : 'data-list');
+      tog.setAttribute('aria-pressed', String(on)); var lbl = tog.getAttribute(on ? 'data-pile' : 'data-list'); tog.setAttribute('aria-label', lbl); tog.title = lbl;
       if (!on) layoutStickies(el);
       return;
     }
     var n = ev.target.closest('.sticky'); if (n) sendStickyBack(el, n);
   });
   document.addEventListener('keydown', function (ev) {
+    var compose = ev.target.closest && ev.target.closest('.stickies-compose');
+    if (compose && ev.key === 'Escape') { ev.preventDefault(); clearComposer(compose.closest('.stickies')); return; }
     var n = ev.target.closest && ev.target.closest('.sticky');
     if (n && ev.target === n && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); sendStickyBack(n.closest('.stickies'), n); }
   });
   document.addEventListener('submit', function (ev) {
     var form = ev.target.closest && ev.target.closest('.stickies-compose'); if (!form) return;
     ev.preventDefault(); pinSticky(form.closest('.stickies'));
+  });
+  document.addEventListener('focusin', function (ev) {
+    var compose = ev.target.closest && ev.target.closest('.stickies-compose');
+    if (compose && !ev.target.matches('.stickies-throw')) startSpamCheck(compose.closest('.stickies'));
   });
   document.addEventListener('input', function (ev) {
     if (!ev.target.matches || !ev.target.matches('.stickies-compose textarea')) return;

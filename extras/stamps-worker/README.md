@@ -29,7 +29,7 @@ Use the Worker's own `workers.dev` address rather than a route on your domain: i
 
 Short notes readers leave under posts, pinned once you approve them. They live in the same Worker and database.
 
-1. **Database:** in the D1 **Console**, run [`migrate-1.3.0.sql`](migrate-1.3.0.sql), one statement at a time.
+1. **Database:** in the D1 **Console**, run [`migrate-1.3.0.sql`](migrate-1.3.0.sql), one statement at a time, then [`migrate-1.3.2.sql`](migrate-1.3.2.sql).
 2. **Turnstile:** Cloudflare dashboard → **Turnstile** → **Add widget**, your domain, mode **Managed**, pre-clearance off. Keep the site key (public) and secret key.
 3. **Worker code:** deploy the latest [`worker.js`](worker.js).
 4. **Secrets** (Worker → Settings → Variables and Secrets, type Secret): `TURNSTILE_SECRET` (the Turnstile secret key) and `MOD_SECRET` (any long random text, kept in your password manager). Deploy.
@@ -39,6 +39,10 @@ Short notes readers leave under posts, pinned once you approve them. They live i
 6. **Theme:** Ghost → Design → **Stickies site key**: paste the Turnstile site key. Stickies appear under posts, replacing Ghost's comments.
 
 Approve and Delete buttons use signed links that expire after 7 days. To remove a sticky later by hand: `UPDATE stickies SET status = 'deleted' WHERE id = 123;` in the D1 Console.
+
+## Upgrading from before 1.3.2
+
+In the D1 **Console**, run [`migrate-1.3.2.sql`](migrate-1.3.2.sql) once (it lets stickies keep the colour they were written on), then deploy the new `worker.js`. Until you do, the stickies area stays hidden and the Worker says the table needs updating.
 
 ## Upgrading from before 1.2.3
 

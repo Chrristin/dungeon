@@ -69,14 +69,10 @@
         data-err-spam="{{t "The spam check didn't pass. Please try again."}}" data-err-name="{{t "That name isn't allowed. Try another, or leave it empty."}}"
         data-err-slow="{{t "That's a lot of stickies at once. Try again in a minute."}}" data-err-other="{{t "Couldn't pin that right now. Please try again."}}"
         data-checking="{{t "One moment, checking you're not a bot..."}}" data-anonymous="{{t "anonymous"}}" aria-labelledby="stickies-title-{{id}}" hidden>
-        <header class="stickies-head">
-            <h2 class="stickies-title" id="stickies-title-{{id}}">{{t "Stickies"}} <span class="stickies-count"></span></h2>
-            <div class="stickies-tools">
-                <button class="stickies-toggle" type="button" aria-pressed="false" data-list="{{t "Read as a list"}}" data-pile="{{t "Back to the pile"}}">{{t "Read as a list"}}</button>
-                <button class="stickies-add" type="button">+ {{t "Leave a sticky"}}</button>
-            </div>
-        </header>
-        <form class="stickies-compose" hidden>
+        <h2 class="visually-hidden" id="stickies-title-{{id}}">{{t "Stickies"}}</h2>
+        {{!-- The writing sticky: always open, stuck on the post card's corner (below it on phones). The x crumples it and throws it away. --}}
+        <form class="stickies-compose">
+            <button class="stickies-throw" type="button" aria-label="{{t "Throw it away"}}" title="{{t "Throw it away"}}">&times;</button>
             <label class="visually-hidden" for="sticky-text-{{id}}">{{t "Your sticky"}}</label>
             <textarea id="sticky-text-{{id}}" maxlength="200" rows="4" placeholder="{{t "Write something short..."}}" required></textarea>
             <div class="stickies-compose-row">
@@ -86,14 +82,19 @@
             </div>
             <div class="stickies-turnstile"></div>
             <div class="stickies-compose-actions">
-                <button class="stickies-cancel" type="button">{{t "Cancel"}}</button>
+                <span class="stickies-note">{{t "Stickies appear once approved."}}</span>
                 <button class="stickies-pin" type="submit">{{t "Pin it"}}</button>
             </div>
             <p class="stickies-msg" aria-live="polite"></p>
-            <p class="stickies-note">{{t "Stickies appear once approved."}}</p>
         </form>
-        <p class="stickies-empty" hidden>{{t "No stickies yet. Be the first."}}</p>
-        <div class="stickies-board" role="list" aria-label="{{t "Stickies"}}"></div>
+        <div class="stickies-head">
+            <button class="stickies-toggle" type="button" aria-pressed="false" aria-label="{{t "Read as a list"}}" title="{{t "Read as a list"}}" data-list="{{t "Read as a list"}}" data-pile="{{t "Back to the pile"}}">
+                <svg class="icon-list" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.5" cy="6.5" r="1.1"/><circle cx="4.5" cy="12" r="1.1"/><circle cx="4.5" cy="17.5" r="1.1"/></svg>
+                <svg class="icon-pile" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="10" height="10" rx="2" transform="rotate(-8 8.5 10)"/><rect x="10" y="9" width="10" height="10" rx="2" transform="rotate(7 15 14)"/></svg>
+            </button>
+        </div>
+        {{!-- Two areas: the stage is where stickies can move (out and back under the pile); the board is where they sit --}}
+        <div class="stickies-stage"><div class="stickies-board" role="list" aria-label="{{t "Stickies"}}"></div></div>
         <p class="stickies-hint">{{t "Tap a sticky to send it to the back of the pile."}}</p>
         <div class="stickies-list" role="list" hidden></div>
     </section>

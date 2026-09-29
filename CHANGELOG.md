@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.2
+
+- The blank sticky is always there, stuck at an angle on the post card's bottom-right corner (just below the card on phones), ready to write on. No button to open it.
+- Each blank sticky is a random colour, and the pinned sticky keeps that colour. The Worker stores it: run `extras/stamps-worker/migrate-1.3.2.sql` once, then deploy the latest `worker.js`.
+- No Cancel button: the x crumples the sticky into a ball and throws it off the page in a random direction, and a fresh one takes its place. Escape clears what you've typed.
+- Stickies start right below the post and flow around the blank sticky. No title or count; a list icon at the top right switches between the pile and the list.
+- A sticky sent to the back moves out into a margin around the pile, where it stays visible, and never over the rest of the page.
+- Cloudflare's spam check loads only when someone starts writing, not on every visit.
+
 ## 1.3.1
 
 - Stickies sit directly on the page, with no board behind them. The area grows with the stickies, in loose rows, up to its full height; only then do they pile up (and the "send it to the back" hint appears).

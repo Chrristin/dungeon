@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 1.3.1. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 1.3.2. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -136,7 +136,7 @@ Stamps need a small counter you run yourself on Cloudflare's free plan, because 
 
 ## Stickies
 
-Readers can leave a short handwritten sticky under a post: up to 200 characters and an optional name. Stickies sit right on the page, in loose rows; the area grows with them, and once it's full they pile up, the newest on top. Tapping one sends it to the back, and **Read as a list** shows them all in order. Longer stickies are written smaller, like a real sticky note. A new sticky waits for your approval before anyone else sees it, while its writer sees it straight away, marked as waiting, and can take it back during the same visit. There are no replies.
+Readers can leave a short handwritten sticky under a post: up to 200 characters and an optional name. A blank sticky, in a random colour, is always stuck on the post card's corner (just below the card on phones), ready to write on; the pinned sticky keeps its colour. Its x crumples it up and throws it off the page, and Escape clears it. Stickies sit right on the page, in loose rows around the blank one; the area grows with them, and once it's full they pile up, the newest on top. Tapping one sends it to the back, and the list icon shows them all in order. Longer stickies are written smaller, like a real sticky note. A new sticky waits for your approval before anyone else sees it, while its writer sees it straight away, marked as waiting, and can take it back during the same visit. There are no replies.
 
 You approve or delete each sticky from a Telegram message or an ntfy notification, with one tap. Stickies use the same Worker as stamps, plus Cloudflare Turnstile to keep bots out. Set them up with [`extras/stamps-worker`](extras/stamps-worker/README.md), then fill in **Stickies site key**. Once they're on, Ghost's own comments are no longer shown under posts; switch commenting off in Ghost too (**Settings → Membership → Access → Commenting → Nobody**).
 
