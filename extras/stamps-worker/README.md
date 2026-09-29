@@ -25,6 +25,21 @@ The free plan allows 100,000 D1 row writes a day.
 
 Use the Worker's own `workers.dev` address rather than a route on your domain: it keeps working if your site is down, and isn't affected by local DNS tricks such as a Pi-hole pointing your domain at a home server.
 
+## Stickies (from 1.3.0)
+
+Short notes readers leave under posts, pinned once you approve them. They live in the same Worker and database.
+
+1. **Database:** in the D1 **Console**, run [`migrate-1.3.0.sql`](migrate-1.3.0.sql), one statement at a time.
+2. **Turnstile:** Cloudflare dashboard → **Turnstile** → **Add widget**, your domain, mode **Managed**, pre-clearance off. Keep the site key (public) and secret key.
+3. **Worker code:** deploy the latest [`worker.js`](worker.js).
+4. **Secrets** (Worker → Settings → Variables and Secrets, type Secret): `TURNSTILE_SECRET` (the Turnstile secret key) and `MOD_SECRET` (any long random text, kept in your password manager). Deploy.
+5. **Notifications,** either or both:
+   - **Telegram:** create a bot with @BotFather and add its token as the secret `TELEGRAM_BOT_TOKEN` (the token alone, without "bot" in front). Deploy, then open `https://<your-worker>/telegram/setup?key=<MOD_SECRET>`. It says "Almost there": send your bot a message, and open the link again. It shows your chat ID: add it as the text variable `TELEGRAM_CHAT_ID`, and deploy.
+   - **ntfy:** pick a long, hard-to-guess channel name, subscribe to it in the ntfy app, and add it as the secret `NTFY_TOPIC`.
+6. **Theme:** Ghost → Design → **Stickies site key**: paste the Turnstile site key. Stickies appear under posts, replacing Ghost's comments.
+
+Approve and Delete buttons use signed links that expire after 7 days. To remove a sticky later by hand: `UPDATE stickies SET status = 'deleted' WHERE id = 123;` in the D1 Console.
+
 ## Upgrading from before 1.2.3
 
 In the D1 **Console**, run [`migrate-1.2.3.sql`](migrate-1.2.3.sql) once (it adds one column), then deploy the new `worker.js`. Until you do, signing a name shows a message saying the database needs updating.

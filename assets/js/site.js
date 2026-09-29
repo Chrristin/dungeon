@@ -1351,6 +1351,211 @@
   });
   initStamps(document);
 
+  // Stickies: short notes readers leave under a post, pinned once approved. Needs the stamps Worker
+  // and a Turnstile site key (theme settings). The pile: early stickies spread out, later ones land on
+  // top; tapping one sends it to the back. A writer sees their own sticky straight away, marked as
+  // waiting, and can take it back during the same visit. Text is only ever shown as plain text.
+  var stickyApi = function (el) { return el.getAttribute('data-endpoint').replace(/\/+$/, '') + '/stickies/' + encodeURIComponent(el.getAttribute('data-slug')); };
+  var mineKey = function (el) { return 'dungeon-stickies:' + el.getAttribute('data-slug'); };
+  var myStickies = function (el) { try { return JSON.parse(localStorage.getItem(mineKey(el)) || '[]'); } catch (e) { return []; } };
+  var saveMyStickies = function (el, list) { try { localStorage.setItem(mineKey(el), JSON.stringify(list.slice(-20))); } catch (e) {} };
+  var pinnedNow = function (id) { try { return sessionStorage.getItem('dungeon-sticky-now:' + id) === '1'; } catch (e) { return false; } };
+  var stickyDate = function (iso) { var d = new Date(iso); if (isNaN(d)) d = new Date(); return String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()]; };
+  function seeded(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  function stickyNode(el, s, waiting) {
+    var n = document.createElement('div');
+    n.className = 'sticky' + (waiting ? ' is-waiting' : ''); n.setAttribute('role', 'listitem'); n.tabIndex = 0;
+    n.setAttribute('data-id', s.id); n.setAttribute('data-c', String(Math.abs(Number(s.id)) % 6));
+    var p = document.createElement('p'); p.textContent = s.body; n.appendChild(p);
+    if (s.name) { var by = document.createElement('span'); by.className = 'sticky-by'; by.textContent = s.name; n.appendChild(by); }
+    if (waiting) { var w = document.createElement('span'); w.className = 'sticky-waiting'; w.textContent = el.getAttribute('data-waiting'); n.appendChild(w); }
+    if (pinnedNow(s.id)) { var x = document.createElement('button'); x.type = 'button'; x.className = 'sticky-remove'; x.innerHTML = '&times;'; x.setAttribute('aria-label', el.getAttribute('data-remove')); n.appendChild(x); }
+    n.setAttribute('aria-label', s.body + (s.name ? ', ' + s.name : '') + '. ' + el.getAttribute('data-send-back'));
+    return n;
+  }
+  // Lay out the pile. Oldest first, each sticky takes the emptiest of 30 random spots (seeded, so the
+  // pile looks the same on every visit and only changes as stickies are added).
+  function layoutStickies(el) {
+    var board = el.querySelector('.stickies-board'), list = el.querySelector('.stickies-list');
+    var approved = (el._stickies || []).slice(), mine = myStickies(el).filter(function (m) { return m.status === 'pending'; });
+    var shownIds = {}; approved.forEach(function (s) { shownIds[s.id] = true; });
+    mine = mine.filter(function (m) { return !shownIds[m.id]; });
+    board.textContent = ''; list.textContent = '';
+    var all = approved.slice().reverse().map(function (s) { return { s: s, waiting: false }; }).concat(mine.map(function (m) { return { s: m, waiting: true }; }));
+    el.classList.toggle('is-empty', !all.length);
+    el.querySelector('.stickies-empty').hidden = !!all.length;
+    var count = el._count || 0; el.querySelector('.stickies-count').textContent = count > 0 ? count : '';
+    if (!all.length) return;
+    all.slice().reverse().forEach(function (item) { // the list: newest first
+      var d = document.createElement('div'); d.setAttribute('role', 'listitem'); d.setAttribute('data-c', String(Math.abs(Number(item.s.id)) % 6));
+      if (item.waiting) d.className = 'is-waiting';
+      d.appendChild(document.createTextNode(item.s.body));
+      var meta = document.createElement('span');
+      meta.textContent = (item.s.name || el.getAttribute('data-anonymous')) + ' · ' + stickyDate(item.s.date || item.s.created) + (item.waiting ? ' · ' + el.getAttribute('data-waiting') : '');
+      d.appendChild(meta);
+      if (pinnedNow(item.s.id)) { var x = document.createElement('button'); x.type = 'button'; x.className = 'sticky-remove'; x.setAttribute('data-id', item.s.id); x.innerHTML = '&times;'; x.setAttribute('aria-label', el.getAttribute('data-remove')); d.appendChild(x); }
+      list.appendChild(d);
+    });
+    var W = board.clientWidth, H = board.clientHeight;
+    if (!W || !H) return; // not visible yet (the list view, say): laid out again when shown
+    var probe = stickyNode(el, { id: 0, body: '' }, false); probe.style.visibility = 'hidden'; board.appendChild(probe);
+    var nw = probe.offsetWidth, nh = probe.offsetHeight; board.removeChild(probe);
+    var rand = seeded(7), placed = [];
+    all.forEach(function (item, i) {
+      var best = null, bestD = -1;
+      for (var k = 0; k < 30; k++) {
+        var x = rand() * Math.max(1, W - nw), y = rand() * Math.max(1, H - nh), d = 1e9;
+        for (var q = 0; q < placed.length; q++) d = Math.min(d, Math.hypot(placed[q].x - x, placed[q].y - y));
+        if (d > bestD) { bestD = d; best = { x: x, y: y }; }
+      }
+      placed.push(best);
+      var n = stickyNode(el, item.s, item.waiting);
+      var rot = 'rotate(' + ((rand() - 0.5) * 14).toFixed(1) + 'deg)';
+      n.style.setProperty('--rot', rot); n.style.transform = rot;
+      n.style.left = best.x + 'px'; n.style.top = best.y + 'px'; n.style.zIndex = i + 1;
+      if (item.s.id === el._landing) n.classList.add('is-landing');
+      board.appendChild(n);
+    });
+    el._landing = null;
+  }
+  function sendStickyBack(el, n) {
+    if (n.getAttribute('data-moving')) return;
+    var board = el.querySelector('.stickies-board'), notes = [].slice.call(board.children);
+    var min = Math.min.apply(null, notes.map(function (x) { return +x.style.zIndex; }));
+    var rot = n.style.getPropertyValue('--rot');
+    if (calmStamps || !n.animate) { notes.forEach(function (x) { if (x !== n) x.style.zIndex = +x.style.zIndex + 1; }); n.style.zIndex = min; return; }
+    n.setAttribute('data-moving', '1');
+    var r = n.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var under = document.elementsFromPoint(cx, cy).map(function (e) { return e.closest && e.closest('.sticky'); }).filter(function (x) { return x && x !== n; })[0];
+    var b = board.getBoundingClientRect(), dx = cx - (b.left + b.width / 2), dy = cy - (b.top + b.height / 2), len = Math.hypot(dx, dy) || 1;
+    var ox = dx / len * 150, oy = dy / len * 95;
+    var out = n.animate([
+      { transform: rot + ' translate(0,0) scale(1)' },
+      { transform: rot + ' translate(0,-6px) scale(1.06)', offset: 0.3 },
+      { transform: rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.06)' }
+    ], { duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'forwards' });
+    out.onfinish = function () {
+      notes.forEach(function (x) { if (x !== n) x.style.zIndex = +x.style.zIndex + 1; }); n.style.zIndex = min;
+      var back = n.animate([
+        { transform: rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.06)', filter: 'brightness(1)' },
+        { transform: rot + ' translate(0,0) scale(.97)', filter: 'brightness(.9)', offset: 0.8 },
+        { transform: rot + ' translate(0,0) scale(1)', filter: 'brightness(.96)' }
+      ], { duration: 900, easing: 'cubic-bezier(.25,.7,.3,1)', fill: 'forwards' });
+      out.cancel();
+      back.onfinish = function () { back.cancel(); n.style.transform = rot; n.style.filter = 'brightness(.96)'; n.removeAttribute('data-moving'); };
+      if (under) { var ur = under.style.getPropertyValue('--rot'); under.style.filter = ''; under.animate([{ transform: ur + ' scale(1)' }, { transform: ur + ' translateY(-4px) scale(1.03)' }, { transform: ur + ' scale(1)' }], { duration: 420, delay: 420, easing: 'ease-out' }); }
+    };
+  }
+  var turnstileLoading = null;
+  function loadTurnstile() {
+    if (window.turnstile) return Promise.resolve();
+    if (turnstileLoading) return turnstileLoading;
+    turnstileLoading = new Promise(function (res, rej) {
+      var s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; s.async = true;
+      s.onload = function () { res(); }; s.onerror = rej; document.head.appendChild(s);
+    });
+    return turnstileLoading;
+  }
+  function openComposer(el) {
+    var form = el.querySelector('.stickies-compose'); form.hidden = false;
+    el.querySelector('.stickies-add').hidden = true;
+    form.querySelector('textarea').focus();
+    if (el._widget === undefined) {
+      el._widget = null;
+      loadTurnstile().then(function () {
+        el._widget = window.turnstile.render(form.querySelector('.stickies-turnstile'), {
+          sitekey: el.getAttribute('data-sitekey'), appearance: 'interaction-only', theme: 'light',
+          callback: function (t) { el._ts = t; }, 'expired-callback': function () { el._ts = null; }, 'error-callback': function () { el._ts = null; }
+        });
+      }, function () {});
+    }
+  }
+  function closeComposer(el) {
+    var form = el.querySelector('.stickies-compose'); form.hidden = true;
+    el.querySelector('.stickies-add').hidden = false; form.querySelector('.stickies-msg').textContent = '';
+  }
+  function waitForToken(el, ms) {
+    return new Promise(function (res) { var t0 = Date.now(); (function poll() { if (el._ts || Date.now() - t0 > ms) res(el._ts || null); else setTimeout(poll, 200); })(); });
+  }
+  function pinSticky(el) {
+    var form = el.querySelector('.stickies-compose'), text = form.querySelector('textarea'), nameIn = form.querySelector('input'), msg = form.querySelector('.stickies-msg'), btn = form.querySelector('.stickies-pin');
+    var body = text.value.trim(); if (!body) { text.focus(); return; }
+    btn.disabled = true; msg.textContent = el._ts ? '' : el.getAttribute('data-checking');
+    waitForToken(el, 10000).then(function (token) {
+      return fetch(stickyApi(el), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: body, name: nameIn.value.trim(), turnstile: token }) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); });
+    }).then(function (res) {
+      btn.disabled = false; el._ts = null;
+      if (el._widget !== null && el._widget !== undefined && window.turnstile) { try { window.turnstile.reset(el._widget); } catch (e) {} }
+      if (!res.ok) {
+        var e = (res.d && res.d.error) || '';
+        msg.textContent = res.status === 429 ? el.getAttribute('data-err-slow') : /spam/.test(e) ? el.getAttribute('data-err-spam') : /name/.test(e) ? el.getAttribute('data-err-name') : el.getAttribute('data-err-other');
+        return;
+      }
+      var mine = myStickies(el); mine.push({ id: res.d.id, token: res.d.token, body: body, name: nameIn.value.trim() || null, created: new Date().toISOString(), status: 'pending' });
+      saveMyStickies(el, mine);
+      try { sessionStorage.setItem('dungeon-sticky-now:' + res.d.id, '1'); } catch (e2) {}
+      text.value = ''; form.querySelector('.stickies-left').textContent = '200';
+      closeComposer(el); el._landing = res.d.id; layoutStickies(el);
+    }, function () { btn.disabled = false; msg.textContent = el.getAttribute('data-err-other'); });
+  }
+  function takeBackSticky(el, id) {
+    var mine = myStickies(el), m = mine.filter(function (x) { return String(x.id) === String(id); })[0]; if (!m) return;
+    fetch(stickyApi(el) + '/' + m.id, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: m.token }) })
+      .then(function (r) { if (!r.ok) throw r; }).then(function () {
+        saveMyStickies(el, mine.filter(function (x) { return x !== m; }));
+        if ((el._stickies || []).some(function (s) { return String(s.id) === String(id); })) { el._stickies = el._stickies.filter(function (s) { return String(s.id) !== String(id); }); el._count = Math.max(0, (el._count || 1) - 1); }
+        layoutStickies(el);
+      }, function () {});
+  }
+  function initStickies(root) {
+    root.querySelectorAll('.stickies').forEach(function (el) {
+      if (el.getAttribute('data-ready')) return; el.setAttribute('data-ready', '1');
+      var api = stickyApi(el), mine = myStickies(el);
+      var statuses = mine.length ? fetch(api + '/mine', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: mine.map(function (m) { return { id: m.id, token: m.token }; }) }) })
+        .then(function (r) { return r.ok ? r.json() : { items: [] }; }).catch(function () { return { items: [] }; }) : Promise.resolve({ items: [] });
+      Promise.all([fetch(api).then(function (r) { if (!r.ok) throw r; return r.json(); }), statuses]).then(function (out) {
+        el._stickies = out[0].stickies || []; el._count = out[0].count || 0;
+        var st = {}; (out[1].items || []).forEach(function (i) { st[i.id] = i.status; });
+        saveMyStickies(el, mine.filter(function (m) { return st[m.id] === 'pending' || st[m.id] === 'approved' || st[m.id] === undefined; })
+          .map(function (m) { if (st[m.id]) m.status = st[m.id]; return m; }));
+        el.hidden = false; layoutStickies(el); // only shown once the Worker answers
+      }).catch(function () {});
+      var resizeT; window.addEventListener('resize', function () { clearTimeout(resizeT); resizeT = setTimeout(function () { if (!el.hidden) layoutStickies(el); }, 200); });
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (!el.hidden) layoutStickies(el); });
+    });
+  }
+  document.addEventListener('click', function (ev) {
+    var el = ev.target.closest && ev.target.closest('.stickies'); if (!el) return;
+    var rm = ev.target.closest('.sticky-remove');
+    if (rm) { ev.stopPropagation(); takeBackSticky(el, rm.getAttribute('data-id') || rm.closest('.sticky').getAttribute('data-id')); return; }
+    if (ev.target.closest('.stickies-add')) { openComposer(el); return; }
+    if (ev.target.closest('.stickies-cancel')) { closeComposer(el); return; }
+    var tog = ev.target.closest('.stickies-toggle');
+    if (tog) {
+      var on = el.classList.toggle('is-list'); el.querySelector('.stickies-list').hidden = !on;
+      tog.setAttribute('aria-pressed', String(on)); tog.textContent = tog.getAttribute(on ? 'data-pile' : 'data-list');
+      if (!on) layoutStickies(el);
+      return;
+    }
+    var n = ev.target.closest('.sticky'); if (n) sendStickyBack(el, n);
+  });
+  document.addEventListener('keydown', function (ev) {
+    var n = ev.target.closest && ev.target.closest('.sticky');
+    if (n && ev.target === n && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); sendStickyBack(n.closest('.stickies'), n); }
+  });
+  document.addEventListener('submit', function (ev) {
+    var form = ev.target.closest && ev.target.closest('.stickies-compose'); if (!form) return;
+    ev.preventDefault(); pinSticky(form.closest('.stickies'));
+  });
+  document.addEventListener('input', function (ev) {
+    if (!ev.target.matches || !ev.target.matches('.stickies-compose textarea')) return;
+    var left = 200 - [...ev.target.value].length, c = ev.target.closest('.stickies-compose').querySelector('.stickies-left');
+    c.textContent = left; c.classList.toggle('is-low', left < 20);
+  });
+  initStickies(document);
+
   function closeReader() { if (reader && reader.open) reader.close(); }
 
   function openPost(url, card) {

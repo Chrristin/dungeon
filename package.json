@@ -1,7 +1,7 @@
 {
   "name": "dungeon",
   "description": "A playful Ghost theme of tilted pastel index cards, a floating menu, a Now page, a Scatter wall and a lightsaber colour switch.",
-  "version": "1.2.4",
+  "version": "1.3.0",
   "license": "MIT",
   "author": {
     "name": "Christin Emmanuel George",
@@ -139,6 +139,11 @@
         "type": "text",
         "default": "",
         "description": "Address of your stamps Worker (see extras/stamps-worker). Empty hides the stamps"
+      },
+      "stickies_site_key": {
+        "type": "text",
+        "default": "",
+        "description": "Turnstile site key. With the stamps endpoint, shows stickies instead of comments"
       }
     }
   },

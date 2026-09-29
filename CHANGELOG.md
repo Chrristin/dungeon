@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0
+
+- Stickies: readers leave short handwritten notes under posts, on a board where they pile up, newest on top. Tapping one sends it to the back; **Read as a list** shows them all. New stickies wait for approval; their writer sees theirs straight away, marked as waiting, and can take it back during the same visit. Stickies replace Ghost's comments when switched on.
+- Moderation from your phone: each new sticky arrives in Telegram and/or ntfy with Approve and Delete buttons, using signed, expiring links. Cloudflare Turnstile keeps bots out.
+- New setting: **Stickies site key**. The stamps Worker gains stickies; existing setups need `extras/stamps-worker/migrate-1.3.0.sql` run once, then the new Worker code and secrets (see its README).
+- The Caveat handwriting font is included, under the SIL Open Font License.
+
 ## 1.2.4
 
 - Share: the paper plane and the menu icons are redrawn with smooth curves and rounded ends, instead of sharp points.

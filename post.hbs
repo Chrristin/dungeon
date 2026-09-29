@@ -62,8 +62,45 @@
         </div>
     </article>
 
+    {{!-- Stickies replace Ghost's comments when the stamps Worker and a Turnstile site key are set --}}
+    {{#if @custom.stickies_site_key}}{{#if @custom.stamps_endpoint}}
+    <section class="stickies" data-endpoint="{{@custom.stamps_endpoint}}" data-slug="{{slug}}" data-sitekey="{{@custom.stickies_site_key}}"
+        data-waiting="{{t "waiting to be pinned"}}" data-remove="{{t "Take back my sticky"}}" data-send-back="{{t "Select to send it to the back of the pile"}}"
+        data-err-spam="{{t "The spam check didn't pass. Please try again."}}" data-err-name="{{t "That name isn't allowed. Try another, or leave it empty."}}"
+        data-err-slow="{{t "That's a lot of stickies at once. Try again in a minute."}}" data-err-other="{{t "Couldn't pin that right now. Please try again."}}"
+        data-checking="{{t "One moment, checking you're not a bot..."}}" data-anonymous="{{t "anonymous"}}" aria-labelledby="stickies-title-{{id}}" hidden>
+        <header class="stickies-head">
+            <h2 class="stickies-title" id="stickies-title-{{id}}">{{t "Stickies"}} <span class="stickies-count"></span></h2>
+            <div class="stickies-tools">
+                <button class="stickies-toggle" type="button" aria-pressed="false" data-list="{{t "Read as a list"}}" data-pile="{{t "Back to the pile"}}">{{t "Read as a list"}}</button>
+                <button class="stickies-add" type="button">+ {{t "Leave a sticky"}}</button>
+            </div>
+        </header>
+        <form class="stickies-compose" hidden>
+            <label class="visually-hidden" for="sticky-text-{{id}}">{{t "Your sticky"}}</label>
+            <textarea id="sticky-text-{{id}}" maxlength="200" rows="4" placeholder="{{t "Write something short..."}}" required></textarea>
+            <div class="stickies-compose-row">
+                <label class="visually-hidden" for="sticky-name-{{id}}">{{t "Your name (optional)"}}</label>
+                <input id="sticky-name-{{id}}" type="text" maxlength="24" autocomplete="nickname" placeholder="{{t "Your name (optional)"}}">
+                <span class="stickies-left" aria-live="polite">200</span>
+            </div>
+            <div class="stickies-turnstile"></div>
+            <div class="stickies-compose-actions">
+                <button class="stickies-cancel" type="button">{{t "Cancel"}}</button>
+                <button class="stickies-pin" type="submit">{{t "Pin it"}}</button>
+            </div>
+            <p class="stickies-msg" aria-live="polite"></p>
+            <p class="stickies-note">{{t "Stickies appear once approved."}}</p>
+        </form>
+        <p class="stickies-empty" hidden>{{t "No stickies yet. Be the first."}}</p>
+        <div class="stickies-board" role="list" aria-label="{{t "Stickies"}}"></div>
+        <p class="stickies-hint">{{t "Tap a sticky to send it to the back of the pile."}}</p>
+        <div class="stickies-list" role="list" hidden></div>
+    </section>
+    {{/if}}{{else}}
     {{#if comments}}
     <div class="post-comments">{{comments}}</div>
+    {{/if}}
     {{/if}}
 
     <nav class="post-next" aria-label="{{t "More posts"}}">

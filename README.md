@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 1.2.4. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 1.3.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -67,6 +67,7 @@ Found in **Settings → Design & branding → Customise**.
 | **Saber dark message** | Text shown briefly when switching to dark mode. |
 | **Saber sound** | A synthesised saber sound on switching. Off by default. It only ever plays when a visitor clicks the saber. |
 | **Stamps endpoint** | The address of your stamps Worker. Empty hides the stamps; share always shows. See [Stamps and sharing](#stamps-and-sharing). |
+| **Stickies site key** | Your Cloudflare Turnstile site key. With the stamps endpoint set, stickies replace Ghost's comments under posts. See [Stickies](#stickies). |
 
 ## Navigation
 
@@ -132,6 +133,14 @@ Every post ends with a round **Share** button. Hovering turns its arrow into a p
 **Stamps** are the "I was here" of this theme, on posts and on Now cards. One stamp button shows how many readers have stamped. Stamping brings the stamp down with a small animation and leaves a red SEEN impression with the date, and a name line inside the stamp invites a signature for a few seconds: just start typing. Tapping the stamp again lists the latest names. A reader can take their own name back during the same browser visit, and for up to a day after signing.
 
 Stamps need a small counter you run yourself on Cloudflare's free plan, because a Ghost theme can't store anything. Follow [`extras/stamps-worker`](extras/stamps-worker/README.md), then paste the Worker's address into the **Stamps endpoint** setting. Until then the stamps stay hidden.
+
+## Stickies
+
+Readers can leave a short handwritten sticky under a post: up to 200 characters and an optional name. Stickies pile up on a board, the newest on top; tapping one sends it to the back, and **Read as a list** shows them all in order. A new sticky waits for your approval before anyone else sees it, while its writer sees it straight away, marked as waiting, and can take it back during the same visit. There are no replies.
+
+You approve or delete each sticky from a Telegram message or an ntfy notification, with one tap. Stickies use the same Worker as stamps, plus Cloudflare Turnstile to keep bots out. Set them up with [`extras/stamps-worker`](extras/stamps-worker/README.md), then fill in **Stickies site key**. Once they're on, Ghost's own comments are no longer shown under posts; switch commenting off in Ghost too (**Settings → Membership → Access → Commenting → Nobody**).
+
+The handwriting is Caveat, under the SIL Open Font License (`assets/fonts/LICENSE-Caveat.txt`).
 
 ## A row of people
 
