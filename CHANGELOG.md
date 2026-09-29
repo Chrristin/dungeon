@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.5
+
+- The crumple looks like paper: the sticky crushes into an uneven, lumpy ball, different every time, with creases, light and shade appearing as it crumples, and a shadow that follows its shape.
+- Escape throws the blank sticky when it's in view. In the reader overlay, Escape throws it if something's written on it, and otherwise closes the overlay.
+- "Pin it" is now a push pin, in a deeper version of the sticky's colour.
+- Tape in random colours, plain and patterned, each sticky keeping its own.
+- Sending a sticky to the back is one smooth motion: it pulls out, sinks beneath its neighbours with a short fade instead of blinking under them, and the neighbours nudge aside and settle.
+- Hovering over a sticky gives it a small wobble.
+- Stickies' random choices (tape, doodles, fraying, layout) are better mixed, so neighbouring stickies rarely repeat each other.
+
 ## 1.3.4
 
 - Doodles: a sticky with empty paper gets a small line drawing there, matched to the post's tags where possible (music, homelab, design, F1, books, health, product) and a random one otherwise. Each sticky keeps the same doodle, and doodles never touch the writing or the name.

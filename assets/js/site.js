@@ -1367,9 +1367,16 @@
   var myStickies = function (el) { try { return JSON.parse(localStorage.getItem(mineKey(el)) || '[]'); } catch (e) { return []; } };
   var saveMyStickies = function (el, list) { try { localStorage.setItem(mineKey(el), JSON.stringify(list.slice(-20))); } catch (e) {} };
   var pinnedNow = function (id) { try { return sessionStorage.getItem('dungeon-sticky-now:' + id) === '1'; } catch (e) { return false; } };
+  var TAPES = ['#8fd3c1', '#f4a3b8', '#b9b3f0', '#f2b48a', '#f6d36b', '#9cc6f2', 'rgba(255, 255, 255, 0.75)',
+    'repeating-linear-gradient(90deg, #f6d36b 0 6px, #fbe6a4 6px 12px)', 'repeating-linear-gradient(45deg, #9cc6f2 0 5px, #cfe2f8 5px 10px)',
+    'repeating-linear-gradient(45deg, #f4a3b8 0 5px, #fbd3de 5px 10px)', 'repeating-linear-gradient(90deg, #8fd3c1 0 4px, #c9ece2 4px 8px)',
+    'repeating-linear-gradient(-45deg, #b9b3f0 0 4px, #e0ddf8 4px 8px)'];
+  var tapeFor = function (node, rand) { node.style.setProperty('--tape', TAPES[Math.floor(rand() * TAPES.length)]); node.style.setProperty('--tape-tilt', ((rand() - 0.5) * 12).toFixed(1) + 'deg'); };
   var paperOf = function (s) { return String(s.colour === 0 || s.colour > 0 ? s.colour : Math.abs(Number(s.id)) % 6); };
   var stickyDate = function (iso) { var d = new Date(iso); if (isNaN(d)) d = new Date(); return String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()]; };
-  function seeded(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  // Seeded randomness. The seed is scrambled first: consecutive sticky numbers otherwise start out with
+  // near-identical values, so neighbours picked the same tape (or doodle) far too often.
+  function seeded(seed) { seed = Math.imul(seed ^ 0x9e3779b9, 0x85ebca6b); seed ^= seed >>> 13; seed = Math.imul(seed, 0xc2b2ae35); seed ^= seed >>> 16; return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
   // A frayed paper edge: an outline with rounded corners and a slightly uneven border, worked out from the
   // sticky's own number, so each one differs but stays the same on every visit.
@@ -1392,6 +1399,7 @@
     n.className = 'sticky' + (waiting ? ' is-waiting' : ''); n.setAttribute('role', 'listitem'); n.tabIndex = 0;
     n.setAttribute('data-id', s.id); n.setAttribute('data-c', paperOf(s));
     var paper = document.createElement('div'); paper.className = 'sticky-paper'; paper.style.setProperty('--fray', frayClip(s.id));
+    tapeFor(n, seeded(Math.abs(Number(s.id)) * 53 + 11));
     if (waiting) { var w = document.createElement('span'); w.className = 'sticky-waiting'; w.textContent = el.getAttribute('data-waiting'); paper.appendChild(w); }
     var p = document.createElement('p'); p.className = 'sticky-text'; p.textContent = s.body; paper.appendChild(p);
     var foot = document.createElement('div'); foot.className = 'sticky-foot';
@@ -1534,36 +1542,64 @@
     });
     el._landing = null;
   }
+  // Sending a sticky to the back, as one motion: it's pulled out just far enough to clear its neighbours
+  // (so passing beneath them never "pops"), slides back underneath, and the neighbours react: nudged
+  // aside as it pulls away, lifting a touch to let it under, then settling.
   function sendStickyBack(el, n) {
     if (n.getAttribute('data-moving')) return;
     var board = el.querySelector('.stickies-board'), notes = [].slice.call(board.children);
     var min = Math.min.apply(null, notes.map(function (x) { return +x.style.zIndex; }));
-    var rot = n.style.getPropertyValue('--rot');
-    if (calmStamps || !n.animate) { notes.forEach(function (x) { if (x !== n) x.style.zIndex = +x.style.zIndex + 1; }); n.style.zIndex = min; return; }
+    var toBack = function () { notes.forEach(function (x) { if (x !== n) x.style.zIndex = +x.style.zIndex + 1; }); n.style.zIndex = min; };
+    if (calmStamps || !n.animate) { toBack(); return; }
     n.setAttribute('data-moving', '1');
-    var r = n.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    var under = document.elementsFromPoint(cx, cy).map(function (e) { return e.closest && e.closest('.sticky'); }).filter(function (x) { return x && x !== n; })[0];
-    var b = board.getBoundingClientRect(), dx = cx - (b.left + b.width / 2), dy = cy - (b.top + b.height / 2), len = Math.hypot(dx, dy) || 1;
-    var ox = dx / len * 150, oy = dy / len * 95;
-    var stage = el.querySelector('.stickies-stage').getBoundingClientRect(), m = 6; // keep the pulled-out sticky inside the moving area
-    ox = Math.max(stage.left + m - r.left, Math.min(stage.right - m - r.right, ox));
-    oy = Math.max(stage.top + m - r.top, Math.min(stage.bottom - m - r.bottom, oy));
-    var out = n.animate([
-      { transform: rot + ' translate(0,0) scale(1)' },
-      { transform: rot + ' translate(0,-6px) scale(1.06)', offset: 0.3 },
-      { transform: rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.06)' }
-    ], { duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'forwards' });
-    out.onfinish = function () {
-      notes.forEach(function (x) { if (x !== n) x.style.zIndex = +x.style.zIndex + 1; }); n.style.zIndex = min;
-      var back = n.animate([
-        { transform: rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.06)', filter: 'brightness(1)' },
-        { transform: rot + ' translate(0,0) scale(.97)', filter: 'brightness(.9)', offset: 0.8 },
-        { transform: rot + ' translate(0,0) scale(1)', filter: 'brightness(.96)' }
-      ], { duration: 900, easing: 'cubic-bezier(.25,.7,.3,1)', fill: 'forwards' });
-      out.cancel();
-      back.onfinish = function () { back.cancel(); n.style.transform = rot; n.style.filter = 'brightness(.96)'; n.removeAttribute('data-moving'); };
-      if (under) { var ur = under.style.getPropertyValue('--rot'); under.style.filter = ''; under.animate([{ transform: ur + ' scale(1)' }, { transform: ur + ' translateY(-4px) scale(1.03)' }, { transform: ur + ' scale(1)' }], { duration: 420, delay: 420, easing: 'ease-out' }); }
-    };
+    var rot = n.style.getPropertyValue('--rot'), r = n.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var hit = function (a, b2, dx, dy) { return a.left + dx < b2.right && a.right + dx > b2.left && a.top + dy < b2.bottom && a.bottom + dy > b2.top; };
+    var near = notes.filter(function (x) { return x !== n && hit(r, x.getBoundingClientRect(), 0, 0); });
+    var b = board.getBoundingClientRect(), vx = cx - (b.left + b.width / 2), vy = cy - (b.top + b.height / 2), len = Math.hypot(vx, vy) || 1;
+    vx /= len; vy /= len;
+    var stage = el.querySelector('.stickies-stage').getBoundingClientRect(), m = 6;
+    var clampX = function (x) { return Math.max(stage.left + m - r.left, Math.min(stage.right - m - r.right, x)); };
+    var clampY = function (y) { return Math.max(stage.top + m - r.top, Math.min(stage.bottom - m - r.bottom, y)); };
+    var ox = clampX(vx * 260), oy = clampY(vy * 260); // as far as allowed, unless less is enough:
+    for (var d = 40; d <= 260; d += 10) {
+      var tx = clampX(vx * d), ty = clampY(vy * d);
+      if (!near.some(function (x) { return hit(r, x.getBoundingClientRect(), tx, ty); })) { ox = tx; oy = ty; break; }
+    }
+    var T = 1050, swap = 0.46;
+    var move = n.animate([
+      { transform: rot + ' translate(0,0) scale(1)', filter: 'brightness(1)', offset: 0, easing: 'cubic-bezier(.25,.8,.35,1)' },
+      { transform: rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.05)', filter: 'brightness(1)', offset: swap, easing: 'cubic-bezier(.45,0,.3,1)' },
+      { transform: rot + ' translate(0,0) scale(1)', filter: 'brightness(.96)', offset: 1 }
+    ], { duration: T, fill: 'forwards' });
+    // At its furthest point it goes beneath. In a busy pile it can't always get clear of everything first,
+    // so a copy stays on top and fades away as the real one carries on underneath: it sinks, rather than
+    // blinking under its neighbours.
+    setTimeout(function () {
+      var ghost = n.cloneNode(true); ghost.removeAttribute('data-id'); ghost.removeAttribute('tabindex'); ghost.removeAttribute('role');
+      ghost.setAttribute('aria-hidden', 'true'); ghost.style.pointerEvents = 'none'; ghost.style.zIndex = notes.length + 5;
+      board.appendChild(ghost);
+      var rest = T * (1 - swap);
+      var gm = ghost.animate([
+        { transform: rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.05)', opacity: 1, offset: 0 },
+        { transform: rot + ' translate(' + (ox * 0.62) + 'px,' + (oy * 0.62) + 'px) scale(1.035)', opacity: 0, offset: 0.34 },
+        { transform: rot + ' translate(0,0) scale(1)', opacity: 0, offset: 1 }
+      ], { duration: rest, easing: 'cubic-bezier(.45,0,.3,1)', fill: 'forwards' });
+      gm.onfinish = function () { ghost.remove(); };
+      toBack();
+    }, T * swap);
+    near.forEach(function (x) { // the neighbours react
+      var xr = x.getBoundingClientRect(), ax = (xr.left + xr.width / 2) - cx, ay = (xr.top + xr.height / 2) - cy, al = Math.hypot(ax, ay) || 1;
+      var px = (ax / al * 5).toFixed(1), py = (ay / al * 5).toFixed(1), tilt = (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 0.8);
+      x.animate([
+        { translate: '0 0', rotate: '0deg', scale: '1' },
+        { translate: px + 'px ' + py + 'px', rotate: tilt + 'deg', scale: '1', offset: 0.22 },
+        { translate: (px / 2) + 'px ' + (py / 2) + 'px', rotate: (tilt / 2) + 'deg', scale: '1', offset: 0.45 },
+        { translate: '0 -3px', rotate: '0deg', scale: '1.015', offset: 0.72 },
+        { translate: '0 0', rotate: '0deg', scale: '1' }
+      ], { duration: T, easing: 'ease-in-out' });
+      x.style.filter = '';
+    });
+    move.onfinish = function () { move.cancel(); n.style.transform = rot; n.style.filter = 'brightness(.96)'; n.removeAttribute('data-moving'); };
   }
   var turnstileLoading = null;
   function loadTurnstile() {
@@ -1579,7 +1615,7 @@
   function newPaper(el) {
     var form = el.querySelector('.stickies-compose'), prev = form.getAttribute('data-c'), c;
     do { c = String(Math.floor(Math.random() * 6)); } while (c === prev);
-    form.setAttribute('data-c', c);
+    form.setAttribute('data-c', c); tapeFor(form, Math.random);
   }
   // Cloudflare's spam check loads only when someone starts writing, not on every visit.
   function startSpamCheck(el) {
@@ -1609,21 +1645,52 @@
     var form = el.querySelector('.stickies-compose'), r = form.getBoundingClientRect();
     clearComposer(el);
     if (calmStamps || !document.body.animate) { restick(el); return; }
-    var ball = document.createElement('div'); ball.className = 'sticky-ball'; ball.setAttribute('data-c', form.getAttribute('data-c'));
+    // outer: the flight and a shadow that follows the crushed shape; inner: the paper, whose outline
+    // morphs from the sticky's rectangle into a random lumpy ball, with creases and shading.
+    var ball = document.createElement('div'); ball.className = 'sticky-ball';
+    var paper = document.createElement('div'); paper.className = 'sticky-ball-paper'; paper.setAttribute('data-c', form.getAttribute('data-c'));
     ball.style.left = r.left + 'px'; ball.style.top = r.top + 'px'; ball.style.width = r.width + 'px'; ball.style.height = r.height + 'px';
+    var ph1 = Math.random() * 6.28, ph2 = Math.random() * 6.28, ph3 = Math.random() * 6.28;
+    var N = 32, rect = [], half = [], crushed = [], cr = function (a, rad) { return (50 + Math.cos(a) * rad).toFixed(1) + '% ' + (50 + Math.sin(a) * rad).toFixed(1) + '%'; };
+    for (var i = 0; i < N; i++) { // points round the rectangle's edge, matched to points round the ball
+      var t = i / N, per = t * 4, x, y;
+      if (per < 1) { x = per * 100; y = 0; } else if (per < 2) { x = 100; y = (per - 1) * 100; } else if (per < 3) { x = 100 - (per - 2) * 100; y = 100; } else { x = 0; y = 100 - (per - 3) * 100; }
+      rect.push(x.toFixed(1) + '% ' + y.toFixed(1) + '%');
+      var ang = Math.atan2(y - 50, x - 50);
+      // lumpy, not spiky: a couple of broad bulges, small irregularities, the odd dent or corner
+      var lump = 3.5 * Math.sin(2 * ang + ph1) + 2.5 * Math.sin(3 * ang + ph2) + 1.5 * Math.sin(5 * ang + ph3);
+      var odd = Math.random() < 0.14 ? -4.5 : (Math.random() < 0.12 ? 3 : 0);
+      half.push(cr(ang, 36 + lump * 1.4 + (Math.random() - 0.5) * 7)); // half-crushed: ragged and uneven
+      crushed.push(cr(ang, 28 + lump + odd + (Math.random() - 0.5) * 2.5)); // crushed: a lumpy ball with facets
+    }
+    var creases = '';
+    for (var k = 0; k < 9; k++) { // fold lines, some catching light, some in shadow
+      var x1 = 20 + Math.random() * 60, y1 = 20 + Math.random() * 60, x2 = 20 + Math.random() * 60, y2 = 20 + Math.random() * 60, mx = (x1 + x2) / 2 + (Math.random() - 0.5) * 20, my = (y1 + y2) / 2 + (Math.random() - 0.5) * 20;
+      creases += '<path d="M' + x1.toFixed(0) + ' ' + y1.toFixed(0) + 'L' + mx.toFixed(0) + ' ' + my.toFixed(0) + 'L' + x2.toFixed(0) + ' ' + y2.toFixed(0) + '" stroke="' + (k % 3 ? 'rgba(0,0,0,.28)' : 'rgba(255,255,255,.6)') + '"/>';
+    }
+    paper.innerHTML = '<div class="sticky-ball-shade"></div><svg class="sticky-ball-folds" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + creases + '</svg>';
+    ball.appendChild(paper);
     (form.closest('dialog') || document.body).appendChild(ball); // inside the overlay when thrown from there
     form.style.visibility = 'hidden';
     var cx = r.left + r.width / 2, cy = r.top + r.height / 2, a = Math.random() * Math.PI * 2;
     var reach = Math.max(innerWidth, innerHeight) * 0.9, dx = Math.cos(a) * reach, dy = Math.sin(a) * reach;
-    var spin = (Math.random() < 0.5 ? -1 : 1) * (540 + Math.random() * 360);
+    var spin = (Math.random() < 0.5 ? -1 : 1) * (540 + Math.random() * 360), sq = 0.55 + Math.random() * 0.2;
+    paper.animate([
+      { clipPath: 'polygon(' + rect.join(',') + ')', filter: 'brightness(1)' },
+      { clipPath: 'polygon(' + half.join(',') + ')', filter: 'brightness(0.97)', offset: 0.14 },
+      { clipPath: 'polygon(' + crushed.join(',') + ')', filter: 'brightness(0.94)', offset: 0.3 },
+      { clipPath: 'polygon(' + crushed.join(',') + ')', filter: 'brightness(0.94)' }
+    ], { duration: 1200, easing: 'ease-out', fill: 'forwards' });
+    paper.querySelector('svg').animate([{ opacity: 0 }, { opacity: 0.9, offset: 0.28 }, { opacity: 0.9 }], { duration: 1200, fill: 'forwards' });
+    paper.querySelector('.sticky-ball-shade').animate([{ opacity: 0 }, { opacity: 1, offset: 0.3 }, { opacity: 1 }], { duration: 1200, fill: 'forwards' }); // light and shade appear as it crushes
     var fly = ball.animate([
-      { transform: 'rotate(-3deg) scale(1)', borderRadius: '7px', boxShadow: '0 0 0 rgba(0,0,0,0)' },
-      { transform: 'rotate(30deg) scale(0.62, 0.5)', borderRadius: '38%', boxShadow: 'inset -8px -10px 18px rgba(0,0,0,.22), inset 6px 6px 12px rgba(255,255,255,.45)', offset: 0.16 },
-      { transform: 'rotate(110deg) scale(0.3)', borderRadius: '50%', boxShadow: 'inset -10px -12px 16px rgba(0,0,0,.28), inset 6px 6px 10px rgba(255,255,255,.5)', offset: 0.3 },
-      { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 90) + 'px) rotate(' + (spin * 0.5) + 'deg) scale(0.27)', borderRadius: '50%', offset: 0.62 },
-      { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + spin + 'deg) scale(0.24)', borderRadius: '50%' }
-    ], { duration: 1150, easing: 'cubic-bezier(.3,.55,.45,1)', fill: 'forwards' });
-    setTimeout(function () { form.style.visibility = ''; restick(el); }, 380);
+      { transform: 'rotate(-3deg) scale(1)' },
+      { transform: 'rotate(18deg) scale(' + (sq + 0.1) + ',' + (sq - 0.05) + ')', offset: 0.14 },
+      { transform: 'rotate(70deg) scale(0.34)', offset: 0.3 },
+      { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 90) + 'px) rotate(' + (spin * 0.5) + 'deg) scale(0.3)', offset: 0.62 },
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + spin + 'deg) scale(0.27)' }
+    ], { duration: 1200, easing: 'cubic-bezier(.3,.55,.45,1)', fill: 'forwards' });
+    setTimeout(function () { form.style.visibility = ''; restick(el); }, 400);
     fly.onfinish = function () { ball.remove(); };
   }
   function waitForToken(el, ms) {
@@ -1696,9 +1763,13 @@
   });
   document.addEventListener('keydown', function (ev) {
     var compose = ev.target.closest && ev.target.closest('.stickies-compose');
-    if (compose && ev.key === 'Escape' && !compose.closest('dialog')) { // in the overlay, its cancel handler does this
-      var hasText = compose.querySelector('textarea').value || compose.querySelector('input').value;
-      if (hasText) { ev.preventDefault(); clearComposer(compose.closest('.stickies')); return; }
+    if (ev.key === 'Escape' && !document.querySelector('.reader[open]')) { // on the page (the overlay's cancel handler does its own)
+      var pageSticky = document.querySelector('.stickies:not([hidden]) .stickies-compose');
+      var busyElsewhere = ev.target.closest && !ev.target.closest('.stickies-compose') && /^(input|textarea|select)$/i.test(ev.target.tagName || '');
+      if (pageSticky && !busyElsewhere) {
+        var pr = pageSticky.getBoundingClientRect();
+        if (pr.bottom > 0 && pr.top < innerHeight && pr.right > 0 && pr.left < innerWidth) { ev.preventDefault(); throwComposer(pageSticky.closest('.stickies')); return; }
+      }
     }
     var n = ev.target.closest && ev.target.closest('.sticky');
     if (n && ev.target === n && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); sendStickyBack(n.closest('.stickies'), n); }
@@ -1722,8 +1793,8 @@
   // In the overlay, the browser closes the dialog on Escape by itself. If the blank sticky has writing
   // on it, Escape clears that first and keeps the overlay open; pressed again, it closes as usual.
   if (reader) reader.addEventListener('cancel', function (e) {
-    var a = document.activeElement, comp = a && a.closest && a.closest('.stickies-compose');
-    if (comp && (comp.querySelector('textarea').value || comp.querySelector('input').value)) { e.preventDefault(); clearComposer(comp.closest('.stickies')); }
+    var written = document.querySelector('.reader .stickies-compose');
+    if (written && (written.querySelector('textarea').value || written.querySelector('input').value)) { e.preventDefault(); throwComposer(written.closest('.stickies')); }
   });
 
   function openPost(url, card) {
