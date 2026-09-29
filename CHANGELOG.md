@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.1
+
+- Stickies sit directly on the page, with no board behind them. The area grows with the stickies, in loose rows, up to its full height; only then do they pile up (and the "send it to the back" hint appears).
+- Stickies have softer, rounded corners and slightly frayed edges, different on each one and the same on every visit.
+- Stickies hold 200 characters cleanly: longer stickies are written smaller, down to a readable size, and the name and x have their own row, so the text never runs over them. A sticky that still doesn't fit grows taller instead.
+- The "waiting to be pinned" label has its own line.
+- Tapping the stamp after you've stamped shows "You left your mark already" by the icon, and the list of names still opens.
+- Stickies Worker: fixed a problem that stopped browsers sending stickies (the preflight check). Deploy the latest `extras/stamps-worker/worker.js`.
+
 ## 1.3.0
 
 - Stickies: readers leave short handwritten notes under posts, on a board where they pile up, newest on top. Tapping one sends it to the back; **Read as a list** shows them all. New stickies wait for approval; their writer sees theirs straight away, marked as waiting, and can take it back during the same visit. Stickies replace Ghost's comments when switched on.

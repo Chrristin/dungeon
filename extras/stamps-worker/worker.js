@@ -82,6 +82,8 @@ async function summary(env, slug) {
 export default {
   async fetch(request, env, ctx) {
     const headers = cors(env, request);
+    // Browsers ask first ("preflight") before sending JSON. Answer that for every address, before routing.
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
     // Setup checks, so a missing piece shows as a clear message instead of a crash
     if (!env.DB || typeof env.DB.prepare !== 'function') return json({ error: 'setup: no D1 database connected. Add a D1 binding named DB (Worker, Bindings).' }, 500, headers);
     if (!env.SITE) return json({ error: 'setup: no SITE variable. Add a variable named SITE with your site address.' }, 500, headers);

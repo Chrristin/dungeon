@@ -1289,6 +1289,13 @@
         }
       }, function () { el._signing = false; });
   }
+  // Already stamped: a small note by the icon, then the list of names opens as before
+  function stampToast(el) {
+    var t = el.querySelector('.stamp-toast');
+    if (!t) { t = document.createElement('span'); t.className = 'stamp-toast'; t.setAttribute('role', 'status'); t.textContent = el.getAttribute('data-marked') || 'You left your mark already'; el.appendChild(t); }
+    t.classList.remove('is-showing'); void t.offsetWidth; t.classList.add('is-showing');
+    clearTimeout(el._toastTimer); el._toastTimer = setTimeout(function () { t.classList.remove('is-showing'); }, 1900);
+  }
   function unsignStamp(el) {
     var mine = myStamp(el); if (!mine || !mine.name || el._signing) return;
     el._signing = true;
@@ -1311,7 +1318,7 @@
       var el = btn.closest('.stamp');
       if (!myStamp(el)) { closeStampLists(); stampIt(el); return; }
       var list = el.querySelector('.stamp-list'); closeStampLists(list);
-      if (list.hidden) renderList(el);
+      if (list.hidden) { renderList(el); stampToast(el); }
       list.hidden = !list.hidden; btn.setAttribute('aria-expanded', String(!list.hidden));
       if (!list.hidden && !calmStamps) { list.classList.remove('is-opening'); void list.offsetWidth; list.classList.add('is-opening'); }
       if (!list.hidden) { var i = list.querySelector('input'); if (i && window.matchMedia('(pointer: fine)').matches) i.focus(); }
@@ -1363,16 +1370,47 @@
   var stickyDate = function (iso) { var d = new Date(iso); if (isNaN(d)) d = new Date(); return String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()]; };
   function seeded(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
+  // A frayed paper edge: an outline with rounded corners and a slightly uneven border, worked out from the
+  // sticky's own number, so each one differs but stays the same on every visit.
+  function frayClip(id) {
+    var r = seeded(Math.abs(Number(id)) * 9973 + 17), R = 7, pts = [];
+    var nudge = function () { return (r() < 0.14 ? 1.2 + r() * 1.6 : r() * 1.1).toFixed(2); };
+    var at = function (xp, xpx, yp, ypx) { return 'calc(' + xp + '% + ' + xpx + 'px) calc(' + yp + '% + ' + ypx + 'px)'; };
+    var arc = function (cxp, cxpx, cyp, cypx, from) {
+      for (var k = 0; k <= 3; k++) { var t = (from + k * 30) * Math.PI / 180; pts.push(at(cxp, (cxpx + R * Math.cos(t)).toFixed(2), cyp, (cypx + R * Math.sin(t)).toFixed(2))); }
+    };
+    var t;
+    arc(0, R, 0, R, 180); for (t = 9; t <= 91; t += 7) pts.push(at(t, 0, 0, nudge()));
+    arc(100, -R, 0, R, 270); for (t = 9; t <= 91; t += 7) pts.push(at(100, -nudge(), t, 0));
+    arc(100, -R, 100, -R, 0); for (t = 91; t >= 9; t -= 7) pts.push(at(t, 0, 100, -nudge()));
+    arc(0, R, 100, -R, 90); for (t = 91; t >= 9; t -= 7) pts.push(at(0, nudge(), t, 0));
+    return 'polygon(' + pts.join(',') + ')';
+  }
   function stickyNode(el, s, waiting) {
     var n = document.createElement('div');
     n.className = 'sticky' + (waiting ? ' is-waiting' : ''); n.setAttribute('role', 'listitem'); n.tabIndex = 0;
     n.setAttribute('data-id', s.id); n.setAttribute('data-c', String(Math.abs(Number(s.id)) % 6));
-    var p = document.createElement('p'); p.textContent = s.body; n.appendChild(p);
-    if (s.name) { var by = document.createElement('span'); by.className = 'sticky-by'; by.textContent = s.name; n.appendChild(by); }
-    if (waiting) { var w = document.createElement('span'); w.className = 'sticky-waiting'; w.textContent = el.getAttribute('data-waiting'); n.appendChild(w); }
-    if (pinnedNow(s.id)) { var x = document.createElement('button'); x.type = 'button'; x.className = 'sticky-remove'; x.innerHTML = '&times;'; x.setAttribute('aria-label', el.getAttribute('data-remove')); n.appendChild(x); }
+    var paper = document.createElement('div'); paper.className = 'sticky-paper'; paper.style.setProperty('--fray', frayClip(s.id));
+    if (waiting) { var w = document.createElement('span'); w.className = 'sticky-waiting'; w.textContent = el.getAttribute('data-waiting'); paper.appendChild(w); }
+    var p = document.createElement('p'); p.className = 'sticky-text'; p.textContent = s.body; paper.appendChild(p);
+    var foot = document.createElement('div'); foot.className = 'sticky-foot';
+    var by = document.createElement('span'); by.className = 'sticky-by'; by.textContent = s.name || ''; foot.appendChild(by);
+    if (pinnedNow(s.id)) { var x = document.createElement('button'); x.type = 'button'; x.className = 'sticky-remove'; x.innerHTML = '&times;'; x.setAttribute('aria-label', el.getAttribute('data-remove')); foot.appendChild(x); }
+    paper.appendChild(foot); n.appendChild(paper);
     n.setAttribute('aria-label', s.body + (s.name ? ', ' + s.name : '') + '. ' + el.getAttribute('data-send-back'));
     return n;
+  }
+  // Longer stickies are written smaller, like on a real sticky note, down to a readable minimum; a sticky
+  // that still doesn't fit grows taller rather than letting its text run over the name.
+  function fitSticky(n) {
+    var p = n.querySelector('.sticky-text'); if (!p) return;
+    p.style.fontSize = '';
+    var max = parseFloat(getComputedStyle(p).fontSize), min = Math.max(12.5, max * 0.64);
+    if (p.scrollHeight <= p.clientHeight + 1) return;
+    var lo = min, hi = max;
+    for (var i = 0; i < 7; i++) { var mid = (lo + hi) / 2; p.style.fontSize = mid + 'px'; if (p.scrollHeight <= p.clientHeight + 1) lo = mid; else hi = mid; }
+    p.style.fontSize = lo + 'px';
+    if (p.scrollHeight > p.clientHeight + 1) n.style.height = (n.offsetHeight + (p.scrollHeight - p.clientHeight) + 4) + 'px';
   }
   // Lay out the pile. Oldest first, each sticky takes the emptiest of 30 random spots (seeded, so the
   // pile looks the same on every visit and only changes as stickies are added).
@@ -1389,6 +1427,7 @@
     if (!all.length) return;
     all.slice().reverse().forEach(function (item) { // the list: newest first
       var d = document.createElement('div'); d.setAttribute('role', 'listitem'); d.setAttribute('data-c', String(Math.abs(Number(item.s.id)) % 6));
+      d.style.setProperty('--fray', frayClip(item.s.id));
       if (item.waiting) d.className = 'is-waiting';
       d.appendChild(document.createTextNode(item.s.body));
       var meta = document.createElement('span');
@@ -1397,14 +1436,22 @@
       if (pinnedNow(item.s.id)) { var x = document.createElement('button'); x.type = 'button'; x.className = 'sticky-remove'; x.setAttribute('data-id', item.s.id); x.innerHTML = '&times;'; x.setAttribute('aria-label', el.getAttribute('data-remove')); d.appendChild(x); }
       list.appendChild(d);
     });
-    var W = board.clientWidth, H = board.clientHeight;
-    if (!W || !H) return; // not visible yet (the list view, say): laid out again when shown
+    var W = board.clientWidth;
+    if (!W) return; // not visible yet (the list view, say): laid out again when shown
     var probe = stickyNode(el, { id: 0, body: '' }, false); probe.style.visibility = 'hidden'; board.appendChild(probe);
     var nw = probe.offsetWidth, nh = probe.offsetHeight; board.removeChild(probe);
-    var rand = seeded(7), placed = [];
+    // The area grows with the pile: as many rows as the stickies need, up to the maximum height.
+    var maxH = parseFloat(getComputedStyle(board).maxHeight) || 496;
+    var perRow = Math.max(1, Math.floor(W / (nw * 1.12))), rows = Math.ceil(all.length / perRow);
+    var need = rows * nh * 1.1 + 24, crowded = need > maxH, H = Math.max(nh + 24, Math.min(maxH, need));
+    board.style.height = H + 'px'; el.classList.toggle('is-crowded', crowded);
+    var rand = seeded(7), placed = [], gapX = (W - perRow * nw) / perRow;
     all.forEach(function (item, i) {
       var best = null, bestD = -1;
-      for (var k = 0; k < 30; k++) {
+      if (!crowded) { // room for everyone: loose rows, each sticky a little off its spot
+        var col = i % perRow, row = Math.floor(i / perRow);
+        best = { x: Math.max(0, Math.min(W - nw, col * (nw + gapX) + gapX / 2 + (rand() - 0.5) * gapX * 0.6)), y: Math.max(0, Math.min(H - nh, row * nh * 1.1 + 10 + (rand() - 0.5) * 12)) };
+      } else for (var k = 0; k < 30; k++) { // crowded: each takes the emptiest of 30 spots, and the pile builds up
         var x = rand() * Math.max(1, W - nw), y = rand() * Math.max(1, H - nh), d = 1e9;
         for (var q = 0; q < placed.length; q++) d = Math.min(d, Math.hypot(placed[q].x - x, placed[q].y - y));
         if (d > bestD) { bestD = d; best = { x: x, y: y }; }
@@ -1415,7 +1462,7 @@
       n.style.setProperty('--rot', rot); n.style.transform = rot;
       n.style.left = best.x + 'px'; n.style.top = best.y + 'px'; n.style.zIndex = i + 1;
       if (item.s.id === el._landing) n.classList.add('is-landing');
-      board.appendChild(n);
+      board.appendChild(n); fitSticky(n);
     });
     el._landing = null;
   }
@@ -1515,7 +1562,10 @@
       var api = stickyApi(el), mine = myStickies(el);
       var statuses = mine.length ? fetch(api + '/mine', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: mine.map(function (m) { return { id: m.id, token: m.token }; }) }) })
         .then(function (r) { return r.ok ? r.json() : { items: [] }; }).catch(function () { return { items: [] }; }) : Promise.resolve({ items: [] });
-      Promise.all([fetch(api).then(function (r) { if (!r.ok) throw r; return r.json(); }), statuses]).then(function (out) {
+      // Load the handwriting before laying out, so each sticky's text is measured in the real font:
+      // measured in the fallback, which is wider, long stickies were shrunk and stretched needlessly.
+      var hand = document.fonts && document.fonts.load ? Promise.all([document.fonts.load('400 1rem "Caveat"'), document.fonts.load('600 1rem "Caveat"')]).catch(function () {}) : Promise.resolve();
+      Promise.all([fetch(api).then(function (r) { if (!r.ok) throw r; return r.json(); }), statuses, hand]).then(function (out) {
         el._stickies = out[0].stickies || []; el._count = out[0].count || 0;
         var st = {}; (out[1].items || []).forEach(function (i) { st[i.id] = i.status; });
         saveMyStickies(el, mine.filter(function (m) { return st[m.id] === 'pending' || st[m.id] === 'approved' || st[m.id] === undefined; })

@@ -23,7 +23,7 @@
                 {{content}}
             </div>
             {{#if @custom.stamps_endpoint}}
-            <div class="stamp stamp--small" data-endpoint="{{@custom.stamps_endpoint}}" data-slug="{{slug}}" data-bad-name="{{t "Name not allowed"}}" hidden>
+            <div class="stamp stamp--small" data-endpoint="{{@custom.stamps_endpoint}}" data-slug="{{slug}}" data-bad-name="{{t "Name not allowed"}}" data-marked="{{t "You left your mark already"}}" hidden>
                 <button class="stamp-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="{{t "Stamp: I was here"}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6l-.8 7h-4.4z"/><path d="M5 13.5h14v3H5z"/><path d="M4 20.5h16"/><path d="M10 10.5v3M14 10.5v3"/></svg><span class="stamp-count"></span></button>
                 <div class="stamp-mark" hidden><span class="stamp-seen">{{t "Seen"}}</span><span class="stamp-date"></span><span class="stamp-name"><span class="stamp-field"><input type="text" maxlength="24" autocomplete="off" aria-label="{{t "Leave your name"}}"><span class="stamp-prompt" aria-hidden="true">{{t "leave name"}}</span></span><span class="stamp-signed"></span><button class="stamp-unsign" type="button" aria-label="{{t "Remove my name"}}" hidden>&times;</button></span></div>
                 <div class="stamp-list" hidden data-remove="{{t "Remove my name"}}"><div class="stamp-list-rows"></div><p class="stamp-more" data-word="{{t "more"}}"></p></div>
