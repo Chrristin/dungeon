@@ -1690,8 +1690,6 @@ html.is-theming, html.is-theming * {
 .garden-after li a:hover { text-decoration: underline; }
 .garden-quiet { margin: 0; font: 0.8rem var(--mono); color: var(--graphite); }
 .garden-back { display: inline-block; margin-top: 1.6rem; font: 0.78rem var(--mono); }
-.scatter-garden { display: inline-block; margin-top: 0.6rem; font: 0.72rem var(--mono); color: inherit; opacity: 0.75; }
-.scatter-garden:hover { opacity: 1; }
 @media (max-width: 760px) { .garden-after { padding-left: 1rem; padding-right: 1rem; } }
 @media (prefers-reduced-motion: reduce) { .garden-random.is-pulling::before { animation: none; } .garden-card:hover { transform: none; } }
 
@@ -1754,15 +1752,17 @@ html[data-scheme="dark"] .og-link-stem { stroke: #5aa650; }
     html[data-scheme="auto"] .og[data-k="source"] { --og-bg: #3a3120; --og-page: #4a3f2a; --og-meta: #f6d27a; }
     html[data-scheme="auto"] .og-link-stem { stroke: #5aa650; }
 }
-/* the Scatter wall's "Read in the garden": a small tendril that, on hover, runs along the card's bottom edge
-   and climbs its right side, flowering; it never moves the words */
-.scatter-card { position: relative; }
-.scatter-garden { display: inline-flex; align-items: center; gap: 0.2rem; text-decoration: none; }
-.vine-slot { display: inline-block; width: 1.4rem; height: 1rem; position: relative; }
-.vine-slot svg { position: absolute; left: 0; top: 0; overflow: visible; }
-.vine-grow { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 3; }
-.vine-grow .vg-stem { fill: none; stroke: #3f8a3a; stroke-width: 2; stroke-linecap: round; transition: stroke-dashoffset 0.8s cubic-bezier(.3,.7,.3,1); }
-.vine-grow .vg-bit { transform-box: fill-box; transform-origin: center; transform: scale(0); transition: transform 0.35s cubic-bezier(.3,1.4,.5,1); }
-.vine-grow.is-grown .vg-bit { transform: scale(1); }
+/* the Scatter wall's garden patch: bottom right, after everything else in the card */
+.scatter-patch { display: block; flex: none; width: 3.25rem; height: 1.8rem; margin: auto -0.35rem -0.4rem auto; padding-top: 0.5rem; box-sizing: content-box; color: inherit; } /* pinned to the card's bottom right, however tall the card is */
+.scatter-patch svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.patch-ground { fill: none; stroke: #7a5a3a; stroke-width: 1.6; stroke-linecap: round; opacity: 0.55; }
+.patch-blade { fill: none; stroke: #4fa83e; stroke-width: 1.5; stroke-linecap: round; transform-box: fill-box; transform-origin: bottom center; transition: transform 0.3s ease; }
+.patch-blade--dark { stroke: #2f7a2c; } .patch-blade--light { stroke: #8fd65a; }
+.scatter-patch:hover .patch-blade, .scatter-patch:focus-visible .patch-blade { transform: rotate(-4deg); }
+.scatter-patch:hover .patch-blade:nth-child(2n), .scatter-patch:focus-visible .patch-blade:nth-child(2n) { transform: rotate(5deg); }
+.patch-flower { transform-box: fill-box; transform-origin: bottom center; transform: scale(0); transition: transform 0.32s cubic-bezier(.3,1.5,.5,1); }
+.patch-stem { fill: none; stroke: #3f8a3a; stroke-width: 1.2; stroke-linecap: round; }
+.scatter-patch.is-blooming .patch-flower { transform: scale(1); }
+.scatter-patch:focus-visible { outline: 2px solid var(--led); outline-offset: 3px; border-radius: 4px; }
 .og-link, .og { animation-play-state: running; }
-@media (prefers-reduced-motion: reduce) { .og-link { animation: none; } .og:hover { transform: none; } .vine-grow .vg-stem, .vine-grow .vg-bit { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .og-link { animation: none; } .og:hover { transform: none; } .patch-flower, .patch-blade { transition: none; } }

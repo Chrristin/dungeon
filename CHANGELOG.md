@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1
+
+- On the Scatter wall, "Read in the garden" and its vine are replaced by a small patch of grass in the bottom-right corner of garden cards, after everything else in the card. On hover, two or three flowers bloom in it, in colours that stand out from that card; clicking it opens the note in the garden overlay. It carries a label for screen readers, and no visible text.
+
 ## 1.5.0
 
 - Garden cards are Overgrown: sized to their content and showing their text, with vines creeping round a card as it gains links, flowers on evergreens, and pages stacked behind long notes. Colours follow light and dark mode.

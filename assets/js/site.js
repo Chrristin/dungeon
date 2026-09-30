@@ -2103,30 +2103,48 @@
   }
   document.addEventListener('click', function (e) { if (document.querySelector('.og-panel') && !(e.target.closest && e.target.closest('.og-panel, .og-link'))) closeLinkPanel(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.querySelector('.og-panel')) closeLinkPanel(); });
-  // "Read in the garden" on the Scatter wall: a tendril in a fixed slot; on hover it grows along the card's
-  // bottom edge and up its right side, leaves and flowers opening as it goes. The words never move.
-  function initVineLinks(root) {
-    [].forEach.call(root.querySelectorAll('.scatter-garden'), function (a) {
-      var slot = a.querySelector('.vine-slot'); if (!slot || slot.firstChild) return;
-      slot.innerHTML = '<svg width="22" height="16" viewBox="0 0 22 16"><path d="M2 12C7 13 9 6 15 7s5-4 5-4" fill="none" stroke="#3f8a3a" stroke-width="2" stroke-linecap="round"/>' + gleaf(15, 7, -60, 6, '#8fd65a') + '</svg>';
-      var card = a.closest('.scatter-card'), grow = null;
-      var build = function () {
-        var W = card.offsetWidth, H = card.offsetHeight, cr = card.getBoundingClientRect(), sr = slot.getBoundingClientRect();
-        var x0 = sr.left - cr.left + 4, y0 = sr.top - cr.top + 12, edge = H - 5, run = W - 10 - x0, pts = [];
-        for (var d = 0; d <= run + H * 0.62; d += 2) { var x, y; if (d <= run) { x = x0 + d; y = y0 + Math.min(1, d / 16) * (edge - y0) + Math.sin(d / 9) * 2; } else { x = W - 10 + Math.sin(d / 9) * 2.5; y = edge - (d - run); } pts.push([x, y]); }
-        var len = 0; for (var i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-        var bits = '', n = Math.floor(pts.length / 9);
-        for (var k = 1; k <= n; k++) { var q = pts[k * 9 - 1]; bits += '<g class="vg-bit" style="transition-delay:' + (k / n * 0.7).toFixed(2) + 's">' + gleaf(q[0], q[1], k % 2 ? -110 : 70, 8, k % 3 ? '#5fbf4a' : '#8fd65a') + '</g>'; }
-        [0.45, 0.7, 0.92].forEach(function (t, f) { var q = pts[Math.floor(pts.length * t)]; bits += '<g class="vg-bit" style="transition-delay:' + (0.4 + f * 0.15).toFixed(2) + 's">' + gflower(q[0], q[1], 5.5, FLOWERS[f * 2 % 5]) + '</g>'; });
-        card.insertAdjacentHTML('beforeend', '<svg class="vine-grow" aria-hidden="true" viewBox="0 0 ' + W + ' ' + H + '"><path class="vg-stem" d="M' + pts.map(function (q) { return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('L') + '" style="stroke-dasharray:' + len.toFixed(0) + ';stroke-dashoffset:' + len.toFixed(0) + '"/>' + bits + '</svg>');
-        return card.lastElementChild;
+  // The Scatter wall's garden patch: on hover, two or three flowers bloom in the grass, in colours picked
+  // afresh each time; clicking it opens the note in the garden.
+  function initPatches(root) {
+    [].forEach.call(root.querySelectorAll('.scatter-patch'), function (a) {
+      if (a.getAttribute('data-ready')) return; a.setAttribute('data-ready', '1');
+      var svg = a.querySelector('svg'), NS = 'http://www.w3.org/2000/svg', SLOTS = [[10, 9], [15, 6], [20, 8.5], [25, 5.5], [31, 7.5], [36, 9.5]];
+      var bloom = function () {
+        if (svg.querySelector('.patch-flower')) return;
+        var slots = SLOTS.slice().sort(function () { return Math.random() - 0.5; }), n = 2 + (Math.random() < 0.5 ? 1 : 0);
+        // flowers in colours that stand out from this card: skip any too close to its own colour
+        var rgb = function (s) { // any CSS colour (hex, rgb, oklch...) as red, green, blue: paint one pixel and read it back
+          var cv = rgb.cv || (rgb.cv = document.createElement('canvas')), x = cv.getContext('2d', { willReadFrequently: true });
+          cv.width = cv.height = 1; x.clearRect(0, 0, 1, 1); x.fillStyle = '#000'; x.fillStyle = s; x.fillRect(0, 0, 1, 1);
+          var d = x.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2]];
+        };
+        // the card's settled colour: its colour animates (on hover, and while the page switches light or dark),
+        // so pause that animation for the moment of reading
+        var cardEl = a.closest('.scatter-card') || a, was = cardEl.style.transition; cardEl.style.transition = 'none';
+        var bg = rgb(getComputedStyle(cardEl).backgroundColor); cardEl.style.transition = was;
+        var hsl = function (c) { var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = 0;
+          if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360;
+          var l = (mx + mn) / 2; return [h, d ? d / (1 - Math.abs(2 * l - 1)) : 0, l]; };
+        var card = hsl(bg), far = FLOWERS.filter(function (c) { // skip flowers too close in hue to a strongly coloured card
+          if (card[1] < 0.35) return true; var dh = Math.abs(hsl(rgb(c))[0] - card[0]); return Math.min(dh, 360 - dh) > 40; });
+        var colours = (far.length >= 2 ? far : FLOWERS).slice().sort(function () { return Math.random() - 0.5; }); n = Math.min(n, colours.length);
+        for (var i = 0; i < n; i++) {
+          var x = slots[i][0], y = slots[i][1], r = 2.6 + Math.random() * 0.8, g = document.createElementNS(NS, 'g');
+          g.setAttribute('class', 'patch-flower'); g.style.transitionDelay = (i * 0.09).toFixed(2) + 's';
+          g.innerHTML = '<path class="patch-stem" d="M' + x + ' 21.5C' + (x - 1) + ' 17 ' + (x + 1) + ' ' + (y + 5) + ' ' + x + ' ' + (y + 1) + '"/>' + gflower(x, y, r, colours[i]);
+          svg.appendChild(g);
+        }
+        void svg.getBoundingClientRect(); a.classList.add('is-blooming');
       };
-      var on = function () { if (calmStamps) return; if (grow) grow.remove(); grow = build(); void grow.getBoundingClientRect(); grow.querySelector('.vg-stem').style.strokeDashoffset = 0; grow.classList.add('is-grown'); };
-      var off = function () { if (!grow) return; var g = grow; grow = null; var s = g.querySelector('.vg-stem'); s.style.strokeDashoffset = s.style.strokeDasharray; g.classList.remove('is-grown'); setTimeout(function () { g.remove(); }, 800); };
-      a.addEventListener('mouseenter', on); a.addEventListener('focus', on); a.addEventListener('mouseleave', off); a.addEventListener('blur', off);
+      var fade = function () {
+        a.classList.remove('is-blooming');
+        setTimeout(function () { if (!a.classList.contains('is-blooming')) [].forEach.call(svg.querySelectorAll('.patch-flower'), function (f) { f.remove(); }); }, 320);
+      };
+      a.addEventListener('mouseenter', bloom); a.addEventListener('focus', bloom);
+      a.addEventListener('mouseleave', fade); a.addEventListener('blur', fade);
     });
   }
-  initVineLinks(document);
+  initPatches(document);
   function initGarden() {
     var el = document.querySelector('.garden'); if (!el) return;
     var data = readJson(document.getElementById('garden-data')), L = readJson({ textContent: el.getAttribute('data-labels') }) || {};
@@ -2241,7 +2259,7 @@
     // garden notes open in the overlay too: the cards, lists, map, the connection panel and "Mentioned in"
     window.dungeonOpen = function (url) { openPost(url, null); };
     document.addEventListener('click', function (e) {
-      var link = e.target.closest && e.target.closest('.garden .og, .garden-topic a, .garden-all a, .garden-node, .og-panel a, .garden-after .garden-backlinks a');
+      var link = e.target.closest && e.target.closest('.garden .og, .garden-topic a, .garden-all a, .garden-node, .og-panel a, .garden-after .garden-backlinks a, .scatter-patch');
       if (!link || e.defaultPrevented) return;
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       var href = link.getAttribute('href') || (link.href && link.href.baseVal); if (!href) return;
