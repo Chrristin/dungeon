@@ -4,7 +4,16 @@
   "description": "Publishes Obsidian notes marked publish: true into Ghost as a digital garden",
   "type": "module",
   "main": "sync.js",
-  "scripts": { "start": "node sync.js", "once": "node sync.js once", "import-scatter": "node sync.js import-scatter" },
-  "dependencies": { "markdown-it": "^14.1.0", "turndown": "^7.2.0", "yaml": "^2.5.0" },
+  "scripts": {
+    "start": "node sync.js",
+    "once": "node sync.js once",
+    "import-scatter": "node sync.js import-scatter"
+  },
+  "dependencies": {
+    "markdown-it": "^14.1.0",
+    "markdown-it-footnote": "^4.0.0",
+    "turndown": "^7.2.0",
+    "yaml": "^2.5.0"
+  },
   "license": "MIT"
 }

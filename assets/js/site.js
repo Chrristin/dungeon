@@ -1976,64 +1976,191 @@
   var readJson = function (node) { try { return node ? JSON.parse(node.textContent) : null; } catch (e) { return null; } };
 
   // a garden note's page (or the same note in the reader overlay): stage, TENDED stamp, source label, backlinks
+  var STAGE_BG = { seedling: '#eef9d6', growing: '#d5f5e6', evergreen: '#1f6b4f' };
+  var CONF = { certain: 4, likely: 3, speculative: 2, hunch: 1 };
+  // a small map of one note's neighbours: links out and in as vines, related notes dotted; each a tiny card
+  function localMap(meta, L) {
+    var nb = [], seen = {};
+    var add = function (x, kind) { if (!x || seen[x.u]) return; seen[x.u] = 1; nb.push({ t: x.t, u: x.u, g: x.g || 'seedling', kind: kind }); };
+    (meta.links || []).forEach(function (x) { add(x, 'out'); }); (meta.backlinks || []).forEach(function (x) { add(x, 'in'); }); (meta.related || []).forEach(function (x) { add(x, 'rel'); });
+    if (!nb.length) return '';
+    nb = nb.slice(0, 10);
+    var W = 560, H = 230, cx = W / 2, cy = H / 2, s = '';
+    var pos = nb.map(function (n, i) { var a = -Math.PI / 2 + i * 2 * Math.PI / nb.length; return [cx + Math.cos(a) * 210, cy + Math.sin(a) * 82]; });
+    nb.forEach(function (n, i) {
+      var p = pos[i], mx = (cx + p[0]) / 2, my = (cy + p[1]) / 2, dx = p[0] - cx, dy = p[1] - cy, d = 'M' + cx + ' ' + cy + 'Q' + (mx - dy * 0.15).toFixed(1) + ' ' + (my + dx * 0.15).toFixed(1) + ' ' + p[0].toFixed(1) + ' ' + p[1].toFixed(1);
+      s += '<path class="' + (n.kind === 'rel' ? 'lm-rel' : 'lm-vine') + '" d="' + d + '"/>';
+      if (n.kind !== 'rel') s += gleaf(mx - dy * 0.07, my + dx * 0.07, i * 57, 7, 'var(--og-leaf2, #8fd65a)');
+    });
+    var node = function (x, y, label, g, cls, href) {
+      var w = Math.min(170, label.length * 6.2 + 20), t = label.length > 26 ? label.slice(0, 25) + '...' : label;
+      return (href ? '<a class="lm-node ' + cls + '" href="' + esc(href) + '">' : '<g class="lm-node ' + cls + '">') + '<title>' + esc(label) + '</title>' +
+        '<rect x="' + (x - w / 2).toFixed(1) + '" y="' + (y - 11) + '" width="' + w.toFixed(1) + '" height="22" rx="6" data-g="' + esc(g) + '"/>' +
+        '<text x="' + x.toFixed(1) + '" y="' + (y + 4) + '" text-anchor="middle">' + esc(t) + '</text>' + (href ? '</a>' : '</g>');
+    };
+    nb.forEach(function (n, i) { s += node(pos[i][0], pos[i][1], n.t, n.g, 'lm-' + n.kind, n.u); });
+    s += node(cx, cy, L.thisNote || 'this note', meta.stage || 'seedling', 'lm-self', null);
+    return '<svg class="lm" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(L.map || '') + '">' + s + '</svg>';
+  }
+  var chipList = function (items, cls) { return '<ul class="gn-chips">' + items.map(function (b) { return '<li><a class="gn-chip ' + (cls || '') + '" data-g="' + esc(b.g || 'seedling') + '" href="' + esc(b.u) + '">' + esc(b.t) + '</a></li>'; }).join('') + '</ul>'; };
+  // a garden note's page (or the same note in the reader overlay), in the lab-notebook look
   function initGardenNote(root, meta) {
     var panel = root.querySelector('.post-panel'); if (!panel || !meta || panel.getAttribute('data-garden-ready')) return;
-    panel.setAttribute('data-garden-ready', '1');
-    var head = panel.querySelector('.panel-head') || panel.firstElementChild;
-    var mark = document.createElement('div'); mark.className = 'garden-mark';
-    var stage = meta.stage || 'seedling';
-    mark.innerHTML = '<span class="garden-stage" data-g="' + esc(stage) + '">' + sprout(stage) + esc(stage) + '</span>' +
-      (meta.type === 'source' ? '<span class="garden-source">' + esc('Source') + (meta.kind ? ' · ' + esc(meta.kind) : '') + '</span>' : '') +
-      (meta.tended ? '<span class="garden-tended">Tended ' + esc(gardenDay(meta.tended)) + '</span>' : '');
-    if (head) head.appendChild(mark);
-    if (meta.type === 'source') panel.classList.add('is-source');
+    panel.setAttribute('data-garden-ready', '1'); panel.classList.add('is-garden');
     var after = root.querySelector('.garden-after') || document.querySelector('.garden-after');
+    var L = (after && readJson({ textContent: after.getAttribute('data-labels') })) || {};
+    var head = panel.querySelector('.panel-head') || panel.firstElementChild, stage = meta.stage || 'seedling';
+    var tendedTimes = (meta.log || []).filter(function (e) { return e.e === 'tended'; }).length;
+    var dots = CONF[meta.confidence] ? '<span class="gn-conf" aria-hidden="true">' + [1, 2, 3, 4].map(function (k) { return '<i' + (k <= CONF[meta.confidence] ? '' : ' class="o"') + '></i>'; }).join('') + '</span>' + esc(meta.confidence) : '&mdash;';
+    var mins = Math.max(1, Math.round((meta.words || 0) / 220));
+    var spec = document.createElement('div'); spec.className = 'gn-spec';
+    spec.innerHTML = '<div><b>' + esc(L.stage || 'Stage') + '</b><span class="gn-stage" data-g="' + esc(stage) + '">' + sprout(stage) + esc(stage) + '</span></div>' +
+      '<div><b>' + esc(L.confidence || 'Confidence') + '</b>' + dots + '</div>' +
+      '<div><b>' + esc(L.links || 'Links') + '</b>' + (meta.backlinks || []).length + ' ' + esc(L['in'] || 'in') + ' · ' + (meta.links || []).length + ' ' + esc(L.out || 'out') + '</div>' +
+      '<div><b>' + esc(L.plantedH || 'Planted') + '</b>' + esc(gardenDay(meta.planted || meta.tended)) + '</div>' +
+      '<div><b>' + esc(L.tendedH || 'Tended') + '</b>' + esc(gardenDay(meta.tended)) + (tendedTimes ? ' · ' + tendedTimes + ' ' + esc(tendedTimes === 1 ? (L.time || 'time') : (L.times || 'times')) : '') + '</div>' +
+      '<div><b>' + esc(L.length || 'Length') + '</b>' + (meta.words || 0) + ' ' + esc(L.words || 'words') + ' · ' + mins + ' ' + esc(L.min || 'min') + '</div>';
+    if (head) head.appendChild(spec);
+    if (meta.tended) spec.insertAdjacentHTML('beforebegin', '<div class="gn-stamp-row" aria-hidden="true"><span class="gn-stamp">' + esc(L.tendedH || 'Tended') + ' ' + esc(gardenDay(meta.tended).replace(/ \d{4}$/, '')) + '</span></div>'); // its own line: it can't overlap anything
+    if (meta.type === 'source') { panel.classList.add('is-source'); spec.insertAdjacentHTML('afterbegin', '<div class="gn-srcrow"><span class="garden-source">' + esc(L.source || 'Source') + (meta.kind ? ' · ' + esc(meta.kind) : '') + '</span></div>'); }
+    var content = panel.querySelector('.gh-content');
+    if (content) { gardenSidenotes(content, meta); gardenLinkIcons(content); }
     if (after && !after.getAttribute('data-ready')) {
       after.setAttribute('data-ready', '1');
-      var list = after.querySelector('.garden-backlinks'), bl = meta.backlinks || [];
-      list.innerHTML = '<h2 class="garden-h">' + esc(after.getAttribute('data-mentioned')) + '</h2>' + (bl.length
-        ? '<ul>' + bl.map(function (b) { return '<li><a href="' + esc(b.u) + '">' + esc(b.t) + '</a></li>'; }).join('') + '</ul>'
-        : '<p class="garden-quiet">' + esc(after.getAttribute('data-none')) + '</p>');
+      var log = meta.log || [], bl = meta.backlinks || [], rel = meta.related || [], out = '';
+      if (log.length) out += '<section><h2 class="garden-h">' + esc(L.log || 'Tending log') + '</h2><ol class="gn-log">' + log.map(function (e) {
+        return '<li data-g="' + esc(e.g || stage) + '"><i></i><time datetime="' + esc(e.d) + '">' + esc(gardenDay(e.d).replace(/ \d{4}$/, '')) + '</time><span>' + esc(e.e === 'stage' ? e.g : e.e === 'planted' ? (L.planted || 'planted') : (L.tended || 'tended')) + '</span></li>'; }).join('') + '</ol></section>';
+      out += '<section><h2 class="garden-h">' + esc(after.getAttribute('data-mentioned')) + '</h2>' + (bl.length ? chipList(bl) : '<p class="garden-quiet">' + esc(after.getAttribute('data-none')) + '</p>') + '</section>';
+      if (rel.length) out += '<section><h2 class="garden-h">' + esc(L.related || 'Related') + '</h2>' + chipList(rel, 'is-rel') + '</section>';
+      var map = localMap(meta, L); if (map) out += '<section><h2 class="garden-h">' + esc(L.map || 'Nearby in the garden') + '</h2>' + map + '</section>';
+      var list = after.querySelector('.garden-backlinks'); if (list) list.innerHTML = out;
+      var back = after.querySelector('.garden-back'); if (back && !after.querySelector('.gn-keys')) back.insertAdjacentHTML('afterend', '<button type="button" class="gn-keys" data-gk="help"><kbd>?</kbd> ' + esc(L.keys || 'shortcuts') + '</button>');
     }
   }
-  initGardenNote(document, readJson(document.getElementById('garden-note')));
+  // footnotes move into the margin beside their paragraph on wide screens (or sit under it on narrow ones)
+  function gardenSidenotes(content, meta) {
+    var fns = meta.fn || []; if (!fns.length) return;
+    var refs = [].filter.call(content.querySelectorAll('a[href^="#fn"]'), function (a) { return /^#fn\d+$/.test(a.getAttribute('href')) && !a.closest('ol'); });
+    refs.forEach(function (a, i) {
+      var f = fns[i]; if (!f) return;
+      a.classList.add('gn-ref'); a.textContent = String(i + 1); a.removeAttribute('href'); a.setAttribute('aria-hidden', 'true');
+      var block = a.closest('p, li, blockquote') || a.parentNode;
+      var note = document.createElement('aside'); note.className = 'gn-side'; note.innerHTML = '<b>' + (i + 1) + '</b> ' + esc(f.text);
+      block.parentNode.insertBefore(note, block.nextSibling); note._block = block;
+    });
+    var panel = content.closest('.post-panel'), wide = window.matchMedia('(min-width: 64rem)'); panel.classList.add('has-sidenotes');
+    var heading = panel.querySelector('.panel-title, h1');
+    var place = function () { // wide screens: level with its paragraph, in the margin; otherwise just under it
+      var last = 0;
+      content.style.paddingLeft = ''; // keep the text lined up with the heading while the margin takes room on the right
+      if (wide.matches && heading) { var inset = heading.getBoundingClientRect().left - content.getBoundingClientRect().left; if (inset > 0) content.style.paddingLeft = inset + 'px'; }
+      [].forEach.call(content.querySelectorAll('.gn-side'), function (n) {
+        if (!wide.matches) { n.style.top = ''; return; }
+        var top = Math.max(last, n._block.getBoundingClientRect().top - content.getBoundingClientRect().top);
+        n.style.top = top + 'px'; last = top + n.offsetHeight + 12;
+      });
+    };
+    place(); window.addEventListener('resize', place); if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    // Ghost keeps the footnotes as a plain list at the end, after a rule: it's replaced by the sidenotes
+    [].forEach.call(content.querySelectorAll('ol'), function (ol) {
+      if (ol.querySelector('a[href^="#fnref"]')) { var hr = ol.previousElementSibling; if (hr && hr.tagName === 'HR') hr.remove(); ol.remove(); }
+    });
+  }
+  // small marks after external links, saying where they go
+  function gardenLinkIcons(content) {
+    [].forEach.call(content.querySelectorAll('a[href^="http"]'), function (a) {
+      if (a.origin === location.origin || a.querySelector('img') || a.closest('.kg-card')) return;
+      var h = a.hostname.replace(/^www\./, ''), k = /(^|\.)youtube\.com$|^youtu\.be$/.test(h) ? 'yt' : /(^|\.)github\.com$/.test(h) ? 'gh' : /(^|\.)wikipedia\.org$/.test(h) ? 'wp' : /\.pdf($|\?)/i.test(a.pathname) ? 'pdf' : 'ext';
+      a.classList.add('gn-ext'); a.setAttribute('data-icon', k);
+    });
+  }
+  // hover a link to another note to see its first lines, without leaving (pointing devices only)
+  var previewCache = {};
+  function gardenPreview(a) {
+    var url = a.href.split('#')[0];
+    if (!previewCache[url]) previewCache[url] = fetch(url, { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (html) {
+      if (!html) return null; var doc = new DOMParser().parseFromString(html, 'text/html'), m = readJson(doc.getElementById('garden-note'));
+      var t = doc.querySelector('.post-panel .panel-title, .post-panel h1'), p = doc.querySelector('.post-panel .gh-content p');
+      return t ? { t: t.textContent.trim(), x: p ? p.textContent.trim().slice(0, 170) : '', g: m ? m.stage : null, links: m ? (m.backlinks || []).length + ' in · ' + (m.links || []).length + ' out' : '' } : null;
+    }).catch(function () { return null; });
+    return previewCache[url];
+  }
+  (function () {
+    if (!window.matchMedia || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    var tip = null, timer = null;
+    var hide = function () { clearTimeout(timer); if (tip) { tip.remove(); tip = null; } };
+    document.addEventListener('mouseover', function (e) {
+      var a = e.target.closest && e.target.closest('.post-panel.is-garden .gh-content a[href]'); if (!a || a.origin !== location.origin || a.hash) return;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        gardenPreview(a).then(function (d) {
+          if (!d || !a.matches(':hover')) return; hide();
+          tip = document.createElement('div'); tip.className = 'gn-preview'; tip.setAttribute('data-g', d.g || 'post');
+          tip.innerHTML = '<div class="gn-preview-m">' + esc([d.g, d.links].filter(Boolean).join(' · ')) + '</div><b>' + esc(d.t) + '</b>' + (d.x ? '<p>' + esc(d.x) + (d.x.length >= 170 ? '...' : '') + '</p>' : '');
+          (a.closest('dialog') || document.body).appendChild(tip);
+          var r = a.getBoundingClientRect(), w = tip.offsetWidth;
+          tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left)) + 'px'; tip.style.top = (r.bottom + 8) + 'px';
+        });
+      }, 260);
+    });
+    document.addEventListener('mouseout', function (e) { var a = e.target.closest && e.target.closest('.post-panel.is-garden .gh-content a[href]'); if (a && !a.contains(e.relatedTarget)) hide(); });
+    document.addEventListener('scroll', hide, true);
+  })();
 
   // the Garden page
+  // The map: notes as tiny cards in their stage colours, links you wrote as leafy vines, related notes dotted.
+  // Point at a note and its neighbours light up while the rest fades.
   function drawGardenMap(box, notes) {
-    var W = box.clientWidth || 600, H = stacked.matches ? 300 : 380, idx = {}, edges = [];
+    var W = box.clientWidth || 600, H = stacked.matches ? 360 : 460, idx = {}, edges = [], rels = [];
     notes.forEach(function (n, i) { idx[n.s] = i; });
-    notes.forEach(function (n, i) { (n.l || []).forEach(function (s) { if (idx[s] !== undefined && idx[s] !== i) edges.push([i, idx[s]]); }); });
-    var deg = notes.map(function () { return 0; }); edges.forEach(function (e) { deg[e[0]]++; deg[e[1]]++; });
-    var rand = seeded(notes.length * 131 + 7), P = notes.map(function () { return { x: W * (0.2 + rand() * 0.6), y: H * (0.2 + rand() * 0.6), vx: 0, vy: 0 }; });
-    for (var step = 0; step < 280; step++) { // pull linked notes together, push everything apart, keep it all near the middle
-      var cool = 1 - step / 280;
-      for (var a = 0; a < P.length; a++) for (var b = a + 1; b < P.length; b++) {
-        var dx = P[a].x - P[b].x, dy = P[a].y - P[b].y, d2 = dx * dx + dy * dy + 0.01, f = 900 / d2, d = Math.sqrt(d2);
-        P[a].vx += dx / d * f; P[a].vy += dy / d * f; P[b].vx -= dx / d * f; P[b].vy -= dy / d * f;
-      }
-      edges.forEach(function (e) { var p = P[e[0]], q = P[e[1]], dx = q.x - p.x, dy = q.y - p.y, d = Math.sqrt(dx * dx + dy * dy) || 1, f = (d - 70) * 0.03; p.vx += dx / d * f; p.vy += dy / d * f; q.vx -= dx / d * f; q.vy -= dy / d * f; });
-      P.forEach(function (p) { p.vx += (W / 2 - p.x) * 0.004; p.vy += (H / 2 - p.y) * 0.006; p.x += Math.max(-8, Math.min(8, p.vx * cool)); p.y += Math.max(-8, Math.min(8, p.vy * cool)); p.vx *= 0.5; p.vy *= 0.5;
-        p.x = Math.max(18, Math.min(W - 18, p.x)); p.y = Math.max(18, Math.min(H - 18, p.y)); });
-    }
-    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
-    edges.forEach(function (e) { svg += '<line x1="' + P[e[0]].x.toFixed(1) + '" y1="' + P[e[0]].y.toFixed(1) + '" x2="' + P[e[1]].x.toFixed(1) + '" y2="' + P[e[1]].y.toFixed(1) + '"/>'; });
     notes.forEach(function (n, i) {
-      var r = 4 + Math.min(7, deg[i] * 1.2);
-      svg += '<a href="/' + esc(n.s) + '/" class="garden-node" data-g="' + esc(n.g) + '"><title>' + esc(n.t) + '</title><circle cx="' + P[i].x.toFixed(1) + '" cy="' + P[i].y.toFixed(1) + '" r="' + r.toFixed(1) + '"/>' +
-        (deg[i] >= 3 ? '<text x="' + (P[i].x + r + 4).toFixed(1) + '" y="' + (P[i].y + 3).toFixed(1) + '">' + esc(n.t.length > 28 ? n.t.slice(0, 27) + '...' : n.t) + '</text>' : '') + '</a>';
+      (n.l || []).forEach(function (s) { if (idx[s] !== undefined && idx[s] !== i) edges.push([i, idx[s]]); });
+      (n.r || []).forEach(function (s) { var j2 = idx[s]; if (j2 !== undefined && j2 > i) rels.push([i, j2]); });
+    });
+    var deg = notes.map(function () { return 0; }); edges.forEach(function (e) { deg[e[0]]++; deg[e[1]]++; });
+    var label = function (t) { return t.length > 24 ? t.slice(0, 23) + '...' : t; };
+    var size = notes.map(function (n) { return [Math.min(180, label(n.t).length * 6.1 + 22), 22]; });
+    var rand = seeded(notes.length * 131 + 7), P = notes.map(function () { return { x: W * (0.15 + rand() * 0.7), y: H * (0.15 + rand() * 0.7), vx: 0, vy: 0 }; });
+    for (var step = 0; step < 320; step++) { // linked notes pull together; cards push apart by their size; all stay near the middle
+      var cool = 1 - step / 320;
+      for (var a = 0; a < P.length; a++) for (var c = a + 1; c < P.length; c++) {
+        var dx = P[a].x - P[c].x, dy = P[a].y - P[c].y, need = (size[a][0] + size[c][0]) / 2 + 14, ox = need - Math.abs(dx), oy = 36 - Math.abs(dy);
+        var d2 = dx * dx + dy * dy + 0.01, f = 1400 / d2, d = Math.sqrt(d2);
+        P[a].vx += dx / d * f; P[a].vy += dy / d * f; P[c].vx -= dx / d * f; P[c].vy -= dy / d * f;
+        if (ox > 0 && oy > 0) { var sgn = dx >= 0 ? 1 : -1, sy = dy >= 0 ? 1 : -1; if (oy < ox * 0.6) { P[a].vy += sy * oy * 0.3; P[c].vy -= sy * oy * 0.3; } else { P[a].vx += sgn * ox * 0.15; P[c].vx -= sgn * ox * 0.15; } }
+      }
+      edges.forEach(function (e) { var p = P[e[0]], q = P[e[1]], dx2 = q.x - p.x, dy2 = q.y - p.y, d3 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1, f2 = (d3 - 130) * 0.02; p.vx += dx2 / d3 * f2; p.vy += dy2 / d3 * f2; q.vx -= dx2 / d3 * f2; q.vy -= dy2 / d3 * f2; });
+      P.forEach(function (p, i) { p.vx += (W / 2 - p.x) * 0.003; p.vy += (H / 2 - p.y) * 0.006; p.x += Math.max(-9, Math.min(9, p.vx * cool)); p.y += Math.max(-9, Math.min(9, p.vy * cool)); p.vx *= 0.5; p.vy *= 0.5;
+        p.x = Math.max(size[i][0] / 2 + 6, Math.min(W - size[i][0] / 2 - 6, p.x)); p.y = Math.max(18, Math.min(H - 18, p.y)); });
+    }
+    var curve = function (p, q) { var mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2, dx = q.x - p.x, dy = q.y - p.y; return { d: 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + 'Q' + (mx - dy * 0.16).toFixed(1) + ' ' + (my + dx * 0.16).toFixed(1) + ' ' + q.x.toFixed(1) + ' ' + q.y.toFixed(1), mx: mx - dy * 0.08, my: my + dx * 0.08 }; };
+    var svg = '<svg class="gm" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+    rels.forEach(function (e) { svg += '<path class="gm-rel" data-a="' + e[0] + '" data-b="' + e[1] + '" d="' + curve(P[e[0]], P[e[1]]).d + '"/>'; });
+    edges.forEach(function (e, k) { var cv = curve(P[e[0]], P[e[1]]); svg += '<g class="gm-vine" data-a="' + e[0] + '" data-b="' + e[1] + '"><path d="' + cv.d + '"/>' + gleaf(cv.mx, cv.my, k * 67, 8, 'var(--og-leaf2, #8fd65a)') + '</g>'; });
+    notes.forEach(function (n, i) {
+      var w = size[i][0], x = P[i].x - w / 2, y = P[i].y - 11;
+      svg += '<a href="/' + esc(n.s) + '/" class="garden-node" data-i="' + i + '" data-g="' + esc(n.g) + '"><title>' + esc(n.t) + '</title><rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="22" rx="' + (n.k === 'source' ? 2 : 6) + '" data-k="' + esc(n.k) + '"/>' +
+        '<text x="' + P[i].x.toFixed(1) + '" y="' + (P[i].y + 4).toFixed(1) + '" text-anchor="middle">' + esc(label(n.t)) + '</text></a>';
     });
     box.innerHTML = svg + '</svg>';
+    var map = box.querySelector('svg'), nearOf = function (i) { var s = {}; s[i] = 1; edges.concat(rels).forEach(function (e) { if (e[0] == i) s[e[1]] = 1; if (e[1] == i) s[e[0]] = 1; }); return s; };
+    map.addEventListener('mouseover', function (e) {
+      var a = e.target.closest('.garden-node'); if (!a) return; var i = +a.getAttribute('data-i'), near = nearOf(i); map.classList.add('is-focus');
+      [].forEach.call(map.querySelectorAll('.garden-node'), function (n) { n.classList.toggle('is-near', !!near[n.getAttribute('data-i')]); });
+      [].forEach.call(map.querySelectorAll('.gm-vine, .gm-rel'), function (g) { g.classList.toggle('is-near', g.getAttribute('data-a') == i || g.getAttribute('data-b') == i); });
+    });
+    map.addEventListener('mouseleave', function () { map.classList.remove('is-focus'); });
   }
-  var gleaf = function (x, y, a, len, fill) {
+  function gleaf(x, y, a, len, fill) {
     var r = a * Math.PI / 180, cx = x + Math.cos(r) * len, cy = y + Math.sin(r) * len, px = Math.cos(r + Math.PI / 2) * len * 0.33, py = Math.sin(r + Math.PI / 2) * len * 0.33;
     return '<path class="og-leaf" d="M' + x.toFixed(1) + ' ' + y.toFixed(1) + 'Q' + ((x + cx) / 2 + px).toFixed(1) + ' ' + ((y + cy) / 2 + py).toFixed(1) + ' ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + 'Q' + ((x + cx) / 2 - px).toFixed(1) + ' ' + ((y + cy) / 2 - py).toFixed(1) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + 'Z" fill="' + fill + '"/>';
-  };
-  var FLOWERS = ['#ff6b9a', '#ffd23f', '#9b5de5', '#ff8c42', '#f15bb5'];
-  var gflower = function (x, y, r, c) {
+  }
+  var FLOWERS = ['#ff6b9a', '#ffd23f', '#9b5de5', '#ff8c42', '#f15bb5']; // (also read by gflower, at call time)
+  function gflower(x, y, r, c) {
     var o = ''; for (var i = 0; i < 5; i++) { var a = i * 72 * Math.PI / 180; o += '<circle cx="' + (x + Math.cos(a) * r * 0.62).toFixed(1) + '" cy="' + (y + Math.sin(a) * r * 0.62).toFixed(1) + '" r="' + (r * 0.5).toFixed(1) + '" fill="' + c + '"/>'; }
     return '<g class="og-flower">' + o + '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r * 0.36).toFixed(1) + '" fill="#ffd23f"/></g>';
-  };
-  var hashOf = function (s) { var h = 7; for (var i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 2654435761); return h >>> 0; };
+  }
+  function hashOf(s) { var h = 7; for (var i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 2654435761); return h >>> 0; }
   // vines creep clockwise round a card from its top-left corner: the more links, the further round (all the way at 9)
   function growCards(box) {
     [].forEach.call(box.querySelectorAll('.og'), function (c) {
@@ -2145,6 +2272,65 @@
     });
   }
   initPatches(document);
+  // Keyboard shortcuts on garden pages: / search the garden, r a random note, g the garden, ? this list.
+  // The garden's notes come from the Garden page's map data (fetched once when needed, off the Garden page).
+  (function () {
+    var gk = document.querySelector('.gk'); if (!gk) return;
+    var L = readJson({ textContent: gk.getAttribute('data-labels') }) || {}, gardenUrl = gk.getAttribute('data-garden'), data = null;
+    var onGarden = function () { return !!document.querySelector('.garden') || !!document.querySelector('.post-panel.is-garden') || !!document.getElementById('garden-note'); };
+    var notes = function () {
+      if (data) return data;
+      var here = readJson(document.getElementById('garden-data'));
+      data = here ? Promise.resolve(here.notes || []) : fetch(gardenUrl, { credentials: 'same-origin' }).then(function (r) { return r.text(); })
+        .then(function (h) { var d = readJson(new DOMParser().parseFromString(h, 'text/html').getElementById('garden-data')); return (d && d.notes) || []; }).catch(function () { return []; });
+      return data;
+    };
+    var open = function (slug) { closePanel(); if (window.dungeonOpen) window.dungeonOpen('/' + slug + '/'); else location.href = '/' + slug + '/'; };
+    var panel = null;
+    var closePanel = function () { if (panel) { panel.remove(); panel = null; } };
+    var show = function (html) {
+      closePanel(); panel = document.createElement('div'); panel.className = 'gk-panel'; panel.setAttribute('role', 'dialog'); panel.innerHTML = html;
+      (document.querySelector('dialog[open]') || document.body).appendChild(panel);
+      panel.addEventListener('click', function (e) { if (e.target === panel || e.target.closest('.gk-x')) closePanel(); });
+    };
+    var help = function () {
+      show('<div class="gk-box"><button type="button" class="gk-x" aria-label="' + esc(L.close) + '">&times;</button><h2 class="garden-h">' + esc(L.keys) + '</h2><dl>' +
+        [['/', L.s], ['r', L.r], ['g', L.g], ['?', L.h]].map(function (k) { return '<dt><kbd>' + k[0] + '</kbd></dt><dd>' + esc(k[1]) + '</dd>'; }).join('') + '</dl></div>');
+    };
+    var search = function () {
+      show('<div class="gk-box gk-search"><input type="search" placeholder="' + esc(L.search) + '" aria-label="' + esc(L.search) + '"><ol class="gk-results"></ol></div>');
+      var input = panel.querySelector('input'), res = panel.querySelector('.gk-results'), sel = 0, found = [];
+      var draw = function () {
+        res.innerHTML = found.length ? found.map(function (n, i) { return '<li' + (i === sel ? ' class="is-sel"' : '') + ' data-s="' + esc(n.s) + '">' + sprout(n.g) + '<b>' + esc(n.t) + '</b><span>' + esc((n.x || '').slice(0, 90)) + '</span></li>'; }).join('') : (input.value ? '<li class="gk-none">' + esc(L.none) + '</li>' : '');
+      };
+      notes().then(function (all) {
+        var run = function () {
+          var q = input.value.trim().toLowerCase(); sel = 0;
+          found = !q ? [] : all.map(function (n) { var t = n.t.toLowerCase(), x = (n.x || '').toLowerCase(); return [t.indexOf(q) === 0 ? 3 : t.indexOf(q) >= 0 ? 2 : x.indexOf(q) >= 0 ? 1 : 0, n]; })
+            .filter(function (p) { return p[0]; }).sort(function (a, b) { return b[0] - a[0] || a[1].t.localeCompare(b[1].t); }).slice(0, 8).map(function (p) { return p[1]; });
+          draw();
+        };
+        input.addEventListener('input', run);
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'ArrowDown') { sel = Math.min(found.length - 1, sel + 1); draw(); e.preventDefault(); }
+          else if (e.key === 'ArrowUp') { sel = Math.max(0, sel - 1); draw(); e.preventDefault(); }
+          else if (e.key === 'Enter' && found[sel]) open(found[sel].s);
+        });
+        res.addEventListener('click', function (e) { var li = e.target.closest('li[data-s]'); if (li) open(li.getAttribute('data-s')); });
+      });
+      input.focus();
+    };
+    document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-gk="help"]')) { e.preventDefault(); help(); } });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && panel) { closePanel(); e.preventDefault(); e.stopPropagation(); return; }
+      if (e.metaKey || e.ctrlKey || e.altKey || !onGarden()) return;
+      var t = e.target; if (t && (t.isContentEditable || /^(input|textarea|select)$/i.test(t.tagName))) return;
+      if (e.key === '/') { e.preventDefault(); search(); }
+      else if (e.key === '?') { e.preventDefault(); help(); }
+      else if (e.key === 'r') { e.preventDefault(); notes().then(function (all) { if (all.length) open(all[Math.floor(Math.random() * all.length)].s); }); }
+      else if (e.key === 'g') { e.preventDefault(); closePanel(); location.href = gardenUrl; }
+    }, true);
+  })();
   function initGarden() {
     var el = document.querySelector('.garden'); if (!el) return;
     var data = readJson(document.getElementById('garden-data')), L = readJson({ textContent: el.getAttribute('data-labels') }) || {};
@@ -2203,6 +2389,7 @@
     var mapT; window.addEventListener('resize', function () { clearTimeout(mapT); mapT = setTimeout(function () { drawGardenMap(el.querySelector('.garden-map'), notes); }, 250); });
   }
   initGarden();
+  initGardenNote(document, readJson(document.getElementById('garden-note')));
 
   function closeReader() { if (reader && reader.open) reader.close(); }
   // In the overlay, the browser closes the dialog on Escape by itself. If the blank sticky has writing
@@ -2259,11 +2446,11 @@
     // garden notes open in the overlay too: the cards, lists, map, the connection panel and "Mentioned in"
     window.dungeonOpen = function (url) { openPost(url, null); };
     document.addEventListener('click', function (e) {
-      var link = e.target.closest && e.target.closest('.garden .og, .garden-topic a, .garden-all a, .garden-node, .og-panel a, .garden-after .garden-backlinks a, .scatter-patch');
+      var link = e.target.closest && e.target.closest('.garden .og, .garden-topic a, .garden-all a, .garden-node, .og-panel a, .garden-after .garden-backlinks a, .scatter-patch, .gn-chip, .lm-node, .post-panel.is-garden .gh-content a[href]');
       if (!link || e.defaultPrevented) return;
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       var href = link.getAttribute('href') || (link.href && link.href.baseVal); if (!href) return;
-      var url = new URL(href, location.href); if (url.origin !== location.origin) return;
+      var url = new URL(href, location.href); if (url.origin !== location.origin || (url.hash && url.pathname === location.pathname)) return;
       e.preventDefault(); closeLinkPanel();
       openPost(url.href, link.classList.contains('og') ? link : null);
     });

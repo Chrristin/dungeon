@@ -79,6 +79,8 @@ Everything goes in a note's properties (the block at the top in Obsidian). Only 
 | `labels` | Extra internal tags, like a Scatter kind (`quote`, `lyric`, `reading`, `code`, `found`, `thought`) or colour (`red`, `mint`...). |
 | `slug` | The note's address. Set it before renaming a file, so the address (and its stamps and stickies) stays the same. |
 | `tended` | The "last tended" date. Normally taken from when the file last changed. |
+| `planted` | When the note was first planted. Normally taken from when the file was created. |
+| `confidence` | How sure you are: `certain`, `likely`, `speculative` or `hunch`. Shown on the note. |
 | `title` | The title, if it should differ from the file name. |
 
 ## Good to know
@@ -86,6 +88,9 @@ Everything goes in a note's properties (the block at the top in Obsidian). Only 
 - **Private notes stay private, but their names can show.** A link to an unpublished note becomes its name as plain text, so "details are in [[My passwords]]" would show "My passwords". The sync lists every such mention in its log; to hide one, give the link an alias: `[[My passwords|my notes]]`.
 - **`%%comments%%` stay private,** and never leave the vault.
 - **Highlights** (`==text==`) become bold, the nearest thing Ghost keeps.
+- **Footnotes** (`text[^1]` and `[^1]: the note`) appear as sidenotes in the margin.
+- **Related notes** are worked out from shared wording, with no tagging; links you write always come first.
+- **The tending log** is recorded from when you start using this version: when a note is first seen, tended, or changes stage.
 - **Images** (`![[picture.png]]` or `![](path)`) are uploaded to Ghost once each and reused.
 - **Videos:** a YouTube or Vimeo link on its own line (or `![](link)`) becomes an embedded player.
 - **Garden notes appear only on the Garden page** (and the Scatter wall when marked), never in the homepage feed.

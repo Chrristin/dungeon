@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0
+
+- Garden notes in the lab-notebook look: graph paper, a spec sheet (stage, confidence, links in and out, planted, tended, length), the Tended stamp on its own line, footnotes as sidenotes in the margin (under their paragraph on narrow screens), small marks after external links (YouTube, GitHub, Wikipedia, PDF), and previews of linked notes on hover.
+- Under each note: a tending log, "Mentioned in", "Related" (by shared wording) and a small map of its neighbours. Links inside a note, the chips and the map open in the overlay.
+- The Garden map, redesigned: notes as small labelled cards in their stage colours, spaced so they never overlap; links as vines, related notes dotted; pointing at a note lights up its neighbours.
+- Keyboard shortcuts on garden pages: / searches the garden, r opens a random note, g goes to the garden, ? lists them.
+- garden-sync: new note properties `confidence` and `planted`; footnotes; related notes by shared wording; a tending log kept from now on. Update `sync.js`, `package.json` and `package-lock.json` on the server, reinstall, and restart garden-sync.
+
 ## 1.5.1
 
 - On the Scatter wall, "Read in the garden" and its vine are replaced by a small patch of grass in the bottom-right corner of garden cards, after everything else in the card. On hover, two or three flowers bloom in it, in colours that stand out from that card; clicking it opens the note in the garden overlay. It carries a label for screen readers, and no visible text.

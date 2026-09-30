@@ -1766,3 +1766,91 @@ html[data-scheme="dark"] .og-link-stem { stroke: #5aa650; }
 .scatter-patch:focus-visible { outline: 2px solid var(--led); outline-offset: 3px; border-radius: 4px; }
 .og-link, .og { animation-play-state: running; }
 @media (prefers-reduced-motion: reduce) { .og-link { animation: none; } .og:hover { transform: none; } .patch-flower, .patch-blade { transition: none; } }
+
+/* ---- a garden note in the lab-notebook look */
+.post-panel.is-garden { background-image: linear-gradient(rgba(31, 107, 79, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(31, 107, 79, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(31, 107, 79, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(31, 107, 79, 0.1) 1px, transparent 1px); background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px; }
+.gn-stamp-row { display: flex; justify-content: flex-end; margin: 0.9rem 0.4rem -0.55rem 0; position: relative; z-index: 2; }
+.gn-stamp { display: inline-block; padding: 0.3rem 0.55rem; border: 2.5px solid #c42b3c; border-radius: 4px; background: var(--card-bg, transparent); color: #c42b3c;
+    font: 600 0.72rem/1 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; rotate: -6deg; opacity: 0.92; }
+.gn-spec { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 1.1rem; border: 1.5px solid currentColor; font: 0.72rem/1.4 var(--mono); }
+.gn-spec > div { padding: 0.45rem 0.65rem; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; min-width: 0; }
+.gn-spec > div:nth-child(3n) { border-right: 0; } .gn-spec > div:nth-last-child(-n+3) { border-bottom: 0; }
+.gn-spec b { display: block; font-weight: 500; font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; margin-bottom: 0.15rem; }
+.gn-spec .gn-srcrow { grid-column: 1 / -1; border-right: 0; }
+.gn-stage { display: inline-flex; align-items: center; gap: 0.3rem; text-transform: lowercase; }
+.gn-stage .garden-sprout { width: 1rem; height: 1rem; }
+.gn-conf { display: inline-flex; gap: 3px; margin-right: 0.4rem; vertical-align: -1px; }
+.gn-conf i { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: currentColor; }
+.gn-conf i.o { background: none; box-shadow: inset 0 0 0 1.5px currentColor; }
+@media (max-width: 40rem) { .gn-spec { grid-template-columns: repeat(2, 1fr); } .gn-spec > div:nth-child(3n) { border-right: 1px solid currentColor; } .gn-spec > div:nth-child(2n) { border-right: 0; } .gn-spec > div:nth-last-child(-n+3) { border-bottom: 1px solid currentColor; } .gn-spec > div:nth-last-child(-n+2) { border-bottom: 0; } }
+/* sidenotes: in the margin on wide screens, under their paragraph otherwise */
+.gn-ref { font: 600 0.62rem var(--mono); color: #c42b3c; vertical-align: super; padding: 0 0.1rem; }
+.gn-side { display: block; margin: -0.4rem 0 1.2rem; padding: 0.1rem 0 0.1rem 0.7rem; border-left: 2px solid #c42b3c; font-size: 0.82rem; line-height: 1.5; opacity: 0.85; }
+.gn-side b { font: 600 0.62rem var(--mono); color: #c42b3c; margin-right: 0.2rem; }
+/* wide screens: the text column narrows and the sidenotes sit to its right, inside the panel, like a notebook's margin */
+@media (min-width: 64rem) {
+    .post-panel.is-garden.has-sidenotes .gh-content { position: relative; box-sizing: border-box; padding-right: 15rem; }
+    .post-panel.is-garden.has-sidenotes .gn-side { position: absolute; left: calc(100% - 13rem); width: 12.5rem; margin: 0; }
+}
+/* where external links go, as small marks after them */
+.gn-ext::after { display: inline-grid; place-items: center; min-width: 0.95rem; height: 0.95rem; margin-left: 0.2rem; padding: 0 0.15rem; border-radius: 3px; vertical-align: 0.1em;
+    font: 700 0.5rem/1 var(--mono); color: #fff; background: #6b6f76; content: "\2197"; text-decoration: none; }
+.gn-ext[data-icon="yt"]::after { content: "\25B6"; background: #ff0033; }
+.gn-ext[data-icon="gh"]::after { content: "GH"; background: #17191e; }
+.gn-ext[data-icon="wp"]::after { content: "W"; background: #6b6f76; font-family: Georgia, serif; }
+.gn-ext[data-icon="pdf"]::after { content: "PDF"; background: #c42b3c; }
+/* hover previews of linked notes */
+.gn-preview { position: fixed; z-index: 60; width: min(20rem, calc(100vw - 16px)); padding: 0.7rem 0.85rem; border-radius: 8px; background: #d5f5e6; color: #17191e;
+    box-shadow: 0 16px 28px -14px rgba(0, 0, 0, 0.45); font-size: 0.82rem; line-height: 1.45; pointer-events: none; }
+.gn-preview[data-g="seedling"] { background: #eef9d6; } .gn-preview[data-g="evergreen"] { background: #1f6b4f; color: #f3f7ee; } .gn-preview[data-g="post"] { background: #fffdf7; }
+.gn-preview-m { font: 0.6rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; margin-bottom: 0.2rem; }
+.gn-preview b { display: block; font-size: 0.95rem; margin-bottom: 0.2rem; } .gn-preview p { margin: 0; }
+/* after the note: tending log, mentioned in, related, nearby */
+.garden-after section { margin-bottom: 1.8rem; }
+.gn-log { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 0; position: relative; }
+.gn-log li { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 6rem; padding-top: 1.5rem; font: 0.68rem/1.4 var(--mono); text-align: center; }
+.gn-log li::before { content: ""; position: absolute; top: 0.55rem; left: 0; right: 0; border-top: 2px dashed var(--rule); }
+.gn-log li:first-child::before { left: 50%; } .gn-log li:last-child::before { right: 50%; }
+.gn-log i { position: absolute; top: 0; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #c8ee7a; box-shadow: 0 0 0 3px var(--paper); }
+.gn-log li[data-g="growing"] i { background: #5fd3a4; } .gn-log li[data-g="evergreen"] i { background: #1f6b4f; }
+.gn-log time { color: var(--ink); } .gn-log span { color: var(--graphite); }
+.gn-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.gn-chip { display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #d5f5e6; color: #17191e; font-size: 0.85rem; text-decoration: none; }
+.gn-chip[data-g="seedling"] { background: #eef9d6; } .gn-chip[data-g="evergreen"] { background: #1f6b4f; color: #f3f7ee; }
+.gn-chip.is-rel { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--rule); border: 0; outline: 1.5px dashed var(--graphite); outline-offset: -1.5px; }
+.gn-chip:hover { text-decoration: underline; }
+.lm { display: block; width: 100%; max-width: 40rem; height: auto; overflow: visible; }
+.lm-vine { fill: none; stroke: #3f8a3a; stroke-width: 2.2; stroke-linecap: round; }
+.lm-rel { fill: none; stroke: var(--graphite); stroke-width: 1.5; stroke-dasharray: 2 6; stroke-linecap: round; opacity: 0.8; }
+.lm-node rect { fill: #d5f5e6; stroke: rgba(23, 25, 30, 0.3); } .lm-node rect[data-g="seedling"] { fill: #eef9d6; } .lm-node rect[data-g="evergreen"] { fill: #1f6b4f; }
+.lm-node text { font: 10.5px var(--mono); fill: #17191e; } .lm-node rect[data-g="evergreen"] + text { fill: #f3f7ee; }
+.lm-self rect { stroke: #c42b3c; stroke-width: 2; } .lm-self text { font-weight: 600; }
+a.lm-node:hover rect { stroke: #c42b3c; stroke-width: 1.8; }
+.gn-keys { all: unset; cursor: pointer; margin-left: 1.2rem; font: 0.72rem var(--mono); color: var(--graphite); }
+.gn-keys:hover { color: var(--ink); }
+kbd { font: 0.72rem var(--mono); padding: 0.05rem 0.4rem; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; background: var(--paper); color: var(--ink); }
+/* ---- the garden map */
+.gm { display: block; max-width: 100%; height: auto; }
+.gm-vine path { fill: none; stroke: #3f8a3a; stroke-width: 2.2; stroke-linecap: round; }
+.gm-rel { fill: none; stroke: var(--graphite); stroke-width: 1.4; stroke-dasharray: 2 6; stroke-linecap: round; opacity: 0.75; }
+.garden-node rect { fill: #d5f5e6; stroke: rgba(23, 25, 30, 0.28); transition: opacity 0.2s ease; } .garden-node[data-g="seedling"] rect { fill: #eef9d6; } .garden-node[data-g="evergreen"] rect { fill: #1f6b4f; }
+.garden-node rect[data-k="source"] { fill: #fbefc9; }
+.garden-node text { font: 10.5px var(--mono); fill: #17191e; pointer-events: none; } .garden-node[data-g="evergreen"] text { fill: #f3f7ee; }
+.garden-node:hover rect, .garden-node:focus rect { stroke: #c42b3c; stroke-width: 2; }
+.gm.is-focus .garden-node:not(.is-near), .gm.is-focus .gm-vine:not(.is-near), .gm.is-focus .gm-rel:not(.is-near) { opacity: 0.25; }
+.gm .garden-node, .gm .gm-vine, .gm .gm-rel { transition: opacity 0.2s ease; }
+/* ---- keyboard shortcuts and garden search */
+.gk-panel { position: fixed; inset: 0; z-index: 80; display: grid; place-items: start center; padding-top: 14vh; background: rgba(10, 12, 14, 0.35); }
+.gk-box { position: relative; width: min(34rem, calc(100vw - 2rem)); padding: 1.1rem 1.2rem; border-radius: 12px; background: var(--paper); color: var(--ink); box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.5); }
+.gk-x { all: unset; position: absolute; right: 0.9rem; top: 0.7rem; cursor: pointer; font: 600 1.1rem var(--mono); color: var(--graphite); }
+.gk-box dl { display: grid; grid-template-columns: auto 1fr; gap: 0.6rem 1rem; margin: 0; align-items: center; } .gk-box dd { margin: 0; }
+.gk-search input { width: 100%; box-sizing: border-box; padding: 0.7rem 0.8rem; border: 1px solid var(--rule); border-radius: 8px; background: transparent; color: inherit; font: 1rem inherit; }
+.gk-results { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+.gk-results li { display: grid; grid-template-columns: auto 1fr; gap: 0 0.5rem; align-items: center; padding: 0.45rem 0.5rem; border-radius: 6px; cursor: pointer; }
+.gk-results li span { grid-column: 2; font-size: 0.78rem; color: var(--graphite); }
+.gk-results li.is-sel, .gk-results li:hover { background: var(--wash); }
+.gk-results .gk-none { display: block; color: var(--graphite); cursor: default; }
+/* dark */
+html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradient(rgba(143, 214, 90, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(143, 214, 90, 0.05) 1px, transparent 1px), linear-gradient(rgba(143, 214, 90, 0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(143, 214, 90, 0.09) 1px, transparent 1px); }
+@media (prefers-color-scheme: dark) { html[data-scheme="auto"] .post-panel.is-garden { background-image: linear-gradient(rgba(143, 214, 90, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(143, 214, 90, 0.05) 1px, transparent 1px), linear-gradient(rgba(143, 214, 90, 0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(143, 214, 90, 0.09) 1px, transparent 1px); } }

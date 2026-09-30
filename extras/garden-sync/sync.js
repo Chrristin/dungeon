@@ -15,12 +15,14 @@
 //   type: source             a book, film, talk, article or paper; with source_kind: book | film | talk | ...
 //   scatter: true            also show it on the Scatter wall; scatter_line: "a sharp line for the card"
 //   labels: [quote, red]     extra internal tags, such as a Scatter kind (quote, lyric, reading, code, found, thought) or colour
-//   title, slug, tended      override the file name, the address, or the "last tended" date
+//   confidence: certain | likely | speculative | hunch   how sure you are, shown on the note
+//   title, slug, tended, planted   override the file name, the address, the "last tended" or the "planted" date
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import YAML from 'yaml';
 import MarkdownIt from 'markdown-it';
+import footnotes from 'markdown-it-footnote';
 
 const cfg = {
   ghost: (process.env.GHOST_URL || '').replace(/\/+$/, ''),
@@ -98,6 +100,11 @@ function scanVault() {
       note.scatterLine = fm.scatter_line ? String(fm.scatter_line).slice(0, 300) : null;
       note.tended = isoDay(fm.tended || fm.updated) || isoDay(fs.statSync(f).mtime);
       note.labels = asList(fm.labels).map((l) => l.toLowerCase());
+      const conf = String(fm.confidence || '').toLowerCase();
+      note.confidence = ['certain', 'likely', 'speculative', 'hunch'].includes(conf) ? conf : null;
+      const st = fs.statSync(f);
+      note.planted = isoDay(fm.planted || fm.created) || isoDay(st.birthtimeMs ? st.birthtime : st.mtime) || note.tended;
+      note.bodyHash = crypto.createHash('sha1').update(note.title + '\n' + body).digest('hex');
     }
     notes.push(note);
     byName.set(name.toLowerCase(), note);
@@ -108,7 +115,7 @@ function scanVault() {
 
 // ---------------------------------------------------------------- turning a note into a post
 const WIKI = /(!?)\[\[([^\]|#^]+)(#[^\]|]*)?(?:\|([^\]]*))?\]\]/g;
-const md = new MarkdownIt({ html: true, linkify: true, typographer: true });
+const md = new MarkdownIt({ html: true, linkify: true, typographer: true }).use(footnotes);
 const IMAGE = /\.(png|jpe?g|gif|webp|svg|avif)$/i;
 
 async function uploadImage(file, state) {
@@ -170,6 +177,8 @@ async function render(note, vault, state) {
     return `[${label.replace(/[[\]]/g, '')}](/${t.slug}/${heading ? '#' + slugify(heading.slice(1)) : ''})`;
   });
   body = body.replace(/==([^=\n]+)==/g, '**$1**'); // Obsidian highlights: bold, the nearest thing Ghost keeps
+  const fn = []; // footnotes, as plain text, for the theme's sidenotes
+  for (const m of body.matchAll(/^\[\^([^\]]+)\]:\s*(.+)$/gm)) fn.push({ id: m[1], text: m[2].replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '').trim() });
   body = body.replace(/%%[\s\S]*?%%/g, ''); // Obsidian comments stay private
   let html = md.render(body).trim();
   const h1 = html.match(/^<h1>(.*?)<\/h1>\s*/);
@@ -177,22 +186,39 @@ async function render(note, vault, state) {
   const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   const words = text ? text.split(' ').length : 0;
   let lead = text.slice(0, 220); if (text.length > 220) lead = lead.replace(/\s+\S*$/, '') + '...';
-  return { html, links: [...links], excerpt: text.slice(0, 160), privateMentions, words, lead, said };
+  return { html, links: [...links], excerpt: text.slice(0, 160), privateMentions, words, lead, said, fn };
 }
 
 const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c'); // safe inside a <script>
-function payload(note, r, backlinks) {
+function payload(note, r, backlinks, extra) {
   const tags = note.topics.map((t) => ({ name: t })); // topics first: the first tag gives a note its filing code
   tags.push({ name: '#garden' }, { name: '#' + note.stage });
   if (note.type === 'source') tags.push({ name: '#source' });
   if (note.scatter) tags.push({ name: '#scatter' });
   for (const l of note.labels) if (!['garden', 'scatter', 'source', 'seedling', 'growing', 'evergreen'].includes(l)) tags.push({ name: '#' + l });
-  const meta = { stage: note.stage, tended: note.tended, type: note.type, kind: note.kind, scatter: note.scatter, backlinks };
+  const meta = { stage: note.stage, tended: note.tended, planted: note.planted, confidence: note.confidence, words: r.words, type: note.type, kind: note.kind, scatter: note.scatter, backlinks,
+    links: extra.links, related: extra.related, log: extra.log, fn: r.fn.length ? r.fn : undefined };
   return {
     title: note.title, slug: note.slug, html: r.html || '<p></p>', tags, status: 'published', visibility: 'public',
     custom_excerpt: note.scatterLine || (note.scatter && r.words > 60 ? r.lead : null), // long notes show their opening on the wall
     codeinjection_head: `<script type="application/json" id="garden-note">${json(meta)}</script>`,
   };
+}
+
+// ---------------------------------------------------------------- related by wording
+const STOP = new Set(('a an and are as at be been but by can could did do does for from had has have he her his how i if in into is it its just like me more most my no not now of on one or our out over she so some than that the their them then there these they this those to too up us very was we were what when where which who why will with would you your also about after again all am any because before being both each few into only own same should such through under until while get got go going make made much many really thing things way well even still i\'m it\'s don\'t').split(' '));
+function words(t) { return String(t).toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)); }
+function relatedByWording(items) { // items: [{ slug, title, text, links:Set }] -> { slug: [slugs] }
+  const docs = items.map((it) => { const tf = {}; [...words(it.title), ...words(it.title), ...words(it.text)].forEach((w) => { tf[w] = (tf[w] || 0) + 1; }); return tf; });
+  const df = {}; docs.forEach((tf) => Object.keys(tf).forEach((w) => { df[w] = (df[w] || 0) + 1; }));
+  const N = docs.length, vecs = docs.map((tf) => { const v = {}; let n = 0; for (const w in tf) { if (df[w] < 2) continue; const x = (1 + Math.log(tf[w])) * Math.log(1 + N / df[w]); v[w] = x; n += x * x; } n = Math.sqrt(n) || 1; for (const w in v) v[w] /= n; return v; });
+  const out = {};
+  items.forEach((a, i) => {
+    const scores = [];
+    items.forEach((b, j) => { if (i === j || a.links.has(b.slug) || b.links.has(a.slug)) return; let s = 0; const va = vecs[i], vb = vecs[j]; for (const w in va) if (vb[w]) s += va[w] * vb[w]; if (s >= 0.12) scores.push([s, b.slug]); });
+    out[a.slug] = scores.sort((x, y) => y[0] - x[0]).slice(0, 3).map((x) => x[1]);
+  });
+  return out;
 }
 
 // ---------------------------------------------------------------- one pass
@@ -222,18 +248,29 @@ async function pass() {
   for (const [n, r] of rendered) for (const name of new Set(r.privateMentions)) // private notes stay private, but their names can show in your sentences
     log(`note: "${n.title}" mentions "${name}", which isn't published, so its name shows as plain text. To hide it, give the link an alias: [[${name}|other words]]`);
   const backlinks = new Map(vault.published.map((n) => [n.slug, []]));
-  for (const [n, r] of rendered) for (const s of r.links) if (backlinks.has(s)) backlinks.get(s).push({ t: n.title, u: `/${n.slug}/` });
+  for (const [n, r] of rendered) for (const s of r.links) if (backlinks.has(s)) backlinks.get(s).push({ t: n.title, u: `/${n.slug}/`, g: n.stage });
+  const bySlug = new Map(vault.published.map((n) => [n.slug, n]));
+  const related = relatedByWording(vault.published.map((n) => ({ slug: n.slug, title: n.title, text: rendered.get(n).excerpt + ' ' + rendered.get(n).html.replace(/<[^>]+>/g, ' '), links: new Set(rendered.get(n).links) })));
+  const today = new Date().toISOString().slice(0, 10);
+  const logOf = (n) => { // planted, tended and stage changes, recorded as the sync sees them
+    const known = state.notes[n.rel] || {}, tl = (known.log || []).slice();
+    if (!tl.length) tl.push({ d: n.planted, e: 'planted', g: n.stage });
+    else if (known.stage && known.stage !== n.stage) tl.push({ d: today, e: 'stage', g: n.stage });
+    else if (known.bh && known.bh !== n.bodyHash) { const last = tl[tl.length - 1]; if (!(last.e === 'tended' && last.d === n.tended)) tl.push({ d: n.tended, e: 'tended', g: n.stage }); }
+    return tl.slice(-30);
+  };
   let made = 0, changed = 0, gone = 0;
   const seen = new Set();
   for (const [n, r] of rendered) {
     seen.add(n.rel);
-    const data = payload(n, r, backlinks.get(n.slug).sort((a, b) => a.t.localeCompare(b.t)));
+    const tlog = logOf(n), card = (s) => { const t = bySlug.get(s); return t ? { t: t.title, u: `/${t.slug}/`, g: t.stage } : null; };
+    const data = payload(n, r, backlinks.get(n.slug).sort((a, b) => a.t.localeCompare(b.t)), { log: tlog, links: r.links.map(card).filter(Boolean), related: (related[n.slug] || []).map(card).filter(Boolean) });
     const h = hashOf(data), known = state.notes[n.rel];
-    if (known && known.hash === h) continue;
+    if (known && known.hash === h) { known.log = tlog; known.stage = n.stage; known.bh = n.bodyHash; continue; }
     const id = await upsert(n, data, known, state);
     if (cfg.dry) continue; // a dry run only says what it would do
     known ? changed++ : made++;
-    state.notes[n.rel] = { id, slug: n.slug, hash: h };
+    state.notes[n.rel] = { id, slug: n.slug, hash: h, log: tlog, stage: n.stage, bh: n.bodyHash };
     log(known ? 'updated' : 'published', n.slug);
   }
   const inUse = new Set([...seen].map((rel) => state.notes[rel] && state.notes[rel].id).filter(Boolean));
@@ -250,7 +287,7 @@ async function pass() {
   }
   // the Garden page carries the whole garden's map, so the theme can draw it without asking for every note
   const nodes = vault.published.map((n) => ({ s: n.slug, t: n.title, g: n.stage, k: n.type, kind: n.kind, p: n.topics, d: n.tended, sc: n.scatter || undefined,
-    l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said }));
+    l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said, r: related[n.slug] || [], c: n.confidence || undefined }));
   const garden = { v: 1, updated: new Date().toISOString().slice(0, 10), notes: nodes.sort((a, b) => a.t.localeCompare(b.t)) };
   const ph = hashOf(garden.notes);
   if (state.page !== ph && !cfg.dry) {
