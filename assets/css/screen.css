@@ -1968,6 +1968,7 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
 .ratings-filter { flex-wrap: wrap; }
 .ratings-card[hidden] { display: none; }
 .ratings-readers { font-size: 0.7rem; }
+.ratings-card .card-foot { justify-content: space-between; }
 .ratings-empty { padding: 1rem 0.5rem; font: 0.85rem var(--mono); color: var(--graphite); }
 .og-rated { margin-left: 0.6rem; vertical-align: middle; text-transform: none; }
 .og[data-g="evergreen"] .rated { --stamp: rgba(255, 255, 255, 0.9); }

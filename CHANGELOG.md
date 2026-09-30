@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.1
+
+- Ratings page: cards show the post's feature image, like everywhere else, and the line in the card's foot is gone.
+
 ## 1.10.0
 
 - Ratings. Give any post your rating out of 5, in halves, with an internal tag: `#rated-4-5` for 4.5, `#rated-4` for 4, from `#rated-0-5` to `#rated-5`. The post gets a red ink RATED stamp at the top, and a small one on its card. In the garden, `rating: 4.5` in a note does the same (garden-sync adds the tag).
