@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2
+
+- Removed `page-map.hbs` and `partials/map.hbs`, left over from 2.0.0 after the rename to Plots.
+
 ## 2.0.1
 
 - The map homepage is now called Plots, so it isn't confused with the Garden's map. Its page moves from `/map/` to `/plots/`: if you made a page with the slug `map` on 2.0.0, change its slug to `plots`. Template files, partials and CSS classes are renamed to match (`page-plots.hbs`, `partials/plots.hbs`, `.plots-*`).
