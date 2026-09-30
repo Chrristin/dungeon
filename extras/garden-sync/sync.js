@@ -115,6 +115,37 @@ function scanVault() {
   return { notes, published: notes.filter((n) => n.published), byName, attachments };
 }
 
+// ---------------------------------------------------------------- the site's posts (read only)
+const SKIP_TAGS = new Set(['hash-garden', 'hash-note', 'hash-now', 'hash-scatter']);
+let siteHost = null; // the site's public address, asked of Ghost once, so links written as https://yoursite/... count
+async function readPosts() {
+  if (!siteHost) { try { const st = await api('GET', '/site/'); siteHost = new URL(st.site.url).host; } catch { siteHost = ''; } }
+  const out = []; let page = 1;
+  for (;;) {
+    const res = await api('GET', `/posts/?filter=status:published&formats=html,plaintext&include=tags&fields=id,slug,title,html,plaintext,custom_excerpt,published_at,updated_at,url&limit=50&page=${page}`);
+    for (const p of res.posts) {
+      if ((p.tags || []).some((t) => SKIP_TAGS.has(t.slug))) continue;
+      const text = String(p.plaintext || '').replace(/\s+/g, ' ').trim();
+      out.push({ slug: p.slug, title: p.title, html: p.html || '', text, words: text ? text.split(' ').length : 0,
+        topics: (p.tags || []).filter((t) => t.visibility === 'public').map((t) => t.name), date: String(p.updated_at || p.published_at || '').slice(0, 10),
+        excerpt: String(p.custom_excerpt || text).slice(0, 160) });
+    }
+    if (!res.meta.pagination.next) break;
+    page = res.meta.pagination.next;
+  }
+  return out;
+}
+// the site's own addresses a post links to, as slugs
+function linkedSlugs(html) {
+  const out = new Set(), site = siteHost;
+  for (const m of String(html).matchAll(/href="([^"#?]+)/g)) {
+    let u; try { u = new URL(m[1], 'http://local'); } catch { continue; }
+    if (u.host !== 'local' && u.host !== site && !/^(localhost|ghost)(:\d+)?$/.test(u.host)) continue;
+    const slug = u.pathname.replace(/^\/|\/$/g, ''); if (slug && !slug.includes('/')) out.add(slug);
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------- turning a note into a post
 const WIKI = /(!?)\[\[([^\]|#^]+)(#[^\]|]*)?(?:\|([^\]]*))?\]\]/g;
 const md = new MarkdownIt({ html: true, linkify: true, typographer: true }).use(footnotes);
@@ -150,7 +181,7 @@ function sentenceAround(text, at, len) {
 }
 async function render(note, vault, state) {
   const links = new Set();
-  const target = (name) => { const t = vault.byName.get(String(name).trim().toLowerCase()); return t && t.published ? t : null; };
+  const target = (name) => { const k = String(name).trim().toLowerCase(), t = vault.byName.get(k); return t && t.published ? t : (vault.postsByName && vault.postsByName.get(k)) || null; }; // a note, or one of your posts by its title
   let body = note.body;
   body = body.split('\n').map((line) => { // videos on their own line: a bare link, <link>, or Obsidian's ![](link)
     const m = line.trim().match(/^(?:!\[[^\]]*\]\()?<?(https?:\/\/[^\s)>]+)>?\)?$/);
@@ -185,7 +216,8 @@ async function render(note, vault, state) {
   let html = md.render(body).trim();
   const h1 = html.match(/^<h1>(.*?)<\/h1>\s*/);
   if (h1 && h1[1].replace(/<[^>]+>/g, '').trim().toLowerCase() === note.title.toLowerCase()) html = html.slice(h1[0].length); // Ghost shows the title already
-  const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const text = html.replace(/<sup class="footnote-ref">[\s\S]*?<\/sup>/g, '').replace(/<hr class="footnotes-sep">[\s\S]*$/, '') // footnotes stay out of the excerpt and the wording
+    .replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   const words = text ? text.split(' ').length : 0;
   let lead = text.slice(0, 220); if (text.length > 220) lead = lead.replace(/\s+\S*$/, '') + '...';
   return { html, links: [...links], excerpt: text.slice(0, 160), privateMentions, words, lead, said, fn };
@@ -256,16 +288,23 @@ async function upsert(note, data, known, state) {
 
 async function pass() {
   const vault = scanVault(), state = loadState();
+  const posts = await readPosts();
+  vault.postsByName = new Map(); for (const p of posts) { vault.postsByName.set(p.title.toLowerCase(), { slug: p.slug, title: p.title, stage: 'post', published: true, post: true }); vault.postsByName.set(p.slug, vault.postsByName.get(p.title.toLowerCase())); }
   const rendered = new Map();
   for (const n of vault.published) rendered.set(n, await render(n, vault, state));
   for (const [n, r] of rendered) for (const name of new Set(r.privateMentions)) // private notes stay private, but their names can show in your sentences
     log(`note: "${n.title}" mentions "${name}", which isn't published, so its name shows as plain text. To hide it, give the link an alias: [[${name}|other words]]`);
+  const known = new Set([...vault.published.map((n) => n.slug), ...posts.map((p) => p.slug)]);
+  for (const p of posts) p.links = [...linkedSlugs(p.html)].filter((s) => known.has(s) && s !== p.slug);
   const backlinks = new Map(vault.published.map((n) => [n.slug, []]));
   for (const [n, r] of rendered) for (const s of r.links) if (backlinks.has(s)) backlinks.get(s).push({ t: n.title, u: `/${n.slug}/`, g: n.stage });
+  for (const p of posts) for (const s of p.links) if (backlinks.has(s)) backlinks.get(s).push({ t: p.title, u: `/${p.slug}/`, g: 'post' });
   const bySlug = new Map(vault.published.map((n) => [n.slug, n]));
+  for (const p of posts) bySlug.set(p.slug, { slug: p.slug, title: p.title, stage: 'post' });
   const slugOfName = (name) => { const t = vault.byName.get(name); return t && t.published ? t.slug : slugify(name); };
   const related = relatedByWording(vault.published.map((n) => ({ slug: n.slug, title: n.title, text: rendered.get(n).html.replace(/<[^>]+>/g, ' '), words: rendered.get(n).words,
-    topics: n.topics.map((t) => t.toLowerCase()), links: new Set(rendered.get(n).links), never: new Set(n.notRelated.map(slugOfName)) })));
+    topics: n.topics.map((t) => t.toLowerCase()), links: new Set(rendered.get(n).links), never: new Set(n.notRelated.map(slugOfName)) }))
+    .concat(posts.map((p) => ({ slug: p.slug, title: p.title, text: p.text, words: p.words, topics: p.topics.map((t) => t.toLowerCase()), links: new Set(p.links), never: new Set() }))));
   const today = new Date().toISOString().slice(0, 10);
   const logOf = (n) => { // planted, tended and stage changes, recorded as the sync sees them
     const known = state.notes[n.rel] || {}, tl = (known.log || []).slice();
@@ -303,7 +342,8 @@ async function pass() {
   // the Garden page carries the whole garden's map, so the theme can draw it without asking for every note
   const nodes = vault.published.map((n) => ({ s: n.slug, t: n.title, g: n.stage, k: n.type, kind: n.kind, p: n.topics, d: n.tended, sc: n.scatter || undefined,
     l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said, r: related[n.slug] || [], c: n.confidence || undefined }));
-  const garden = { v: 1, updated: new Date().toISOString().slice(0, 10), notes: nodes.sort((a, b) => a.t.localeCompare(b.t)) };
+  for (const p of posts) nodes.push({ s: p.slug, t: p.title, g: 'post', k: 'post', p: p.topics, d: p.date, l: p.links, x: p.excerpt, w: p.words, r: related[p.slug] || [] });
+  const garden = { v: 2, updated: new Date().toISOString().slice(0, 10), notes: nodes.sort((a, b) => a.t.localeCompare(b.t)) };
   const ph = hashOf(garden.notes);
   if (state.page !== ph && !cfg.dry) {
     const head = `<script type="application/json" id="garden-data">${json(garden)}</script>`;

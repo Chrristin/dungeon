@@ -95,3 +95,4 @@ Everything goes in a note's properties (the block at the top in Obsidian). Only 
 - **Images** (`![[picture.png]]` or `![](path)`) are uploaded to Ghost once each and reused.
 - **Videos:** a YouTube or Vimeo link on its own line (or `![](link)`) becomes an embedded player.
 - **Garden notes appear only on the Garden page** (and the Scatter wall when marked), never in the homepage feed.
+- **Your posts join the garden:** the sync reads your published posts (never changing them), so they appear on the Garden page and map, their links count, and their Ghost tags count as topics. In a note, `[[The post's title]]` links to a post.

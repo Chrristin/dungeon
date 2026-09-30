@@ -1970,6 +1970,7 @@
     growing: 'M12 21.2V9.4M12 13.6c-3.6.1-5.8-2-5.7-4.9 3.4-.1 5.7 1.9 5.7 4.9zM12.1 10.6c-.1-3.1 2-5.2 5.6-5.3.1 3.3-2.1 5.3-5.6 5.3z',
     evergreen: 'M12 21.3v-4.2M11.9 2.8l5.2 7.1h-3.1l4.2 6.3H5.9l4.1-6.2H6.9z'
   };
+  SPROUT.post = 'M7 3.5h7.5l3.5 3.5v13.5H7zM14.5 3.5V7H18M9.5 11h6M9.5 14h6M9.5 17h4'; // a post: a small page
   var sprout = function (stage) { return '<svg class="garden-sprout" viewBox="0 0 24 24" aria-hidden="true"><path d="' + (SPROUT[stage] || SPROUT.seedling) + '"/></svg>'; };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var gardenDay = function (iso) { var d = new Date(iso); return isNaN(d) ? '' : String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
@@ -2335,61 +2336,98 @@
     var el = document.querySelector('.garden'); if (!el) return;
     var data = readJson(document.getElementById('garden-data')), L = readJson({ textContent: el.getAttribute('data-labels') }) || {};
     if (!data || !data.notes || !data.notes.length) { var empty = document.querySelector('.garden-empty'); if (empty) empty.hidden = false; return; }
-    var notes = data.notes, inbound = {};
-    notes.forEach(function (n) { (n.l || []).forEach(function (s) { inbound[s] = (inbound[s] || 0) + 1; }); });
+    var everything = data.notes, inbound = {}, bySlug = {};
+    everything.forEach(function (n) { bySlug[n.s] = n; (n.l || []).forEach(function (s) { inbound[s] = (inbound[s] || 0) + 1; }); }); // links count across notes and posts alike
     var degree = function (n) { return (inbound[n.s] || 0) + (n.l || []).length; };
-    var count = function (g) { return notes.filter(function (n) { return n.g === g; }).length; };
-    el.querySelector('.garden-stats').innerHTML = '<b>' + notes.length + '</b> ' + esc(L.notes) + ' · <b>' + count('evergreen') + '</b> ' + esc(L.evergreen) + ' · <b>' + count('growing') + '</b> ' + esc(L.growing) + ' · <b>' + count('seedling') + '</b> ' + esc(L.seedlings);
-    var bySlug = {}; notes.forEach(function (n) { bySlug[n.s] = n; });
+    var isPost = function (n) { return n.k === 'post'; };
+    var noteCount = everything.filter(function (n) { return !isPost(n); }), count = function (g) { return noteCount.filter(function (n) { return n.g === g; }).length; };
+    var postN = everything.length - noteCount.length;
+    el.querySelector('.garden-stats').innerHTML = '<b>' + noteCount.length + '</b> ' + esc(L.notes) + (postN ? ' · <b>' + postN + '</b> ' + esc(L.posts || 'posts') : '') + ' · <b>' + count('evergreen') + '</b> ' + esc(L.evergreen) + ' · <b>' + count('growing') + '</b> ' + esc(L.growing) + ' · <b>' + count('seedling') + '</b> ' + esc(L.seedlings);
     var trim = function (s, max) { s = String(s || ''); return s.length > max ? s.slice(0, max).replace(/\s+\S*$/, '') + '...' : s; };
     // Overgrown cards, sized to their content: vines creep round the edges as a note gains links,
-    // flowers open on evergreens, and a stack of pages behind shows how much has been written.
+    // flowers open on evergreens, and a stack of pages behind shows how much has been written. Posts are paper.
     var card = function (n) {
       var ins = inbound[n.s] || 0, outs = (n.l || []).length, w = n.w || 0;
-      var label = n.k === 'source' ? L.source + (n.kind ? ' · ' + n.kind : '') : (L[n.g] || n.g) + (n.p && n.p[0] ? ' · ' + n.p[0] : '');
+      var label = isPost(n) ? (L.post || 'Post') + (n.p && n.p[0] ? ' · ' + n.p[0] : '') : n.k === 'source' ? L.source + (n.kind ? ' · ' + n.kind : '') : (L[n.g] || n.g) + (n.p && n.p[0] ? ' · ' + n.p[0] : '');
       return '<a class="og" href="/' + esc(n.s) + '/" data-note="' + esc(n.s) + '" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" data-links="' + (ins + outs) + '">' +
         (w > 1000 ? '<span class="og-page og-page-2" aria-hidden="true"></span>' : '') + (w > 300 ? '<span class="og-page" aria-hidden="true"></span>' : '') +
         '<span class="og-sheet" aria-hidden="true"></span><span class="og-text"><span class="og-meta">' + esc(label) + '</span><span class="og-title">' + esc(n.t) + '</span>' +
         (n.x ? '<span class="og-ex">' + esc(trim(n.x, 150)) + '</span>' : '') + '</span><span class="og-foot">' + ins + ' in · ' + outs + ' out</span></a>';
     };
-    var recent = notes.slice().sort(function (a, b) { return (b.d || '').localeCompare(a.d || ''); }).slice(0, 8);
-    var recentBox = el.querySelector('[data-list="recent"]'); recentBox.innerHTML = recent.map(card).join('');
-    var connected = notes.filter(function (n) { return degree(n) > 0; }).sort(function (a, b) { return degree(b) - degree(a); }).slice(0, 8);
-    var cs = el.querySelector('[data-list="connected"]');
-    if (connected.length) cs.innerHTML = connected.map(card).join(''); else cs.closest('.garden-section').hidden = true;
+    var recentBox = el.querySelector('[data-list="recent"]'), cs = el.querySelector('[data-list="connected"]'), all = el.querySelector('[data-list="all"]');
+    var order = { evergreen: 0, growing: 1, seedling: 2, post: 3 }, shown = everything, sortHow = 'az';
     var growAll = function () { [recentBox, cs].forEach(function (box) { if (!box.closest('.garden-section').hidden) { growCards(box); linkCards(box, bySlug, L); } }); };
-    var topics = {};
-    notes.forEach(function (n) { (n.p && n.p.length ? n.p : [L.other]).forEach(function (t) { (topics[t] = topics[t] || []).push(n); }); });
-    el.querySelector('.garden-topics').innerHTML = Object.keys(topics).sort(function (a, b) { return topics[b].length - topics[a].length || a.localeCompare(b); }).map(function (t) {
-      return '<div class="garden-topic"><h3>' + esc(t) + ' <span>' + topics[t].length + '</span></h3><ul>' + topics[t].sort(function (a, b) { return a.t.localeCompare(b.t); }).map(function (n) {
-        return '<li><a href="/' + esc(n.s) + '/">' + sprout(n.g) + esc(n.t) + '</a></li>'; }).join('') + '</ul></div>';
-    }).join('');
-    var all = el.querySelector('[data-list="all"]'), order = { evergreen: 0, growing: 1, seedling: 2 };
-    var drawAll = function (how) {
-      var list = notes.slice().sort(how === 'recent' ? function (a, b) { return (b.d || '').localeCompare(a.d || ''); } : how === 'stage' ? function (a, b) { return order[a.g] - order[b.g] || a.t.localeCompare(b.t); } : function (a, b) { return a.t.localeCompare(b.t); });
+    var drawAll = function () {
+      var list = shown.slice().sort(sortHow === 'recent' ? function (a, b) { return (b.d || '').localeCompare(a.d || ''); } : sortHow === 'stage' ? function (a, b) { return order[a.g] - order[b.g] || a.t.localeCompare(b.t); } : function (a, b) { return a.t.localeCompare(b.t); });
       all.innerHTML = list.map(function (n) { return '<li><a href="/' + esc(n.s) + '/">' + esc(n.t) + '</a><span class="garden-dots" aria-hidden="true"></span>' + sprout(n.g) + '<time datetime="' + esc(n.d) + '">' + esc(gardenDay(n.d)) + '</time></li>'; }).join('');
     };
-    drawAll('az');
+    var draw = function () { // every section, from what the filter shows
+      closeLinkPanel();
+      recentBox.innerHTML = shown.slice().sort(function (a, b) { return (b.d || '').localeCompare(a.d || ''); }).slice(0, 8).map(card).join('');
+      recentBox.removeAttribute('data-linked'); cs.removeAttribute('data-linked');
+      var connected = shown.filter(function (n) { return degree(n) > 0; }).sort(function (a, b) { return degree(b) - degree(a); }).slice(0, 8);
+      cs.closest('.garden-section').hidden = !connected.length; cs.innerHTML = connected.map(card).join('');
+      var topics = {};
+      shown.forEach(function (n) { (n.p && n.p.length ? n.p : [L.other]).forEach(function (t) { (topics[t] = topics[t] || []).push(n); }); });
+      el.querySelector('.garden-topics').innerHTML = Object.keys(topics).sort(function (a, b) { return topics[b].length - topics[a].length || a.localeCompare(b); }).map(function (t) {
+        return '<div class="garden-topic"><h3>' + esc(t) + ' <span>' + topics[t].length + '</span></h3><ul>' + topics[t].sort(function (a, b) { return a.t.localeCompare(b.t); }).map(function (n) {
+          return '<li><a href="/' + esc(n.s) + '/">' + sprout(n.g) + esc(n.t) + '</a></li>'; }).join('') + '</ul></div>';
+      }).join('');
+      drawAll();
+      if (!el.hidden) { growAll(); drawGardenMap(el.querySelector('.garden-map'), shown); }
+    };
+    el.querySelector('.garden-filter').addEventListener('click', function (ev) {
+      var b = ev.target.closest('button'); if (!b) return;
+      [].forEach.call(this.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      var f = b.getAttribute('data-f'); shown = f === 'post' ? everything.filter(isPost) : f === 'note' ? everything.filter(function (n) { return !isPost(n); }) : everything;
+      draw();
+    });
     el.querySelector('.garden-sort').addEventListener('click', function (ev) {
       var b = ev.target.closest('button'); if (!b) return;
       [].forEach.call(this.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-      drawAll(b.getAttribute('data-sort'));
+      sortHow = b.getAttribute('data-sort'); drawAll();
     });
     el.querySelector('.garden-random').addEventListener('click', function () { // pull a card from the deck
-      var pick = notes[Math.floor(Math.random() * notes.length)], btn = this;
+      var pick = shown[Math.floor(Math.random() * shown.length)], btn = this;
       var go = function () { if (window.dungeonOpen) window.dungeonOpen('/' + pick.s + '/'); else location.href = '/' + pick.s + '/'; };
       if (calmStamps) { go(); return; }
       btn.classList.add('is-pulling'); setTimeout(function () { btn.classList.remove('is-pulling'); go(); }, 460);
     });
-    el.hidden = false;
-    growAll();
+    draw(); el.hidden = false;
+    growAll(); drawGardenMap(el.querySelector('.garden-map'), shown);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(growAll); // card heights settle once the fonts arrive
-    var growT; window.addEventListener('resize', function () { clearTimeout(growT); growT = setTimeout(growAll, 250); });
-    drawGardenMap(el.querySelector('.garden-map'), notes);
-    var mapT; window.addEventListener('resize', function () { clearTimeout(mapT); mapT = setTimeout(function () { drawGardenMap(el.querySelector('.garden-map'), notes); }, 250); });
+    var growT; window.addEventListener('resize', function () { clearTimeout(growT); growT = setTimeout(function () { growAll(); drawGardenMap(el.querySelector('.garden-map'), shown); }, 250); });
+  }
+  // A post's page: where it sits in the garden (what links to it, what it links to, related), from the Garden page's data
+  var gardenDataCache = null;
+  function gardenData(url) {
+    var here = readJson(document.getElementById('garden-data'));
+    if (here) return Promise.resolve(here.notes || []);
+    if (!gardenDataCache) gardenDataCache = fetch(url, { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (h) { var d = readJson(new DOMParser().parseFromString(h, 'text/html').getElementById('garden-data')); return (d && d.notes) || []; }).catch(function () { return []; });
+    return gardenDataCache;
+  }
+  function initPostGarden(root) {
+    var box = root.querySelector('.post-garden'), panel = root.querySelector('.post-panel');
+    if (!box || !panel || box.getAttribute('data-ready') || panel.classList.contains('is-garden')) return;
+    box.setAttribute('data-ready', '1');
+    var slug = panel.getAttribute('data-key'), L = readJson({ textContent: box.getAttribute('data-labels') }) || {};
+    gardenData(box.getAttribute('data-garden')).then(function (list) {
+      var by = {}; list.forEach(function (n) { by[n.s] = n; });
+      var me = by[slug]; if (!me) return;
+      var chip = function (n) { return { t: n.t, u: '/' + n.s + '/', g: n.g }; };
+      var inb = list.filter(function (n) { return (n.l || []).indexOf(slug) >= 0; }).map(chip);
+      var outs = (me.l || []).map(function (s) { return by[s]; }).filter(Boolean).map(chip);
+      var rel = (me.r || []).map(function (s) { return by[s]; }).filter(Boolean).map(chip);
+      if (!inb.length && !outs.length && !rel.length) return;
+      var sec = function (h, items, cls) { return items.length ? '<section><h3 class="garden-h">' + esc(h) + '</h3>' + chipList(items, cls) + '</section>' : ''; };
+      box.innerHTML = '<h2 class="post-garden-h">' + sprout('growing') + esc(L.title || 'In the garden') + '</h2>' + sec(L.mentioned || 'Mentioned in', inb) + sec(L.links || 'Links to', outs) + sec(L.related || 'Related', rel, 'is-rel');
+      box.hidden = false;
+    });
   }
   initGarden();
   initGardenNote(document, readJson(document.getElementById('garden-note')));
+  initPostGarden(document);
 
   function closeReader() { if (reader && reader.open) reader.close(); }
   // In the overlay, the browser closes the dialog on Escape by itself. If the blank sticky has writing
@@ -2415,6 +2453,8 @@
         if (stickiesHere) body.querySelector('.post-panel').appendChild(document.importNode(stickiesHere, true));
         var afterHere = doc.querySelector('.garden-after'); // a garden note's "Mentioned in" comes too
         if (afterHere) body.querySelector('.post-panel').appendChild(document.importNode(afterHere, true));
+        var postGardenHere = doc.querySelector('.post-garden'); // and a post's place in the garden
+        if (postGardenHere && !gardenMeta) body.querySelector('.post-panel').appendChild(document.importNode(postGardenHere, true));
         decorate(body);
         initPostActions(body);
         initStamps(body);
@@ -2424,6 +2464,7 @@
         if (!already) reader.showModal();
         initStickies(body); // after it's open, so the pile can be measured
         if (gardenMeta) initGardenNote(body, readJson(gardenMeta));
+        else initPostGarden(body);
         reader.scrollTop = 0;
         document.title = doc.title || baseTitle;
         if (already) history.replaceState({ reader: true }, '', url);
@@ -2446,7 +2487,7 @@
     // garden notes open in the overlay too: the cards, lists, map, the connection panel and "Mentioned in"
     window.dungeonOpen = function (url) { openPost(url, null); };
     document.addEventListener('click', function (e) {
-      var link = e.target.closest && e.target.closest('.garden .og, .garden-topic a, .garden-all a, .garden-node, .og-panel a, .garden-after .garden-backlinks a, .scatter-patch, .gn-chip, .lm-node, .post-panel.is-garden .gh-content a[href]');
+      var link = e.target.closest && e.target.closest('.garden .og, .garden-topic a, .garden-all a, .garden-node, .og-panel a, .garden-after .garden-backlinks a, .scatter-patch, .gn-chip, .lm-node, .post-panel.is-garden .gh-content a[href], .post-garden a');
       if (!link || e.defaultPrevented) return;
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       var href = link.getAttribute('href') || (link.href && link.href.baseVal); if (!href) return;

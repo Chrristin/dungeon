@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0
+
+- Posts in the garden: your published posts appear on the Garden page and map as paper cards, with an Everything, Notes and Posts filter redrawing every section. Links between posts and notes count in both directions, and a post's tags count as its topics.
+- Each post's page shows "In the garden": the notes and posts that mention it, what it links to, and related ones. It comes along into the overlay, and its links open there.
+- garden-sync: reads published posts (read only), lets notes link to posts by title with `[[Post title]]`, includes posts in "related by wording", and keeps footnotes out of excerpts and wording. Update `sync.js` on the server and restart garden-sync.
+
 ## 1.6.1
 
 - garden-sync: "related by wording" is much stricter. Two notes are related only if they share a topic, have at least three distinctive words in common, and are both at least 25 words long; words used in over half the garden no longer count. New note property `not_related` rules out a pair in both directions. No theme changes; update `sync.js` on the server and restart garden-sync.
