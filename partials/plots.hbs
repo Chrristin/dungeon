@@ -1,4 +1,4 @@
-{{!-- Plots: a homepage of plots, one per dimension of the site. Drawn from the page with the address /plots/:
+{{!-- Plots: a homepage of plots, one per dimension of the site. A tag's image, if it has one, is etched faintly behind its plot. Drawn from the page with the address /plots/:
       its title is the badge, its excerpt the statement, its text the introduction (a bulleted list of links becomes
       a row of buttons), and its public tags, in order, are the plots. A tag's name, description and posts fill its
       plot; a tag with no posts yet shows as unplanted. Context: that page. --}}
@@ -26,6 +26,7 @@
     <div class="plots-grid">
     {{#foreach tags visibility="public"}}
         <article class="card plot" data-key="plot-{{slug}}"{{#if accent_color}} style="--card: {{accent_color}}; --card-hi: {{accent_color}};"{{/if}} aria-labelledby="plot-{{slug}}">
+            {{#if feature_image}}<img class="plot-etch" src="{{img_url feature_image size="m"}}" alt="" aria-hidden="true" loading="lazy" decoding="async">{{/if}}
             {{#get "posts" filter="tag:{{slug}}+tag:-hash-now" limit="5" include="tags" order="featured desc, published_at desc" as |plotPosts plotPages|}}
             <header class="card-head plot-head">
                 <span class="tag-code" data-tag="{{../slug}}"></span>

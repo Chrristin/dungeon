@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.4
+
+- Plots move again: pointing at one straightens and lifts it like every other card, and on phones plots follow the scroll the way the post cards do. Rows inside a plot nudge sideways when pointed at. An unplanted plot stays an outline.
+- Etchings: a plot's tag image is drawn faintly behind the plot and darkens on hover. Line drawings on a transparent background work best.
+
 ## 2.0.3
 
 - The Plots statement is drawn in two colours: everything after its first comma is green, so `Digital Christin, in progress.` shows the second half in the theme's green. With no comma it stays one colour.

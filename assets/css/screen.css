@@ -2067,7 +2067,24 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
     align-items: start;
 }
 .plot { grid-column: span 6; padding: 1.2rem 1.3rem 1.1rem; gap: 0.7rem; transform: rotate(calc(var(--tilt) * 0.35)); }
-.plot:hover, .plot:focus-within { transform: rotate(calc(var(--tilt) * 0.35)); box-shadow: var(--card-shadow, 0 12px 26px -20px rgba(23, 25, 30, 0.55)); }
+/* Hover: the plot straightens and lifts like every other card; its etching darkens and drifts closer */
+.plot { overflow: hidden; }
+.plot-etch {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    opacity: 0.12;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: -1;
+    transition: opacity 320ms ease, transform 700ms ease;
+}
+.plot:hover .plot-etch, .plot:focus-within .plot-etch { opacity: 0.2; transform: scale(1.04) rotate(-0.6deg); }
+.plot-rows a { transition: transform 160ms ease; }
+.plot-rows a:hover { transform: translateX(3px); }
 .plot:nth-child(1) { grid-column: 1 / span 7; grid-row: span 2; padding: 1.5rem 1.6rem 1.3rem; }
 .plot:nth-child(2), .plot:nth-child(3) { grid-column: 8 / span 5; }
 .plot:nth-child(n+4) { grid-column: span 4; }
@@ -2116,6 +2133,7 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
     border: 1px dashed var(--graphite);
 }
 .plot:has(.plot-empty)::before { display: none; }
+.plot:has(.plot-empty):hover, .plot:has(.plot-empty):focus-within { background: transparent; box-shadow: none; }
 .plot:has(.plot-empty) .card-line { background: var(--rule); }
 
 /* After the plots: what changed lately, and the way into the whole garden */
@@ -2180,3 +2198,19 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
 .plot-head .tag-code { color: var(--on-card); font-weight: 500; }
 /* The badge and the current plot sit on a slightly deeper green, so small white text keeps 4.5:1 in light mode */
 .plots-badge, .plot-switch a[aria-current="page"] { background: color-mix(in srgb, var(--led), #000 16%); border-color: transparent; }
+
+/* An unplanted plot has no card colour to multiply into: in dark mode its etching is drawn light instead */
+html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); mix-blend-mode: screen; }
+@media (prefers-color-scheme: dark) {
+    html[data-scheme="auto"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); mix-blend-mode: screen; }
+}
+
+/* Touch: plots follow the scroll like the other cards (site.js sets --focus), their etchings darkening as they come into view */
+@media (hover: none) {
+    .plot { transform: rotate(calc(var(--tilt) * 0.35 * (1 - var(--f)))) translateY(calc(var(--f) * -3px)); }
+    .plot-etch { opacity: calc(0.1 + 0.1 * var(--f)); transition: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .plot-etch, .plot-rows a { transition: none; }
+    .plot:hover .plot-etch, .plot:focus-within .plot-etch, .plot-rows a:hover { transform: none; }
+}

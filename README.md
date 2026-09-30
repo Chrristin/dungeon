@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 2.0.3. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 2.0.4. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -149,7 +149,7 @@ An optional homepage that shows your site as a set of plots, one per subject, in
 | Text | The introduction under the statement. A bulleted list of links becomes a row of buttons, for the first thing a visitor should do (a résumé, your best work, a contact page). |
 | Public tags, in order | The plots, in that order. The first is the largest. |
 
-**Each plot** is a public tag: its name and description are the plot's heading and line, its accent colour (Tags → the tag → Accent colour) sets the card's colour, and otherwise the colour comes from the slug like any card. It lists five pieces, featured ones first, then newest. A tag with no posts yet shows as an outline marked unplanted, so you can show a subject you mean to start. Add a plot's tag to a post as a **second** tag: the first tag gives a post its filing code, and making the plot the first tag would change it.
+**Each plot** is a public tag: its name and description are the plot's heading and line, its accent colour (Tags → the tag → Accent colour) sets the card's colour, and otherwise the colour comes from the slug like any card. Give the tag an image and it's etched faintly behind the plot, darkening when you point at it (or, on phones, as the plot scrolls into view): line drawings on a transparent background work best, since they multiply into the card's colour. It lists five pieces, featured ones first, then newest. A tag with no posts yet shows as an outline marked unplanted, so you can show a subject you mean to start. Add a plot's tag to a post as a **second** tag: the first tag gives a post its filing code, and making the plot the first tag would change it.
 
 **Growth.** A post or note can carry an internal tag for its stage, `#seedling`, `#growing` (or `#budding`) or `#evergreen`, shown as the Garden page's sprouts on cards, plots and lists. Garden notes get theirs from garden-sync. Each plot's meter counts its pieces: none is unplanted, 1 to 2 sprouting, 3 to 10 growing, 11 to 20 flourishing, more is lit.
 

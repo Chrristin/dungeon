@@ -310,7 +310,7 @@
   // Touch devices: scroll-linked "hover". Each card's --focus is the share of it that's
   // on screen, reaching 1 once the card (or most of the screen, for tall cards) is in view.
   var noHover = window.matchMedia('(hover: none)');
-  var focusCards = [].slice.call(document.querySelectorAll('.cards .card, .hero-card .card, .now-card, .scatter-card'));
+  var focusCards = [].slice.call(document.querySelectorAll('.cards .card, .hero-card .card, .now-card, .scatter-card, .plots-grid .plot'));
   var focusQueued = false;
   function updateFocus() {
     focusQueued = false;
