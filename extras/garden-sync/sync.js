@@ -16,6 +16,7 @@
 //   scatter: true            also show it on the Scatter wall; scatter_line: "a sharp line for the card"
 //   labels: [quote, red]     extra internal tags, such as a Scatter kind (quote, lyric, reading, code, found, thought) or colour
 //   confidence: certain | likely | speculative | hunch   how sure you are, shown on the note
+//   not_related: [[Other note]]   never show these two as related (either direction)
 //   title, slug, tended, planted   override the file name, the address, the "last tended" or the "planted" date
 import fs from 'node:fs';
 import path from 'node:path';
@@ -105,6 +106,7 @@ function scanVault() {
       const st = fs.statSync(f);
       note.planted = isoDay(fm.planted || fm.created) || isoDay(st.birthtimeMs ? st.birthtime : st.mtime) || note.tended;
       note.bodyHash = crypto.createHash('sha1').update(note.title + '\n' + body).digest('hex');
+      note.notRelated = asList(fm.not_related).map((x) => x.replace(/^\[\[|\]\]$/g, '').split('|')[0].trim().toLowerCase());
     }
     notes.push(note);
     byName.set(name.toLowerCase(), note);
@@ -208,14 +210,25 @@ function payload(note, r, backlinks, extra) {
 // ---------------------------------------------------------------- related by wording
 const STOP = new Set(('a an and are as at be been but by can could did do does for from had has have he her his how i if in into is it its just like me more most my no not now of on one or our out over she so some than that the their them then there these they this those to too up us very was we were what when where which who why will with would you your also about after again all am any because before being both each few into only own same should such through under until while get got go going make made much many really thing things way well even still i\'m it\'s don\'t').split(' '));
 function words(t) { return String(t).toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)); }
-function relatedByWording(items) { // items: [{ slug, title, text, links:Set }] -> { slug: [slugs] }
+// items: [{ slug, title, text, words, topics, links:Set, never:Set }] -> { slug: [slugs] }
+// Wording alone can't tell a band's "Down with the System" from a monitoring system, so the bar is high:
+// a shared topic, always; at least three distinctive words in common; notes long enough to judge; and never
+// a pair you've ruled out with not_related.
+function relatedByWording(items) {
+  const MIN_WORDS = 25, MIN_SHARED = 3, MIN_SCORE = 0.15;
   const docs = items.map((it) => { const tf = {}; [...words(it.title), ...words(it.title), ...words(it.text)].forEach((w) => { tf[w] = (tf[w] || 0) + 1; }); return tf; });
   const df = {}; docs.forEach((tf) => Object.keys(tf).forEach((w) => { df[w] = (df[w] || 0) + 1; }));
-  const N = docs.length, vecs = docs.map((tf) => { const v = {}; let n = 0; for (const w in tf) { if (df[w] < 2) continue; const x = (1 + Math.log(tf[w])) * Math.log(1 + N / df[w]); v[w] = x; n += x * x; } n = Math.sqrt(n) || 1; for (const w in v) v[w] /= n; return v; });
+  const N = docs.length, vecs = docs.map((tf) => { const v = {}; let n = 0; for (const w in tf) { if (df[w] < 2 || df[w] > N * 0.5) continue; const x = (1 + Math.log(tf[w])) * Math.log(1 + N / df[w]); v[w] = x; n += x * x; } n = Math.sqrt(n) || 1; for (const w in v) v[w] /= n; return v; });
   const out = {};
   items.forEach((a, i) => {
     const scores = [];
-    items.forEach((b, j) => { if (i === j || a.links.has(b.slug) || b.links.has(a.slug)) return; let s = 0; const va = vecs[i], vb = vecs[j]; for (const w in va) if (vb[w]) s += va[w] * vb[w]; if (s >= 0.12) scores.push([s, b.slug]); });
+    if (a.words >= MIN_WORDS) items.forEach((b, j) => {
+      if (i === j || b.words < MIN_WORDS || a.links.has(b.slug) || b.links.has(a.slug) || a.never.has(b.slug) || b.never.has(a.slug)) return;
+      let s = 0, shared = 0; const va = vecs[i], vb = vecs[j];
+      for (const w in va) if (vb[w]) { s += va[w] * vb[w]; shared++; }
+      if (!a.topics.some((t) => b.topics.includes(t))) return; // different topics: never related by wording
+      if (shared >= MIN_SHARED && s >= MIN_SCORE) scores.push([s, b.slug]);
+    });
     out[a.slug] = scores.sort((x, y) => y[0] - x[0]).slice(0, 3).map((x) => x[1]);
   });
   return out;
@@ -250,7 +263,9 @@ async function pass() {
   const backlinks = new Map(vault.published.map((n) => [n.slug, []]));
   for (const [n, r] of rendered) for (const s of r.links) if (backlinks.has(s)) backlinks.get(s).push({ t: n.title, u: `/${n.slug}/`, g: n.stage });
   const bySlug = new Map(vault.published.map((n) => [n.slug, n]));
-  const related = relatedByWording(vault.published.map((n) => ({ slug: n.slug, title: n.title, text: rendered.get(n).excerpt + ' ' + rendered.get(n).html.replace(/<[^>]+>/g, ' '), links: new Set(rendered.get(n).links) })));
+  const slugOfName = (name) => { const t = vault.byName.get(name); return t && t.published ? t.slug : slugify(name); };
+  const related = relatedByWording(vault.published.map((n) => ({ slug: n.slug, title: n.title, text: rendered.get(n).html.replace(/<[^>]+>/g, ' '), words: rendered.get(n).words,
+    topics: n.topics.map((t) => t.toLowerCase()), links: new Set(rendered.get(n).links), never: new Set(n.notRelated.map(slugOfName)) })));
   const today = new Date().toISOString().slice(0, 10);
   const logOf = (n) => { // planted, tended and stage changes, recorded as the sync sees them
     const known = state.notes[n.rel] || {}, tl = (known.log || []).slice();

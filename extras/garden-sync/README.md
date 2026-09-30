@@ -81,6 +81,7 @@ Everything goes in a note's properties (the block at the top in Obsidian). Only 
 | `tended` | The "last tended" date. Normally taken from when the file last changed. |
 | `planted` | When the note was first planted. Normally taken from when the file was created. |
 | `confidence` | How sure you are: `certain`, `likely`, `speculative` or `hunch`. Shown on the note. |
+| `not_related` | Notes never to show as related to this one, like `["[[Some note]]"]`. Works in both directions. |
 | `title` | The title, if it should differ from the file name. |
 
 ## Good to know
@@ -89,7 +90,7 @@ Everything goes in a note's properties (the block at the top in Obsidian). Only 
 - **`%%comments%%` stay private,** and never leave the vault.
 - **Highlights** (`==text==`) become bold, the nearest thing Ghost keeps.
 - **Footnotes** (`text[^1]` and `[^1]: the note`) appear as sidenotes in the margin.
-- **Related notes** are worked out from shared wording, with no tagging; links you write always come first.
+- **Related notes** are worked out from shared wording, with no tagging, and only between notes that **share a topic**, have at least three distinctive words in common, and are at least 25 words long. Wording can't tell meanings apart, so the bar is deliberately high; notes without topics get no automatic relations. Links you write always come first.
 - **The tending log** is recorded from when you start using this version: when a note is first seen, tended, or changes stage.
 - **Images** (`![[picture.png]]` or `![](path)`) are uploaded to Ghost once each and reused.
 - **Videos:** a YouTube or Vimeo link on its own line (or `![](link)`) becomes an embedded player.

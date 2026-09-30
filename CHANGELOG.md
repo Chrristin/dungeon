@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1
+
+- garden-sync: "related by wording" is much stricter. Two notes are related only if they share a topic, have at least three distinctive words in common, and are both at least 25 words long; words used in over half the garden no longer count. New note property `not_related` rules out a pair in both directions. No theme changes; update `sync.js` on the server and restart garden-sync.
+
 ## 1.6.0
 
 - Garden notes in the lab-notebook look: graph paper, a spec sheet (stage, confidence, links in and out, planted, tended, length), the Tended stamp on its own line, footnotes as sidenotes in the margin (under their paragraph on narrow screens), small marks after external links (YouTube, GitHub, Wikipedia, PDF), and previews of linked notes on hover.
