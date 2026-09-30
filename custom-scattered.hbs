@@ -8,9 +8,9 @@
 </section>
 {{/post}}
 
-{{!-- Short notes: posts with the internal tag #note, newest first.
+{{!-- Short notes: garden notes marked for the wall (#scatter) and older posts with the internal tag #note, newest first.
       Optional kind label from #reading, #code, #found or #thought. --}}
-{{#get "posts" filter="tag:hash-note" limit="100" order="published_at desc" include="tags"}}
+{{#get "posts" filter="tag:[hash-note,hash-scatter]" limit="100" order="published_at desc" include="tags"}}
 <section class="scatter" aria-label="{{t "Notes"}}">
     {{#foreach posts}}
     <article class="card scatter-card{{#has tag="#quote, #lyric"}} scatter-card--quote{{/has}}" data-key="{{slug}}" data-color="{{#has tag="#pistachio"}}0{{else has tag="#mint"}}1{{else has tag="#sky"}}2{{else has tag="#periwinkle"}}3{{else has tag="#lilac"}}4{{else has tag="#blush"}}5{{else has tag="#peach"}}6{{else has tag="#butter"}}7{{else has tag="#sage"}}8{{else has tag="#seafoam"}}9{{else has tag="#red"}}red{{else has tag="#tangerine"}}tangerine{{else has tag="#sunflower"}}sunflower{{else has tag="#cobalt"}}cobalt{{else has tag="#emerald"}}emerald{{else has tag="#ink"}}ink{{/has}}">
@@ -24,7 +24,12 @@
             <span class="card-line" aria-hidden="true"></span>
             {{#has tag="#reading"}}<span class="card-tag">{{t "Reading"}}</span>{{else has tag="#code"}}<span class="card-tag">{{t "Code"}}</span>{{else has tag="#found"}}<span class="card-tag">{{t "Found"}}</span>{{else has tag="#thought"}}<span class="card-tag">{{t "Thought"}}</span>{{else has tag="#lyric"}}<span class="card-tag">{{t "Lyric"}}</span>{{else has tag="#quote"}}<span class="card-tag">{{t "Quote"}}</span>{{/has}}
         </header>
+        {{#has tag="#garden"}}
+        <div class="scatter-body gh-content">{{#if custom_excerpt}}<p>{{custom_excerpt}}</p>{{else}}{{content}}{{/if}}</div>
+        <a class="scatter-garden" href="{{url}}">{{t "Read in the garden"}} &rarr;</a>
+        {{else}}
         <div class="scatter-body gh-content">{{content}}</div>
+        {{/has}}
         {{#has tag="#quote, #lyric"}}<p class="quote-by"><span class="quote-by-text">{{title}}</span></p>{{/has}}
     </article>
     {{else}}

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0
+
+- The Garden: a digital garden written in Obsidian and published by the new `extras/garden-sync` container. The Garden page shows stage counts, a random note, recently tended and most connected notes, a map of the links, notes by topic, and every note, sortable.
+- Garden notes show their stage (seedling, growing, evergreen) as hand-drawn marks, a red Tended stamp, and "Mentioned in" backlinks; sources are drawn as library cards. They stay out of the homepage feed and Older/Newer.
+- The Scatter wall also shows garden notes marked `scatter: true`, each linking back to the full note. `garden-sync import-scatter` moves existing Scatter notes into the garden, keeping their addresses, kinds and colours.
+
+## 1.3.9
+
+- Closing a sticky is smoother, especially on phones and when closing several quickly: no more copies created mid-motion (a likely cause of white flashes on Android), the pile's edges only clip again once every sticky has settled, and a closing sticky stays on top until it slides under.
+- Fixed: stickies sent to the back lost their shadow for good.
+- Members' stickies have a hand-drawn frame; the author's, a double one.
+- Removed the "Tap a sticky to read it" hint.
+
 ## 1.3.8
 
 - Member stickies: signed-in Ghost members pin straight away, with no spam check or approval, under their Ghost account name, marked as a member's. They can take their stickies back any time, from any device. You still get a notification, with a Delete button.

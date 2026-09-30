@@ -8,7 +8,7 @@
         {{#if @custom.role_line}}<p class="statement-role">{{@custom.role_line}}</p>{{/if}}
     </div>
     {{#if @custom.hero_card}}
-    {{#get "posts" limit="1" include="tags,authors" filter="tag:-[hash-now,hash-note]"}}
+    {{#get "posts" limit="1" include="tags,authors" filter="tag:-[hash-now,hash-note,hash-garden]"}}
         {{#foreach posts}}<div class="hero-card">{{> "post-row"}}</div>{{/foreach}}
     {{/get}}
     {{/if}}

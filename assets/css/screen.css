@@ -419,8 +419,7 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
    moving area stays within the card's margins, so nothing pokes out past its edge. */
 .post-panel .stickies { max-width: none; margin: 1.4rem 0 0; }
 .post-panel .stickies-stage { margin: -1.2rem; padding: 1.2rem; }
-.post-panel .stickies-hint { color: var(--on-card-meta, var(--graphite)); }
-.post-panel .stickies-toggle { border-color: rgba(23, 25, 30, 0.2); color: #17191e; }
+.post-panel .post-panel .stickies-toggle { border-color: rgba(23, 25, 30, 0.2); color: #17191e; }
 @media (min-width: 900px) { .post-panel .stickies-compose { right: -0.6rem; } }
 .reader-close {
     position: sticky;
@@ -1289,8 +1288,6 @@ body.has-everything .colophon-secondary { display: none; }
 .stickies.is-empty .stickies-stage, .stickies.is-list .stickies-stage { display: none; }
 .sticky { pointer-events: auto; }
 .stickies-board { position: relative; height: 12rem; max-height: 31rem; }
-.stickies-hint { margin: 0.6rem 0 0; font: 0.72rem var(--mono); color: var(--graphite); }
-.stickies.is-empty .stickies-hint, .stickies.is-list .stickies-hint,
 
 /* A sticky is two layers: the outer one is placed, tilted, casts the shadow and holds the tape; the paper
    inside has the colour and the frayed edge (a cut edge would otherwise cut the shadow too). Inside the
@@ -1308,13 +1305,18 @@ body.has-everything .colophon-secondary { display: none; }
 .sticky-by { flex: 1; min-width: 0; font-size: 1.05rem; color: #5a5d64; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sticky-remove, .stickies-list .sticky-remove { all: unset; flex: none; padding: 0.05rem 0.25rem; font: 600 0.9rem/1 var(--mono); color: #5a5d64; cursor: pointer; opacity: 0.7; }
 .sticky-remove:hover, .stickies-list .sticky-remove:hover { opacity: 1; color: #c42b3c; }
+.sticky-border { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.sticky-border path { vector-effect: non-scaling-stroke; }
 .sticky-doodle { position: absolute; pointer-events: none; overflow: visible; fill: none; stroke: rgba(35, 37, 43, 0.46); stroke-linecap: round; stroke-linejoin: round; }
 .sticky-doodle path { vector-effect: non-scaling-stroke; stroke-width: 1.5; }
 .sticky.is-waiting .sticky-paper { outline: 2px dashed rgba(35, 37, 43, 0.35); outline-offset: -6px; }
 .sticky.is-waiting::before { display: none; } /* no tape until it's pinned */
 .sticky.is-landing { animation: sticky-land 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
 @media (hover: hover) { .sticky:not([data-moving]):not([data-focus]):hover { animation: sticky-wobble 0.55s ease-in-out; } }
-.sticky[data-focus] { filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)); cursor: zoom-out; }
+.sticky[data-focus] { cursor: zoom-out; }
+/* Warn the browser before a sticky moves, so it prepares a separate layer in advance; on phones,
+   preparing it mid-motion is what shows as a white flash. */
+.sticky[data-focus], .sticky[data-moving] { will-change: transform, opacity; }
 .stickies.has-focus .stickies-stage { overflow: visible; } /* a lifted sticky isn't clipped by the pile's edges */
 @keyframes sticky-wobble { 20% { rotate: 2.2deg; } 45% { rotate: -1.8deg; } 70% { rotate: 1deg; } 100% { rotate: 0deg; } }
 @keyframes sticky-land { from { scale: 1.25; opacity: 0; translate: 0 -14px; } to { scale: 1; opacity: 1; translate: 0 0; } }
@@ -1622,3 +1624,73 @@ html.is-theming, html.is-theming * {
     .post-panel figcaption { font-size: 0.8rem; }
     .panel-content pre { font-size: 0.75rem; }
 }
+
+/* ---------------------------------------------------------------- the garden
+   Notes that grow over time, written in Obsidian and published by garden-sync (extras/garden-sync). */
+.garden[hidden], .garden-empty[hidden] { display: none; }
+.garden, .garden-empty { margin: 0 0 4rem; } /* the page's own column, lined up with the heading */
+.garden-head { border-bottom: 0; padding-top: clamp(1rem, 3vw, 2rem); padding-bottom: 1rem; }
+.garden-stats { margin: 0 0 1rem; font: 0.8rem/1.6 var(--mono); color: var(--graphite); }
+.garden-stats b { color: var(--ink); font-weight: 600; }
+.garden-sprout { flex: none; width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.garden-random { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--ink); font: 500 0.8rem/1 var(--mono); cursor: pointer; }
+.garden-random::before { content: ""; width: 0.9rem; height: 1.1rem; border: 1.5px solid currentColor; border-radius: 3px; box-shadow: 3px -3px 0 -1.5px var(--paper), 3px -3px 0 0 currentColor; }
+.garden-random:hover { background: var(--wash); }
+.garden-random.is-pulling::before { animation: garden-pull 0.45s ease-in-out; }
+@keyframes garden-pull { 30% { transform: translateX(-3px) rotate(-8deg); } 60% { transform: translate(6px, -8px) rotate(10deg); opacity: 0.4; } }
+.garden-section { margin-top: 2.6rem; }
+.garden-section[hidden] { display: none; }
+.garden-h { margin: 0 0 1rem; font: 500 0.75rem/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--graphite); }
+.garden-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr)); gap: 1rem; }
+.garden-card { display: flex; flex-direction: column; gap: 0.5rem; min-height: 8.5rem; padding: 0.9rem 1rem 0.8rem; border-radius: 12px; text-decoration: none; color: #17191e;
+    background: #e6f1dd; box-shadow: 0 10px 18px -14px rgba(0, 0, 0, 0.45); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.garden-card[data-g="growing"] { background: #d5ecd9; } .garden-card[data-g="evergreen"] { background: #c3e2cf; }
+.garden-card:hover { transform: translateY(-3px); box-shadow: 0 16px 22px -14px rgba(0, 0, 0, 0.5); }
+/* sources are library cards: lined, with a red margin rule */
+.garden-card[data-k="source"] { background-color: #fbf6e9; padding-left: 2rem;
+    background-image: linear-gradient(90deg, transparent 1.3rem, rgba(196, 43, 60, 0.4) 1.3rem, rgba(196, 43, 60, 0.4) calc(1.3rem + 1px), transparent calc(1.3rem + 1px)),
+      repeating-linear-gradient(transparent 0 1.3rem, rgba(47, 125, 224, 0.2) 1.3rem calc(1.3rem + 1px)); }
+.garden-card-top { display: flex; align-items: center; gap: 0.4rem; font: 0.68rem var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: #4a4e56; }
+.garden-card-title { font-weight: 600; font-size: 1.02rem; line-height: 1.3; }
+.garden-card-foot { margin-top: auto; font: 0.68rem var(--mono); color: #5e636c; }
+.garden-map { overflow: hidden; border-radius: 14px; background: var(--wash); }
+.garden-map svg { display: block; max-width: 100%; height: auto; }
+.garden-map line { stroke: var(--graphite); stroke-opacity: 0.35; stroke-width: 0.9; }
+.garden-node circle { fill: #e6f1dd; stroke: var(--ink); stroke-width: 1.2; transition: r 0.15s ease; }
+.garden-node[data-g="growing"] circle { fill: #9fd1a9; } .garden-node[data-g="evergreen"] circle { fill: #3f8f5c; }
+.garden-node text { font: 0.62rem var(--mono); fill: var(--ink); pointer-events: none; }
+.garden-node:hover circle, .garden-node:focus circle { stroke: #c42b3c; stroke-width: 2; }
+.garden-topics { columns: 2 16rem; column-gap: 2rem; }
+.garden-topic { break-inside: avoid; margin-bottom: 1.4rem; }
+.garden-topic h3 { margin: 0 0 0.4rem; font-size: 1rem; }
+.garden-topic h3 span { font: 0.72rem var(--mono); color: var(--graphite); }
+.garden-topic ul, .garden-after ul { list-style: none; margin: 0; padding: 0; }
+.garden-topic li { margin: 0.25rem 0; }
+.garden-topic a { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; }
+.garden-topic a:hover { text-decoration: underline; }
+.garden-topic .garden-sprout, .garden-all .garden-sprout { width: 1rem; height: 1rem; color: var(--graphite); }
+.garden-sort { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; }
+.garden-sort button { padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--ink); font: 0.72rem/1 var(--mono); cursor: pointer; }
+.garden-sort button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.garden-all { list-style: none; margin: 0; padding: 0; }
+.garden-all li { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.35rem 0; }
+.garden-all a { text-decoration: none; }
+.garden-all a:hover { text-decoration: underline; }
+.garden-dots { flex: 1; min-width: 1rem; border-bottom: 1px dotted var(--rule); transform: translateY(-0.25rem); }
+.garden-all time { flex: none; font: 0.7rem var(--mono); color: var(--graphite); }
+/* a garden note's page */
+.garden-mark { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-top: 0.9rem; }
+.garden-stage { display: inline-flex; align-items: center; gap: 0.35rem; font: 0.72rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.garden-source { padding: 0.2rem 0.5rem 0.2rem 0.9rem; font: 0.68rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: #17191e;
+    background: linear-gradient(90deg, transparent 0.5rem, rgba(196, 43, 60, 0.45) 0.5rem, rgba(196, 43, 60, 0.45) calc(0.5rem + 1px), transparent calc(0.5rem + 1px)), #fbf6e9; border-radius: 3px; }
+.garden-tended { padding: 0.25rem 0.55rem; border: 2px solid #c42b3c; border-radius: 4px; color: #c42b3c; font: 600 0.66rem/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; rotate: -4deg; opacity: 0.9; }
+.garden-after { max-width: 47rem; margin: 0 auto; padding: 2.5rem 0 3rem; }
+.garden-after ul { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.garden-after li a { display: inline-block; padding: 0.5rem 0.8rem; border-radius: 10px; background: var(--wash); text-decoration: none; }
+.garden-after li a:hover { text-decoration: underline; }
+.garden-quiet { margin: 0; font: 0.8rem var(--mono); color: var(--graphite); }
+.garden-back { display: inline-block; margin-top: 1.6rem; font: 0.78rem var(--mono); }
+.scatter-garden { display: inline-block; margin-top: 0.6rem; font: 0.72rem var(--mono); color: inherit; opacity: 0.75; }
+.scatter-garden:hover { opacity: 1; }
+@media (max-width: 760px) { .garden-after { padding-left: 1rem; padding-right: 1rem; } }
+@media (prefers-reduced-motion: reduce) { .garden-random.is-pulling::before { animation: none; } .garden-card:hover { transform: none; } }

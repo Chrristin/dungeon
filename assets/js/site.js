@@ -1501,6 +1501,23 @@
   ];
   // Several doodles per sticky, where the text leaves room: one main doodle (by topic) and a few scribbles,
   // scattered at different sizes and tilts, never on each other, the writing or the name. One pen per sticky.
+  // Members' stickies get a hand-drawn frame just inside the paper's edge; the author's, a double one.
+  // Same pen as the sticky's doodles, wobbly like them.
+  function addBorder(el, n, s) {
+    if (s.role !== 'member' && s.role !== 'author') return;
+    var paper = n.querySelector('.sticky-paper'), W = paper.clientWidth, H = paper.clientHeight; if (!W || !H) return;
+    var rand = seeded(Math.abs(Number(s.id)) * 97 + 3), ink = DARK_PAPER[n.getAttribute('data-c')] ? 'rgba(251, 245, 232, 0.6)' : 'rgba(35, 37, 43, 0.5)';
+    var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'sticky-border'); svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.style.stroke = ink;
+    var frame = function (inset, amt, width) {
+      var i = inset, pth = document.createElementNS(NS, 'path');
+      pth.setAttribute('d', wobbly('M' + (i + 3) + ' ' + i + 'H' + (W - i) + 'V' + (H - i) + 'H' + i + 'V' + (i + 2), rand, amt)); // not quite closed, like a hand-drawn box
+      pth.style.strokeWidth = width; svg.appendChild(pth);
+    };
+    frame(6 + rand() * 1.5, 1.1, (1.2 + rand() * 0.4).toFixed(2));
+    if (s.role === 'author') frame(10 + rand() * 1.5, 1.3, (0.9 + rand() * 0.3).toFixed(2)); // yours: a double frame
+    paper.appendChild(svg);
+  }
   function addDoodle(el, n, s) {
     var p = n.querySelector('.sticky-text'), paper = n.querySelector('.sticky-paper');
     if (!p || n.style.height) return;
@@ -1548,7 +1565,7 @@
   // Lay out the pile. Oldest first, each sticky takes the emptiest of 30 random spots (seeded, so the
   // pile looks the same on every visit and only changes as stickies are added).
   function layoutStickies(el) {
-    el._focus = null; el.classList.remove('has-focus');
+    el._focus = null; el._moving = 0; el.classList.remove('has-focus');
     var board = el.querySelector('.stickies-board'), list = el.querySelector('.stickies-list');
     var approved = (el._stickies || []).slice(), mine = myStickies(el).filter(function (m) { return m.status === 'pending'; });
     var shownIds = {}; approved.forEach(function (s) { shownIds[s.id] = true; });
@@ -1609,7 +1626,7 @@
       n.style.setProperty('--rot', rot); n.style.transform = rot;
       n.style.left = best.x + 'px'; n.style.top = best.y + 'px'; n.style.zIndex = i + 1;
       if (item.s.id === el._landing) n.classList.add('is-landing');
-      board.appendChild(n); fitSticky(n); addDoodle(el, n, item.s);
+      board.appendChild(n); fitSticky(n); addDoodle(el, n, item.s); addBorder(el, n, item.s);
     });
     el._landing = null;
   }
@@ -1653,8 +1670,7 @@
     el._focus = null; n.removeAttribute('data-focus');
     var now = getComputedStyle(n).transform; // where it is, enlarged
     if (n._lift) { n._lift.cancel(); n._lift = null; }
-    n.style.zIndex = n._z;
-    sendStickyBack(el, n, now);
+    sendStickyBack(el, n, now); // it stays on top until the moment it goes under
     if (next && next !== n) focusSticky(el, next);
   }
   function tapSticky(el, n) {
@@ -1683,27 +1699,18 @@
       if (!near.some(function (x) { return hit(r, x.getBoundingClientRect(), tx, ty); })) { ox = tx; oy = ty; break; }
     }
     var T = 1050, swap = 0.46;
+    el._moving = (el._moving || 0) + 1; // how many stickies are in motion: clipping comes back only when all have settled
+    var out = rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.05)';
+    // One continuous motion, and nothing new appears mid-way: at its furthest point the sticky fades a little,
+    // goes beneath, and fades back as it slides under. The shadow is left alone throughout.
     var move = n.animate([
-      { transform: from && from !== 'none' ? from : rot + ' translate(0,0) scale(1)', filter: 'brightness(1)', offset: 0, easing: 'cubic-bezier(.25,.8,.35,1)' },
-      { transform: rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.05)', filter: 'brightness(1)', offset: swap, easing: 'cubic-bezier(.45,0,.3,1)' },
-      { transform: rot + ' translate(0,0) scale(1)', filter: 'brightness(.96)', offset: 1 }
+      { transform: from && from !== 'none' ? from : rot + ' translate(0,0) scale(1)', opacity: 1, offset: 0, easing: 'cubic-bezier(.25,.8,.35,1)' },
+      { transform: rot + ' translate(' + (ox * 0.96).toFixed(1) + 'px,' + (oy * 0.96).toFixed(1) + 'px) scale(1.05)', opacity: 1, offset: swap - 0.08 },
+      { transform: out, opacity: 0.35, offset: swap, easing: 'cubic-bezier(.45,0,.3,1)' },
+      { transform: rot + ' translate(' + (ox * 0.7).toFixed(1) + 'px,' + (oy * 0.7).toFixed(1) + 'px) scale(1.04)', opacity: 1, offset: swap + 0.2 },
+      { transform: rot + ' translate(0,0) scale(1)', opacity: 1, offset: 1 }
     ], { duration: T, fill: 'forwards' });
-    // At its furthest point it goes beneath. In a busy pile it can't always get clear of everything first,
-    // so a copy stays on top and fades away as the real one carries on underneath: it sinks, rather than
-    // blinking under its neighbours.
-    setTimeout(function () {
-      var ghost = n.cloneNode(true); ghost.removeAttribute('data-id'); ghost.removeAttribute('tabindex'); ghost.removeAttribute('role');
-      ghost.setAttribute('aria-hidden', 'true'); ghost.style.pointerEvents = 'none'; ghost.style.zIndex = notes.length + 5;
-      board.appendChild(ghost);
-      var rest = T * (1 - swap);
-      var gm = ghost.animate([
-        { transform: rot + ' translate(' + ox + 'px,' + oy + 'px) scale(1.05)', opacity: 1, offset: 0 },
-        { transform: rot + ' translate(' + (ox * 0.62) + 'px,' + (oy * 0.62) + 'px) scale(1.035)', opacity: 0, offset: 0.34 },
-        { transform: rot + ' translate(0,0) scale(1)', opacity: 0, offset: 1 }
-      ], { duration: rest, easing: 'cubic-bezier(.45,0,.3,1)', fill: 'forwards' });
-      gm.onfinish = function () { ghost.remove(); };
-      toBack();
-    }, T * swap);
+    setTimeout(toBack, T * swap); // beneath the others at its furthest point, while faded
     near.forEach(function (x) { // the neighbours react
       var xr = x.getBoundingClientRect(), ax = (xr.left + xr.width / 2) - cx, ay = (xr.top + xr.height / 2) - cy, al = Math.hypot(ax, ay) || 1;
       var px = (ax / al * 5).toFixed(1), py = (ay / al * 5).toFixed(1), tilt = (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 0.8);
@@ -1714,9 +1721,12 @@
         { translate: '0 -3px', rotate: '0deg', scale: '1.015', offset: 0.72 },
         { translate: '0 0', rotate: '0deg', scale: '1' }
       ], { duration: T, easing: 'ease-in-out' });
-      x.style.filter = '';
     });
-    move.onfinish = function () { move.cancel(); n.style.transform = rot; n.style.filter = 'brightness(.96)'; n.removeAttribute('data-moving'); if (!el._focus) el.classList.remove('has-focus'); };
+    move.onfinish = function () {
+      move.cancel(); n.style.transform = rot; n.style.filter = ''; n.removeAttribute('data-moving');
+      el._moving = Math.max(0, (el._moving || 1) - 1);
+      if (!el._focus && !el._moving) el.classList.remove('has-focus'); // only once every sticky has settled
+    };
   }
   var turnstileLoading = null;
   function loadTurnstile() {
@@ -1952,6 +1962,116 @@
   });
   initStickies(document);
 
+  // ---------------------------------------------------------------- the garden
+  // Garden notes are written in Obsidian and published by garden-sync (extras/garden-sync). Each note carries
+  // its stage, "last tended" date and backlinks in its header data; the Garden page carries the whole map.
+  var SPROUT = {
+    seedling: 'M12 20.5c-3.2 0-5.3-1.5-5.3-3.6s2.3-3.5 5.3-3.5 5.2 1.4 5.2 3.4-2 3.7-5.2 3.7zM12.2 13.4c-.2-2.3.6-4.1 2.3-5.1',
+    growing: 'M12 21.2V9.4M12 13.6c-3.6.1-5.8-2-5.7-4.9 3.4-.1 5.7 1.9 5.7 4.9zM12.1 10.6c-.1-3.1 2-5.2 5.6-5.3.1 3.3-2.1 5.3-5.6 5.3z',
+    evergreen: 'M12 21.3v-4.2M11.9 2.8l5.2 7.1h-3.1l4.2 6.3H5.9l4.1-6.2H6.9z'
+  };
+  var sprout = function (stage) { return '<svg class="garden-sprout" viewBox="0 0 24 24" aria-hidden="true"><path d="' + (SPROUT[stage] || SPROUT.seedling) + '"/></svg>'; };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var gardenDay = function (iso) { var d = new Date(iso); return isNaN(d) ? '' : String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
+  var readJson = function (node) { try { return node ? JSON.parse(node.textContent) : null; } catch (e) { return null; } };
+
+  // a garden note's page (or the same note in the reader overlay): stage, TENDED stamp, source label, backlinks
+  function initGardenNote(root, meta) {
+    var panel = root.querySelector('.post-panel'); if (!panel || !meta || panel.getAttribute('data-garden-ready')) return;
+    panel.setAttribute('data-garden-ready', '1');
+    var head = panel.querySelector('.panel-head') || panel.firstElementChild;
+    var mark = document.createElement('div'); mark.className = 'garden-mark';
+    var stage = meta.stage || 'seedling';
+    mark.innerHTML = '<span class="garden-stage" data-g="' + esc(stage) + '">' + sprout(stage) + esc(stage) + '</span>' +
+      (meta.type === 'source' ? '<span class="garden-source">' + esc('Source') + (meta.kind ? ' · ' + esc(meta.kind) : '') + '</span>' : '') +
+      (meta.tended ? '<span class="garden-tended">Tended ' + esc(gardenDay(meta.tended)) + '</span>' : '');
+    if (head) head.appendChild(mark);
+    if (meta.type === 'source') panel.classList.add('is-source');
+    var after = root.querySelector('.garden-after') || document.querySelector('.garden-after');
+    if (after && !after.getAttribute('data-ready')) {
+      after.setAttribute('data-ready', '1');
+      var list = after.querySelector('.garden-backlinks'), bl = meta.backlinks || [];
+      list.innerHTML = '<h2 class="garden-h">' + esc(after.getAttribute('data-mentioned')) + '</h2>' + (bl.length
+        ? '<ul>' + bl.map(function (b) { return '<li><a href="' + esc(b.u) + '">' + esc(b.t) + '</a></li>'; }).join('') + '</ul>'
+        : '<p class="garden-quiet">' + esc(after.getAttribute('data-none')) + '</p>');
+    }
+  }
+  initGardenNote(document, readJson(document.getElementById('garden-note')));
+
+  // the Garden page
+  function drawGardenMap(box, notes) {
+    var W = box.clientWidth || 600, H = stacked.matches ? 300 : 380, idx = {}, edges = [];
+    notes.forEach(function (n, i) { idx[n.s] = i; });
+    notes.forEach(function (n, i) { (n.l || []).forEach(function (s) { if (idx[s] !== undefined && idx[s] !== i) edges.push([i, idx[s]]); }); });
+    var deg = notes.map(function () { return 0; }); edges.forEach(function (e) { deg[e[0]]++; deg[e[1]]++; });
+    var rand = seeded(notes.length * 131 + 7), P = notes.map(function () { return { x: W * (0.2 + rand() * 0.6), y: H * (0.2 + rand() * 0.6), vx: 0, vy: 0 }; });
+    for (var step = 0; step < 280; step++) { // pull linked notes together, push everything apart, keep it all near the middle
+      var cool = 1 - step / 280;
+      for (var a = 0; a < P.length; a++) for (var b = a + 1; b < P.length; b++) {
+        var dx = P[a].x - P[b].x, dy = P[a].y - P[b].y, d2 = dx * dx + dy * dy + 0.01, f = 900 / d2, d = Math.sqrt(d2);
+        P[a].vx += dx / d * f; P[a].vy += dy / d * f; P[b].vx -= dx / d * f; P[b].vy -= dy / d * f;
+      }
+      edges.forEach(function (e) { var p = P[e[0]], q = P[e[1]], dx = q.x - p.x, dy = q.y - p.y, d = Math.sqrt(dx * dx + dy * dy) || 1, f = (d - 70) * 0.03; p.vx += dx / d * f; p.vy += dy / d * f; q.vx -= dx / d * f; q.vy -= dy / d * f; });
+      P.forEach(function (p) { p.vx += (W / 2 - p.x) * 0.004; p.vy += (H / 2 - p.y) * 0.006; p.x += Math.max(-8, Math.min(8, p.vx * cool)); p.y += Math.max(-8, Math.min(8, p.vy * cool)); p.vx *= 0.5; p.vy *= 0.5;
+        p.x = Math.max(18, Math.min(W - 18, p.x)); p.y = Math.max(18, Math.min(H - 18, p.y)); });
+    }
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+    edges.forEach(function (e) { svg += '<line x1="' + P[e[0]].x.toFixed(1) + '" y1="' + P[e[0]].y.toFixed(1) + '" x2="' + P[e[1]].x.toFixed(1) + '" y2="' + P[e[1]].y.toFixed(1) + '"/>'; });
+    notes.forEach(function (n, i) {
+      var r = 4 + Math.min(7, deg[i] * 1.2);
+      svg += '<a href="/' + esc(n.s) + '/" class="garden-node" data-g="' + esc(n.g) + '"><title>' + esc(n.t) + '</title><circle cx="' + P[i].x.toFixed(1) + '" cy="' + P[i].y.toFixed(1) + '" r="' + r.toFixed(1) + '"/>' +
+        (deg[i] >= 3 ? '<text x="' + (P[i].x + r + 4).toFixed(1) + '" y="' + (P[i].y + 3).toFixed(1) + '">' + esc(n.t.length > 28 ? n.t.slice(0, 27) + '...' : n.t) + '</text>' : '') + '</a>';
+    });
+    box.innerHTML = svg + '</svg>';
+  }
+  function initGarden() {
+    var el = document.querySelector('.garden'); if (!el) return;
+    var data = readJson(document.getElementById('garden-data')), L = readJson({ textContent: el.getAttribute('data-labels') }) || {};
+    if (!data || !data.notes || !data.notes.length) { var empty = document.querySelector('.garden-empty'); if (empty) empty.hidden = false; return; }
+    var notes = data.notes, inbound = {};
+    notes.forEach(function (n) { (n.l || []).forEach(function (s) { inbound[s] = (inbound[s] || 0) + 1; }); });
+    var degree = function (n) { return (inbound[n.s] || 0) + (n.l || []).length; };
+    var count = function (g) { return notes.filter(function (n) { return n.g === g; }).length; };
+    el.querySelector('.garden-stats').innerHTML = '<b>' + notes.length + '</b> ' + esc(L.notes) + ' · <b>' + count('evergreen') + '</b> ' + esc(L.evergreen) + ' · <b>' + count('growing') + '</b> ' + esc(L.growing) + ' · <b>' + count('seedling') + '</b> ' + esc(L.seedlings);
+    var card = function (n, i) {
+      var meta = n.k === 'source' ? esc(L.source) + (n.kind ? ' · ' + esc(n.kind) : '') : esc((n.p && n.p[0]) || '');
+      return '<a class="garden-card" href="/' + esc(n.s) + '/" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" style="rotate:' + (((i * 37) % 7) - 3) * 0.5 + 'deg">' +
+        '<span class="garden-card-top">' + sprout(n.g) + '<span>' + meta + '</span></span><span class="garden-card-title">' + esc(n.t) + '</span>' +
+        '<span class="garden-card-foot">' + esc(L.tended) + ' ' + esc(gardenDay(n.d)) + '</span></a>';
+    };
+    var recent = notes.slice().sort(function (a, b) { return (b.d || '').localeCompare(a.d || ''); }).slice(0, 8);
+    el.querySelector('[data-list="recent"]').innerHTML = recent.map(card).join('');
+    var connected = notes.filter(function (n) { return degree(n) > 0; }).sort(function (a, b) { return degree(b) - degree(a); }).slice(0, 8);
+    var cs = el.querySelector('[data-list="connected"]');
+    if (connected.length) cs.innerHTML = connected.map(card).join(''); else cs.closest('.garden-section').hidden = true;
+    var topics = {};
+    notes.forEach(function (n) { (n.p && n.p.length ? n.p : [L.other]).forEach(function (t) { (topics[t] = topics[t] || []).push(n); }); });
+    el.querySelector('.garden-topics').innerHTML = Object.keys(topics).sort(function (a, b) { return topics[b].length - topics[a].length || a.localeCompare(b); }).map(function (t) {
+      return '<div class="garden-topic"><h3>' + esc(t) + ' <span>' + topics[t].length + '</span></h3><ul>' + topics[t].sort(function (a, b) { return a.t.localeCompare(b.t); }).map(function (n) {
+        return '<li><a href="/' + esc(n.s) + '/">' + sprout(n.g) + esc(n.t) + '</a></li>'; }).join('') + '</ul></div>';
+    }).join('');
+    var all = el.querySelector('[data-list="all"]'), order = { evergreen: 0, growing: 1, seedling: 2 };
+    var drawAll = function (how) {
+      var list = notes.slice().sort(how === 'recent' ? function (a, b) { return (b.d || '').localeCompare(a.d || ''); } : how === 'stage' ? function (a, b) { return order[a.g] - order[b.g] || a.t.localeCompare(b.t); } : function (a, b) { return a.t.localeCompare(b.t); });
+      all.innerHTML = list.map(function (n) { return '<li><a href="/' + esc(n.s) + '/">' + esc(n.t) + '</a><span class="garden-dots" aria-hidden="true"></span>' + sprout(n.g) + '<time datetime="' + esc(n.d) + '">' + esc(gardenDay(n.d)) + '</time></li>'; }).join('');
+    };
+    drawAll('az');
+    el.querySelector('.garden-sort').addEventListener('click', function (ev) {
+      var b = ev.target.closest('button'); if (!b) return;
+      [].forEach.call(this.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      drawAll(b.getAttribute('data-sort'));
+    });
+    el.querySelector('.garden-random').addEventListener('click', function () { // pull a card from the deck
+      var pick = notes[Math.floor(Math.random() * notes.length)], btn = this;
+      if (calmStamps) { location.href = '/' + pick.s + '/'; return; }
+      btn.classList.add('is-pulling'); setTimeout(function () { location.href = '/' + pick.s + '/'; }, 460);
+    });
+    el.hidden = false;
+    drawGardenMap(el.querySelector('.garden-map'), notes);
+    var mapT; window.addEventListener('resize', function () { clearTimeout(mapT); mapT = setTimeout(function () { drawGardenMap(el.querySelector('.garden-map'), notes); }, 250); });
+  }
+  initGarden();
+
   function closeReader() { if (reader && reader.open) reader.close(); }
   // In the overlay, the browser closes the dialog on Escape by itself. If the blank sticky has writing
   // on it, Escape clears that first and keeps the overlay open; pressed again, it closes as usual.
@@ -1971,6 +2091,7 @@
         var panel = doc.querySelector('.post-panel');
         if (!panel) { location.href = url; return; }
         body.replaceChildren(document.importNode(panel, true));
+        var gardenMeta = doc.getElementById('garden-note'); // a garden note's stage, tended date and backlinks
         var stickiesHere = doc.querySelector('.stickies'); // the stickies come across too, inside the card: one piece
         if (stickiesHere) body.querySelector('.post-panel').appendChild(document.importNode(stickiesHere, true));
         decorate(body);
@@ -1980,6 +2101,7 @@
         document.documentElement.classList.add('reader-open');
         reader.showModal();
         initStickies(body); // after it's open, so the pile can be measured
+        if (gardenMeta) initGardenNote(body, readJson(gardenMeta));
         reader.scrollTop = 0;
         document.title = doc.title || baseTitle;
         baseUrl = location.href;
