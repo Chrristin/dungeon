@@ -2111,12 +2111,13 @@
   // the Garden page
   // The map: notes as tiny cards in their stage colours, links you wrote as leafy vines, related notes dotted.
   // Point at a note and its neighbours light up while the rest fades.
-  function drawGardenMap(box, notes) {
-    var W = Math.max(900, Math.sqrt(notes.length) * 190), H = W * 0.62, idx = {}, edges = [], rels = []; // the map's own space; the view zooms and pans over it
+  function drawGardenMap(box, notes, L) {
+    L = L || {};
+    var W = Math.max(900, Math.sqrt(notes.length) * 190), H = W * Math.max(0.62, Math.min(1.6, (box.clientHeight || 1) / (box.clientWidth || 1))), idx = {}, edges = [], rels = [], seenRel = {}; // the map's own space; the view zooms and pans over it
     notes.forEach(function (n, i) { idx[n.s] = i; });
     notes.forEach(function (n, i) {
       (n.l || []).forEach(function (s) { if (idx[s] !== undefined && idx[s] !== i) edges.push([i, idx[s]]); });
-      (n.r || []).forEach(function (s) { var j2 = idx[s]; if (j2 !== undefined && j2 > i) rels.push([i, j2]); });
+      (n.r || []).forEach(function (s) { var j2 = idx[s]; if (j2 === undefined || j2 === i) return; var key = Math.min(i, j2) + '|' + Math.max(i, j2); if (!seenRel[key]) { seenRel[key] = 1; rels.push([i, j2]); } }); // related either way round, drawn once
     });
     var deg = notes.map(function () { return 0; }); edges.forEach(function (e) { deg[e[0]]++; deg[e[1]]++; });
     var label = function (t) { return t.length > 24 ? t.slice(0, 23) + '...' : t; };
@@ -2134,50 +2135,99 @@
       P.forEach(function (p, i) { p.vx += (W / 2 - p.x) * 0.003; p.vy += (H / 2 - p.y) * 0.006; p.x += Math.max(-9, Math.min(9, p.vx * cool)); p.y += Math.max(-9, Math.min(9, p.vy * cool)); p.vx *= 0.5; p.vy *= 0.5;
         p.x = Math.max(size[i][0] / 2 + 6, Math.min(W - size[i][0] / 2 - 6, p.x)); p.y = Math.max(18, Math.min(H - 18, p.y)); });
     }
-    var curve = function (p, q) { var mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2, dx = q.x - p.x, dy = q.y - p.y; return { d: 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + 'Q' + (mx - dy * 0.16).toFixed(1) + ' ' + (my + dx * 0.16).toFixed(1) + ' ' + q.x.toFixed(1) + ' ' + q.y.toFixed(1), mx: mx - dy * 0.08, my: my + dx * 0.08 }; };
+    // vines grow between linked notes (solid, leafy); related notes are joined by a dotted runner that wanders the same way
+    var vineOf = edges.map(function (e) { return wildVine(P[e[0]].x, P[e[0]].y, P[e[1]].x, P[e[1]].y, notes[e[0]].s + '>' + notes[e[1]].s, 1, 3); });
+    var relOf = rels.map(function (e) { return wildVine(P[e[0]].x, P[e[0]].y, P[e[1]].x, P[e[1]].y, notes[e[0]].s + '~' + notes[e[1]].s, 1, 0); });
     var svg = '<svg class="gm" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="' + esc(box.closest('section').getAttribute('aria-label') || '') + '">';
-    rels.forEach(function (e) { svg += '<path class="gm-rel" data-a="' + e[0] + '" data-b="' + e[1] + '" d="' + curve(P[e[0]], P[e[1]]).d + '"/>'; });
-    edges.forEach(function (e, k) { // leafy vines along each link
-      var p = P[e[0]], q = P[e[1]], cv = curve(p, q), cx = (p.x + q.x) / 2 - (q.y - p.y) * 0.16, cy = (p.y + q.y) / 2 + (q.x - p.x) * 0.16, leaves = '';
-      [0.25, 0.5, 0.75].forEach(function (t, m) { var u = 1 - t, x = u * u * p.x + 2 * u * t * cx + t * t * q.x, y = u * u * p.y + 2 * u * t * cy + t * t * q.y; leaves += gleaf(x, y, k * 67 + m * 120, 8, m % 2 ? '#8fd65a' : '#5fbf4a'); });
-      svg += '<g class="gm-vine" data-a="' + e[0] + '" data-b="' + e[1] + '"><path d="' + cv.d + '"/>' + leaves + '</g>';
-    });
+    rels.forEach(function (e, k) { svg += '<path class="gm-rel" data-e="r' + k + '" data-a="' + e[0] + '" data-b="' + e[1] + '" d="' + relOf[k].d + '"/>'; });
+    edges.forEach(function (e, k) { svg += '<g class="gm-vine" data-e="v' + k + '" data-a="' + e[0] + '" data-b="' + e[1] + '"><path class="gm-stem" d="' + vineOf[k].d + '"/>' + vineOf[k].leaves + vineOf[k].curl + '</g>'; });
+    rels.forEach(function (e, k) { svg += '<path class="gm-hit" data-e="r' + k + '" d="' + relOf[k].d + '"/>'; }); // wide, invisible: pointing anywhere along a line finds it
+    edges.forEach(function (e, k) { svg += '<path class="gm-hit" data-e="v' + k + '" d="' + vineOf[k].d + '"/>'; });
     notes.forEach(function (n, i) {
       var w = size[i][0], x = P[i].x - w / 2, y = P[i].y - 11;
-      svg += '<a href="/' + esc(n.s) + '/" class="garden-node" data-i="' + i + '" data-g="' + esc(n.g) + '"><title>' + esc(n.t) + '</title><rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="22" rx="' + (n.k === 'source' ? 2 : 6) + '" data-k="' + esc(n.k) + '"/>' +
+      svg += '<a href="/' + esc(n.s) + '/" class="garden-node" data-i="' + i + '" data-g="' + esc(n.g) + '" aria-label="' + esc(n.t) + '"><rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="22" rx="' + (n.k === 'source' ? 2 : 6) + '" data-k="' + esc(n.k) + '"/>' +
+        '<circle class="gm-dot" cx="' + P[i].x.toFixed(1) + '" cy="' + P[i].y.toFixed(1) + '" r="5" data-k="' + esc(n.k) + '"/>' +
         '<text x="' + P[i].x.toFixed(1) + '" y="' + (P[i].y + 4).toFixed(1) + '" text-anchor="middle">' + esc(label(n.t)) + '</text></a>';
     });
-    box.innerHTML = svg + '</svg><div class="gm-ctl"><button type="button" data-z="in" aria-label="' + esc(box.getAttribute('data-zoom-in') || 'Zoom in') + '">+</button><button type="button" data-z="out" aria-label="' + esc(box.getAttribute('data-zoom-out') || 'Zoom out') + '">&minus;</button><button type="button" data-z="fit">' + esc(box.getAttribute('data-fit') || 'Fit') + '</button></div>';
-    var map = box.querySelector('svg');
-    // the view: fit every note at first; + and - buttons, Ctrl or pinch to zoom, drag to move (plain scrolling still scrolls the page)
+    box.innerHTML = svg + '</svg><div class="gm-tip" hidden></div><div class="gm-ctl"><span class="gm-hint">' + esc(L.mapHint || 'Click the map, then scroll to zoom') + '</span><button type="button" data-z="in" aria-label="' + esc(box.getAttribute('data-zoom-in') || 'Zoom in') + '">+</button><button type="button" data-z="out" aria-label="' + esc(box.getAttribute('data-zoom-out') || 'Zoom out') + '">&minus;</button><button type="button" data-z="fit">' + esc(box.getAttribute('data-fit') || 'Fit') + '</button></div>';
+    var map = box.querySelector('svg'), tip = box.querySelector('.gm-tip'), hint = box.querySelector('.gm-hint');
+    var nodeEls = [].slice.call(map.querySelectorAll('.garden-node')), dotEls = [].slice.call(map.querySelectorAll('.gm-dot'));
+    // the view: fit every note at first; + and - buttons, pinch, Ctrl + scroll, or scroll once the map has been clicked;
+    // drag to move. Zoomed out far enough, notes become dots.
     var xs = P.map(function (p, i) { return [p.x - size[i][0] / 2, p.x + size[i][0] / 2]; }), fit = function () {
       var x0 = Math.min.apply(null, xs.map(function (v) { return v[0]; })) - 30, x1 = Math.max.apply(null, xs.map(function (v) { return v[1]; })) + 30;
       var y0 = Math.min.apply(null, P.map(function (p) { return p.y; })) - 40, y1 = Math.max.apply(null, P.map(function (p) { return p.y; })) + 40;
       return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
     };
-    var full = fit(), vb = { x: full.x, y: full.y, w: full.w, h: full.h };
-    var show = function () { map.setAttribute('viewBox', vb.x.toFixed(1) + ' ' + vb.y.toFixed(1) + ' ' + vb.w.toFixed(1) + ' ' + vb.h.toFixed(1)); };
+    var full = fit(), vb = { x: full.x, y: full.y, w: full.w, h: full.h }, openNode = null, litKey = null, dotsNow = null;
+    var scaleNow = function () { var r = map.getBoundingClientRect(); return Math.min(r.width / vb.w, r.height / vb.h) || 1; }; // screen pixels per map unit
+    var toScreen = function (x, y) { var r = map.getBoundingClientRect(), B = box.getBoundingClientRect(), s = scaleNow(); return { x: r.left - B.left + (r.width - vb.w * s) / 2 + (x - vb.x) * s, y: r.top - B.top + (r.height - vb.h * s) / 2 + (y - vb.y) * s }; };
+    var sizeOpen = function () { // the open note: its whole title, never smaller on screen than readable
+      if (openNode === null) return;
+      var i = openNode, a = nodeEls[i], s = scaleNow(), k = Math.max(1, 11.5 / (10.5 * s)), w = notes[i].t.length * 6.3 + 26, rect = a.querySelector('rect');
+      var r = map.getBoundingClientRect(), vw = r.width / s, vl = vb.x - (vw - vb.w) / 2, half = w * k / 2 + 4 / s, cx = P[i].x; // keep it inside the map's edges
+      cx = half * 2 > vw ? vl + vw / 2 : Math.max(vl + half, Math.min(vl + vw - half, cx));
+      rect.setAttribute('x', (P[i].x - w / 2).toFixed(1)); rect.setAttribute('width', w.toFixed(1)); rect.setAttribute('y', (P[i].y - 13).toFixed(1)); rect.setAttribute('height', '26');
+      a.setAttribute('transform', 'translate(' + cx.toFixed(1) + ' ' + P[i].y.toFixed(1) + ') scale(' + k.toFixed(3) + ') translate(' + (-P[i].x).toFixed(1) + ' ' + (-P[i].y).toFixed(1) + ')');
+    };
+    var placeTip = function () {
+      if (!litKey) { tip.hidden = true; return; }
+      var m = (litKey[0] === 'v' ? vineOf : relOf)[+litKey.slice(1)].mid, p = toScreen(m[0], m[1]);
+      tip.style.left = p.x.toFixed(1) + 'px'; tip.style.top = p.y.toFixed(1) + 'px'; tip.hidden = false;
+      var pair = (litKey[0] === 'v' ? edges : rels)[+litKey.slice(1)], tr = tip.getBoundingClientRect(), B = box.getBoundingClientRect(), hit = false, top = Infinity, bottom = -Infinity;
+      pair.forEach(function (j) { var nr = nodeEls[j].getBoundingClientRect(); top = Math.min(top, nr.top); bottom = Math.max(bottom, nr.bottom); if (tr.left < nr.right && tr.right > nr.left && tr.top < nr.bottom && tr.bottom > nr.top) hit = true; });
+      if (hit) tip.style.top = (top - B.top - 6 > tr.height + 4 ? top - B.top - 6 + tr.height * 0.5 : bottom - B.top + 6 + tr.height * 1.5).toFixed(1) + 'px'; // it sat on a note: move it above both (or below, near the top)
+    };
+    var show = function () {
+      map.setAttribute('viewBox', vb.x.toFixed(1) + ' ' + vb.y.toFixed(1) + ' ' + vb.w.toFixed(1) + ' ' + vb.h.toFixed(1));
+      var s = scaleNow(), dots = 10.5 * s < 7.5; // titles too small to read: show the notes as dots
+      if (dots !== dotsNow) { map.classList.toggle('is-dots', dots); dotsNow = dots; }
+      var r = (4.5 / s).toFixed(2); dotEls.forEach(function (c) { c.setAttribute('r', r); });
+      sizeOpen(); placeTip();
+    };
+    var keep = function () { // never lose the garden: zoomed out past it, it stays in the middle; zoomed in, some of it stays in view
+      if (vb.w >= full.w) vb.x = full.x + (full.w - vb.w) / 2; else vb.x = Math.max(full.x - vb.w * 0.4, Math.min(full.x + full.w - vb.w * 0.6, vb.x));
+      if (vb.h >= full.h) vb.y = full.y + (full.h - vb.h) / 2; else vb.y = Math.max(full.y - vb.h * 0.4, Math.min(full.y + full.h - vb.h * 0.6, vb.y));
+    };
     var zoom = function (f, px, py) { // f > 1 zooms in, keeping the point (px, py) where it is
-      var w = Math.max(full.w / 8, Math.min(full.w * 1.6, vb.w / f)), k = w / vb.w;
+      var w = Math.max(full.w / 8, Math.min(full.w * 4, vb.w / f)), k = w / vb.w;
       if (px === undefined) { px = vb.x + vb.w / 2; py = vb.y + vb.h / 2; }
-      vb.x = px - (px - vb.x) * k; vb.y = py - (py - vb.y) * k; vb.w = w; vb.h = vb.h * k; show();
+      vb.x = px - (px - vb.x) * k; vb.y = py - (py - vb.y) * k; vb.w = w; vb.h = vb.h * k; keep(); show();
     };
     var toMap = function (cx, cy) { var r = map.getBoundingClientRect(), s = Math.max(vb.w / r.width, vb.h / r.height); return { x: vb.x + (cx - r.left - (r.width - vb.w / s) / 2) * s, y: vb.y + (cy - r.top - (r.height - vb.h / s) / 2) * s, s: s }; };
     show();
-    // on narrow screens the whole garden would be too small to read: start zoomed to readable labels, centred on
-    // the best-connected note (Fit still shows everything)
-    var boxW = box.clientWidth || 600, readable = boxW * 1.25;
-    if (vb.w > readable) {
-      var hub = 0; deg.forEach(function (d, i) { if (d > deg[hub]) hub = i; });
-      zoom(vb.w / readable, P[hub].x, P[hub].y); vb.h = vb.w * (box.clientHeight || vb.h) / boxW; // the box's proportions: no empty bands
-      vb.x = P[hub].x - vb.w / 2; vb.y = vb.h >= full.h ? full.y - (vb.h - full.h) / 2 : P[hub].y - vb.h / 2;
-      vb.x = Math.max(full.x, Math.min(full.x + full.w - vb.w, vb.x)); if (vb.h < full.h) vb.y = Math.max(full.y, Math.min(full.y + full.h - vb.h, vb.y)); show(); // stay within the garden's edges
-    }
+    var nearOf = function (i) { var s = {}; s[i] = 1; edges.concat(rels).forEach(function (e) { if (e[0] == i) s[e[1]] = 1; if (e[1] == i) s[e[0]] = 1; }); return s; };
+    var focusNode = function (i) {
+      var near = nearOf(i); map.classList.add('is-focus');
+      nodeEls.forEach(function (n) { n.classList.toggle('is-near', !!near[n.getAttribute('data-i')]); });
+      [].forEach.call(map.querySelectorAll('.gm-vine, .gm-rel'), function (g) { g.classList.toggle('is-near', g.getAttribute('data-a') == i || g.getAttribute('data-b') == i); });
+    };
+    var openAt = function (i) { // pointing at (or first tapping) a note grows it to its whole title, in front of its neighbours
+      if (openNode === i) return; closeNode(); openNode = i;
+      var a = nodeEls[i]; a.classList.add('is-open'); a.querySelector('text').textContent = notes[i].t; a.parentNode.appendChild(a); sizeOpen();
+    };
+    var closeNode = function () {
+      if (openNode === null) return; var i = openNode, a = nodeEls[i], rect = a.querySelector('rect'), w = size[i][0]; openNode = null;
+      a.classList.remove('is-open'); a.removeAttribute('transform'); a.querySelector('text').textContent = label(notes[i].t);
+      rect.setAttribute('x', (P[i].x - w / 2).toFixed(1)); rect.setAttribute('width', w.toFixed(1)); rect.setAttribute('y', (P[i].y - 11).toFixed(1)); rect.setAttribute('height', '22');
+    };
+    var litLine = function (key) { // pointing at a line lights it and the two notes it joins, and says why they're joined
+      unlitLine(); litKey = key;
+      var isVine = key[0] === 'v', k = +key.slice(1), pair = (isVine ? edges : rels)[k], A = notes[pair[0]], B2 = notes[pair[1]];
+      map.classList.add('is-focus');
+      nodeEls.forEach(function (n) { var i = +n.getAttribute('data-i'); n.classList.toggle('is-near', i === pair[0] || i === pair[1]); });
+      [].forEach.call(map.querySelectorAll('.gm-vine, .gm-rel'), function (g) { g.classList.toggle('is-near', g.getAttribute('data-e') === key); });
+      var shared = (A.p || []).filter(function (t) { return (B2.p || []).indexOf(t) >= 0; });
+      tip.textContent = isVine ? (L.link || 'A link you wrote') : (L.relword || 'Related by wording') + (shared.length ? ' · ' + shared.join(', ') : '');
+      placeTip();
+    };
+    var unlitLine = function () { if (!litKey) return; litKey = null; map.classList.remove('is-focus'); [].forEach.call(map.querySelectorAll('.is-near'), function (x) { x.classList.remove('is-near'); }); placeTip(); };
+    var armed = false, arm = function (on) { armed = on; box.classList.toggle('is-armed', on); hint.textContent = on ? (L.mapArmed || 'Scrolling zooms the map') : (L.mapHint || 'Click the map, then scroll to zoom'); };
     box.querySelector('.gm-ctl').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var z = b.getAttribute('data-z'); if (z === 'fit') { vb = { x: full.x, y: full.y, w: full.w, h: full.h }; show(); } else zoom(z === 'in' ? 1.35 : 1 / 1.35); });
-    map.addEventListener('wheel', function (e) { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); var p = toMap(e.clientX, e.clientY); zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15, p.x, p.y); }, { passive: false });
-    var pts = {}, drag = null, pinch = null, moved = false;
+    map.addEventListener('wheel', function (e) { if (!armed && !e.ctrlKey && !e.metaKey) return; e.preventDefault(); var p = toMap(e.clientX, e.clientY); zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15, p.x, p.y); }, { passive: false });
+    var pts = {}, drag = null, pinch = null, moved = false, lastType = 'mouse';
     map.addEventListener('pointerdown', function (e) {
-      pts[e.pointerId] = { x: e.clientX, y: e.clientY }; moved = false;
+      lastType = e.pointerType || 'mouse'; pts[e.pointerId] = { x: e.clientX, y: e.clientY }; moved = false;
       var ids = Object.keys(pts);
       if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) }; drag = null; }
       else if (!e.target.closest('.garden-node')) { drag = { x: e.clientX, y: e.clientY }; try { map.setPointerCapture(e.pointerId); } catch (err) {} map.classList.add('is-panning'); }
@@ -2186,23 +2236,84 @@
       if (!pts[e.pointerId]) return; pts[e.pointerId] = { x: e.clientX, y: e.clientY };
       var ids = Object.keys(pts);
       if (pinch && ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y), m = toMap((a.x + b.x) / 2, (a.y + b.y) / 2); zoom(d / pinch.d, m.x, m.y); pinch.d = d; moved = true; return; }
-      if (drag) { var s = toMap(0, 0).s, dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 3) moved = true; vb.x -= dx * s; vb.y -= dy * s; drag = { x: e.clientX, y: e.clientY }; show(); }
+      if (drag) { var s = toMap(0, 0).s, dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 3) moved = true; vb.x -= dx * s; vb.y -= dy * s; drag = { x: e.clientX, y: e.clientY }; keep(); show(); }
     });
     var end = function (e) { delete pts[e.pointerId]; if (Object.keys(pts).length < 2) pinch = null; if (!Object.keys(pts).length) { drag = null; map.classList.remove('is-panning'); } };
     map.addEventListener('pointerup', end); map.addEventListener('pointercancel', end);
     map.addEventListener('click', function (e) { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true); // a drag isn't a click
-    var nearOf = function (i) { var s = {}; s[i] = 1; edges.concat(rels).forEach(function (e) { if (e[0] == i) s[e[1]] = 1; if (e[1] == i) s[e[0]] = 1; }); return s; };
-    map.addEventListener('mouseover', function (e) {
-      var a = e.target.closest('.garden-node'); if (!a) return; var i = +a.getAttribute('data-i'), near = nearOf(i); map.classList.add('is-focus');
-      [].forEach.call(map.querySelectorAll('.garden-node'), function (n) { n.classList.toggle('is-near', !!near[n.getAttribute('data-i')]); });
-      [].forEach.call(map.querySelectorAll('.gm-vine, .gm-rel'), function (g) { g.classList.toggle('is-near', g.getAttribute('data-a') == i || g.getAttribute('data-b') == i); });
+    map.addEventListener('click', function (e) {
+      var a = e.target.closest('.garden-node'), h = e.target.closest('.gm-hit');
+      if (lastType === 'mouse') { if (!a) arm(true); return; } // a click on the map lets scrolling zoom it, until the pointer leaves
+      if (a) { var i = +a.getAttribute('data-i'); if (openNode !== i) { e.preventDefault(); unlitLine(); openAt(i); focusNode(i); } return; } // first tap shows the title; the second opens it
+      if (h) { var key = h.getAttribute('data-e'); closeNode(); if (litKey === key) unlitLine(); else litLine(key); return; }
+      closeNode(); unlitLine(); map.classList.remove('is-focus');
     });
-    map.addEventListener('mouseout', function (e) { var a = e.target.closest && e.target.closest('.garden-node'); if (a && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.garden-node') === a)) map.classList.remove('is-focus'); });
-    map.addEventListener('mouseleave', function () { map.classList.remove('is-focus'); });
+    map.addEventListener('mouseover', function (e) {
+      if (lastType !== 'mouse') return;
+      var a = e.target.closest('.garden-node');
+      if (a) { var i = +a.getAttribute('data-i'); unlitLine(); openAt(i); focusNode(i); return; }
+      var h = e.target.closest('.gm-hit'); if (h) litLine(h.getAttribute('data-e'));
+    });
+    map.addEventListener('mouseout', function (e) {
+      if (lastType !== 'mouse') return;
+      var a = e.target.closest && e.target.closest('.garden-node'), to = e.relatedTarget;
+      if (a && !(to && to.closest && to.closest('.garden-node') === a)) { closeNode(); map.classList.remove('is-focus'); }
+      var h = e.target.closest && e.target.closest('.gm-hit'); if (h && !(to && to.closest && to.closest('.gm-hit') === h)) unlitLine();
+    });
+    map.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') lastType = 'mouse'; });
+    map.addEventListener('mouseleave', function () { closeNode(); unlitLine(); map.classList.remove('is-focus'); arm(false); });
   }
   function gleaf(x, y, a, len, fill) {
     var r = a * Math.PI / 180, cx = x + Math.cos(r) * len, cy = y + Math.sin(r) * len, px = Math.cos(r + Math.PI / 2) * len * 0.33, py = Math.sin(r + Math.PI / 2) * len * 0.33;
     return '<path class="og-leaf" d="M' + x.toFixed(1) + ' ' + y.toFixed(1) + 'Q' + ((x + cx) / 2 + px).toFixed(1) + ' ' + ((y + cy) / 2 + py).toFixed(1) + ' ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + 'Q' + ((x + cx) / 2 - px).toFixed(1) + ' ' + ((y + cy) / 2 - py).toFixed(1) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + 'Z" fill="' + fill + '"/>';
+  }
+  // A vine that grows rather than runs: it bows to one side and wanders (a slow sway with a smaller wobble on top,
+  // fading out at both ends so it leaves each card cleanly). Random, but fixed for each pair, so it's the same on
+  // every visit. leaves: how many leaves (none for a dotted runner); a vine with leaves also gets a curling tendril.
+  // opt.range: the stretch where leaves go, as [from, to] along the vine (where it shows between two cards);
+  // opt.minX: how far left it may wander.
+  function wildVine(ax, ay, bx, by, key, scale, leaves, opt) {
+    opt = opt || {}; var r0 = opt.range ? opt.range[0] : 0.2, r1 = opt.range ? opt.range[1] : 0.8;
+    var rand = seeded(hashOf(key)), dx = bx - ax, dy = by - ay, len = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / len, ny = dx / len;
+    var bow = (rand() - 0.5) * 0.4 * len, amp = Math.min(16 * scale, len * 0.07) * (0.6 + rand() * 0.7);
+    var f1 = 1.1 + rand() * 1.4, f2 = 2.6 + rand() * 2, p1 = rand() * 6.283, p2 = rand() * 6.283, n = 20, P = [], i;
+    for (i = 0; i <= n; i++) { var t = i / n, env = Math.sin(Math.PI * t), off = bow * 4 * t * (1 - t) + amp * env * (Math.sin(6.283 * f1 * t + p1) + 0.35 * Math.sin(6.283 * f2 * t + p2)); P.push([Math.max(opt.minX === undefined ? -Infinity : opt.minX, ax + dx * t + nx * off), ay + dy * t + ny * off]); }
+    var q = function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }, d = 'M' + q(P[0]);
+    for (i = 0; i < n; i++) { var a = P[i - 1] || P[i], b = P[i], c = P[i + 1], e = P[i + 2] || c; // a smooth curve through the points
+      d += 'C' + q([b[0] + (c[0] - a[0]) / 6, b[1] + (c[1] - a[1]) / 6]) + ' ' + q([c[0] - (e[0] - b[0]) / 6, c[1] - (e[1] - b[1]) / 6]) + ' ' + q(c); }
+    var dir = function (k) { return Math.atan2(P[k + 1][1] - P[k - 1][1], P[k + 1][0] - P[k - 1][0]) * 180 / Math.PI; }, lv = '', curl = '';
+    for (i = 0; i < (leaves || 0); i++) {
+      var k = Math.max(1, Math.min(n - 1, Math.round((r0 + (r1 - r0) * (leaves > 1 ? i / (leaves - 1) : 0.5)) * n)));
+      lv += gleaf(P[k][0], P[k][1], dir(k) + (i % 2 ? -55 : 55) + (rand() - 0.5) * 30, (7 + rand() * 4) * scale, i % 2 ? 'var(--og-leaf2, #8fd65a)' : 'var(--og-leaf, #5fbf4a)');
+    }
+    if (leaves) {
+      var kc = Math.max(1, Math.min(n - 1, Math.round((r0 + (r1 - r0) * 0.37) * n))), ang = (dir(kc) - 70) * Math.PI / 180, L2 = 9 * scale, ex = P[kc][0] + Math.cos(ang) * L2, ey = P[kc][1] + Math.sin(ang) * L2;
+      curl = '<path class="og-curl" d="M' + q(P[kc]) + 'Q' + q([ex + Math.cos(ang + 1.6) * L2 * 0.6, ey + Math.sin(ang + 1.6) * L2 * 0.6]) + ' ' + q([ex + Math.cos(ang + 2.6) * L2 * 0.5, ey + Math.sin(ang + 2.6) * L2 * 0.5]) + '"/>';
+    }
+    return { d: d, leaves: lv, curl: curl, mid: P[n / 2] };
+  }
+  // The stretch of a centre-to-centre line that shows between two cards: [from, to] as fractions of its length
+  function gapRange(ax, ay, bx, by, ra, rb) {
+    var dx = Math.abs(bx - ax) || 0.01, dy = Math.abs(by - ay) || 0.01;
+    var t0 = Math.min(ra.width / 2 / dx, ra.height / 2 / dy), t1 = 1 - Math.min(rb.width / 2 / dx, rb.height / 2 / dy);
+    if (t1 - t0 < 0.08) { var m = (t0 + t1) / 2; t0 = m - 0.04; t1 = m + 0.04; }
+    return [Math.max(0.05, t0 + 0.03), Math.min(0.95, t1 - 0.03)];
+  }
+  // A spread group on the Garden page: vines from the hero card to each of its related cards, behind the cards (they
+  // show in the gaps). Solid and leafy for links you wrote, dotted for automatic relations.
+  function spreadVines(box, heroSlug, members) {
+    var old = box.querySelector('.og-spread-vines'); if (old) old.remove();
+    var hc = box.querySelector('.og-spread-hero .og'); if (!hc) return;
+    var B = box.getBoundingClientRect(), r = hc.getBoundingClientRect(), narrow = window.matchMedia('(max-width: 760px)').matches, svg = '';
+    members.forEach(function (m) {
+      var c = box.querySelector('.og-spread-side .og[data-note="' + m.n.s + '"]'); if (!c) return;
+      var rc = c.getBoundingClientRect(), ax, ay, bx, by;
+      if (narrow) { ax = r.left - B.left + 12; ay = r.bottom - B.top - 16; bx = rc.left - B.left; by = rc.top - B.top + 22; } // one column: vines run down the left-hand gutter
+      else { ax = r.left - B.left + r.width / 2; ay = r.top - B.top + r.height / 2; bx = rc.left - B.left + rc.width / 2; by = rc.top - B.top + rc.height / 2; }
+      var v = wildVine(ax, ay, bx, by, heroSlug + '*' + m.n.s, narrow ? 0.55 : 1.25, m.how === 'link' ? (narrow ? 2 : 4) : 0, narrow ? { minX: 3, range: [0.25, 0.75] } : { range: gapRange(ax, ay, bx, by, r, rc) });
+      svg += '<g class="og-sv' + (m.how === 'link' ? '' : ' is-rel') + '"><path class="og-sv-stem" d="' + v.d + '"/>' + v.leaves + v.curl + '</g>';
+    });
+    box.insertAdjacentHTML('afterbegin', '<svg class="og-spread-vines" aria-hidden="true" width="' + B.width.toFixed(0) + '" height="' + B.height.toFixed(0) + '" viewBox="0 0 ' + B.width.toFixed(0) + ' ' + B.height.toFixed(0) + '">' + svg + '</svg>');
   }
   var FLOWERS = ['#ff6b9a', '#ffd23f', '#9b5de5', '#ff8c42', '#f15bb5']; // (also read by gflower, at call time)
   function gflower(x, y, r, c) {
@@ -2256,10 +2367,7 @@
         if (!cards[b] || seen[a + '|' + b] || seen[b + '|' + a]) return; seen[a + '|' + b] = 1;
         var ra = cards[a].getBoundingClientRect(), rb = cards[b].getBoundingClientRect();
         var ax = ra.left - B.left + ra.width / 2, ay = ra.top - B.top + ra.height / 2, bx = rb.left - B.left + rb.width / 2, by = rb.top - B.top + rb.height / 2, dx = bx - ax, dy = by - ay;
-        var c1 = [ax + dx * 0.3 - dy * 0.22, ay + dy * 0.3 + dx * 0.22], c2 = [ax + dx * 0.7 - dy * 0.22, ay + dy * 0.7 + dx * 0.22];
-        var d = 'M' + ax.toFixed(1) + ' ' + ay.toFixed(1) + 'C' + c1[0].toFixed(1) + ' ' + c1[1].toFixed(1) + ' ' + c2[0].toFixed(1) + ' ' + c2[1].toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1);
-        var leaves = '', rand = seeded(hashOf(a + b));
-        for (var t = 0.1; t < 0.95; t += 0.09) { var u = 1 - t, x = u * u * u * ax + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * bx, y = u * u * u * ay + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * by; leaves += gleaf(x, y, rand() * 360, 8, 'var(--og-leaf2)'); }
+        var v = wildVine(ax, ay, bx, by, a + '|' + b, 1.2, 5, { range: gapRange(ax, ay, bx, by, ra, rb) }), d = v.d, leaves = v.leaves + v.curl;
         svg += '<g class="og-link" data-a="' + esc(a) + '" data-b="' + esc(b) + '"><path class="og-link-stem" d="' + d + '"/>' + leaves + '<path class="og-link-hit" d="' + d + '"><title>' + esc(bySlug[a].t) + ' → ' + esc(bySlug[b].t) + '</title></path></g>';
       });
     });
@@ -2408,29 +2516,97 @@
     var postN = everything.length - noteCount.length;
     el.querySelector('.garden-stats').innerHTML = '<b>' + noteCount.length + '</b> ' + esc(L.notes) + (postN ? ' · <b>' + postN + '</b> ' + esc(L.posts || 'posts') : '') + ' · <b>' + count('evergreen') + '</b> ' + esc(L.evergreen) + ' · <b>' + count('growing') + '</b> ' + esc(L.growing) + ' · <b>' + count('seedling') + '</b> ' + esc(L.seedlings);
     var trim = function (s, max) { s = String(s || ''); return s.length > max ? s.slice(0, max).replace(/\s+\S*$/, '') + '...' : s; };
-    // Overgrown cards, sized to their content: vines creep round the edges as a note gains links,
-    // flowers open on evergreens, and a stack of pages behind shows how much has been written. Posts are paper.
-    var card = function (n) {
-      var ins = inbound[n.s] || 0, outs = (n.l || []).length, w = n.w || 0;
+    // Length is etched into a card's left edge: one to four cuts (under 300 words, under 1,000, under 2,500, longer)
+    var etch = function (w) {
+      if (!w) return ''; var lv = w < 300 ? 1 : w < 1000 ? 2 : w < 2500 ? 3 : 4, o = '';
+      for (var i = 0; i < 4; i++) o += '<i' + (i < lv ? ' class="is-cut"' : '') + '></i>';
+      return '<span class="og-etch" aria-hidden="true">' + o + '</span>';
+    };
+    // Overgrown cards, sized to their content: vines creep round the edges as a note gains links, and flowers open on
+    // evergreens. Posts are paper. In Most connected, a card's stack of pages is its group: the related cards under it.
+    // o: { group: how many are under it } for a hero, { spread: true } for a hero laid open, { how: 'link' | 'rel' } for one of its group
+    var card = function (n, o) {
+      o = o || {};
+      var ins = inbound[n.s] || 0, outs = (n.l || []).length, grp = o.group || 0, stack = '';
+      for (var i = Math.min(grp, 3); i >= 1; i--) stack += '<span class="og-page' + (i > 1 ? ' og-page-' + i : '') + '" aria-hidden="true"></span>';
       var label = isPost(n) ? (L.post || 'Post') + (n.p && n.p[0] ? ' · ' + n.p[0] : '') : n.k === 'source' ? L.source + (n.kind ? ' · ' + n.kind : '') : (L[n.g] || n.g) + (n.p && n.p[0] ? ' · ' + n.p[0] : '');
-      return '<a class="og" href="/' + esc(n.s) + '/" data-note="' + esc(n.s) + '" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" data-links="' + (ins + outs) + '">' +
-        (w > 1000 ? '<span class="og-page og-page-2" aria-hidden="true"></span>' : '') + (w > 300 ? '<span class="og-page" aria-hidden="true"></span>' : '') +
-        '<span class="og-sheet" aria-hidden="true"></span><span class="og-text"><span class="og-meta">' + esc(label) + '</span><span class="og-title">' + esc(n.t) + '</span>' +
-        (isPost(n) && n.tl ? '<span class="og-tldr"><b>TL;DR</b>' + esc(trim(n.tl, 220)) + '</span>' : n.x ? '<span class="og-ex">' + esc(trim(n.x, 150)) + '</span>' : '') + '</span><span class="og-foot">' + ins + ' in · ' + outs + ' out</span></a>';
+      var how = o.how ? ' · ' + (o.how === 'link' ? (L.linked || 'linked') : (L.relword || 'Related by wording')) : '';
+      return '<a class="og" href="/' + esc(n.s) + '/" data-note="' + esc(n.s) + '" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" data-links="' + (ins + outs) + '"' +
+        (grp ? ' data-group="' + grp + '" aria-expanded="false"' : o.spread ? ' aria-expanded="true"' : '') + '>' + stack +
+        '<span class="og-sheet" aria-hidden="true"></span>' + etch(n.w) + '<span class="og-text"><span class="og-meta">' + esc(label) + '</span><span class="og-title">' + esc(n.t) + '</span>' +
+        (isPost(n) && n.tl ? '<span class="og-tldr"><b>TL;DR</b>' + esc(trim(n.tl, 220)) + '</span>' : n.x ? '<span class="og-ex">' + esc(trim(n.x, 150)) + '</span>' : '') + '</span><span class="og-foot">' + ins + ' in · ' + outs + ' out' + esc(how) + '</span>' +
+        (grp ? '<span class="og-count" aria-hidden="true">+' + grp + '</span><span class="visually-hidden">' + esc(grp + ' ' + (L.spread || 'related: select to spread them')) + '</span>' : '') + '</a>';
     };
     var recentBox = el.querySelector('[data-list="recent"]'), cs = el.querySelector('[data-list="connected"]'), all = el.querySelector('[data-list="all"]');
-    var order = { evergreen: 0, growing: 1, seedling: 2, post: 3 }, shown = everything, sortHow = 'az';
-    var growAll = function () { [recentBox, cs].forEach(function (box) { if (!box.closest('.garden-section').hidden) { growCards(box); linkCards(box, bySlug, L); } }); };
+    var order = { evergreen: 0, growing: 1, seedling: 2, post: 3 }, shown = everything, sortHow = 'az', groups = [], spreadHero = null;
+    var calm = function () { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; };
+    // Most connected, in groups: the best-connected card is a hero, and its links and related cards (the ones not
+    // already under a stronger hero) sit under it. Each card appears once. Up to 8 groups.
+    var groupsOf = function (list) {
+      var inList = {}, nb = {}; list.forEach(function (n) { inList[n.s] = 1; });
+      var add = function (a, b, how) { if (!inList[a] || !inList[b] || a === b) return; nb[a] = nb[a] || {}; if (nb[a][b] !== 'link') nb[a][b] = how; };
+      list.forEach(function (n) { (n.l || []).forEach(function (s) { add(n.s, s, 'link'); add(s, n.s, 'link'); }); (n.r || []).forEach(function (s) { add(n.s, s, 'rel'); add(s, n.s, 'rel'); }); });
+      var conn = function (n) { return Object.keys(nb[n.s] || {}).length; }, claimed = {}, out = [];
+      list.filter(function (n) { return conn(n) > 0; }).sort(function (a, b) { return conn(b) - conn(a) || (b.w || 0) - (a.w || 0) || (b.d || '').localeCompare(a.d || ''); }).forEach(function (h) { // ties: the longer piece leads
+        if (claimed[h.s] || out.length >= 8) return; claimed[h.s] = 1;
+        var ms = Object.keys(nb[h.s]).filter(function (s) { return !claimed[s]; }).map(function (s) { return { n: bySlug[s], how: nb[h.s][s] }; })
+          .sort(function (a, b) { return (a.how === b.how ? 0 : a.how === 'link' ? -1 : 1) || conn(b.n) - conn(a.n); }).slice(0, 8);
+        ms.forEach(function (m) { claimed[m.n.s] = 1; }); out.push({ h: h, ms: ms });
+      });
+      return out;
+    };
+    var heroGroup = function () { return spreadHero ? groups.filter(function (g) { return g.h.s === spreadHero; })[0] : null; };
+    var drawConnected = function () {
+      closeLinkPanel(); cs.removeAttribute('data-linked'); cs.classList.remove('is-spread');
+      groups = groupsOf(shown); cs.closest('.garden-section').hidden = !groups.length;
+      var g = heroGroup();
+      if (!g) { spreadHero = null; cs.innerHTML = groups.map(function (x) { return card(x.h, { group: x.ms.length }); }).join(''); return; }
+      var side = function (odd) { return g.ms.filter(function (m, i) { return i % 2 === odd; }).map(function (m) { return card(m.n, { how: m.how }); }).join(''); };
+      cs.classList.add('is-spread');
+      cs.innerHTML = '<div class="og-spread"><div class="og-spread-side">' + side(0) + '</div><div class="og-spread-hero">' + card(g.h, { spread: true }) + '</div><div class="og-spread-side">' + side(1) + '</div></div>' +
+        '<button type="button" class="og-fold">' + esc(L.fold || 'Fold back') + '</button>';
+    };
+    var growConnected = function () {
+      if (cs.closest('.garden-section').hidden) return; growCards(cs);
+      var g = heroGroup(); if (g) spreadVines(cs, g.h.s, g.ms); else linkCards(cs, bySlug, L);
+    };
+    var spread = function (slug, from) { // the first click on a stack lays its group out round the hero; a second click opens the hero
+      var before = from.getBoundingClientRect(); spreadHero = slug; drawConnected(); growConnected();
+      var hero = cs.querySelector('.og-spread-hero .og'); if (!hero) return;
+      hero.focus({ preventScroll: true });
+      var sec = cs.closest('.garden-section'), top = sec.getBoundingClientRect().top; if (top < 0 || top > window.innerHeight * 0.6) sec.scrollIntoView({ behavior: calm() ? 'auto' : 'smooth', block: 'start' });
+      if (calm() || !hero.animate) return;
+      var after = hero.getBoundingClientRect(), hx = after.left + after.width / 2, hy = after.top + after.height / 2;
+      hero.animate([{ transform: 'translate(' + (before.left - after.left).toFixed(0) + 'px,' + (before.top - after.top).toFixed(0) + 'px)' }, { transform: 'none' }], { duration: 480, easing: 'cubic-bezier(.3,.9,.3,1)' });
+      [].forEach.call(cs.querySelectorAll('.og-spread-side .og'), function (c, i) {
+        var r = c.getBoundingClientRect();
+        c.animate([{ transform: 'translate(' + (hx - r.left - r.width / 2).toFixed(0) + 'px,' + (hy - r.top - r.height / 2).toFixed(0) + 'px) scale(0.6)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 520, delay: 60 * i, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'backwards' });
+      });
+      var vines = cs.querySelector('.og-spread-vines'); if (vines) vines.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: 320, fill: 'backwards' });
+    };
+    var fold = function () {
+      var slug = spreadHero; spreadHero = null; drawConnected(); growConnected();
+      var c = slug && cs.querySelector('.og[data-note="' + slug + '"]'); if (c) c.focus({ preventScroll: true });
+    };
+    cs.addEventListener('click', function (e) {
+      if (e.target.closest('.og-fold')) { fold(); return; }
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var c = e.target.closest('.og[data-group]'); if (!c || !+c.getAttribute('data-group')) return;
+      e.preventDefault(); spread(c.getAttribute('data-note'), c);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && spreadHero && !document.documentElement.classList.contains('reader-open') && !document.querySelector('.og-panel, .gk-panel')) fold();
+    });
+    var growAll = function () { if (!recentBox.closest('.garden-section').hidden) { growCards(recentBox); linkCards(recentBox, bySlug, L); } growConnected(); };
     var drawAll = function () {
       var list = shown.slice().sort(sortHow === 'recent' ? function (a, b) { return (b.d || '').localeCompare(a.d || ''); } : sortHow === 'stage' ? function (a, b) { return order[a.g] - order[b.g] || a.t.localeCompare(b.t); } : function (a, b) { return a.t.localeCompare(b.t); });
       all.innerHTML = list.map(function (n) { return '<li><a href="/' + esc(n.s) + '/">' + esc(n.t) + '</a><span class="garden-dots" aria-hidden="true"></span>' + sprout(n.g) + '<time datetime="' + esc(n.d) + '">' + esc(gardenDay(n.d)) + '</time></li>'; }).join('');
     };
     var draw = function () { // every section, from what the filter shows
       closeLinkPanel();
-      recentBox.innerHTML = shown.slice().sort(function (a, b) { return (b.d || '').localeCompare(a.d || ''); }).slice(0, 8).map(card).join('');
-      recentBox.removeAttribute('data-linked'); cs.removeAttribute('data-linked');
-      var connected = shown.filter(function (n) { return degree(n) > 0; }).sort(function (a, b) { return degree(b) - degree(a); }).slice(0, 8);
-      cs.closest('.garden-section').hidden = !connected.length; cs.innerHTML = connected.map(card).join('');
+      recentBox.innerHTML = shown.slice().sort(function (a, b) { return (b.d || '').localeCompare(a.d || ''); }).slice(0, 8).map(function (n) { return card(n); }).join('');
+      recentBox.removeAttribute('data-linked');
+      drawConnected();
       var topics = {};
       shown.forEach(function (n) { (n.p && n.p.length ? n.p : [L.other]).forEach(function (t) { (topics[t] = topics[t] || []).push(n); }); });
       el.querySelector('.garden-topics').innerHTML = Object.keys(topics).sort(function (a, b) { return topics[b].length - topics[a].length || a.localeCompare(b); }).map(function (t) {
@@ -2438,13 +2614,13 @@
           return '<li><a href="/' + esc(n.s) + '/">' + sprout(n.g) + esc(n.t) + '</a></li>'; }).join('') + '</ul></div>';
       }).join('');
       drawAll();
-      if (!el.hidden) { growAll(); drawGardenMap(el.querySelector('.garden-map'), shown); }
+      if (!el.hidden) { growAll(); drawGardenMap(el.querySelector('.garden-map'), shown, L); }
     };
     el.querySelector('.garden-filter').addEventListener('click', function (ev) {
       var b = ev.target.closest('button'); if (!b) return;
       [].forEach.call(this.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
       var f = b.getAttribute('data-f'); shown = f === 'post' ? everything.filter(isPost) : f === 'note' ? everything.filter(function (n) { return !isPost(n); }) : everything;
-      draw();
+      spreadHero = null; draw();
     });
     el.querySelector('.garden-sort').addEventListener('click', function (ev) {
       var b = ev.target.closest('button'); if (!b) return;
@@ -2458,9 +2634,9 @@
       btn.classList.add('is-pulling'); setTimeout(function () { btn.classList.remove('is-pulling'); go(); }, 460);
     });
     draw(); el.hidden = false;
-    growAll(); drawGardenMap(el.querySelector('.garden-map'), shown);
+    growAll(); drawGardenMap(el.querySelector('.garden-map'), shown, L);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(growAll); // card heights settle once the fonts arrive
-    var growT; window.addEventListener('resize', function () { clearTimeout(growT); growT = setTimeout(function () { growAll(); drawGardenMap(el.querySelector('.garden-map'), shown); }, 250); });
+    var growT; window.addEventListener('resize', function () { clearTimeout(growT); growT = setTimeout(function () { growAll(); drawGardenMap(el.querySelector('.garden-map'), shown, L); }, 250); });
   }
   // A post's page: where it sits in the garden (what links to it, what it links to, related), from the Garden page's data
   var gardenDataCache = null;

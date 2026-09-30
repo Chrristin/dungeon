@@ -1696,7 +1696,8 @@ html.is-theming, html.is-theming * {
 @media (prefers-reduced-motion: reduce) { .garden-random.is-pulling::before { animation: none; } .garden-card:hover { transform: none; } }
 
 /* ---- Overgrown cards: sized to their content; vines creep round a card as it gains links, flowers open on
-   evergreens, and pages stack behind long notes. Cards that link to each other are joined by vines. */
+   evergreens, and length is etched into the left edge. In Most connected, the pages stacked behind a card are its
+   group: the related cards under it. Cards that link to each other are joined by vines. */
 .og { --og-bg: #eef9d6; --og-page: #c8ee7a; --og-meta: #58861a; --og-ink: #17191e; --og-sub: #3d4148; --og-stem: #3f8a3a; --og-leaf: #5fbf4a; --og-leaf2: #8fd65a;
     position: relative; z-index: 1; display: inline-block; width: 100%; margin: 0 0 1.8rem; padding: 1.1rem 1.1rem 1rem; break-inside: avoid;
     color: var(--og-ink); text-decoration: none; transition: transform 0.2s ease; }
@@ -1709,6 +1710,31 @@ html.is-theming, html.is-theming * {
     repeating-linear-gradient(transparent 0 17px, rgba(47, 125, 224, 0.2) 17px 18px); }
 .og-page { background: var(--og-page); box-shadow: 0 8px 16px -14px rgba(0, 0, 0, 0.5); transform: translate(6px, 6px) rotate(1.1deg); }
 .og-page-2 { transform: translate(12px, 12px) rotate(2.2deg); opacity: 0.8; }
+.og-page-3 { transform: translate(18px, 18px) rotate(3.3deg); opacity: 0.65; }
+/* how many cards are under a hero: a small tag hanging off its bottom-left corner */
+.og-count { position: absolute; left: 0.9rem; bottom: -0.65rem; z-index: 4; padding: 0.15rem 0.45rem; border-radius: 999px; background: var(--og-page); color: var(--og-ink); font: 600 0.62rem/1.2 var(--mono); letter-spacing: 0.04em; }
+/* length, etched into the left edge: one to four cuts, each longer than the last */
+.og-etch { position: absolute; left: 0; top: 1.2rem; z-index: 2; display: flex; flex-direction: column; gap: 4px; }
+.og-etch i { display: block; width: 4px; height: 2px; border-radius: 0 2px 2px 0; background: color-mix(in srgb, var(--og-ink) 13%, transparent); }
+.og-etch i.is-cut { background: color-mix(in srgb, var(--og-ink) 48%, transparent); }
+.og-etch i.is-cut:nth-child(1) { width: 6px; } .og-etch i.is-cut:nth-child(2) { width: 8px; } .og-etch i.is-cut:nth-child(3) { width: 10px; } .og-etch i.is-cut:nth-child(4) { width: 12px; }
+/* a group laid open: the hero in the middle, its related cards either side, vines between them behind the cards */
+.garden-cards.is-spread { columns: auto; padding: 0.6rem 0 1rem; }
+.og-spread { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr); column-gap: clamp(2.5rem, 7vw, 6rem); align-items: center; }
+.og-spread-side { display: flex; flex-direction: column; gap: 2.4rem; }
+.og-spread-side:first-child { padding-bottom: 2.5rem; } .og-spread-side:last-child { padding-top: 3rem; }
+.og-spread .og { margin: 0; }
+.og-spread-vines { position: absolute; left: 0; top: 0; z-index: 0; overflow: visible; pointer-events: none; }
+.og-sv-stem { fill: none; stroke: #3f8a3a; stroke-width: 2.4; stroke-linecap: round; }
+.og-sv.is-rel .og-sv-stem { stroke: var(--graphite); stroke-width: 2; stroke-dasharray: 1 7; opacity: 0.8; }
+.og-curl { fill: none; stroke: #3f8a3a; stroke-width: 1.4; stroke-linecap: round; }
+.og-fold { position: absolute; right: 0; top: -2.7rem; z-index: 2; padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); color: var(--ink); font: 0.72rem/1 var(--mono); cursor: pointer; }
+.og-fold:hover { background: var(--wash); }
+@media (max-width: 760px) {
+    .og-spread { grid-template-columns: minmax(0, 1fr); row-gap: 2rem; }
+    .og-spread-hero { order: -1; }
+    .og-spread-side, .og-spread-side:first-child, .og-spread-side:last-child { padding: 0 0 0 1.8rem; gap: 2rem; }
+}
 .og-text, .og-foot { position: relative; z-index: 2; display: block; }
 .og-meta { display: block; font: 0.62rem/1.5 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--og-meta); }
 .og-title { display: block; margin-top: 0.2rem; font-weight: 600; font-size: 1rem; line-height: 1.25; }
@@ -1740,8 +1766,8 @@ html.is-theming, html.is-theming * {
 .og-panel-pair a:hover { text-decoration: underline; }
 .og-panel-q { margin: 0.7rem 0 0; padding: 0.3rem 0.7rem; border-left: 3px solid #3f8a3a; background: rgba(63, 138, 58, 0.07); color: var(--graphite); font-size: 0.82rem; }
 /* garden cards stay pastel in dark mode, like every other Dungeon card; only the vines between them lighten */
-html[data-scheme="dark"] .og-link-stem { stroke: #5aa650; }
-@media (prefers-color-scheme: dark) { html[data-scheme="auto"] .og-link-stem { stroke: #5aa650; } }
+html[data-scheme="dark"] .og-link-stem, html[data-scheme="dark"] .og-sv-stem, html[data-scheme="dark"] .og-curl, html[data-scheme="dark"] .gm-vine .gm-stem { stroke: #5aa650; }
+@media (prefers-color-scheme: dark) { html[data-scheme="auto"] .og-link-stem, html[data-scheme="auto"] .og-sv-stem, html[data-scheme="auto"] .og-curl, html[data-scheme="auto"] .gm-vine .gm-stem { stroke: #5aa650; } }
 /* the Scatter wall's garden patch: bottom right, after everything else in the card */
 .scatter-patch { display: block; flex: none; width: 3.25rem; height: 1.8rem; margin: auto -0.35rem -0.4rem auto; padding-top: 0.5rem; box-sizing: content-box; color: inherit; } /* pinned to the card's bottom right, however tall the card is */
 .scatter-patch svg { display: block; width: 100%; height: 100%; overflow: visible; }
@@ -1826,13 +1852,32 @@ kbd { font: 0.72rem var(--mono); padding: 0.05rem 0.4rem; border: 1px solid var(
 .gm-ctl { position: absolute; right: 0; top: -2.6rem; display: flex; gap: 0.3rem; } /* in the space above the map, where its heading was */
 .gm-ctl button { min-width: 2rem; height: 2rem; padding: 0 0.6rem; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); color: var(--ink); font: 500 0.85rem/1 var(--mono); cursor: pointer; }
 .gm-ctl button:hover { background: var(--wash); }
-.gm-vine path { fill: none; stroke: #3f8a3a; stroke-width: 2.2; stroke-linecap: round; }
-.gm-rel { fill: none; stroke: var(--graphite); stroke-width: 1.4; stroke-dasharray: 2 6; stroke-linecap: round; opacity: 0.75; }
+.gm-vine .gm-stem { fill: none; stroke: #3f8a3a; stroke-width: 2; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.gm-rel { fill: none; stroke: var(--graphite); stroke-width: 1.5; stroke-dasharray: 1 6; stroke-linecap: round; opacity: 0.75; vector-effect: non-scaling-stroke; }
+.gm-hit { fill: none; stroke: transparent; stroke-width: 14; vector-effect: non-scaling-stroke; pointer-events: stroke; cursor: default; }
+/* zoomed out, notes are dots (kept the same size on screen); the note you point at still shows its whole title */
+.gm-dot { display: none; fill: #d5f5e6; stroke: rgba(23, 25, 30, 0.45); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.garden-node[data-g="seedling"] .gm-dot { fill: #c8ee7a; } .garden-node[data-g="growing"] .gm-dot { fill: #5fd3a4; } .garden-node[data-g="evergreen"] .gm-dot { fill: #1f6b4f; }
+.garden-node[data-g="post"] .gm-dot { fill: #fffdf7; stroke: rgba(23, 25, 30, 0.7); } .gm-dot[data-k="source"] { fill: #f3e3b3; }
+.gm.is-dots .gm-dot { display: inline; }
+.gm.is-dots .garden-node rect, .gm.is-dots .garden-node text { display: none; }
+.gm.is-dots .garden-node.is-open rect, .gm.is-dots .garden-node.is-open text { display: inline; }
+.gm.is-dots .garden-node.is-open .gm-dot { display: none; }
+.garden-node.is-open rect { stroke: #c42b3c; stroke-width: 1.5; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35)); }
+.garden-node.is-open text { font-size: 11px; }
+/* pointing at a line: it lights up with the two notes it joins, and a label says why they're joined */
+.gm.is-focus .gm-vine.is-near .gm-stem { stroke-width: 3; } .gm.is-focus .gm-rel.is-near { opacity: 1; stroke-width: 2.2; stroke: var(--ink); }
+.gm-tip { position: absolute; z-index: 5; transform: translate(-50%, -150%); padding: 0.25rem 0.55rem; border-radius: 6px; background: var(--paper); color: var(--ink); box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.45);
+    font: 0.68rem var(--mono); white-space: nowrap; pointer-events: none; }
+.gm-tip[hidden] { display: none; }
+.gm-hint { align-self: center; margin-right: 0.3rem; font: 0.66rem var(--mono); color: var(--graphite); }
+.garden-map.is-armed .gm { box-shadow: inset 0 0 0 1px var(--rule); border-radius: 10px; }
+@media (pointer: coarse) { .gm-hint { display: none; } }
 .garden-node rect { fill: #d5f5e6; stroke: rgba(23, 25, 30, 0.28); transition: opacity 0.2s ease; } .garden-node[data-g="seedling"] rect { fill: #eef9d6; } .garden-node[data-g="evergreen"] rect { fill: #1f6b4f; }
 .garden-node rect[data-k="source"] { fill: #fbefc9; }
 .garden-node text { font: 10.5px var(--mono); fill: #17191e; pointer-events: none; } .garden-node[data-g="evergreen"] text { fill: #f3f7ee; }
 .garden-node:hover rect, .garden-node:focus rect { stroke: #c42b3c; stroke-width: 2; }
-.gm.is-focus .garden-node:not(.is-near), .gm.is-focus .gm-vine:not(.is-near), .gm.is-focus .gm-rel:not(.is-near) { opacity: 0.4; }
+.gm.is-focus .garden-node:not(.is-near):not(.is-open), .gm.is-focus .gm-vine:not(.is-near), .gm.is-focus .gm-rel:not(.is-near) { opacity: 0.3; }
 .gm .garden-node, .gm .gm-vine, .gm .gm-rel { transition: opacity 0.2s ease; }
 /* ---- keyboard shortcuts and garden search */
 .gk-panel { position: fixed; inset: 0; z-index: 80; display: grid; place-items: start center; padding-top: 14vh; background: rgba(10, 12, 14, 0.35); }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.9.0
+
+- Most connected comes in groups. The best-connected card is a hero (on a tie, the longer piece), and its links and related cards sit under it as a stack of pages, with a small tag saying how many. Each card appears in one group only. The first click on a stack spreads the group round the hero, joined by vines (solid and leafy for links you wrote, dotted for related by wording); a second click opens the hero. Fold back, or Escape, puts it away. On phones the group unfolds downward. Recently tended stays flat.
+- A card's length is etched into its left edge instead of shown as stacked pages: one to four cuts, for under 300 words, under 1,000, under 2,500 and longer.
+- Vines grow rather than run: every vine, on the Garden page and the map, bows and wanders with a tendril and leaves, random but the same on every visit. Related notes are joined by a dotted runner that wanders the same way.
+- The map: pointing at a note grows it to its whole title, in front of its neighbours. Pointing at a line anywhere off the notes lights it up with the two notes it joins, and says why they're joined (a link you wrote, or related by wording and the topic they share). Click the map and scrolling zooms it until the pointer leaves; Ctrl + scroll works any time. Zoomed out, notes become dots, down to the whole garden as a node graph.
+- The map on phones opens fitted, as the node graph, laid out for the tall screen. Pinch to zoom and drag to move; the first tap on a note shows its title and the second opens it; tapping a line lights it up.
+- Fixed: the map's leaves were drawn as outlines; they're filled now.
+
 ## 1.8.1
 
 - Garden cards stay pastel in dark mode, like every other Dungeon card, and posts stay light paper; the page stacks behind long notes read as paper.
