@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.0
+
+- Post cards in the garden show a TL;DR: the post's custom excerpt if it has one, otherwise its strongest line, picked from your own sentences with no AI (weighted towards the post's distinctive words, its title, the closing part and the phrases an argument comes with; away from questions, quotes, the opening hook and product-name detail).
+- garden-sync: works out each post's TL;DR. Update `sync.js` on the server and restart garden-sync.
+
 ## 1.7.0
 
 - Posts in the garden: your published posts appear on the Garden page and map as paper cards, with an Everything, Notes and Posts filter redrawing every section. Links between posts and notes count in both directions, and a post's tags count as its topics.

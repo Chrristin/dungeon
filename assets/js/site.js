@@ -2352,7 +2352,7 @@
       return '<a class="og" href="/' + esc(n.s) + '/" data-note="' + esc(n.s) + '" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" data-links="' + (ins + outs) + '">' +
         (w > 1000 ? '<span class="og-page og-page-2" aria-hidden="true"></span>' : '') + (w > 300 ? '<span class="og-page" aria-hidden="true"></span>' : '') +
         '<span class="og-sheet" aria-hidden="true"></span><span class="og-text"><span class="og-meta">' + esc(label) + '</span><span class="og-title">' + esc(n.t) + '</span>' +
-        (n.x ? '<span class="og-ex">' + esc(trim(n.x, 150)) + '</span>' : '') + '</span><span class="og-foot">' + ins + ' in · ' + outs + ' out</span></a>';
+        (isPost(n) && n.tl ? '<span class="og-tldr"><b>TL;DR</b>' + esc(trim(n.tl, 220)) + '</span>' : n.x ? '<span class="og-ex">' + esc(trim(n.x, 150)) + '</span>' : '') + '</span><span class="og-foot">' + ins + ' in · ' + outs + ' out</span></a>';
     };
     var recentBox = el.querySelector('[data-list="recent"]'), cs = el.querySelector('[data-list="connected"]'), all = el.querySelector('[data-list="all"]');
     var order = { evergreen: 0, growing: 1, seedling: 2, post: 3 }, shown = everything, sortHow = 'az';

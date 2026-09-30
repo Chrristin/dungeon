@@ -1880,3 +1880,7 @@ html[data-scheme="dark"] .og[data-k="post"] { --og-bg: #2a2723; --og-page: #3632
 .post-garden h3.garden-h { margin-bottom: 0.6rem; }
 .post-panel .post-garden { padding: 1.5rem 0 0; }
 @media (max-width: 760px) { .post-garden { padding-left: 1rem; padding-right: 1rem; } }
+
+/* a post's TL;DR on its garden card: its own strongest line (or your custom excerpt), in a red margin */
+.og-tldr { display: block; margin-top: 0.55rem; padding: 0.4rem 0.6rem; border-left: 3px solid #c42b3c; background: rgba(196, 43, 60, 0.06); font-size: 0.82rem; line-height: 1.45; color: var(--og-sub); }
+.og-tldr b { display: block; margin-bottom: 0.1rem; font: 600 0.58rem var(--mono); letter-spacing: 0.12em; color: #c42b3c; }

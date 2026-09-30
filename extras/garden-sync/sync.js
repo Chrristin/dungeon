@@ -128,13 +128,43 @@ async function readPosts() {
       const text = String(p.plaintext || '').replace(/\s+/g, ' ').trim();
       out.push({ slug: p.slug, title: p.title, html: p.html || '', text, words: text ? text.split(' ').length : 0,
         topics: (p.tags || []).filter((t) => t.visibility === 'public').map((t) => t.name), date: String(p.updated_at || p.published_at || '').slice(0, 10),
-        excerpt: String(p.custom_excerpt || text).slice(0, 160) });
+        excerpt: String(p.custom_excerpt || text).slice(0, 160), custom: p.custom_excerpt || null });
     }
     if (!res.meta.pagination.next) break;
     page = res.meta.pagination.next;
   }
+  const df = {}; out.forEach((p) => new Set(words(p.text)).forEach((w) => { df[w] = (df[w] || 0) + 1; }));
+  out.forEach((p) => { p.tldr = p.custom || strongestLine(p.text, p.title, df, out.length) || null; }); // your own excerpt wins
   return out;
 }
+// A post's TL;DR, in its own words: the sentence that carries most of the post's distinctive vocabulary.
+// Sentences are scored against the whole post (words it uses often, weighted by how rare they are across the
+// site), with a bonus for words from the title, and penalties for questions, quotes, the opening hook, and
+// sentences too short or too long to stand alone. No AI: it only ever picks a sentence you wrote.
+function strongestLine(text, title, df, N) {
+  const sents = String(text).replace(/\s+/g, ' ').match(/[^.!?]+[.!?]+(?=\s|$)/g) || [];
+  if (!sents.length) return null;
+  const tf = {}; words(text).forEach((w) => { tf[w] = (tf[w] || 0) + 1; });
+  const weight = (w) => (tf[w] || 0) * Math.log(1 + N / (1 + (df[w] || 0)));
+  const titleWords = new Set(words(title));
+  let best = null;
+  sents.forEach((raw, i) => {
+    const t = raw.trim(), ws = words(t), n = t.split(/\s+/).length;
+    if (n < 9 || n > 38) return; // too short to stand alone, or too long for a card
+    if (/\?$/.test(t) || /^["'\u201c\u2018(]/.test(t) || /:\s*$/.test(t)) return; // questions, quotes, lead-ins
+    const uniq = [...new Set(ws)];
+    let score = uniq.reduce((a, w) => a + weight(w), 0) / Math.sqrt(uniq.length + 3);
+    score *= 1 + 0.25 * uniq.filter((w) => titleWords.has(w)).length;
+    if (i === 0) score *= 0.75; // the opening line is usually a hook, not the point
+    if (i >= sents.length * 0.7) score *= 1.25; // the point often lands near the end
+    if (/\b(the real (problem|point|reason|question)|the point is|more importantly|what (this|it) (is|means)|that's what|that is what|the (whole|only) (point|reason)|because|i picked|i chose|the answer)\b/i.test(t)) score *= 1.45; // the phrases the argument comes with
+    if ((t.match(/\b[A-Z][a-zA-Z]+[A-Z0-9]\w*|\b[A-Z]{2,}\b/g) || []).length >= 2) score *= 0.8; // dense with product names: usually a detail
+    if (/\b(I|we)\b/.test(t)) score *= 1.08; // his own view reads better than a bare fact
+    if (!best || score > best[0]) best = [score, t];
+  });
+  return best ? best[1] : null;
+}
+
 // the site's own addresses a post links to, as slugs
 function linkedSlugs(html) {
   const out = new Set(), site = siteHost;
@@ -342,7 +372,7 @@ async function pass() {
   // the Garden page carries the whole garden's map, so the theme can draw it without asking for every note
   const nodes = vault.published.map((n) => ({ s: n.slug, t: n.title, g: n.stage, k: n.type, kind: n.kind, p: n.topics, d: n.tended, sc: n.scatter || undefined,
     l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said, r: related[n.slug] || [], c: n.confidence || undefined }));
-  for (const p of posts) nodes.push({ s: p.slug, t: p.title, g: 'post', k: 'post', p: p.topics, d: p.date, l: p.links, x: p.excerpt, w: p.words, r: related[p.slug] || [] });
+  for (const p of posts) nodes.push({ s: p.slug, t: p.title, g: 'post', k: 'post', p: p.topics, d: p.date, l: p.links, x: p.excerpt, w: p.words, r: related[p.slug] || [], tl: p.tldr || undefined });
   const garden = { v: 2, updated: new Date().toISOString().slice(0, 10), notes: nodes.sort((a, b) => a.t.localeCompare(b.t)) };
   const ph = hashOf(garden.notes);
   if (state.page !== ph && !cfg.dry) {
