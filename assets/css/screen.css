@@ -1975,12 +1975,12 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
 .ratings-empty { padding: 1rem 0.5rem; font: 0.85rem var(--mono); color: var(--graphite); }
 .og-rated { margin-left: 0.6rem; vertical-align: middle; text-transform: none; }
 .og[data-g="evergreen"] .rated { --stamp: rgba(255, 255, 255, 0.9); }
-/* ---------- The map (2.0): a homepage of plots, drawn from the page at /map/ ---------- */
+/* ---------- Plots (2.0): a homepage of plots, drawn from the page at /plots/ ---------- */
 
-.map { padding: 1.75rem 0 1rem; }
+.plots { padding: 1.75rem 0 1rem; }
 
 /* The band: a strip of graph paper, the one place the garden's grid shows through */
-.map-band, .plot-band {
+.plots-band, .plot-band {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1995,7 +1995,7 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
     font-size: 0.78rem;
     color: var(--graphite);
 }
-.map-badge {
+.plots-badge {
     display: inline-flex;
     align-items: center;
     min-height: 1.9rem;
@@ -2008,25 +2008,25 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
     font-size: 0.82rem;
     text-decoration: none;
 }
-.map-badge:hover { color: var(--paper); filter: brightness(1.08); }
+.plots-badge:hover { color: var(--paper); filter: brightness(1.08); }
 
 /* The opening: the statement and its introduction, with the growth key beside it */
-.map-hero {
+.plots-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 2.5rem 3.5rem;
     align-items: end;
     padding: clamp(2.5rem, 7vw, 4.75rem) 0 clamp(2rem, 5vw, 3.25rem);
 }
-.map-hero .statement-text { font-size: clamp(2.5rem, 5.4vw, 5.6rem); max-width: 15ch; transform: rotate(-1.2deg); transform-origin: left center; }
-body[data-tilt="0"] .map-hero .statement-text { transform: none; }
-.map-intro { margin-top: 1.75rem; max-width: 40rem; color: var(--graphite); }
-.map-intro p { margin: 0 0 0.9rem; }
-.map-intro a { color: var(--ink); }
+.plots-hero .statement-text { font-size: clamp(2.5rem, 5.4vw, 5.6rem); max-width: 15ch; transform: rotate(-1.2deg); transform-origin: left center; }
+body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
+.plots-intro { margin-top: 1.75rem; max-width: 40rem; color: var(--graphite); }
+.plots-intro p { margin: 0 0 0.9rem; }
+.plots-intro a { color: var(--ink); }
 /* A bulleted list of links in the page's text becomes a row of buttons: the way in for a first-time visitor */
-.map-intro ul { display: flex; flex-wrap: wrap; gap: 0.6rem; list-style: none; margin: 1.25rem 0 0; padding: 0; }
-.map-intro li { margin: 0; }
-.map-intro li a {
+.plots-intro ul { display: flex; flex-wrap: wrap; gap: 0.6rem; list-style: none; margin: 1.25rem 0 0; padding: 0; }
+.plots-intro li { margin: 0; }
+.plots-intro li a {
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
@@ -2038,8 +2038,8 @@ body[data-tilt="0"] .map-hero .statement-text { transform: none; }
     text-decoration: none;
     transition: background-color 160ms ease, color 160ms ease;
 }
-.map-intro li a:hover { background: var(--ink); color: var(--paper); }
-.map-legend {
+.plots-intro li a:hover { background: var(--ink); color: var(--paper); }
+.plots-legend {
     display: grid;
     gap: 0.45rem;
     padding: 1rem 1.1rem;
@@ -2049,16 +2049,16 @@ body[data-tilt="0"] .map-hero .statement-text { transform: none; }
     font-size: 0.78rem;
     color: var(--graphite);
 }
-.map-legend p { display: flex; align-items: center; gap: 0.6rem; margin: 0; }
-.map-legend-h { color: var(--ink); }
-.map-legend .stage { color: var(--led); }
+.plots-legend p { display: flex; align-items: center; gap: 0.6rem; margin: 0; }
+.plots-legend-h { color: var(--ink); }
+.plots-legend .stage { color: var(--led); }
 
 .stage { display: inline-flex; flex: none; }
 .stage .garden-sprout { width: 1.05rem; height: 1.05rem; }
 .card-head .stage { margin-left: -0.15rem; }
 
 /* The plots: large index cards, laid out by count. The first is the biggest; two sit beside it; the rest share rows. */
-.map-grid {
+.plots-grid {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 2.25rem 2rem;
@@ -2118,14 +2118,14 @@ body[data-tilt="0"] .map-hero .statement-text { transform: none; }
 .plot:has(.plot-empty) .card-line { background: var(--rule); }
 
 /* After the plots: what changed lately, and the way into the whole garden */
-.map-after { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1rem 3rem; align-items: start; padding-bottom: 1rem; border-bottom: 1px solid var(--rule); }
-.map-tended-list { list-style: none; margin: 0; padding: 0; }
-.map-tended-list a { display: flex; align-items: center; gap: 1rem; min-height: 2.75rem; padding: 0.35rem 0; border-top: 1px solid var(--rule); text-decoration: none; }
-.map-tended-list time { flex: none; width: 4.2rem; font-family: var(--mono); font-size: 0.78rem; color: var(--graphite); }
-.map-tended-title { flex: 1; min-width: 0; font-weight: 500; }
-.map-tended-list a:hover .map-tended-title { color: var(--led); }
-.map-tended-list .stage { color: var(--graphite); }
-.map-garden {
+.plots-after { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1rem 3rem; align-items: start; padding-bottom: 1rem; border-bottom: 1px solid var(--rule); }
+.plots-tended-list { list-style: none; margin: 0; padding: 0; }
+.plots-tended-list a { display: flex; align-items: center; gap: 1rem; min-height: 2.75rem; padding: 0.35rem 0; border-top: 1px solid var(--rule); text-decoration: none; }
+.plots-tended-list time { flex: none; width: 4.2rem; font-family: var(--mono); font-size: 0.78rem; color: var(--graphite); }
+.plots-tended-title { flex: 1; min-width: 0; font-weight: 500; }
+.plots-tended-list a:hover .plots-tended-title { color: var(--led); }
+.plots-tended-list .stage { color: var(--graphite); }
+.plots-garden {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
@@ -2138,10 +2138,10 @@ body[data-tilt="0"] .map-hero .statement-text { transform: none; }
     background-size: 26px 26px;
     text-decoration: none;
 }
-.map-garden-path { font-family: var(--mono); font-size: 0.78rem; color: var(--led); }
-.map-garden-h { font-size: clamp(1.5rem, 2.4vw, 2rem); font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; }
-.map-garden-sub { font-family: var(--mono); font-size: 0.78rem; color: var(--graphite); }
-.map-garden:hover .map-garden-h { color: var(--led); }
+.plots-garden-path { font-family: var(--mono); font-size: 0.78rem; color: var(--led); }
+.plots-garden-h { font-size: clamp(1.5rem, 2.4vw, 2rem); font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; }
+.plots-garden-sub { font-family: var(--mono); font-size: 0.78rem; color: var(--graphite); }
+.plots-garden:hover .plots-garden-h { color: var(--led); }
 
 /* Inside a plot (a tag page): the strip back to the map, and the other plots */
 .plot-band { flex-direction: column; align-items: stretch; margin-top: 1.5rem; }
@@ -2166,16 +2166,16 @@ body[data-tilt="0"] .map-hero .statement-text { transform: none; }
 .plot-switch a[aria-current="page"] { background: var(--led); border-color: var(--led); color: var(--paper); }
 
 @media (max-width: 900px) {
-    .map-hero { grid-template-columns: minmax(0, 1fr); align-items: start; }
-    .map-grid { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; padding: 0.25rem 0.25rem 2rem; }
-    .map-grid > .plot:nth-child(n):nth-last-child(n) { grid-column: 1 / -1; grid-row: auto; }
-    .map-after { grid-template-columns: minmax(0, 1fr); }
-    .map-garden { margin-top: 0.5rem; }
+    .plots-hero { grid-template-columns: minmax(0, 1fr); align-items: start; }
+    .plots-grid { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; padding: 0.25rem 0.25rem 2rem; }
+    .plots-grid > .plot:nth-child(n):nth-last-child(n) { grid-column: 1 / -1; grid-row: auto; }
+    .plots-after { grid-template-columns: minmax(0, 1fr); }
+    .plots-garden { margin-top: 0.5rem; }
     .plot-rows .code { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .map-intro li a { transition: none; }
+    .plots-intro li a { transition: none; }
 }
 .plot-head .tag-code { color: var(--on-card); font-weight: 500; }
 /* The badge and the current plot sit on a slightly deeper green, so small white text keeps 4.5:1 in light mode */
-.map-badge, .plot-switch a[aria-current="page"] { background: color-mix(in srgb, var(--led), #000 16%); border-color: transparent; }
+.plots-badge, .plot-switch a[aria-current="page"] { background: color-mix(in srgb, var(--led), #000 16%); border-color: transparent; }

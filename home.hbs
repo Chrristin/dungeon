@@ -1,10 +1,10 @@
 {{!< default}}
-{{!-- The homepage. With a published page at /map/, the map comes first and the post list follows it;
+{{!-- The homepage. With a published page at /plots/, the plots come first and the post list follows it;
       without one, the homepage is the classic hero and cards. --}}
-{{#get "pages" filter="slug:map" limit="1" include="tags"}}
+{{#get "pages" filter="slug:plots" limit="1" include="tags"}}
 {{#if pages}}
-    {{#foreach pages}}{{> "map"}}{{/foreach}}
-    {{> "feed" posts=../posts pagination=../pagination map=true}}
+    {{#foreach pages}}{{> "plots"}}{{/foreach}}
+    {{> "feed" posts=../posts pagination=../pagination plots=true}}
 {{else}}
     {{> "feed" posts=../posts pagination=../pagination}}
 {{/if}}

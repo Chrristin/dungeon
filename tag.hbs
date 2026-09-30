@@ -1,11 +1,11 @@
 {{!< default}}
 
-{{!-- With a map (/map/), a tag page is a room in it: a strip back to the map, this plot's growth, and the other plots. --}}
-{{#get "pages" filter="slug:map" limit="1" include="tags"}}
+{{!-- With plots (/plots/), a tag page is one of them: a strip back to the plots, this plot's growth, and the other plots. --}}
+{{#get "pages" filter="slug:plots" limit="1" include="tags"}}
 {{#foreach pages}}
-<nav class="plot-band map" aria-label="{{t "The map"}}" data-labels='{"0":"{{t "unplanted"}}","1":"{{t "sprouting"}}","2":"{{t "growing"}}","3":"{{t "growing"}}","4":"{{t "flourishing"}}","5":"{{t "lit"}}"}'>
+<nav class="plot-band plots" aria-label="{{t "Plots"}}" data-labels='{"0":"{{t "unplanted"}}","1":"{{t "sprouting"}}","2":"{{t "growing"}}","3":"{{t "growing"}}","4":"{{t "flourishing"}}","5":"{{t "lit"}}"}'>
     <div class="plot-band-row">
-        <p class="plot-crumbs"><a class="map-badge" href="{{@site.url}}">{{title}}</a><span aria-hidden="true">›</span><span aria-current="page">{{../../tag.name}}</span></p>
+        <p class="plot-crumbs"><a class="plots-badge" href="{{@site.url}}">{{title}}</a><span aria-hidden="true">›</span><span aria-current="page">{{../../tag.name}}</span></p>
         <span class="plot-meter" data-count="{{../../pagination.total}}" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
         <span class="plot-status"></span>
     </div>

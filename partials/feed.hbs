@@ -1,8 +1,8 @@
-{{!-- The post list: the homepage's hero and cards, also used by the map homepage (map=true: no hero, a plain heading). --}}
+{{!-- The post list: the homepage's hero and cards, also used by the plots homepage (plots=true: no hero, a plain heading). --}}
 
 {{#is "home"}}
 {{#unless pagination.prev}}
-{{#unless map}}
+{{#unless plots}}
 <section class="hero">
     <div class="hero-text">
         <h1 class="statement-text">{{@site.description}}</h1>
@@ -22,7 +22,7 @@
     {{#is "home"}}
         {{#if pagination.prev}}
             <h2 id="log-heading" class="section-heading">{{t "Older posts"}}</h2>
-        {{else if map}}
+        {{else if plots}}
             <h2 id="log-heading" class="section-heading">{{#if @custom.list_heading}}{{@custom.list_heading}}{{else}}{{t "Everything, newest first"}}{{/if}}</h2>
         {{else if @custom.list_heading}}
             <h2 id="log-heading" class="section-heading">{{@custom.list_heading}}</h2>
@@ -36,7 +36,7 @@
     {{#is "home"}}
         {{#if pagination.prev}}
             {{#foreach posts}}{{> "post-row"}}{{/foreach}}
-        {{else if map}}
+        {{else if plots}}
             {{#foreach posts}}{{> "post-row"}}{{/foreach}}
         {{else if @custom.hero_card}}
             {{!-- The newest post sits beside the statement on desktop; on phones and tablets it leads the list instead --}}

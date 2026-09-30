@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 2.0.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 2.0.1. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -14,7 +14,7 @@ Version 2.0.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://
 
 ## Features
 
-- **Map homepage (optional).** A homepage of plots, one per part of your site, each a large index card showing its newest pieces and how far it has grown. Tag pages become rooms inside it. Turned on by publishing a page at `/map/`; see [The map homepage](#the-map-homepage).
+- **Plots homepage (optional).** A homepage of plots, one per part of your site, each a large index card showing its newest pieces and how far it has grown. Tag pages become rooms inside it. Turned on by publishing a page at `/plots/`; see [Plots](#plots).
 - **Index-card homepage.** Grainy pastel cards, each at a stable angle. Hovering straightens a card and brings its image's colour back. On phones, cards gain colour as they scroll into view.
 - **Filing codes.** Every post gets a code from its primary tag and date, such as `#HO260924` for a Homelab post on 24 September 2026.
 - **Reader overlay.** Posts open over the homepage in a panel; direct links still work as normal pages.
@@ -136,11 +136,11 @@ Every post ends with a round **Share** button. Hovering turns its arrow into a p
 
 Stamps need a small counter you run yourself on Cloudflare's free plan, because a Ghost theme can't store anything. Follow [`extras/stamps-worker`](extras/stamps-worker/README.md), then paste the Worker's address into the **Stamps endpoint** setting. Until then the stamps stay hidden.
 
-## The map homepage
+## Plots
 
-An optional homepage that shows your site as a set of plots, one per subject, instead of one long list. It's off until you publish a page with the address `/map/`, and everything on it comes from Ghost, so there's nothing to configure in the theme.
+An optional homepage that shows your site as a set of plots, one per subject, instead of one long list. It's off until you publish a page with the address `/plots/`, and everything on it comes from Ghost, so there's nothing to configure in the theme.
 
-**The page at `/map/`:**
+**The page at `/plots/`:**
 
 | Part of the page | Becomes |
 |---|---|
@@ -155,9 +155,9 @@ An optional homepage that shows your site as a set of plots, one per subject, in
 
 **Under the plots:** the five most recently updated pieces, a link to the Garden page when you have one, and then every post, newest first, as usual. The list heading uses the List heading setting.
 
-**Inside a plot.** Each plot's tag page gets a strip with the badge (back to the map), the plot's meter and every other plot, so visitors can move between them. Other tag pages get the strip too.
+**Inside a plot.** Each plot's tag page gets a strip with the badge (back to the plots), the plot's meter and every other plot, so visitors can move between them. Other tag pages get the strip too.
 
-The map is also shown at `/map/` itself. Unpublish the page, or make it a draft, and the classic homepage comes back.
+The plots are also shown at `/plots/` itself. Unpublish the page, or make it a draft, and the classic homepage comes back.
 
 ## The Garden
 

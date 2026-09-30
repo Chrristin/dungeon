@@ -1,8 +1,12 @@
 # Changelog
 
+## 2.0.1
+
+- The map homepage is now called Plots, so it isn't confused with the Garden's map. Its page moves from `/map/` to `/plots/`: if you made a page with the slug `map` on 2.0.0, change its slug to `plots`. Template files, partials and CSS classes are renamed to match (`page-plots.hbs`, `partials/plots.hbs`, `.plots-*`).
+
 ## 2.0.0
 
-- **The map**, an optional homepage of plots. Publish a page at `/map/` and the homepage opens with it: the page's title as a badge, its excerpt as the statement, its text as the introduction (a bulleted list of links becomes a row of buttons), and its public tags, in order, as plots. Each plot is a large index card with the tag's name, description and five pieces, featured first, and a growth meter from how many pieces it holds; a tag with no posts shows as unplanted. Then the most recently tended pieces, a way into the Garden, and every post as before. Without the page, nothing changes.
+- **The map** (renamed Plots in 2.0.1), an optional homepage of plots. Publish a page at `/map/` and the homepage opens with it: the page's title as a badge, its excerpt as the statement, its text as the introduction (a bulleted list of links becomes a row of buttons), and its public tags, in order, as plots. Each plot is a large index card with the tag's name, description and five pieces, featured first, and a growth meter from how many pieces it holds; a tag with no posts shows as unplanted. Then the most recently tended pieces, a way into the Garden, and every post as before. Without the page, nothing changes.
 - Tag pages become rooms of the map when it exists: a strip with the badge back to the map, the plot's meter, and every other plot.
 - Growth stages on posts: the internal tags `#seedling`, `#growing` (or `#budding`) and `#evergreen` show the Garden's sprouts on cards and lists.
 - The homepage and the post list now share one partial (`partials/feed.hbs`); `index.hbs` and the new `home.hbs` both use it. If you've customised `index.hbs`, move your changes to the partial.
