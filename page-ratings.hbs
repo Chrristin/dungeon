@@ -1,0 +1,38 @@
+{{!< default}}
+{{!-- Ratings (the page with the address /ratings/): everything you've rated, gathered from the internal tags
+      #rated-0-5 to #rated-5 on posts (and on garden notes, which garden-sync tags from a note's rating:).
+      Readers' averages come from the stamps Worker. Ghost hands a theme at most 100 posts at a time. --}}
+{{#post}}
+<section class="statement statement--small ratings-head">
+    <h1 class="statement-text">{{title}}</h1>
+    {{#if custom_excerpt}}<p class="statement-desc">{{custom_excerpt}}</p>{{/if}}
+    <div class="gh-content">{{content}}</div>
+</section>
+{{/post}}
+<section class="ratings" aria-label="{{t "Ratings"}}"{{#if @custom.stamps_endpoint}} data-endpoint="{{@custom.stamps_endpoint}}"{{/if}} data-all="{{t "Everything"}}" data-other="{{t "Other"}}" data-readers="{{t "Readers"}}" data-none="{{t "No reader ratings yet"}}" data-one="{{t "reader rating"}}" data-many="{{t "reader ratings"}}" data-from="{{t "from"}}">
+    <div class="ratings-bar">
+        <div class="ratings-filter garden-filter" role="group" aria-label="{{t "Show"}}"></div>
+        <div class="ratings-sort garden-filter" role="group" aria-label="{{t "Sort"}}"><button type="button" data-sort="mine" aria-pressed="true">{{t "My rating"}}</button>{{#if @custom.stamps_endpoint}}<button type="button" data-sort="readers" aria-pressed="false">{{t "Readers"}}</button>{{/if}}<button type="button" data-sort="recent" aria-pressed="false">{{t "Recent"}}</button></div>
+    </div>
+    <div class="cards ratings-cards">
+    {{#get "posts" limit="100" include="tags" filter="tag:[hash-rated-0-5,hash-rated-1,hash-rated-1-5,hash-rated-2,hash-rated-2-5,hash-rated-3,hash-rated-3-5,hash-rated-4,hash-rated-4-5,hash-rated-5]"}}
+        {{#foreach posts}}
+        <article class="card ratings-card" data-key="{{slug}}" data-r="{{> "rating-value"}}" data-date="{{date format="YYYY-MM-DD"}}" data-topic="{{#primary_tag}}{{name}}{{/primary_tag}}">
+            <header class="card-head">
+                <time class="code" datetime="{{date format="YYYY-MM-DD"}}" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</time>
+                <span class="card-line" aria-hidden="true"></span>
+                {{#primary_tag}}<span class="card-tag">{{name}}</span>{{/primary_tag}}
+            </header>
+            <h2 class="card-title"><a href="{{url}}">{{title}}</a></h2>
+            <footer class="card-foot">
+                <span class="ratings-readers"></span>
+                <span class="card-line" aria-hidden="true"></span>
+                {{> "rating-stamp" size="small"}}
+            </footer>
+        </article>
+        {{/foreach}}
+    {{else}}
+        <p class="ratings-empty">{{t "Nothing rated yet. Give a post the internal tag #rated-4-5 (4.5 out of 5) and it appears here."}}</p>
+    {{/get}}
+    </div>
+</section>

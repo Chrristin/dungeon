@@ -1960,7 +1960,120 @@
     var left = 200 - [...ev.target.value].length, c = ev.target.closest('.stickies-compose').querySelector('.stickies-left');
     c.textContent = left; c.classList.toggle('is-low', left < 20);
   });
+  // ---- Ratings (1.10.0). Readers rate what you've rated, out of 5 in halves. Visitors are known by a random id this
+  // browser keeps, and pass the stickies' spam check; signed-in members use their Ghost pass. The average stays
+  // hidden until 3 people have rated.
+  function raterId() {
+    var id = null; try { id = localStorage.getItem('dungeon-rater'); } catch (e) {}
+    if (!id || !/^[A-Za-z0-9-]{20,100}$/.test(id)) {
+      id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() + '-' + crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2) + '-' + Math.random().toString(36).slice(2);
+      try { localStorage.setItem('dungeon-rater', id); } catch (e) {}
+    }
+    return id;
+  }
+  function ratedStore(slug, v) { // what you gave each post, so it shows at once on your next visit
+    var all = {}; try { all = JSON.parse(localStorage.getItem('dungeon-rated') || '{}') || {}; } catch (e) {}
+    if (v === undefined) return all[slug] || 0;
+    all[slug] = v; try { localStorage.setItem('dungeon-rated', JSON.stringify(all)); } catch (e) {}
+  }
+  function readersText(el, d) {
+    var L = function (k) { return el.getAttribute('data-' + k) || ''; }, n = d && d.n || 0;
+    if (!n) return L('none');
+    var word = n === 1 ? L('one') : L('many');
+    if (d.avg === null || d.avg === undefined) return n + ' ' + word + (L('few') ? ' ' + L('few') : '');
+    return L('readers') + ': ' + Number(d.avg).toFixed(1) + ' ' + L('from') + ' ' + n;
+  }
+  function initRate(root) {
+    [].forEach.call(root.querySelectorAll('.rate'), function (el) {
+      if (el._rate) return; el._rate = true;
+      var slug = el.getAttribute('data-slug'), api = (el.getAttribute('data-endpoint') || '').replace(/\/+$/, '') + '/ratings/' + encodeURIComponent(slug);
+      var stars = el.querySelector('.rate-stars'), readers = el.querySelector('.rate-readers'), msg = el.querySelector('.rate-msg'), change = el.querySelector('.rate-change');
+      var L = function (k) { return el.getAttribute('data-' + k) || ''; }, member = el.getAttribute('data-member') === '1', notRated = stars.getAttribute('aria-valuetext');
+      var mine = ratedStore(slug), hover = 0, busy = false;
+      var paint = function () { var v = hover || mine; stars.style.setProperty('--v', v); stars.setAttribute('aria-valuenow', String(v)); stars.setAttribute('aria-valuetext', v ? v + ' / 5' : notRated); };
+      var say = function (t, err) { msg.textContent = t || ''; msg.classList.toggle('is-error', !!err); };
+      var settled = function () { say(mine ? L('thanks') + ' ' + mine + '.' : L('hint')); change.hidden = !mine; };
+      var auth = function () { return member ? memberPass().then(function (p) { return p ? { Authorization: 'GhostMember ' + p } : {}; }) : Promise.resolve({}); };
+      var post = function (url, data) { return auth().then(function (h) { h['Content-Type'] = 'application/json'; return fetch(url, { method: 'POST', headers: h, body: JSON.stringify(data) }); }); };
+      el.hidden = false; paint(); settled();
+      fetch(api).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) { if (d) readers.textContent = readersText(el, d); }).catch(function () {});
+      post(api + '/mine', { rater: raterId() }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+        if (d && d.mine !== undefined && !busy) { mine = d.mine || 0; ratedStore(slug, mine); paint(); settled(); }
+      }).catch(function () {});
+      // the spam check loads only when someone reaches for the stars
+      var startCheck = function () {
+        if (member || el._widget !== undefined) return; el._widget = null;
+        loadTurnstile().then(function () {
+          el._widget = window.turnstile.render(el.querySelector('.rate-turnstile'), { sitekey: el.getAttribute('data-sitekey'), appearance: 'interaction-only', theme: 'light',
+            callback: function (t) { el._ts = t; }, 'expired-callback': function () { el._ts = null; }, 'error-callback': function () { el._ts = null; } });
+        }, function () {});
+      };
+      var token = function () { // wait (up to 10 seconds) for the spam check to finish
+        if (member) return Promise.resolve('');
+        startCheck();
+        return new Promise(function (res) { var t0 = Date.now(); (function wait() { if (el._ts || Date.now() - t0 > 10000) res(el._ts || ''); else setTimeout(wait, 150); })(); });
+      };
+      var commit = function (v) {
+        if (busy || !v) return; busy = true; hover = v; paint(); el.classList.add('is-busy'); if (!member) say(L('checking'));
+        token().then(function (t) { return post(api, { stars: Math.round(v * 2), rater: raterId(), turnstile: t }); }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (d) {
+            if (r.ok) { mine = d.mine || v; ratedStore(slug, mine); readers.textContent = readersText(el, d); hover = 0; paint(); settled(); return; }
+            hover = 0; paint(); say(r.status === 403 ? L('err-spam') : r.status === 429 ? L('err-slow') : L('err-other'), true);
+          });
+        }).catch(function () { hover = 0; paint(); say(L('err-other'), true); }).then(function () {
+          busy = false; el.classList.remove('is-busy');
+          el._ts = null; if (el._widget !== null && el._widget !== undefined && window.turnstile) { try { window.turnstile.reset(el._widget); } catch (e) {} }
+        });
+      };
+      var at = function (e) { var r = stars.getBoundingClientRect(); return Math.max(0.5, Math.min(5, Math.ceil((e.clientX - r.left) / r.width * 10) / 2)); };
+      stars.addEventListener('pointerenter', startCheck); stars.addEventListener('focus', startCheck);
+      stars.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse' && !busy) { hover = at(e); paint(); } });
+      stars.addEventListener('pointerleave', function () { if (!busy) { hover = 0; paint(); } });
+      stars.addEventListener('click', function (e) { commit(at(e)); });
+      stars.addEventListener('keydown', function (e) { // arrows choose, Enter or Space rates
+        if (busy) return; var cur = hover || mine || 0, k = e.key;
+        if (k === 'ArrowRight' || k === 'ArrowUp') cur = Math.min(5, (cur || 0) + 0.5); else if (k === 'ArrowLeft' || k === 'ArrowDown') cur = Math.max(0.5, (cur || 1) - 0.5);
+        else if (k === 'Home') cur = 0.5; else if (k === 'End') cur = 5;
+        else if (k === 'Enter' || k === ' ') { e.preventDefault(); commit(hover || mine); return; } else return;
+        e.preventDefault(); hover = cur; paint(); say(cur + ' / 5');
+      });
+      stars.addEventListener('blur', function () { if (!busy && hover) { hover = 0; paint(); settled(); } });
+      change.addEventListener('click', function () { change.hidden = true; say(L('hint')); stars.focus(); });
+    });
+  }
+  // The Ratings page: everything you've rated, filtered by topic and sorted three ways; readers' averages from the Worker
+  function initRatings() {
+    var el = document.querySelector('.ratings'); if (!el) return;
+    var grid = el.querySelector('.ratings-cards'), cards = [].slice.call(el.querySelectorAll('.ratings-card'));
+    if (!cards.length) { el.querySelector('.ratings-bar').hidden = true; return; }
+    var L = function (k) { return el.getAttribute('data-' + k) || ''; }, counts = {}, topic = 'all', sortHow = 'mine', stats = {};
+    cards.forEach(function (c) { var t = c.getAttribute('data-topic') || L('other'); c.setAttribute('data-topic', t); counts[t] = (counts[t] || 0) + 1; });
+    var bar = el.querySelector('.ratings-filter'), names = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b); });
+    bar.innerHTML = ['<button type="button" data-t="all" aria-pressed="true">' + esc(L('all')) + ' <span>' + cards.length + '</span></button>'].concat(names.map(function (t) {
+      return '<button type="button" data-t="' + esc(t) + '" aria-pressed="false">' + esc(t) + ' <span>' + counts[t] + '</span></button>'; })).join('');
+    var num = function (c, k) { return parseFloat(c.getAttribute(k)) || 0; };
+    var apply = function () {
+      cards.forEach(function (c) { c.hidden = topic !== 'all' && c.getAttribute('data-topic') !== topic; });
+      cards.slice().sort(function (a, b) {
+        var ad = a.getAttribute('data-date') || '', bd = b.getAttribute('data-date') || '';
+        if (sortHow === 'recent') return bd.localeCompare(ad);
+        if (sortHow === 'readers') { var sa = stats[a.getAttribute('data-key')] || {}, sb = stats[b.getAttribute('data-key')] || {}; return ((sb.avg === null || sb.avg === undefined) ? -1 : sb.avg) - ((sa.avg === null || sa.avg === undefined) ? -1 : sa.avg) || (sb.n || 0) - (sa.n || 0) || bd.localeCompare(ad); }
+        return num(b, 'data-r') - num(a, 'data-r') || bd.localeCompare(ad);
+      }).forEach(function (c) { grid.appendChild(c); });
+    };
+    bar.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; [].forEach.call(bar.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); topic = b.getAttribute('data-t'); apply(); });
+    var sorter = el.querySelector('.ratings-sort');
+    sorter.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; [].forEach.call(sorter.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); sortHow = b.getAttribute('data-sort'); apply(); });
+    apply();
+    var endpoint = (el.getAttribute('data-endpoint') || '').replace(/\/+$/, ''); if (!endpoint) return;
+    fetch(endpoint + '/ratings?posts=' + encodeURIComponent(cards.map(function (c) { return c.getAttribute('data-key'); }).join(','))).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      stats = d && d.ratings || {};
+      cards.forEach(function (c) { var s = stats[c.getAttribute('data-key')] || { n: 0, avg: null }, out = c.querySelector('.ratings-readers'); if (out) out.textContent = readersText(el, s); });
+      if (sortHow === 'readers') apply();
+    }).catch(function () {});
+  }
   initStickies(document);
+  initRate(document);
 
   // ---------------------------------------------------------------- the garden
   // Garden notes are written in Obsidian and published by garden-sync (extras/garden-sync). Each note carries
@@ -2534,7 +2647,7 @@
       return '<a class="og" href="/' + esc(n.s) + '/" data-note="' + esc(n.s) + '" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" data-links="' + (ins + outs) + '"' +
         (grp ? ' data-group="' + grp + '" aria-expanded="false"' : o.spread ? ' aria-expanded="true"' : '') + '>' + stack +
         '<span class="og-sheet" aria-hidden="true"></span>' + etch(n.w) + '<span class="og-text"><span class="og-meta">' + esc(label) + '</span><span class="og-title">' + esc(n.t) + '</span>' +
-        (isPost(n) && n.tl ? '<span class="og-tldr"><b>TL;DR</b>' + esc(trim(n.tl, 220)) + '</span>' : n.x ? '<span class="og-ex">' + esc(trim(n.x, 150)) + '</span>' : '') + '</span><span class="og-foot">' + ins + ' in · ' + outs + ' out' + esc(how) + '</span>' +
+        (isPost(n) && n.tl ? '<span class="og-tldr"><b>TL;DR</b>' + esc(trim(n.tl, 220)) + '</span>' : n.x ? '<span class="og-ex">' + esc(trim(n.x, 150)) + '</span>' : '') + '</span><span class="og-foot">' + ins + ' in · ' + outs + ' out' + esc(how) + (n.rt ? '<span class="rated rated--small og-rated" style="--r: ' + Number(n.rt) + '" role="img" aria-label="' + esc((L.rated || 'Rated') + ' ' + n.rt + ' / 5') + '"><span class="rated-stars" aria-hidden="true"></span><span class="rated-num" aria-hidden="true">' + esc(String(n.rt)) + '/5</span></span>' : '') + '</span>' +
         (grp ? '<span class="og-count" aria-hidden="true">+' + grp + '</span><span class="visually-hidden">' + esc(grp + ' ' + (L.spread || 'related: select to spread them')) + '</span>' : '') + '</a>';
     };
     var recentBox = el.querySelector('[data-list="recent"]'), cs = el.querySelector('[data-list="connected"]'), all = el.querySelector('[data-list="all"]');
@@ -2666,6 +2779,7 @@
     });
   }
   initGarden();
+  initRatings(); // after esc() exists
   initGardenNote(document, readJson(document.getElementById('garden-note')));
   initPostGarden(document);
 
@@ -2698,6 +2812,7 @@
         decorate(body);
         initPostActions(body);
         initStamps(body);
+        initRate(body);
         liteYouTube(body);
         document.documentElement.classList.add('reader-open');
         var already = reader.open; // following a link inside the overlay: still one history step, not one per note

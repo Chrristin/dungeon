@@ -17,6 +17,14 @@
 //   GET    /telegram/setup?key=<MOD_SECRET>       finds your chat and connects the bot, once
 //   GET    /whoami   (Authorization: GhostMember <pass from /members/api/session>)   checks a member's pass
 //
+// Ratings (theme 1.10.0), readers' star ratings for the posts you've rated, out of 5 in halves (stars = 1-10 halves):
+//   GET    /ratings/<slug>                        -> { n, avg }   (avg is null until MIN_RATERS people have rated)
+//   GET    /ratings?posts=a,b,c                   -> { ratings: { a: { n, avg } } }   (up to 100 posts, for the Ratings page)
+//   POST   /ratings/<slug>/mine  { rater }        -> { mine }   (your own rating, or null)
+//   POST   /ratings/<slug>  { stars, rater, turnstile } -> { n, avg, mine }   (rate it, or change your rating)
+//   One rating per visitor per post: visitors are known by a random rater id their browser keeps (stored hashed),
+//   signed-in members by their account (no spam check). Visitors pass the same Turnstile check as stickies.
+//
 // Bindings: DB (D1 database with schema.sql), SITE (variable, e.g. https://christingeorge.com).
 // For stickies, as secrets: TURNSTILE_SECRET, MOD_SECRET (any long random text), NTFY_TOPIC,
 // TELEGRAM_BOT_TOKEN; as a variable: TELEGRAM_CHAT_ID (the setup link tells you it).
@@ -95,9 +103,11 @@ export default {
       if (path === '/moderate' || path === '/telegram' || path === '/telegram/setup') return await moderation(request, env, ctx);
       if (path === '/whoami') return json(await whoami(request, env), 200, headers);
       if (path.startsWith('/stickies/')) return await stickies(request, env, headers, ctx);
+      if (path === '/ratings' || path.startsWith('/ratings/')) return await ratings(request, env, headers);
       return await handle(request, env, headers);
     } catch (e) {
       const msg = String(e && e.message || e);
+      if (/no such table: ratings/i.test(msg)) return json({ error: 'setup: the ratings table is missing. Run migrate-1.10.0.sql in the D1 console.' }, 500, headers);
       if (/no such table/i.test(msg)) return json({ error: 'setup: the stamps table is missing. Run schema.sql in the D1 console.' }, 500, headers);
       if (/no such column: role/i.test(msg)) return json({ error: 'setup: the stickies table needs updating for 1.3.8. Run migrate-1.3.8.sql in the D1 console.' }, 500, headers);
       if (/no such column: colour/i.test(msg)) return json({ error: 'setup: the stickies table needs updating for 1.3.2. Run migrate-1.3.2.sql in the D1 console.' }, 500, headers);
@@ -379,4 +389,55 @@ async function whoami(request, env) {
   try { m = await memberFromPass(env, pass); } catch (e) { m = { ok: false, reason: String(e.message || e) }; }
   if (!m.ok) return { member: false, reason: m.reason };
   return { member: true, author: m.author, key: m.bits + '-bit ' + m.alg, passExpiresInSeconds: m.expiresIn, emailHash: (await sha256(m.email)).slice(0, 10) }; // never the email itself
+}
+
+// ---------------------------------------------------------------- Ratings
+const MIN_RATERS = 3, RATE_PER_MINUTE = 10, RATER = /^[A-Za-z0-9-]{20,100}$/;
+async function ratingSummary(env, slug) {
+  const r = await env.DB.prepare('SELECT COUNT(*) AS n, AVG(stars) AS a FROM ratings WHERE post = ?').bind(slug).first();
+  const n = r ? r.n : 0;
+  return { n, avg: n >= MIN_RATERS ? Math.round(r.a * 5) / 10 : null }; // stars are halves: the average out of 5, to one decimal
+}
+async function ratings(request, env, headers) {
+  const url = new URL(request.url);
+  if (url.pathname === '/ratings' || url.pathname === '/ratings/') { // many at once, for the Ratings page
+    if (request.method !== 'GET') return json({ error: 'not found' }, 404, headers);
+    const want = [...new Set(String(url.searchParams.get('posts') || '').toLowerCase().split(',').map((x) => x.trim()).filter((x) => SLUG.test(x)))].slice(0, 100);
+    const out = {};
+    if (want.length) {
+      const rows = (await env.DB.prepare('SELECT post, COUNT(*) AS n, AVG(stars) AS a FROM ratings WHERE post IN (' + want.map(() => '?').join(',') + ') GROUP BY post').bind(...want).all()).results;
+      for (const r of rows) out[r.post] = { n: r.n, avg: r.n >= MIN_RATERS ? Math.round(r.a * 5) / 10 : null };
+    }
+    return json({ ratings: out }, 200, headers);
+  }
+  const m = url.pathname.match(/^\/ratings\/([^/]+)(?:\/(mine))?\/?$/);
+  if (!m) return json({ error: 'not found' }, 404, headers);
+  const slug = decodeURIComponent(m[1]).toLowerCase(), sub = m[2] || null;
+  if (!SLUG.test(slug)) return json({ error: 'bad post' }, 400, headers);
+  let slugs;
+  try { slugs = await stampable(env); } catch { return json({ error: 'site unavailable' }, 503, headers); }
+  if (!slugs.posts || !slugs.posts.has(slug)) return json({ error: 'unknown post' }, 404, headers); // posts only
+  if (request.method === 'GET' && !sub) return json(await ratingSummary(env, slug), 200, headers);
+  if (request.method !== 'POST') return json({ error: 'not found' }, 404, headers);
+
+  let body = {}; try { body = await request.json(); } catch {}
+  let member = null;
+  const pass = (request.headers.get('Authorization') || '').replace(/^GhostMember\s+/i, '');
+  if (pass) { try { const mm = await memberFromPass(env, pass); if (mm.ok) member = { hash: await sha256(mm.email), author: mm.author }; } catch {} }
+  const rater = String(body.rater || '');
+  if (!member && !RATER.test(rater)) return json({ error: 'no rater id' }, 400, headers);
+  const voter = member ? 'm:' + member.hash : 'v:' + (await sha256(rater));
+
+  if (sub === 'mine') {
+    const row = await env.DB.prepare('SELECT stars FROM ratings WHERE post = ? AND voter_hash = ?').bind(slug, voter).first();
+    return json({ mine: row ? row.stars / 2 : null }, 200, headers);
+  }
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (tooMany('rate:' + ip, RATE_PER_MINUTE)) return json({ error: 'slow down' }, 429, headers);
+  const stars = Number(body.stars);
+  if (!Number.isInteger(stars) || stars < 1 || stars > 10) return json({ error: 'stars must be 1 to 10 (halves of 5)' }, 400, headers);
+  if (!member && !(await turnstileOk(env, body.turnstile, ip))) return json({ error: 'spam check failed' }, 403, headers);
+  await env.DB.prepare("INSERT INTO ratings (post, voter_hash, stars, role) VALUES (?, ?, ?, ?) ON CONFLICT (post, voter_hash) DO UPDATE SET stars = excluded.stars, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')")
+    .bind(slug, voter, stars, member ? (member.author ? 'author' : 'member') : null).run();
+  return json({ ...(await ratingSummary(env, slug)), mine: stars / 2 }, 200, headers);
 }

@@ -1924,3 +1924,50 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
 
 /* every card shows its stage, links or not: a sprout, a leafy sprig, a flowering sprig (on the right, clear of the text) */
 .og-deco { fill: none; stroke: #3f8a3a; stroke-width: 1.8; stroke-linecap: round; }
+
+/* ---- Ratings (1.10.0): your rating is a red ink stamp, from the internal tag #rated-4-5 and so on; stars are cut
+   exactly at halves. Readers rate what you've rated, in amber, so the two never read as the same thing. */
+.rated { --stamp: #c42b3c; position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.45rem 0.7rem 0.4rem;
+    border: 2px solid var(--stamp); box-shadow: inset 0 0 0 2px transparent, inset 0 0 0 3px var(--stamp); color: var(--stamp); rotate: -4deg;
+    font: 600 0.62rem/1 var(--mono); letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; }
+.rated-stars { position: relative; display: inline-block; font: 1.15rem/1 system-ui, sans-serif; letter-spacing: 0; }
+.rated-stars::before { content: "\2605\2605\2605\2605\2605"; opacity: 0.25; }
+.rated-stars::after { content: "\2605\2605\2605\2605\2605"; position: absolute; left: 0; top: 0; width: calc(var(--r, 0) * 20%); overflow: hidden; }
+.rated-num { letter-spacing: 0.06em; font-size: 0.7rem; }
+.panel-head { position: relative; }
+.panel-head > .rated { float: right; margin: 0.2rem 0 0.8rem 1.2rem; }
+.rated--small { flex-direction: row; gap: 0.35rem; padding: 0.18rem 0.4rem; border-width: 1.5px; box-shadow: none; rotate: -3deg; font-size: 0.56rem; }
+.rated--small .rated-word { display: none; }
+.rated--small .rated-stars { font-size: 0.8rem; }
+.rated--small .rated-num { font-size: 0.6rem; }
+/* pastel cards and panels carry dark ink in light and dark mode alike; on the dark and red ones the stamp turns white */
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) .rated { --stamp: rgba(255, 255, 255, 0.92); }
+@media (max-width: 560px) { .panel-head > .rated { float: none; margin: 0 0 0.9rem; } }
+
+.rate { margin-top: 1.6rem; padding: 1.1rem 1.2rem 1rem; border-radius: 12px; color: var(--on-card, var(--ink)); background: color-mix(in srgb, var(--on-card, var(--ink)) 7%, transparent); }
+.post-stage:has(.stickies) .rate, .post-panel:has(.stickies) .rate { margin-bottom: 4.5rem; } /* room for the sticky that overlaps the card's foot */
+.rate[hidden] { display: none; }
+.rate-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.4rem 1rem; }
+.rate-title { margin: 0; font: 600 0.72rem/1.2 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: inherit; }
+.rate-readers { margin: 0; font: 0.74rem/1.3 var(--mono); color: var(--on-card-meta, var(--graphite)); }
+.rate-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.2rem; margin-top: 0.6rem; min-height: 3rem; }
+.rate-stars { --v: 0; position: relative; display: inline-block; padding: 0.2rem 0; font: 2.1rem/1 system-ui, sans-serif; letter-spacing: 0.08em; color: color-mix(in srgb, var(--on-card, var(--ink)) 20%, transparent); cursor: pointer; touch-action: manipulation; user-select: none; border-radius: 6px; }
+.rate-stars::before { content: "\2605\2605\2605\2605\2605"; }
+.rate-fill { position: absolute; left: 0; top: 0.2rem; width: calc(var(--v) * 20%); overflow: hidden; white-space: nowrap; color: #e8a33a; pointer-events: none; }
+.rate-fill::before { content: "\2605\2605\2605\2605\2605"; }
+.rate-stars:focus-visible { outline: 2px solid var(--on-card, var(--ink)); outline-offset: 4px; }
+.post-panel:is([data-hue="red"], [data-hue="tangerine"], [data-hue="sunflower"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) .rate-fill { color: var(--on-card); } /* amber would vanish on the bold colours */
+.rate.is-busy .rate-stars { opacity: 0.45; cursor: progress; }
+.rate-msg { margin: 0; font: 0.8rem/1.4 var(--mono); color: inherit; }
+.rate-msg.is-error { font-weight: 600; }
+.rate-change { margin-left: auto; min-height: 2.75rem; padding: 0 0.4rem; border: 0; background: none; color: var(--on-card-meta, var(--graphite)); font: 0.74rem var(--mono); text-decoration: underline; cursor: pointer; }
+.rate-turnstile:empty { display: none; }
+
+.ratings { padding: 0 0.5rem 3rem; }
+.ratings-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.8rem; padding: 0 0.5rem; }
+.ratings-filter { flex-wrap: wrap; }
+.ratings-card[hidden] { display: none; }
+.ratings-readers { font-size: 0.7rem; }
+.ratings-empty { padding: 1rem 0.5rem; font: 0.85rem var(--mono); color: var(--graphite); }
+.og-rated { margin-left: 0.6rem; vertical-align: middle; text-transform: none; }
+.og[data-g="evergreen"] .rated { --stamp: rgba(255, 255, 255, 0.9); }

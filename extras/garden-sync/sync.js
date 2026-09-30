@@ -16,6 +16,7 @@
 //   scatter: true            also show it on the Scatter wall; scatter_line: "a sharp line for the card"
 //   labels: [quote, red]     extra internal tags, such as a Scatter kind (quote, lyric, reading, code, found, thought) or colour
 //   confidence: certain | likely | speculative | hunch   how sure you are, shown on the note
+//   rating: 4.5              your rating out of 5, in halves; the note gets your stamp and a place on the Ratings page
 //   not_related: [[Other note]]   never show these two as related (either direction)
 //   title, slug, tended, planted   override the file name, the address, the "last tended" or the "planted" date
 import fs from 'node:fs';
@@ -101,6 +102,7 @@ function scanVault() {
       note.scatterLine = fm.scatter_line ? String(fm.scatter_line).slice(0, 300) : null;
       note.tended = isoDay(fm.tended || fm.updated) || isoDay(fs.statSync(f).mtime);
       note.labels = asList(fm.labels).map((l) => l.toLowerCase());
+      note.rating = ratingOf(fm.rating);
       const conf = String(fm.confidence || '').toLowerCase();
       note.confidence = ['certain', 'likely', 'speculative', 'hunch'].includes(conf) ? conf : null;
       const st = fs.statSync(f);
@@ -117,6 +119,17 @@ function scanVault() {
 
 // ---------------------------------------------------------------- the site's posts (read only)
 const SKIP_TAGS = new Set(['hash-garden', 'hash-note', 'hash-now', 'hash-scatter']);
+// Ratings: out of 5, in halves. A post carries one as an internal tag, #rated-4-5 for 4.5 or #rated-4 for 4.
+function ratingOf(v) {
+  const n = Number(String(v === undefined || v === null ? '' : v).replace(',', '.'));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.min(5, Math.max(0.5, Math.round(n * 2) / 2));
+}
+const ratingTag = (r) => '#rated-' + String(r).replace('.', '-');
+function ratingFromTags(tags) {
+  for (const t of tags || []) { const m = String(t.name || '').match(/^#rated-(\d)(?:-(5))?$/); if (m) return ratingOf(m[1] + (m[2] ? '.5' : '')); }
+  return null;
+}
 let siteHost = null; // the site's public address, asked of Ghost once, so links written as https://yoursite/... count
 async function readPosts() {
   if (!siteHost) { try { const st = await api('GET', '/site/'); siteHost = new URL(st.site.url).host; } catch { siteHost = ''; } }
@@ -128,7 +141,7 @@ async function readPosts() {
       const text = String(p.plaintext || '').replace(/\s+/g, ' ').trim();
       out.push({ slug: p.slug, title: p.title, html: p.html || '', text, words: text ? text.split(' ').length : 0,
         topics: (p.tags || []).filter((t) => t.visibility === 'public').map((t) => t.name), date: String(p.updated_at || p.published_at || '').slice(0, 10),
-        excerpt: String(p.custom_excerpt || text).slice(0, 160), custom: p.custom_excerpt || null });
+        excerpt: String(p.custom_excerpt || text).slice(0, 160), custom: p.custom_excerpt || null, rating: ratingFromTags(p.tags) });
     }
     if (!res.meta.pagination.next) break;
     page = res.meta.pagination.next;
@@ -259,6 +272,7 @@ function payload(note, r, backlinks, extra) {
   tags.push({ name: '#garden' }, { name: '#' + note.stage });
   if (note.type === 'source') tags.push({ name: '#source' });
   if (note.scatter) tags.push({ name: '#scatter' });
+  if (note.rating) tags.push({ name: ratingTag(note.rating) }); // the same tag you'd give a post by hand
   for (const l of note.labels) if (!['garden', 'scatter', 'source', 'seedling', 'growing', 'evergreen'].includes(l)) tags.push({ name: '#' + l });
   const meta = { stage: note.stage, tended: note.tended, planted: note.planted, confidence: note.confidence, words: r.words, type: note.type, kind: note.kind, scatter: note.scatter, backlinks,
     links: extra.links, related: extra.related, log: extra.log, fn: r.fn.length ? r.fn : undefined };
@@ -371,8 +385,8 @@ async function pass() {
   }
   // the Garden page carries the whole garden's map, so the theme can draw it without asking for every note
   const nodes = vault.published.map((n) => ({ s: n.slug, t: n.title, g: n.stage, k: n.type, kind: n.kind, p: n.topics, d: n.tended, sc: n.scatter || undefined,
-    l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said, r: related[n.slug] || [], c: n.confidence || undefined }));
-  for (const p of posts) nodes.push({ s: p.slug, t: p.title, g: 'post', k: 'post', p: p.topics, d: p.date, l: p.links, x: p.excerpt, w: p.words, r: related[p.slug] || [], tl: p.tldr || undefined });
+    l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said, r: related[n.slug] || [], c: n.confidence || undefined, rt: n.rating || undefined }));
+  for (const p of posts) nodes.push({ s: p.slug, t: p.title, g: 'post', k: 'post', p: p.topics, d: p.date, l: p.links, x: p.excerpt, w: p.words, r: related[p.slug] || [], tl: p.tldr || undefined, rt: p.rating || undefined });
   const garden = { v: 2, updated: new Date().toISOString().slice(0, 10), notes: nodes.sort((a, b) => a.t.localeCompare(b.t)) };
   const ph = hashOf(garden.notes);
   if (state.page !== ph && !cfg.dry) {

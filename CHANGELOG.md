@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.0
+
+- Ratings. Give any post your rating out of 5, in halves, with an internal tag: `#rated-4-5` for 4.5, `#rated-4` for 4, from `#rated-0-5` to `#rated-5`. The post gets a red ink RATED stamp at the top, and a small one on its card. In the garden, `rating: 4.5` in a note does the same (garden-sync adds the tag).
+- Readers can rate what you've rated, and only that: stars at the end of the post, amber so they never read as yours. One rating per visitor per post, changeable; visitors pass the stickies' spam check, signed-in members don't need to. The readers' average stays hidden until 3 people have rated. Needs the stamps Worker, a Turnstile site key, and `migrate-1.10.0.sql` run once in the D1 console.
+- A Ratings page gathers everything you've rated: make a page with the address `/ratings/`. Filter by topic (a post's primary tag), sort by your rating, readers' or most recent. Ghost gives a theme at most 100 posts at once, so the page shows up to 100 rated posts.
+- garden-sync: reads `rating:` from notes and `#rated-` tags from posts, so garden cards show the stamp too.
+
 ## 1.9.0
 
 - Most connected comes in groups. The best-connected card is a hero (on a tie, the longer piece), and its links and related cards sit under it as a stack of pages, with a small tag saying how many. Each card appears in one group only. The first click on a stack spreads the group round the hero, joined by vines (solid and leafy for links you wrote, dotted for related by wording); a second click opens the hero. Fold back, or Escape, puts it away. On phones the group unfolds downward. Recently tended stays flat.

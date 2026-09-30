@@ -9,6 +9,7 @@
                 <span class="card-line" aria-hidden="true"></span>
                 {{#primary_tag}}<span class="card-tag">{{name}}</span>{{/primary_tag}}
             </div>
+            {{> "rating-stamp"}}
             <h1 class="panel-title">{{title}}</h1>
             <p class="panel-sub"><time datetime="{{date format="YYYY-MM-DD"}}">{{date format="D MMM YYYY"}}</time>, {{reading_time minute="1 min read" minutes="% min read"}}</p>
             {{#if custom_excerpt}}<p class="panel-lede">{{custom_excerpt}}</p>{{/if}}
@@ -60,6 +61,21 @@
                 </div>
             </div>
         </div>
+        {{!-- Readers can rate what you've rated: out of 5 in halves, through the stamps Worker, with the stickies' spam check --}}
+        {{#has tag="#rated-0-5, #rated-1, #rated-1-5, #rated-2, #rated-2-5, #rated-3, #rated-3-5, #rated-4, #rated-4-5, #rated-5"}}{{#if @custom.stamps_endpoint}}{{#if @custom.stickies_site_key}}
+        <section class="rate" data-endpoint="{{@custom.stamps_endpoint}}" data-slug="{{slug}}" data-sitekey="{{@custom.stickies_site_key}}"{{#if @member}} data-member="1"{{/if}} aria-labelledby="rate-title-{{id}}"
+            data-none="{{t "No reader ratings yet"}}" data-few="{{t "so far · the average shows from 3"}}" data-one="{{t "reader rating"}}" data-many="{{t "reader ratings"}}" data-readers="{{t "Readers"}}" data-from="{{t "from"}}"
+            data-hint="{{t "Tap a star; its left half gives a half star"}}" data-checking="{{t "Checking you're a person..."}}" data-thanks="{{t "Thanks. You gave it"}}" data-yours="{{t "Your rating"}}"
+            data-err-spam="{{t "The spam check didn't pass. Please try again."}}" data-err-slow="{{t "That's a lot of ratings at once. Try again in a minute."}}" data-err-other="{{t "Couldn't save that right now. Please try again."}}" hidden>
+            <div class="rate-head"><h2 class="rate-title" id="rate-title-{{id}}">{{t "Seen it? Rate it too"}}</h2><p class="rate-readers" aria-live="polite"></p></div>
+            <div class="rate-row">
+                <div class="rate-stars" role="slider" tabindex="0" aria-labelledby="rate-title-{{id}}" aria-valuemin="0.5" aria-valuemax="5" aria-valuenow="0" aria-valuetext="{{t "Not rated"}}"><span class="rate-fill" aria-hidden="true"></span></div>
+                <p class="rate-msg" aria-live="polite"></p>
+                <button type="button" class="rate-change" hidden>{{t "Change my rating"}}</button>
+            </div>
+            <div class="rate-turnstile"></div>
+        </section>
+        {{/if}}{{/if}}{{/has}}
     </article>
 
     {{!-- Stickies replace Ghost's comments when the stamps Worker and a Turnstile site key are set --}}

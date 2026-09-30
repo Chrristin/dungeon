@@ -26,6 +26,7 @@ Version 1.8.1. Works with Ghost 5 and 6. Built for [christingeorge.com](https://
 - **Privacy-minded.** Fonts are hosted by the theme. YouTube embeds show a thumbnail and only load YouTube's no-cookie player when a visitor presses play.
 - **Translatable.** All interface wording goes through Ghost's translation helper.
 
+
 ## Screenshots
 
 | Now page | Scatter wall |
@@ -149,6 +150,14 @@ Signed-in members skip the wait: their sticky goes up straight away under their 
 You approve or delete each sticky from a Telegram message or an ntfy notification, with one tap. Stickies use the same Worker as stamps, plus Cloudflare Turnstile to keep bots out. Set them up with [`extras/stamps-worker`](extras/stamps-worker/README.md), then fill in **Stickies site key**. Once they're on, Ghost's own comments are no longer shown under posts; switch commenting off in Ghost too (**Settings → Membership → Access → Commenting → Nobody**).
 
 The handwriting is Caveat, under the SIL Open Font License (`assets/fonts/LICENSE-Caveat.txt`).
+
+## Ratings
+
+Rate any post out of 5, in halves, with an internal tag: `#rated-4-5` is 4.5, `#rated-4` is 4 (from `#rated-0-5` to `#rated-5`; create the tags once, then pick one from the tag list). The post shows a red RATED stamp, and a small one on its card. Garden notes take `rating: 4.5` in their properties instead.
+
+With the stamps Worker and a Turnstile site key set, readers can rate what you've rated, at the end of the post. Run `extras/stamps-worker/migrate-1.10.0.sql` once in the D1 console first. The readers' average shows once 3 people have rated.
+
+A page with the address `/ratings/` lists everything you've rated (up to 100), by topic, with readers' averages.
 
 ## A row of people
 

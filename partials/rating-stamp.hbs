@@ -1,0 +1,3 @@
+{{!-- Your rating, as a red ink stamp: from the internal tag #rated-4-5 (4.5 of 5), #rated-4 and so on.
+      Use: {{> "rating-stamp"}} in a post's context; size="small" for cards. --}}
+{{#has tag="#rated-0-5, #rated-1, #rated-1-5, #rated-2, #rated-2-5, #rated-3, #rated-3-5, #rated-4, #rated-4-5, #rated-5"}}<span class="rated{{#if size}} rated--{{size}}{{/if}}" style="--r: {{> "rating-value"}}" role="img" aria-label="{{t "Rated"}} {{> "rating-value"}} / 5"><span class="rated-word" aria-hidden="true">{{t "Rated"}}</span><span class="rated-stars" aria-hidden="true"></span><span class="rated-num" aria-hidden="true">{{> "rating-value"}}/5</span></span>{{/has}}
