@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 1.4.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 1.5.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -138,7 +138,7 @@ Stamps need a small counter you run yourself on Cloudflare's free plan, because 
 
 A digital garden: notes that grow over time, linked to each other, instead of posts that are finished when published. You write them in Obsidian; [`extras/garden-sync`](extras/garden-sync/README.md) publishes the ones you mark `publish: true` into Ghost, with their links, images and backlinks.
 
-The Garden page (at `/garden/`) shows the stage counts, a "Pull a random note" button, recently tended and most connected notes, a map of how they link, notes by topic, and every note, sortable. Each note's page shows its stage (seedling, growing or evergreen, as small hand-drawn marks), a red "Tended" stamp and what links to it; sources (books, films, talks) are drawn as library cards. Garden notes stay out of the homepage feed. Mark a note `scatter: true` and it also appears on the Scatter wall, linking back to the garden.
+Garden notes are Overgrown cards, sized to their content: vines creep round a card as it gains links, flowers open on evergreens, and pages stack behind long notes. Cards that link to each other are joined by vines; click one to see the sentence the link was written in. Notes open in the reader overlay. The Garden page (at `/garden/`) shows the stage counts, a "Pull a random note" button, recently tended and most connected notes, a map of how they link, notes by topic, and every note, sortable. Each note's page shows its stage (seedling, growing or evergreen, as small hand-drawn marks), a red "Tended" stamp and what links to it; sources (books, films, talks) are drawn as library cards. Garden notes stay out of the homepage feed. Mark a note `scatter: true` and it also appears on the Scatter wall, linking back to the garden.
 
 ## Stickies
 

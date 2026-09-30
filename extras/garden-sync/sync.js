@@ -124,10 +124,30 @@ async function uploadImage(file, state) {
   return state.images[sum];
 }
 
+function videoCard(url) {
+  let m = String(url).match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/);
+  if (m) return `<figure class="kg-card kg-embed-card"><iframe width="560" height="315" src="https://www.youtube.com/embed/${m[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="YouTube video"></iframe></figure>`;
+  m = String(url).match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (m) return `<figure class="kg-card kg-embed-card"><iframe src="https://player.vimeo.com/video/${m[1]}" width="560" height="315" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Vimeo video"></iframe></figure>`;
+  return null;
+}
+// the sentence a link was written in, as plain text, for the garden's connection panel
+function sentenceAround(text, at, len) {
+  const before = text.slice(0, at), after = text.slice(at + len);
+  const start = Math.max(before.lastIndexOf('. '), before.lastIndexOf('! '), before.lastIndexOf('? '), before.lastIndexOf('\n')) + 1;
+  const ends = ['. ', '! ', '? ', '\n'].map((c) => after.indexOf(c)).filter((i) => i >= 0);
+  const end = at + len + (ends.length ? Math.min(...ends) + 1 : after.length);
+  return text.slice(start, end).replace(/!?\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g, (a, n, al) => (al || n).replace(/#.*/, '')).replace(/[*_`=>#]/g, '').replace(/\s+/g, ' ').trim().slice(0, 220);
+}
 async function render(note, vault, state) {
   const links = new Set();
   const target = (name) => { const t = vault.byName.get(String(name).trim().toLowerCase()); return t && t.published ? t : null; };
   let body = note.body;
+  body = body.split('\n').map((line) => { // videos on their own line: a bare link, <link>, or Obsidian's ![](link)
+    const m = line.trim().match(/^(?:!\[[^\]]*\]\()?<?(https?:\/\/[^\s)>]+)>?\)?$/);
+    const card = m && videoCard(m[1]);
+    return card ? '\n' + card + '\n' : line;
+  }).join('\n');
   // images: Obsidian's ![[picture.png|300]] and Markdown's ![alt](path)
   const embeds = [...body.matchAll(/!\[\[([^\]|]+?\.(?:png|jpe?g|gif|webp|svg|avif))(?:\|[^\]]*)?\]\]/gi)];
   for (const m of embeds) {
@@ -141,7 +161,8 @@ async function render(note, vault, state) {
     if (f && IMAGE.test(f)) body = body.replace(m[0], `![${m[1]}](${await uploadImage(f, state)})`);
   }
   // [[links]]: to a published note, a link; otherwise plain text, so readers never hit a dead end
-  const privateMentions = [];
+  const privateMentions = [], said = {}, plain = body;
+  for (const m of plain.matchAll(WIKI)) { const t = target(m[2]); if (t && t !== note && !said[t.slug]) said[t.slug] = sentenceAround(plain, m.index, m[0].length); }
   body = body.replace(WIKI, (all, bang, name, heading, alias) => {
     const t = target(name), label = (alias || (heading ? name + heading.replace('#', ' > ') : name)).trim();
     if (!t) { if (!alias) privateMentions.push(name.trim()); return label; } // its name shows as plain text: reported, so you can alias it
@@ -156,7 +177,7 @@ async function render(note, vault, state) {
   const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   const words = text ? text.split(' ').length : 0;
   let lead = text.slice(0, 220); if (text.length > 220) lead = lead.replace(/\s+\S*$/, '') + '...';
-  return { html, links: [...links], excerpt: text.slice(0, 160), privateMentions, words, lead };
+  return { html, links: [...links], excerpt: text.slice(0, 160), privateMentions, words, lead, said };
 }
 
 const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c'); // safe inside a <script>
@@ -229,7 +250,7 @@ async function pass() {
   }
   // the Garden page carries the whole garden's map, so the theme can draw it without asking for every note
   const nodes = vault.published.map((n) => ({ s: n.slug, t: n.title, g: n.stage, k: n.type, kind: n.kind, p: n.topics, d: n.tended, sc: n.scatter || undefined,
-    l: rendered.get(n).links, x: rendered.get(n).excerpt }));
+    l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said }));
   const garden = { v: 1, updated: new Date().toISOString().slice(0, 10), notes: nodes.sort((a, b) => a.t.localeCompare(b.t)) };
   const ph = hashOf(garden.notes);
   if (state.page !== ph && !cfg.dry) {
@@ -248,6 +269,14 @@ async function pass() {
 async function importScatter() {
   const { default: Turndown } = await import('turndown');
   const td = new Turndown({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
+  td.addRule('embeds', { // a video card becomes its link on its own line, which the sync turns back into a player
+    filter: (node) => node.nodeName === 'IFRAME' || (node.nodeName === 'FIGURE' && node.querySelector && node.querySelector('iframe')),
+    replacement: (content, node) => {
+      const f = node.nodeName === 'IFRAME' ? node : node.querySelector('iframe'), src = (f && f.getAttribute('src')) || '';
+      const yt = src.match(/youtube(?:-nocookie)?\.com\/embed\/([\w-]{11})/), vm = src.match(/player\.vimeo\.com\/video\/(\d+)/);
+      const url = yt ? `https://www.youtube.com/watch?v=${yt[1]}` : vm ? `https://vimeo.com/${vm[1]}` : src;
+      return url ? `\n\n${url}\n\n` : '';
+    } });
   const dir = path.join(cfg.vault, 'Garden', 'Scatter'), state = loadState();
   fs.mkdirSync(dir, { recursive: true });
   let page = 1, count = 0;

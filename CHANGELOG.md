@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0
+
+- Garden cards are Overgrown: sized to their content and showing their text, with vines creeping round a card as it gains links, flowers on evergreens, and pages stacked behind long notes. Colours follow light and dark mode.
+- Linked cards on the Garden page are joined by vines, growing behind the cards. They are faint at rest and bright for the card you point at; click one to see the two notes and the sentence the link was written in.
+- Garden notes open in the reader overlay: from cards, lists, the map, the random note and "Mentioned in". Following links inside the overlay no longer leaves the address pointing at the wrong page when it closes.
+- "Read in the garden" on the Scatter wall has a small vine that grows along the card and flowers on hover, without moving the words.
+- garden-sync: YouTube and Vimeo links on their own line become embedded players, and the Scatter import keeps videos. Update `sync.js` on the server and restart garden-sync.
+
 ## 1.4.0
 
 - The Garden: a digital garden written in Obsidian and published by the new `extras/garden-sync` container. The Garden page shows stage counts, a random note, recently tended and most connected notes, a map of the links, notes by topic, and every note, sortable.

@@ -2024,6 +2024,109 @@
     });
     box.innerHTML = svg + '</svg>';
   }
+  var gleaf = function (x, y, a, len, fill) {
+    var r = a * Math.PI / 180, cx = x + Math.cos(r) * len, cy = y + Math.sin(r) * len, px = Math.cos(r + Math.PI / 2) * len * 0.33, py = Math.sin(r + Math.PI / 2) * len * 0.33;
+    return '<path class="og-leaf" d="M' + x.toFixed(1) + ' ' + y.toFixed(1) + 'Q' + ((x + cx) / 2 + px).toFixed(1) + ' ' + ((y + cy) / 2 + py).toFixed(1) + ' ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + 'Q' + ((x + cx) / 2 - px).toFixed(1) + ' ' + ((y + cy) / 2 - py).toFixed(1) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + 'Z" fill="' + fill + '"/>';
+  };
+  var FLOWERS = ['#ff6b9a', '#ffd23f', '#9b5de5', '#ff8c42', '#f15bb5'];
+  var gflower = function (x, y, r, c) {
+    var o = ''; for (var i = 0; i < 5; i++) { var a = i * 72 * Math.PI / 180; o += '<circle cx="' + (x + Math.cos(a) * r * 0.62).toFixed(1) + '" cy="' + (y + Math.sin(a) * r * 0.62).toFixed(1) + '" r="' + (r * 0.5).toFixed(1) + '" fill="' + c + '"/>'; }
+    return '<g class="og-flower">' + o + '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r * 0.36).toFixed(1) + '" fill="#ffd23f"/></g>';
+  };
+  var hashOf = function (s) { var h = 7; for (var i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 2654435761); return h >>> 0; };
+  // vines creep clockwise round a card from its top-left corner: the more links, the further round (all the way at 9)
+  function growCards(box) {
+    [].forEach.call(box.querySelectorAll('.og'), function (c) {
+      var old = c.querySelector('.og-vines'); if (old) old.remove();
+      var W = c.offsetWidth, H = c.offsetHeight, links = +c.getAttribute('data-links') || 0; if (!W || !links) return;
+      var per = 2 * (W + H), reach = Math.min(1, links / 9) * per, pts = [], rand = seeded(hashOf(c.getAttribute('data-note')));
+      for (var s = 0; s <= reach; s += 6) {
+        var p = s % per, x, y;
+        if (p < W) { x = p; y = 0; } else if (p < W + H) { x = W; y = p - W; } else if (p < 2 * W + H) { x = W - (p - W - H); y = H; } else { x = 0; y = H - (p - 2 * W - H); }
+        var wob = Math.sin(s / 11) * 4; pts.push([x + (y === 0 || y === H ? 0 : wob) + 10, y + (x === 0 || x === W ? 0 : wob) + 10]);
+      }
+      var v = '<path class="og-stem" d="M' + pts.map(function (q) { return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('L') + '"/>';
+      pts.forEach(function (q, i) {
+        if (i % 4 === 2) v += gleaf(q[0], q[1], rand() * 360, 10, i % 8 ? 'var(--og-leaf)' : 'var(--og-leaf2)');
+        if (c.getAttribute('data-g') === 'evergreen' && i % 11 === 5) v += gflower(q[0], q[1], 6, FLOWERS[(i / 11 | 0) % FLOWERS.length]);
+      });
+      c.insertAdjacentHTML('beforeend', '<svg class="og-vines" aria-hidden="true" viewBox="0 0 ' + (W + 20) + ' ' + (H + 20) + '">' + v + '</svg>');
+    });
+  }
+  // Cards that link to each other on the same page are joined by a vine, growing behind the cards (it shows
+  // in the gaps). Faint at rest, bright for the card you point at; click it to see what the link says.
+  function linkCards(box, bySlug, L) {
+    var old = box.querySelector('.og-links'); if (old) old.remove();
+    var cards = {}; [].forEach.call(box.querySelectorAll('.og'), function (c) { cards[c.getAttribute('data-note')] = c; });
+    var B = box.getBoundingClientRect(), svg = '', seen = {};
+    Object.keys(cards).forEach(function (a) {
+      ((bySlug[a] && bySlug[a].l) || []).forEach(function (b) {
+        if (!cards[b] || seen[a + '|' + b] || seen[b + '|' + a]) return; seen[a + '|' + b] = 1;
+        var ra = cards[a].getBoundingClientRect(), rb = cards[b].getBoundingClientRect();
+        var ax = ra.left - B.left + ra.width / 2, ay = ra.top - B.top + ra.height / 2, bx = rb.left - B.left + rb.width / 2, by = rb.top - B.top + rb.height / 2, dx = bx - ax, dy = by - ay;
+        var c1 = [ax + dx * 0.3 - dy * 0.22, ay + dy * 0.3 + dx * 0.22], c2 = [ax + dx * 0.7 - dy * 0.22, ay + dy * 0.7 + dx * 0.22];
+        var d = 'M' + ax.toFixed(1) + ' ' + ay.toFixed(1) + 'C' + c1[0].toFixed(1) + ' ' + c1[1].toFixed(1) + ' ' + c2[0].toFixed(1) + ' ' + c2[1].toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1);
+        var leaves = '', rand = seeded(hashOf(a + b));
+        for (var t = 0.1; t < 0.95; t += 0.09) { var u = 1 - t, x = u * u * u * ax + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * bx, y = u * u * u * ay + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * by; leaves += gleaf(x, y, rand() * 360, 8, 'var(--og-leaf2)'); }
+        svg += '<g class="og-link" data-a="' + esc(a) + '" data-b="' + esc(b) + '"><path class="og-link-stem" d="' + d + '"/>' + leaves + '<path class="og-link-hit" d="' + d + '"><title>' + esc(bySlug[a].t) + ' → ' + esc(bySlug[b].t) + '</title></path></g>';
+      });
+    });
+    if (!svg) return;
+    box.insertAdjacentHTML('afterbegin', '<svg class="og-links" aria-hidden="true" width="' + B.width + '" height="' + B.height + '" viewBox="0 0 ' + B.width + ' ' + B.height + '">' + svg + '</svg>');
+    if (box.getAttribute('data-linked')) return; box.setAttribute('data-linked', '1');
+    var lit = function (slug, on) { [].forEach.call(box.querySelectorAll('.og-link[data-a="' + slug + '"], .og-link[data-b="' + slug + '"]'), function (g) { g.classList.toggle('is-lit', on); }); };
+    box.addEventListener('mouseover', function (e) { var c = e.target.closest && e.target.closest('.og'); if (c) lit(c.getAttribute('data-note'), true); });
+    box.addEventListener('mouseout', function (e) { var c = e.target.closest && e.target.closest('.og'); if (c && !c.contains(e.relatedTarget)) lit(c.getAttribute('data-note'), false); });
+    box.addEventListener('click', function (e) {
+      var g = e.target.closest && e.target.closest('.og-link'); if (!g) return;
+      e.preventDefault(); openLinkPanel(box, g, e, bySlug, L);
+    });
+  }
+  function closeLinkPanel() {
+    var p = document.querySelector('.og-panel'); if (p) p.remove();
+    [].forEach.call(document.querySelectorAll('.og-link.is-chosen, .og.is-chosen'), function (n) { n.classList.remove('is-chosen'); });
+  }
+  function openLinkPanel(box, g, e, bySlug, L) {
+    closeLinkPanel();
+    var a = bySlug[g.getAttribute('data-a')], b = bySlug[g.getAttribute('data-b')]; if (!a || !b) return;
+    g.classList.add('is-chosen');
+    [a.s, b.s].forEach(function (s) { var c = box.querySelector('.og[data-note="' + s + '"]'); if (c) c.classList.add('is-chosen'); });
+    var said = (a.q && a.q[b.s]) || '', B = box.getBoundingClientRect();
+    var html = '<div class="og-panel" role="dialog" aria-label="' + esc(L.link || 'A link you wrote') + '"><button type="button" class="og-panel-x" aria-label="Close">&times;</button>' +
+      '<div class="og-panel-h">' + esc(L.link || 'A link you wrote') + '</div>' +
+      '<div class="og-panel-pair"><a href="/' + esc(a.s) + '/" data-note="' + esc(a.s) + '" data-g="' + esc(a.g) + '">' + esc(a.t) + '</a><span aria-hidden="true">&rarr;</span><a href="/' + esc(b.s) + '/" data-note="' + esc(b.s) + '" data-g="' + esc(b.g) + '">' + esc(b.t) + '</a></div>' +
+      (said ? '<blockquote class="og-panel-q">' + esc(said) + '</blockquote>' : '') + '</div>';
+    box.insertAdjacentHTML('beforeend', html);
+    var p = box.querySelector('.og-panel'), x = Math.min(B.width - p.offsetWidth - 4, Math.max(0, e.clientX - B.left - 40)), y = e.clientY - B.top + 14;
+    p.style.left = x + 'px'; p.style.top = y + 'px';
+    p.querySelector('.og-panel-x').addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); closeLinkPanel(); });
+  }
+  document.addEventListener('click', function (e) { if (document.querySelector('.og-panel') && !(e.target.closest && e.target.closest('.og-panel, .og-link'))) closeLinkPanel(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.querySelector('.og-panel')) closeLinkPanel(); });
+  // "Read in the garden" on the Scatter wall: a tendril in a fixed slot; on hover it grows along the card's
+  // bottom edge and up its right side, leaves and flowers opening as it goes. The words never move.
+  function initVineLinks(root) {
+    [].forEach.call(root.querySelectorAll('.scatter-garden'), function (a) {
+      var slot = a.querySelector('.vine-slot'); if (!slot || slot.firstChild) return;
+      slot.innerHTML = '<svg width="22" height="16" viewBox="0 0 22 16"><path d="M2 12C7 13 9 6 15 7s5-4 5-4" fill="none" stroke="#3f8a3a" stroke-width="2" stroke-linecap="round"/>' + gleaf(15, 7, -60, 6, '#8fd65a') + '</svg>';
+      var card = a.closest('.scatter-card'), grow = null;
+      var build = function () {
+        var W = card.offsetWidth, H = card.offsetHeight, cr = card.getBoundingClientRect(), sr = slot.getBoundingClientRect();
+        var x0 = sr.left - cr.left + 4, y0 = sr.top - cr.top + 12, edge = H - 5, run = W - 10 - x0, pts = [];
+        for (var d = 0; d <= run + H * 0.62; d += 2) { var x, y; if (d <= run) { x = x0 + d; y = y0 + Math.min(1, d / 16) * (edge - y0) + Math.sin(d / 9) * 2; } else { x = W - 10 + Math.sin(d / 9) * 2.5; y = edge - (d - run); } pts.push([x, y]); }
+        var len = 0; for (var i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+        var bits = '', n = Math.floor(pts.length / 9);
+        for (var k = 1; k <= n; k++) { var q = pts[k * 9 - 1]; bits += '<g class="vg-bit" style="transition-delay:' + (k / n * 0.7).toFixed(2) + 's">' + gleaf(q[0], q[1], k % 2 ? -110 : 70, 8, k % 3 ? '#5fbf4a' : '#8fd65a') + '</g>'; }
+        [0.45, 0.7, 0.92].forEach(function (t, f) { var q = pts[Math.floor(pts.length * t)]; bits += '<g class="vg-bit" style="transition-delay:' + (0.4 + f * 0.15).toFixed(2) + 's">' + gflower(q[0], q[1], 5.5, FLOWERS[f * 2 % 5]) + '</g>'; });
+        card.insertAdjacentHTML('beforeend', '<svg class="vine-grow" aria-hidden="true" viewBox="0 0 ' + W + ' ' + H + '"><path class="vg-stem" d="M' + pts.map(function (q) { return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('L') + '" style="stroke-dasharray:' + len.toFixed(0) + ';stroke-dashoffset:' + len.toFixed(0) + '"/>' + bits + '</svg>');
+        return card.lastElementChild;
+      };
+      var on = function () { if (calmStamps) return; if (grow) grow.remove(); grow = build(); void grow.getBoundingClientRect(); grow.querySelector('.vg-stem').style.strokeDashoffset = 0; grow.classList.add('is-grown'); };
+      var off = function () { if (!grow) return; var g = grow; grow = null; var s = g.querySelector('.vg-stem'); s.style.strokeDashoffset = s.style.strokeDasharray; g.classList.remove('is-grown'); setTimeout(function () { g.remove(); }, 800); };
+      a.addEventListener('mouseenter', on); a.addEventListener('focus', on); a.addEventListener('mouseleave', off); a.addEventListener('blur', off);
+    });
+  }
+  initVineLinks(document);
   function initGarden() {
     var el = document.querySelector('.garden'); if (!el) return;
     var data = readJson(document.getElementById('garden-data')), L = readJson({ textContent: el.getAttribute('data-labels') }) || {};
@@ -2033,17 +2136,24 @@
     var degree = function (n) { return (inbound[n.s] || 0) + (n.l || []).length; };
     var count = function (g) { return notes.filter(function (n) { return n.g === g; }).length; };
     el.querySelector('.garden-stats').innerHTML = '<b>' + notes.length + '</b> ' + esc(L.notes) + ' · <b>' + count('evergreen') + '</b> ' + esc(L.evergreen) + ' · <b>' + count('growing') + '</b> ' + esc(L.growing) + ' · <b>' + count('seedling') + '</b> ' + esc(L.seedlings);
-    var card = function (n, i) {
-      var meta = n.k === 'source' ? esc(L.source) + (n.kind ? ' · ' + esc(n.kind) : '') : esc((n.p && n.p[0]) || '');
-      return '<a class="garden-card" href="/' + esc(n.s) + '/" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" style="rotate:' + (((i * 37) % 7) - 3) * 0.5 + 'deg">' +
-        '<span class="garden-card-top">' + sprout(n.g) + '<span>' + meta + '</span></span><span class="garden-card-title">' + esc(n.t) + '</span>' +
-        '<span class="garden-card-foot">' + esc(L.tended) + ' ' + esc(gardenDay(n.d)) + '</span></a>';
+    var bySlug = {}; notes.forEach(function (n) { bySlug[n.s] = n; });
+    var trim = function (s, max) { s = String(s || ''); return s.length > max ? s.slice(0, max).replace(/\s+\S*$/, '') + '...' : s; };
+    // Overgrown cards, sized to their content: vines creep round the edges as a note gains links,
+    // flowers open on evergreens, and a stack of pages behind shows how much has been written.
+    var card = function (n) {
+      var ins = inbound[n.s] || 0, outs = (n.l || []).length, w = n.w || 0;
+      var label = n.k === 'source' ? L.source + (n.kind ? ' · ' + n.kind : '') : (L[n.g] || n.g) + (n.p && n.p[0] ? ' · ' + n.p[0] : '');
+      return '<a class="og" href="/' + esc(n.s) + '/" data-note="' + esc(n.s) + '" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" data-links="' + (ins + outs) + '">' +
+        (w > 1000 ? '<span class="og-page og-page-2" aria-hidden="true"></span>' : '') + (w > 300 ? '<span class="og-page" aria-hidden="true"></span>' : '') +
+        '<span class="og-sheet" aria-hidden="true"></span><span class="og-text"><span class="og-meta">' + esc(label) + '</span><span class="og-title">' + esc(n.t) + '</span>' +
+        (n.x ? '<span class="og-ex">' + esc(trim(n.x, 150)) + '</span>' : '') + '</span><span class="og-foot">' + ins + ' in · ' + outs + ' out</span></a>';
     };
     var recent = notes.slice().sort(function (a, b) { return (b.d || '').localeCompare(a.d || ''); }).slice(0, 8);
-    el.querySelector('[data-list="recent"]').innerHTML = recent.map(card).join('');
+    var recentBox = el.querySelector('[data-list="recent"]'); recentBox.innerHTML = recent.map(card).join('');
     var connected = notes.filter(function (n) { return degree(n) > 0; }).sort(function (a, b) { return degree(b) - degree(a); }).slice(0, 8);
     var cs = el.querySelector('[data-list="connected"]');
     if (connected.length) cs.innerHTML = connected.map(card).join(''); else cs.closest('.garden-section').hidden = true;
+    var growAll = function () { [recentBox, cs].forEach(function (box) { if (!box.closest('.garden-section').hidden) { growCards(box); linkCards(box, bySlug, L); } }); };
     var topics = {};
     notes.forEach(function (n) { (n.p && n.p.length ? n.p : [L.other]).forEach(function (t) { (topics[t] = topics[t] || []).push(n); }); });
     el.querySelector('.garden-topics').innerHTML = Object.keys(topics).sort(function (a, b) { return topics[b].length - topics[a].length || a.localeCompare(b); }).map(function (t) {
@@ -2063,10 +2173,14 @@
     });
     el.querySelector('.garden-random').addEventListener('click', function () { // pull a card from the deck
       var pick = notes[Math.floor(Math.random() * notes.length)], btn = this;
-      if (calmStamps) { location.href = '/' + pick.s + '/'; return; }
-      btn.classList.add('is-pulling'); setTimeout(function () { location.href = '/' + pick.s + '/'; }, 460);
+      var go = function () { if (window.dungeonOpen) window.dungeonOpen('/' + pick.s + '/'); else location.href = '/' + pick.s + '/'; };
+      if (calmStamps) { go(); return; }
+      btn.classList.add('is-pulling'); setTimeout(function () { btn.classList.remove('is-pulling'); go(); }, 460);
     });
     el.hidden = false;
+    growAll();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(growAll); // card heights settle once the fonts arrive
+    var growT; window.addEventListener('resize', function () { clearTimeout(growT); growT = setTimeout(growAll, 250); });
     drawGardenMap(el.querySelector('.garden-map'), notes);
     var mapT; window.addEventListener('resize', function () { clearTimeout(mapT); mapT = setTimeout(function () { drawGardenMap(el.querySelector('.garden-map'), notes); }, 250); });
   }
@@ -2094,19 +2208,21 @@
         var gardenMeta = doc.getElementById('garden-note'); // a garden note's stage, tended date and backlinks
         var stickiesHere = doc.querySelector('.stickies'); // the stickies come across too, inside the card: one piece
         if (stickiesHere) body.querySelector('.post-panel').appendChild(document.importNode(stickiesHere, true));
+        var afterHere = doc.querySelector('.garden-after'); // a garden note's "Mentioned in" comes too
+        if (afterHere) body.querySelector('.post-panel').appendChild(document.importNode(afterHere, true));
         decorate(body);
         initPostActions(body);
         initStamps(body);
         liteYouTube(body);
         document.documentElement.classList.add('reader-open');
-        reader.showModal();
+        var already = reader.open; // following a link inside the overlay: still one history step, not one per note
+        if (!already) reader.showModal();
         initStickies(body); // after it's open, so the pile can be measured
         if (gardenMeta) initGardenNote(body, readJson(gardenMeta));
         reader.scrollTop = 0;
         document.title = doc.title || baseTitle;
-        baseUrl = location.href;
-        history.pushState({ reader: true }, '', url);
-        pushed = true;
+        if (already) history.replaceState({ reader: true }, '', url);
+        else { baseUrl = location.href; history.pushState({ reader: true }, '', url); pushed = true; }
       })
       .catch(function () { location.href = url; })
       .finally(function () { if (card) card.classList.remove('is-opening'); });
@@ -2122,6 +2238,17 @@
       openPost(link.href, link.closest('.card'));
     });
 
+    // garden notes open in the overlay too: the cards, lists, map, the connection panel and "Mentioned in"
+    window.dungeonOpen = function (url) { openPost(url, null); };
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest && e.target.closest('.garden .og, .garden-topic a, .garden-all a, .garden-node, .og-panel a, .garden-after .garden-backlinks a');
+      if (!link || e.defaultPrevented) return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var href = link.getAttribute('href') || (link.href && link.href.baseVal); if (!href) return;
+      var url = new URL(href, location.href); if (url.origin !== location.origin) return;
+      e.preventDefault(); closeLinkPanel();
+      openPost(url.href, link.classList.contains('og') ? link : null);
+    });
     reader.querySelector('.reader-close').addEventListener('click', closeReader);
     // Any click that is not on the story panel itself closes the overlay.
     reader.addEventListener('click', function (e) {

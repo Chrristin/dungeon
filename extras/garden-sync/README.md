@@ -87,4 +87,5 @@ Everything goes in a note's properties (the block at the top in Obsidian). Only 
 - **`%%comments%%` stay private,** and never leave the vault.
 - **Highlights** (`==text==`) become bold, the nearest thing Ghost keeps.
 - **Images** (`![[picture.png]]` or `![](path)`) are uploaded to Ghost once each and reused.
+- **Videos:** a YouTube or Vimeo link on its own line (or `![](link)`) becomes an embedded player.
 - **Garden notes appear only on the Garden page** (and the Scatter wall when marked), never in the homepage feed.

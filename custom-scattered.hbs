@@ -26,7 +26,7 @@
         </header>
         {{#has tag="#garden"}}
         <div class="scatter-body gh-content">{{#if custom_excerpt}}<p>{{custom_excerpt}}</p>{{else}}{{content}}{{/if}}</div>
-        <a class="scatter-garden" href="{{url}}">{{t "Read in the garden"}} &rarr;</a>
+        <a class="scatter-garden" href="{{url}}"><span class="vine-slot" aria-hidden="true"></span>{{t "Read in the garden"}}</a>
         {{else}}
         <div class="scatter-body gh-content">{{content}}</div>
         {{/has}}

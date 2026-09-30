@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{meta_title}}</title>
     <link rel="preload" href="{{asset "fonts/geist-sans-latin-400-normal.woff2"}}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=1.4.0">
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=1.5.0">
     {{ghost_head}}
 </head>
 <body class="{{body_class}}{{#if @custom.floating_nav}}{{#if @site.navigation}} has-dock{{/if}}{{/if}}" data-tilt="{{#match @custom.card_tilt "None"}}0{{else match @custom.card_tilt "Playful"}}5{{else match @custom.card_tilt "Wild"}}10{{else}}2.5{{/match}}">
@@ -109,7 +109,7 @@
 </footer>
 
 
-<script src="{{asset "js/site.js"}}&r=1.4.0" defer></script>
+<script src="{{asset "js/site.js"}}&r=1.5.0" defer></script>
 {{ghost_foot}}
 </body>
 </html>
