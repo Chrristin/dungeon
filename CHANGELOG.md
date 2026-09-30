@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.1
+
+- Garden cards stay pastel in dark mode, like every other Dungeon card, and posts stay light paper; the page stacks behind long notes read as paper.
+- Every garden card shows its stage, links or not: a sprout on a seedling, a leafy sprig climbing a growing note's edge, a flowering sprig on an evergreen. Links still add vines round the edges.
+- The Garden map sits on the page with no heading or background, and has its own zoom: + and - buttons, Fit, Ctrl + scroll or pinch to zoom, and drag to move around. Plain scrolling still scrolls the page. It fits every note on first load (on phones it starts at a readable size), vines are leafier, and fading happens only while pointing at a note.
+
 ## 1.8.0
 
 - Post cards in the garden show a TL;DR: the post's custom excerpt if it has one, otherwise its strongest line, picked from your own sentences with no AI (weighted towards the post's distinctive words, its title, the closing part and the phrases an argument comes with; away from questions, quotes, the opening hook and product-name detail).

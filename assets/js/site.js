@@ -2112,7 +2112,7 @@
   // The map: notes as tiny cards in their stage colours, links you wrote as leafy vines, related notes dotted.
   // Point at a note and its neighbours light up while the rest fades.
   function drawGardenMap(box, notes) {
-    var W = box.clientWidth || 600, H = stacked.matches ? 360 : 460, idx = {}, edges = [], rels = [];
+    var W = Math.max(900, Math.sqrt(notes.length) * 190), H = W * 0.62, idx = {}, edges = [], rels = []; // the map's own space; the view zooms and pans over it
     notes.forEach(function (n, i) { idx[n.s] = i; });
     notes.forEach(function (n, i) {
       (n.l || []).forEach(function (s) { if (idx[s] !== undefined && idx[s] !== i) edges.push([i, idx[s]]); });
@@ -2135,21 +2135,69 @@
         p.x = Math.max(size[i][0] / 2 + 6, Math.min(W - size[i][0] / 2 - 6, p.x)); p.y = Math.max(18, Math.min(H - 18, p.y)); });
     }
     var curve = function (p, q) { var mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2, dx = q.x - p.x, dy = q.y - p.y; return { d: 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + 'Q' + (mx - dy * 0.16).toFixed(1) + ' ' + (my + dx * 0.16).toFixed(1) + ' ' + q.x.toFixed(1) + ' ' + q.y.toFixed(1), mx: mx - dy * 0.08, my: my + dx * 0.08 }; };
-    var svg = '<svg class="gm" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+    var svg = '<svg class="gm" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="' + esc(box.closest('section').getAttribute('aria-label') || '') + '">';
     rels.forEach(function (e) { svg += '<path class="gm-rel" data-a="' + e[0] + '" data-b="' + e[1] + '" d="' + curve(P[e[0]], P[e[1]]).d + '"/>'; });
-    edges.forEach(function (e, k) { var cv = curve(P[e[0]], P[e[1]]); svg += '<g class="gm-vine" data-a="' + e[0] + '" data-b="' + e[1] + '"><path d="' + cv.d + '"/>' + gleaf(cv.mx, cv.my, k * 67, 8, 'var(--og-leaf2, #8fd65a)') + '</g>'; });
+    edges.forEach(function (e, k) { // leafy vines along each link
+      var p = P[e[0]], q = P[e[1]], cv = curve(p, q), cx = (p.x + q.x) / 2 - (q.y - p.y) * 0.16, cy = (p.y + q.y) / 2 + (q.x - p.x) * 0.16, leaves = '';
+      [0.25, 0.5, 0.75].forEach(function (t, m) { var u = 1 - t, x = u * u * p.x + 2 * u * t * cx + t * t * q.x, y = u * u * p.y + 2 * u * t * cy + t * t * q.y; leaves += gleaf(x, y, k * 67 + m * 120, 8, m % 2 ? '#8fd65a' : '#5fbf4a'); });
+      svg += '<g class="gm-vine" data-a="' + e[0] + '" data-b="' + e[1] + '"><path d="' + cv.d + '"/>' + leaves + '</g>';
+    });
     notes.forEach(function (n, i) {
       var w = size[i][0], x = P[i].x - w / 2, y = P[i].y - 11;
       svg += '<a href="/' + esc(n.s) + '/" class="garden-node" data-i="' + i + '" data-g="' + esc(n.g) + '"><title>' + esc(n.t) + '</title><rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="22" rx="' + (n.k === 'source' ? 2 : 6) + '" data-k="' + esc(n.k) + '"/>' +
         '<text x="' + P[i].x.toFixed(1) + '" y="' + (P[i].y + 4).toFixed(1) + '" text-anchor="middle">' + esc(label(n.t)) + '</text></a>';
     });
-    box.innerHTML = svg + '</svg>';
-    var map = box.querySelector('svg'), nearOf = function (i) { var s = {}; s[i] = 1; edges.concat(rels).forEach(function (e) { if (e[0] == i) s[e[1]] = 1; if (e[1] == i) s[e[0]] = 1; }); return s; };
+    box.innerHTML = svg + '</svg><div class="gm-ctl"><button type="button" data-z="in" aria-label="' + esc(box.getAttribute('data-zoom-in') || 'Zoom in') + '">+</button><button type="button" data-z="out" aria-label="' + esc(box.getAttribute('data-zoom-out') || 'Zoom out') + '">&minus;</button><button type="button" data-z="fit">' + esc(box.getAttribute('data-fit') || 'Fit') + '</button></div>';
+    var map = box.querySelector('svg');
+    // the view: fit every note at first; + and - buttons, Ctrl or pinch to zoom, drag to move (plain scrolling still scrolls the page)
+    var xs = P.map(function (p, i) { return [p.x - size[i][0] / 2, p.x + size[i][0] / 2]; }), fit = function () {
+      var x0 = Math.min.apply(null, xs.map(function (v) { return v[0]; })) - 30, x1 = Math.max.apply(null, xs.map(function (v) { return v[1]; })) + 30;
+      var y0 = Math.min.apply(null, P.map(function (p) { return p.y; })) - 40, y1 = Math.max.apply(null, P.map(function (p) { return p.y; })) + 40;
+      return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    };
+    var full = fit(), vb = { x: full.x, y: full.y, w: full.w, h: full.h };
+    var show = function () { map.setAttribute('viewBox', vb.x.toFixed(1) + ' ' + vb.y.toFixed(1) + ' ' + vb.w.toFixed(1) + ' ' + vb.h.toFixed(1)); };
+    var zoom = function (f, px, py) { // f > 1 zooms in, keeping the point (px, py) where it is
+      var w = Math.max(full.w / 8, Math.min(full.w * 1.6, vb.w / f)), k = w / vb.w;
+      if (px === undefined) { px = vb.x + vb.w / 2; py = vb.y + vb.h / 2; }
+      vb.x = px - (px - vb.x) * k; vb.y = py - (py - vb.y) * k; vb.w = w; vb.h = vb.h * k; show();
+    };
+    var toMap = function (cx, cy) { var r = map.getBoundingClientRect(), s = Math.max(vb.w / r.width, vb.h / r.height); return { x: vb.x + (cx - r.left - (r.width - vb.w / s) / 2) * s, y: vb.y + (cy - r.top - (r.height - vb.h / s) / 2) * s, s: s }; };
+    show();
+    // on narrow screens the whole garden would be too small to read: start zoomed to readable labels, centred on
+    // the best-connected note (Fit still shows everything)
+    var boxW = box.clientWidth || 600, readable = boxW * 1.25;
+    if (vb.w > readable) {
+      var hub = 0; deg.forEach(function (d, i) { if (d > deg[hub]) hub = i; });
+      zoom(vb.w / readable, P[hub].x, P[hub].y); vb.h = vb.w * (box.clientHeight || vb.h) / boxW; // the box's proportions: no empty bands
+      vb.x = P[hub].x - vb.w / 2; vb.y = vb.h >= full.h ? full.y - (vb.h - full.h) / 2 : P[hub].y - vb.h / 2;
+      vb.x = Math.max(full.x, Math.min(full.x + full.w - vb.w, vb.x)); if (vb.h < full.h) vb.y = Math.max(full.y, Math.min(full.y + full.h - vb.h, vb.y)); show(); // stay within the garden's edges
+    }
+    box.querySelector('.gm-ctl').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var z = b.getAttribute('data-z'); if (z === 'fit') { vb = { x: full.x, y: full.y, w: full.w, h: full.h }; show(); } else zoom(z === 'in' ? 1.35 : 1 / 1.35); });
+    map.addEventListener('wheel', function (e) { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); var p = toMap(e.clientX, e.clientY); zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15, p.x, p.y); }, { passive: false });
+    var pts = {}, drag = null, pinch = null, moved = false;
+    map.addEventListener('pointerdown', function (e) {
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY }; moved = false;
+      var ids = Object.keys(pts);
+      if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) }; drag = null; }
+      else if (!e.target.closest('.garden-node')) { drag = { x: e.clientX, y: e.clientY }; try { map.setPointerCapture(e.pointerId); } catch (err) {} map.classList.add('is-panning'); }
+    });
+    map.addEventListener('pointermove', function (e) {
+      if (!pts[e.pointerId]) return; pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var ids = Object.keys(pts);
+      if (pinch && ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y), m = toMap((a.x + b.x) / 2, (a.y + b.y) / 2); zoom(d / pinch.d, m.x, m.y); pinch.d = d; moved = true; return; }
+      if (drag) { var s = toMap(0, 0).s, dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 3) moved = true; vb.x -= dx * s; vb.y -= dy * s; drag = { x: e.clientX, y: e.clientY }; show(); }
+    });
+    var end = function (e) { delete pts[e.pointerId]; if (Object.keys(pts).length < 2) pinch = null; if (!Object.keys(pts).length) { drag = null; map.classList.remove('is-panning'); } };
+    map.addEventListener('pointerup', end); map.addEventListener('pointercancel', end);
+    map.addEventListener('click', function (e) { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true); // a drag isn't a click
+    var nearOf = function (i) { var s = {}; s[i] = 1; edges.concat(rels).forEach(function (e) { if (e[0] == i) s[e[1]] = 1; if (e[1] == i) s[e[0]] = 1; }); return s; };
     map.addEventListener('mouseover', function (e) {
       var a = e.target.closest('.garden-node'); if (!a) return; var i = +a.getAttribute('data-i'), near = nearOf(i); map.classList.add('is-focus');
       [].forEach.call(map.querySelectorAll('.garden-node'), function (n) { n.classList.toggle('is-near', !!near[n.getAttribute('data-i')]); });
       [].forEach.call(map.querySelectorAll('.gm-vine, .gm-rel'), function (g) { g.classList.toggle('is-near', g.getAttribute('data-a') == i || g.getAttribute('data-b') == i); });
     });
+    map.addEventListener('mouseout', function (e) { var a = e.target.closest && e.target.closest('.garden-node'); if (a && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.garden-node') === a)) map.classList.remove('is-focus'); });
     map.addEventListener('mouseleave', function () { map.classList.remove('is-focus'); });
   }
   function gleaf(x, y, a, len, fill) {
@@ -2162,11 +2210,27 @@
     return '<g class="og-flower">' + o + '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r * 0.36).toFixed(1) + '" fill="#ffd23f"/></g>';
   }
   function hashOf(s) { var h = 7; for (var i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 2654435761); return h >>> 0; }
+  // a card's own growth, by stage, drawn on its right edge (card coordinates are offset by 10 in the svg)
+  function stageGrowth(stage, W, H, rand) {
+    var x = W + 10 - 14, y = H + 10, o = '';
+    if (stage === 'seedling') { // a sprout from the bottom edge
+      o += '<path class="og-deco" d="M' + x + ' ' + y + 'C' + (x - 1) + ' ' + (y - 6) + ' ' + (x + 1) + ' ' + (y - 10) + ' ' + x + ' ' + (y - 15) + '"/>';
+      o += gleaf(x, y - 14, -150, 8, 'var(--og-leaf, #5fbf4a)') + gleaf(x, y - 14, -30, 8, 'var(--og-leaf2, #8fd65a)');
+    } else if (stage === 'growing' || stage === 'evergreen') { // a sprig climbing the right edge; flowers on an evergreen
+      var xr = W + 10, h = Math.min(H * 0.55, 90), top = y - h;
+      o += '<path class="og-deco" d="M' + (xr - 4) + ' ' + y + 'C' + (xr + 4) + ' ' + (y - h * 0.35) + ' ' + (xr - 6) + ' ' + (y - h * 0.65) + ' ' + xr + ' ' + top + '"/>';
+      for (var i = 0; i < 5; i++) { var t = 0.15 + i * 0.18, ly = y - h * t, lx = xr - 4 + Math.sin(t * 7) * 4; o += gleaf(lx, ly, i % 2 ? -20 - rand() * 25 : -160 + rand() * 25, 8 + rand() * 3, i % 3 ? 'var(--og-leaf, #5fbf4a)' : 'var(--og-leaf2, #8fd65a)'); }
+      if (stage === 'evergreen') { [0.4, 0.72, 1].forEach(function (t, k) { o += gflower(xr - 2 + Math.sin(t * 7) * 4, y - h * t, 5.5, FLOWERS[(k * 2 + Math.floor(rand() * 5)) % 5]); }); }
+    }
+    return o;
+  }
   // vines creep clockwise round a card from its top-left corner: the more links, the further round (all the way at 9)
   function growCards(box) {
     [].forEach.call(box.querySelectorAll('.og'), function (c) {
       var old = c.querySelector('.og-vines'); if (old) old.remove();
-      var W = c.offsetWidth, H = c.offsetHeight, links = +c.getAttribute('data-links') || 0; if (!W || !links) return;
+      var W = c.offsetWidth, H = c.offsetHeight, links = +c.getAttribute('data-links') || 0, stage = c.getAttribute('data-g'); if (!W) return;
+      var deco = stageGrowth(stage, W, H, seeded(hashOf(c.getAttribute('data-note') + '~')));
+      if (!links) { if (deco) c.insertAdjacentHTML('beforeend', '<svg class="og-vines" aria-hidden="true" viewBox="0 0 ' + (W + 20) + ' ' + (H + 20) + '">' + deco + '</svg>'); return; }
       var per = 2 * (W + H), reach = Math.min(1, links / 9) * per, pts = [], rand = seeded(hashOf(c.getAttribute('data-note')));
       for (var s = 0; s <= reach; s += 6) {
         var p = s % per, x, y;
@@ -2178,7 +2242,7 @@
         if (i % 4 === 2) v += gleaf(q[0], q[1], rand() * 360, 10, i % 8 ? 'var(--og-leaf)' : 'var(--og-leaf2)');
         if (c.getAttribute('data-g') === 'evergreen' && i % 11 === 5) v += gflower(q[0], q[1], 6, FLOWERS[(i / 11 | 0) % FLOWERS.length]);
       });
-      c.insertAdjacentHTML('beforeend', '<svg class="og-vines" aria-hidden="true" viewBox="0 0 ' + (W + 20) + ' ' + (H + 20) + '">' + v + '</svg>');
+      c.insertAdjacentHTML('beforeend', '<svg class="og-vines" aria-hidden="true" viewBox="0 0 ' + (W + 20) + ' ' + (H + 20) + '">' + v + (deco || '') + '</svg>');
     });
   }
   // Cards that link to each other on the same page are joined by a vine, growing behind the cards (it shows
