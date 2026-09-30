@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.10.3
+
+- Rating a post: readers change their rating just by choosing again, with no button; a short "Thanks!" shows after each rating and fades; the count before 3 ratings reads "1 reader rating so far". The writing sticky no longer overlaps the rating box on wide screens.
+
+## 1.10.2
+
+- Ratings page: no rule between the title and the filters, and a card shows readers only once their average shows (3 or more ratings), not a count before that.
+
 ## 1.10.1
 
 - Ratings page: cards show the post's feature image, like everywhere else, and the line in the card's foot is gone.

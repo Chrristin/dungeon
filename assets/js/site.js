@@ -1987,12 +1987,13 @@
     [].forEach.call(root.querySelectorAll('.rate'), function (el) {
       if (el._rate) return; el._rate = true;
       var slug = el.getAttribute('data-slug'), api = (el.getAttribute('data-endpoint') || '').replace(/\/+$/, '') + '/ratings/' + encodeURIComponent(slug);
-      var stars = el.querySelector('.rate-stars'), readers = el.querySelector('.rate-readers'), msg = el.querySelector('.rate-msg'), change = el.querySelector('.rate-change');
+      var stars = el.querySelector('.rate-stars'), readers = el.querySelector('.rate-readers'), msg = el.querySelector('.rate-msg'), toastT = null;
       var L = function (k) { return el.getAttribute('data-' + k) || ''; }, member = el.getAttribute('data-member') === '1', notRated = stars.getAttribute('aria-valuetext');
       var mine = ratedStore(slug), hover = 0, busy = false;
       var paint = function () { var v = hover || mine; stars.style.setProperty('--v', v); stars.setAttribute('aria-valuenow', String(v)); stars.setAttribute('aria-valuetext', v ? v + ' / 5' : notRated); };
-      var say = function (t, err) { msg.textContent = t || ''; msg.classList.toggle('is-error', !!err); };
-      var settled = function () { say(mine ? L('thanks') + ' ' + mine + '.' : L('hint')); change.hidden = !mine; };
+      var say = function (t, err) { clearTimeout(toastT); msg.classList.remove('is-toast'); msg.textContent = t || ''; msg.classList.toggle('is-error', !!err); };
+      var settled = function () { say(mine ? '' : L('hint')); }; // rated: the stars say it; change it any time by choosing again
+      var thanks = function () { say(L('thanks')); void msg.offsetWidth; msg.classList.add('is-toast'); toastT = setTimeout(function () { say(''); }, 2400); };
       var auth = function () { return member ? memberPass().then(function (p) { return p ? { Authorization: 'GhostMember ' + p } : {}; }) : Promise.resolve({}); };
       var post = function (url, data) { return auth().then(function (h) { h['Content-Type'] = 'application/json'; return fetch(url, { method: 'POST', headers: h, body: JSON.stringify(data) }); }); };
       el.hidden = false; paint(); settled();
@@ -2017,7 +2018,7 @@
         if (busy || !v) return; busy = true; hover = v; paint(); el.classList.add('is-busy'); if (!member) say(L('checking'));
         token().then(function (t) { return post(api, { stars: Math.round(v * 2), rater: raterId(), turnstile: t }); }).then(function (r) {
           return r.json().catch(function () { return {}; }).then(function (d) {
-            if (r.ok) { mine = d.mine || v; ratedStore(slug, mine); readers.textContent = readersText(el, d); hover = 0; paint(); settled(); return; }
+            if (r.ok) { mine = d.mine || v; ratedStore(slug, mine); readers.textContent = readersText(el, d); hover = 0; paint(); thanks(); return; }
             hover = 0; paint(); say(r.status === 403 ? L('err-spam') : r.status === 429 ? L('err-slow') : L('err-other'), true);
           });
         }).catch(function () { hover = 0; paint(); say(L('err-other'), true); }).then(function () {
@@ -2038,7 +2039,6 @@
         e.preventDefault(); hover = cur; paint(); say(cur + ' / 5');
       });
       stars.addEventListener('blur', function () { if (!busy && hover) { hover = 0; paint(); settled(); } });
-      change.addEventListener('click', function () { change.hidden = true; say(L('hint')); stars.focus(); });
     });
   }
   // The Ratings page: everything you've rated, filtered by topic and sorted three ways; readers' averages from the Worker
@@ -2068,7 +2068,7 @@
     var endpoint = (el.getAttribute('data-endpoint') || '').replace(/\/+$/, ''); if (!endpoint) return;
     fetch(endpoint + '/ratings?posts=' + encodeURIComponent(cards.map(function (c) { return c.getAttribute('data-key'); }).join(','))).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       stats = d && d.ratings || {};
-      cards.forEach(function (c) { var s = stats[c.getAttribute('data-key')] || { n: 0, avg: null }, out = c.querySelector('.ratings-readers'); if (out) out.textContent = readersText(el, s); });
+      cards.forEach(function (c) { var s = stats[c.getAttribute('data-key')] || { n: 0, avg: null }, out = c.querySelector('.ratings-readers'); if (out) out.textContent = s.avg === null || s.avg === undefined ? '' : readersText(el, s); }); // the readers' average only, once 3 have rated
       if (sortHow === 'readers') apply();
     }).catch(function () {});
   }

@@ -1945,7 +1945,7 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
 @media (max-width: 560px) { .panel-head > .rated { float: none; margin: 0 0 0.9rem; } }
 
 .rate { margin-top: 1.6rem; padding: 1.1rem 1.2rem 1rem; border-radius: 12px; color: var(--on-card, var(--ink)); background: color-mix(in srgb, var(--on-card, var(--ink)) 7%, transparent); }
-.post-stage:has(.stickies) .rate, .post-panel:has(.stickies) .rate { margin-bottom: 4.5rem; } /* room for the sticky that overlaps the card's foot */
+@media (min-width: 900px) { .post-stage:has(.stickies) .rate, .post-panel:has(.stickies) .rate { margin-bottom: 6.5rem; } } /* room for the writing sticky that overlaps the card's foot */
 .rate[hidden] { display: none; }
 .rate-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.4rem 1rem; }
 .rate-title { margin: 0; font: 600 0.72rem/1.2 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: inherit; }
@@ -1960,9 +1960,12 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
 .rate.is-busy .rate-stars { opacity: 0.45; cursor: progress; }
 .rate-msg { margin: 0; font: 0.8rem/1.4 var(--mono); color: inherit; }
 .rate-msg.is-error { font-weight: 600; }
-.rate-change { margin-left: auto; min-height: 2.75rem; padding: 0 0.4rem; border: 0; background: none; color: var(--on-card-meta, var(--graphite)); font: 0.74rem var(--mono); text-decoration: underline; cursor: pointer; }
+.rate-msg.is-toast { animation: rate-toast 2.4s ease forwards; }
+@keyframes rate-toast { 0% { opacity: 0; transform: translateY(4px); } 12%, 75% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .rate-msg.is-toast { animation: none; } }
 .rate-turnstile:empty { display: none; }
 
+.ratings-head { border-bottom: 0; padding-bottom: 1.5rem; } /* no rule between the title and the filters */
 .ratings { padding: 0 0.5rem 3rem; }
 .ratings-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.8rem; padding: 0 0.5rem; }
 .ratings-filter { flex-wrap: wrap; }
