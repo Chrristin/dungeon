@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.3
+
+- The Plots statement is drawn in two colours: everything after its first comma is green, so `Digital Christin, in progress.` shows the second half in the theme's green. With no comma it stays one colour.
+- `page-map.hbs` and `partials/map.hbs` are removed for good; 2.0.2 meant to remove them.
+
 ## 2.0.2
 
 - Removed `page-map.hbs` and `partials/map.hbs`, left over from 2.0.0 after the rename to Plots.

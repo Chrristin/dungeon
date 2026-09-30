@@ -2018,6 +2018,7 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
     align-items: end;
     padding: clamp(2.5rem, 7vw, 4.75rem) 0 clamp(2rem, 5vw, 3.25rem);
 }
+.plots-accent { color: var(--led); }
 .plots-hero .statement-text { font-size: clamp(2.5rem, 5.4vw, 5.6rem); max-width: 15ch; transform: rotate(-1.2deg); transform-origin: left center; }
 body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
 .plots-intro { margin-top: 1.75rem; max-width: 40rem; color: var(--graphite); }

@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 2.0.2. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 2.0.3. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -145,7 +145,7 @@ An optional homepage that shows your site as a set of plots, one per subject, in
 | Part of the page | Becomes |
 |---|---|
 | Title | The badge at the top left, like `DCIP`. Also the page's own title. |
-| Excerpt | The statement, the large heading. Without one, the site description. |
+| Excerpt | The statement, the large heading. Everything after its first comma is drawn in green: `Digital Christin, in progress.` Without an excerpt, the site description. |
 | Text | The introduction under the statement. A bulleted list of links becomes a row of buttons, for the first thing a visitor should do (a résumé, your best work, a contact page). |
 | Public tags, in order | The plots, in that order. The first is the largest. |
 

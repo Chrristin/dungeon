@@ -11,6 +11,8 @@
     <div class="plots-hero">
         <div class="plots-hero-text">
             <h1 class="statement-text">{{#if custom_excerpt}}{{custom_excerpt}}{{else}}{{@site.description}}{{/if}}</h1>
+            {{!-- Everything after the statement's first comma is drawn in green ("Digital Christin, in progress."). Runs as the page is read, so it never flashes; without scripts the statement stays one colour. --}}
+            <script>(function(h){var t=h.textContent,i=t.indexOf(',');if(i<0||i===t.length-1)return;var s=document.createElement('span');s.className='plots-accent';s.textContent=t.slice(i+1);h.textContent=t.slice(0,i+1);h.appendChild(s);})(document.currentScript.previousElementSibling);</script>
             {{#if html}}<div class="plots-intro gh-content">{{content}}</div>{{/if}}
         </div>
         <aside class="plots-legend" aria-label="{{t "How far each piece has grown"}}">
