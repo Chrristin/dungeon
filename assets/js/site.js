@@ -2891,3 +2891,24 @@
     track.classList.add('now-track--moving');
   }
 })();
+
+// The map (2.0): each plot's growth meter, from how many pieces it holds, and the band's totals.
+(function () {
+  // 0 pieces: unplanted; 1-2: sprouting; 3-5 and 6-10: growing; 11-20: flourishing; more: lit
+  function level(n) { return n <= 0 ? 0 : n <= 2 ? 1 : n <= 5 ? 2 : n <= 10 ? 3 : n <= 20 ? 4 : 5; }
+  document.querySelectorAll('.map').forEach(function (map) {
+    var labels = {};
+    try { labels = JSON.parse(map.getAttribute('data-labels') || '{}'); } catch (e) {}
+    var pieces = 0, plots = 0;
+    map.querySelectorAll('.plot-meter[data-count]').forEach(function (meter) {
+      var n = parseInt(meter.getAttribute('data-count'), 10) || 0, l = level(n);
+      pieces += n; plots += 1;
+      meter.querySelectorAll('i').forEach(function (cell, i) { cell.classList.toggle('is-on', i < l); });
+      var holder = meter.closest('.plot, .plot-band-row');
+      var status = holder && holder.querySelector('.plot-status');
+      if (status && labels[l]) status.textContent = labels[l];
+    });
+    var stats = map.querySelector('.map-stats');
+    if (stats && plots) stats.textContent = pieces + ' ' + (labels.pieces || 'pieces') + ', ' + plots + ' ' + (labels.plots || 'plots');
+  });
+})();

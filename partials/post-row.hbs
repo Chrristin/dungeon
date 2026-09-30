@@ -11,6 +11,7 @@
         <time class="code" datetime="{{date format="YYYY-MM-DD"}}" title="{{date format="D MMM YYYY"}}" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</time>
         <span class="card-line" aria-hidden="true"></span>
         {{#primary_tag}}<span class="card-tag">{{name}}</span>{{/primary_tag}}
+        {{> "stage"}}
     </header>
     <h2 class="card-title"><a href="{{url}}">{{title}}</a></h2>
     {{#if custom_excerpt}}<p class="card-excerpt">{{custom_excerpt}}</p>{{else}}<p class="card-excerpt">{{excerpt words="26"}}</p>{{/if}}

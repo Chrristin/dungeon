@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 1.8.1. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 2.0.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -14,6 +14,7 @@ Version 1.8.1. Works with Ghost 5 and 6. Built for [christingeorge.com](https://
 
 ## Features
 
+- **Map homepage (optional).** A homepage of plots, one per part of your site, each a large index card showing its newest pieces and how far it has grown. Tag pages become rooms inside it. Turned on by publishing a page at `/map/`; see [The map homepage](#the-map-homepage).
 - **Index-card homepage.** Grainy pastel cards, each at a stable angle. Hovering straightens a card and brings its image's colour back. On phones, cards gain colour as they scroll into view.
 - **Filing codes.** Every post gets a code from its primary tag and date, such as `#HO260924` for a Homelab post on 24 September 2026.
 - **Reader overlay.** Posts open over the homepage in a panel; direct links still work as normal pages.
@@ -134,6 +135,29 @@ Every post ends with a round **Share** button. Hovering turns its arrow into a p
 **Stamps** are the "I was here" of this theme, on posts and on Now cards. One stamp button shows how many readers have stamped. Stamping brings the stamp down with a small animation and leaves a red SEEN impression with the date, and a name line inside the stamp invites a signature for a few seconds: just start typing. Tapping the stamp again lists the latest names. A reader can take their own name back during the same browser visit, and for up to a day after signing.
 
 Stamps need a small counter you run yourself on Cloudflare's free plan, because a Ghost theme can't store anything. Follow [`extras/stamps-worker`](extras/stamps-worker/README.md), then paste the Worker's address into the **Stamps endpoint** setting. Until then the stamps stay hidden.
+
+## The map homepage
+
+An optional homepage that shows your site as a set of plots, one per subject, instead of one long list. It's off until you publish a page with the address `/map/`, and everything on it comes from Ghost, so there's nothing to configure in the theme.
+
+**The page at `/map/`:**
+
+| Part of the page | Becomes |
+|---|---|
+| Title | The badge at the top left, like `DCIP`. Also the page's own title. |
+| Excerpt | The statement, the large heading. Without one, the site description. |
+| Text | The introduction under the statement. A bulleted list of links becomes a row of buttons, for the first thing a visitor should do (a résumé, your best work, a contact page). |
+| Public tags, in order | The plots, in that order. The first is the largest. |
+
+**Each plot** is a public tag: its name and description are the plot's heading and line, its accent colour (Tags → the tag → Accent colour) sets the card's colour, and otherwise the colour comes from the slug like any card. It lists five pieces, featured ones first, then newest. A tag with no posts yet shows as an outline marked unplanted, so you can show a subject you mean to start. Add a plot's tag to a post as a **second** tag: the first tag gives a post its filing code, and making the plot the first tag would change it.
+
+**Growth.** A post or note can carry an internal tag for its stage, `#seedling`, `#growing` (or `#budding`) or `#evergreen`, shown as the Garden page's sprouts on cards, plots and lists. Garden notes get theirs from garden-sync. Each plot's meter counts its pieces: none is unplanted, 1 to 2 sprouting, 3 to 10 growing, 11 to 20 flourishing, more is lit.
+
+**Under the plots:** the five most recently updated pieces, a link to the Garden page when you have one, and then every post, newest first, as usual. The list heading uses the List heading setting.
+
+**Inside a plot.** Each plot's tag page gets a strip with the badge (back to the map), the plot's meter and every other plot, so visitors can move between them. Other tag pages get the strip too.
+
+The map is also shown at `/map/` itself. Unpublish the page, or make it a draft, and the classic homepage comes back.
 
 ## The Garden
 

@@ -1,0 +1,11 @@
+{{!< default}}
+{{!-- The homepage. With a published page at /map/, the map comes first and the post list follows it;
+      without one, the homepage is the classic hero and cards. --}}
+{{#get "pages" filter="slug:map" limit="1" include="tags"}}
+{{#if pages}}
+    {{#foreach pages}}{{> "map"}}{{/foreach}}
+    {{> "feed" posts=../posts pagination=../pagination map=true}}
+{{else}}
+    {{> "feed" posts=../posts pagination=../pagination}}
+{{/if}}
+{{/get}}

@@ -1,5 +1,23 @@
 {{!< default}}
 
+{{!-- With a map (/map/), a tag page is a room in it: a strip back to the map, this plot's growth, and the other plots. --}}
+{{#get "pages" filter="slug:map" limit="1" include="tags"}}
+{{#foreach pages}}
+<nav class="plot-band map" aria-label="{{t "The map"}}" data-labels='{"0":"{{t "unplanted"}}","1":"{{t "sprouting"}}","2":"{{t "growing"}}","3":"{{t "growing"}}","4":"{{t "flourishing"}}","5":"{{t "lit"}}"}'>
+    <div class="plot-band-row">
+        <p class="plot-crumbs"><a class="map-badge" href="{{@site.url}}">{{title}}</a><span aria-hidden="true">›</span><span aria-current="page">{{../../tag.name}}</span></p>
+        <span class="plot-meter" data-count="{{../../pagination.total}}" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="plot-status"></span>
+    </div>
+    <ul class="plot-switch">
+        {{#foreach tags visibility="public"}}
+        <li><a href="{{url}}"{{#match slug ../../../tag.slug}} aria-current="page"{{/match}}>{{name}}</a></li>
+        {{/foreach}}
+    </ul>
+</nav>
+{{/foreach}}
+{{/get}}
+
 {{#tag}}
 <section class="statement statement--small">
     <p class="statement-role">Series, {{plural ../pagination.total empty="no posts" singular="% post" plural="% posts"}}</p>
