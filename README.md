@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 2.0.4. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 2.0.6. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -145,15 +145,15 @@ An optional homepage that shows your site as a set of plots, one per subject, in
 | Part of the page | Becomes |
 |---|---|
 | Title | The badge at the top left, like `DCIP`. Also the page's own title. |
-| Excerpt | The statement, the large heading. Everything after its first comma is drawn in green: `Digital Christin, in progress.` Without an excerpt, the site description. |
+| Excerpt | The statement, the large heading. Everything after its first comma is drawn in green, and a closing full stop becomes three dots that fill in and fade, on a loop: `Digital Christin, in progress.` Without an excerpt, the site description. |
 | Text | The introduction under the statement. A bulleted list of links becomes a row of buttons, for the first thing a visitor should do (a résumé, your best work, a contact page). |
 | Public tags, in order | The plots, in that order. The first is the largest. |
 
-**Each plot** is a public tag: its name and description are the plot's heading and line, its accent colour (Tags → the tag → Accent colour) sets the card's colour, and otherwise the colour comes from the slug like any card. Give the tag an image and it's etched faintly behind the plot, darkening when you point at it (or, on phones, as the plot scrolls into view): line drawings on a transparent background work best, since they multiply into the card's colour. It lists five pieces, featured ones first, then newest. A tag with no posts yet shows as an outline marked unplanted, so you can show a subject you mean to start. Add a plot's tag to a post as a **second** tag: the first tag gives a post its filing code, and making the plot the first tag would change it.
+**Each plot** is a public tag: its name and description are the plot's heading and line, its accent colour (Tags → the tag → Accent colour) sets the card's colour, and otherwise the colour comes from the slug like any card. Give the tag an image and it's etched faintly behind the plot, darkening when you point at it: line drawings on a transparent background work best. It lists its five newest pieces, by the date they were published. A tag with no posts yet shows as an outline marked unplanted, so you can show a subject you mean to start. Add a plot's tag to a post as a **second** tag: the first tag gives a post its filing code, and making the plot the first tag would change it.
 
 **Growth.** A post or note can carry an internal tag for its stage, `#seedling`, `#growing` (or `#budding`) or `#evergreen`, shown as the Garden page's sprouts on cards, plots and lists. Garden notes get theirs from garden-sync. Each plot's meter counts its pieces: none is unplanted, 1 to 2 sprouting, 3 to 10 growing, 11 to 20 flourishing, more is lit.
 
-**Under the plots:** the five most recently updated pieces, a link to the Garden page when you have one, and then every post, newest first, as usual. The list heading uses the List heading setting.
+**Under the plots:** the five most recently published pieces (Recently planted), a link to the Garden page when you have one, and then every post, newest first, as usual. The list heading uses the List heading setting.
 
 **Inside a plot.** Each plot's tag page gets a strip with the badge (back to the plots), the plot's meter and every other plot, so visitors can move between them. Other tag pages get the strip too.
 

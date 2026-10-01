@@ -310,7 +310,7 @@
   // Touch devices: scroll-linked "hover". Each card's --focus is the share of it that's
   // on screen, reaching 1 once the card (or most of the screen, for tall cards) is in view.
   var noHover = window.matchMedia('(hover: none)');
-  var focusCards = [].slice.call(document.querySelectorAll('.cards .card, .hero-card .card, .now-card, .scatter-card, .plots-grid .plot'));
+  var focusCards = [].slice.call(document.querySelectorAll('.cards .card, .hero-card .card, .now-card, .scatter-card'));
   var focusQueued = false;
   function updateFocus() {
     focusQueued = false;
@@ -322,7 +322,8 @@
       var visible = Math.min(r.bottom, vh) - Math.max(r.top, 0);
       var needed = Math.min(r.height, vh * 0.85);
       var f = visible <= 0 ? 0 : Math.min(1, visible / needed);
-      card.style.setProperty('--focus', f.toFixed(3));
+      var v = f.toFixed(2); // only touch the style when the value moves: cards far off screen stay at 0 and cost nothing
+      if (card._focusV !== v) { card._focusV = v; card.style.setProperty('--focus', v); }
     });
   }
   function queueFocus() { if (!focusQueued) { focusQueued = true; requestAnimationFrame(updateFocus); } }
@@ -408,7 +409,8 @@
       var visible = Math.min(r.bottom, vh) - Math.max(r.top, 0);
       var needed = Math.min(r.height, vh * 0.85);
       var f = visible <= 0 ? 0 : Math.min(1, visible / needed);
-      card.style.setProperty('--focus', f.toFixed(3));
+      var v = f.toFixed(2); // only touch the style when the value moves: cards far off screen stay at 0 and cost nothing
+      if (card._focusV !== v) { card._focusV = v; card.style.setProperty('--focus', v); }
     });
   }
   function queueFocus() { if (!focusQueued) { focusQueued = true; requestAnimationFrame(updateFocus); } }

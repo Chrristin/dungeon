@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.6
+
+- Lighter on phones. On Android Chrome, scrolling the homepage could make every card image vanish at once. It didn't reproduce in a test browser, so these cut what the page asks of a phone rather than fix a known fault:
+  - Plots no longer restyle on every scroll frame on phones; they hold their angle and colour.
+  - A plot's etching is a plain faint image instead of being colour-blended into the card, and phones load its 600px size rather than 1200px.
+  - Post cards' scroll-linked colouring only touches a card when its value changes, so cards far off screen no longer restyle as you scroll.
+
+## 2.0.5
+
+- Plots list their pieces by the date they were published, newest first. Featured posts no longer jump the queue, and editing a post (adding a tag, say) no longer moves it.
+- "Recently tended" under the plots becomes "Recently planted": the five newest pieces by publish date. Ghost counts any edit, even adding a tag, as an update, so the old list filled up with whatever was retagged last.
+- The statement's closing full stop becomes three animated dots: they fill in one by one, hold, and fade, then start again. Without animation (or scripts) the full stop stays.
+
 ## 2.0.4
 
 - Plots move again: pointing at one straightens and lifts it like every other card, and on phones plots follow the scroll the way the post cards do. Rows inside a plot nudge sideways when pointed at. An unplanted plot stays an outline.

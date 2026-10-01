@@ -2019,6 +2019,12 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
     padding: clamp(2.5rem, 7vw, 4.75rem) 0 clamp(2rem, 5vw, 3.25rem);
 }
 .plots-accent { color: var(--led); }
+/* In progress...: three dots fill in one after another, hold, and fade in the same order, then start again */
+.plots-dots i { font-style: normal; animation: plots-dot 2.4s ease-in-out infinite both; }
+.plots-dots i:nth-child(2) { animation-delay: 0.3s; }
+.plots-dots i:nth-child(3) { animation-delay: 0.6s; }
+@keyframes plots-dot { 0% { opacity: 0; } 14% { opacity: 1; } 62% { opacity: 1; } 80%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .plots-dots i { animation: none; opacity: 1; } }
 .plots-hero .statement-text { font-size: clamp(2.5rem, 5.4vw, 5.6rem); max-width: 15ch; transform: rotate(-1.2deg); transform-origin: left center; }
 body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
 .plots-intro { margin-top: 1.75rem; max-width: 40rem; color: var(--graphite); }
@@ -2077,7 +2083,6 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
     object-fit: cover;
     border-radius: inherit;
     opacity: 0.12;
-    mix-blend-mode: multiply;
     pointer-events: none;
     z-index: -1;
     transition: opacity 320ms ease, transform 700ms ease;
@@ -2200,16 +2205,18 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
 .plots-badge, .plot-switch a[aria-current="page"] { background: color-mix(in srgb, var(--led), #000 16%); border-color: transparent; }
 
 /* An unplanted plot has no card colour to multiply into: in dark mode its etching is drawn light instead */
-html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); mix-blend-mode: screen; }
+html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); }
 @media (prefers-color-scheme: dark) {
-    html[data-scheme="auto"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); mix-blend-mode: screen; }
+    html[data-scheme="auto"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); }
 }
 
-/* Touch: plots follow the scroll like the other cards (site.js sets --focus), their etchings darkening as they come into view */
+/* Touch: plots hold still. They're the largest cards on the page, and restyling them on every scroll frame
+   (as the post cards are) costs phones more than it shows. */
 @media (hover: none) {
-    .plot { transform: rotate(calc(var(--tilt) * 0.35 * (1 - var(--f)))) translateY(calc(var(--f) * -3px)); }
-    .plot-etch { opacity: calc(0.1 + 0.1 * var(--f)); transition: none; }
+    .plot { transform: rotate(calc(var(--tilt) * 0.35)); background: var(--card); }
+    .plot-etch { opacity: 0.14; transition: none; }
 }
+
 @media (prefers-reduced-motion: reduce) {
     .plot-etch, .plot-rows a { transition: none; }
     .plot:hover .plot-etch, .plot:focus-within .plot-etch, .plot-rows a:hover { transform: none; }
