@@ -2232,10 +2232,11 @@ html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); 
 
 /* ---------- 2.1: posts open from their card ---------- */
 
-/* Card order: the feature image sits first, level and with the card's corners, then the code line, title and excerpt */
-.post-panel > .panel-image { margin: 0 0 1.4rem; transform: none; }
+/* Card order: the feature image sits first, with the card's corners, then the code line, title and excerpt */
+.post-panel > .panel-image { margin: 0 0 1.4rem; }
 .post-panel > .panel-image img { border-radius: 10px; }
-.post-panel > .panel-image:hover { transform: none; }
+/* Level while a card opens into the post (as the card's image is), easing into its tilt once it's landed */
+.post-panel > .panel-image.is-level { transform: none; }
 /* An excerpt you wrote sits in a light box; the story starts after it */
 .panel-lede { padding: 0.8rem 1rem; border-radius: 12px; background: rgba(255, 255, 255, 0.1); }
 /* While a card opens, the image keeps the card's crop, then extends to the whole photo */

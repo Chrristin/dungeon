@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.1
+
+- **The card grows into its post with everything on it.** The card's image, code line, title and excerpt scale up together and land as the top of the post, on every screen size; then the story paints downward below. Closing is the exact reverse: the story wipes back up and the card, content and all, shrinks into its place. Where the post's own top doesn't line up exactly with the grown card (on wide screens, where the card grows about three times), a very short crossfade hands over at the landing.
+- **Corners change smoothly:** the card's and its image's corners go from their own sizes to the post's (and back) in step with the growth, instead of swelling with the scale and jumping at the end.
+- **The post's feature image keeps its tilt and hover again.** It stays level while the card grows, as it is on the card, then eases into its tilt once the post has landed; on closing it levels again first.
+
 ## 2.1.0
 
 - **A card opens into its post.** Tapping a card grows it into the post and closing shrinks the post back into the card's place. On phones the whole card travels and lands as the top of the post, and the story appears below it; on wider screens the card's shape grows and the post settles in on it. Everything moves by transform alone. Reduced motion, garden notes and links inside a post open as before.

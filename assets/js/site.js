@@ -2899,15 +2899,13 @@
   }
   softImages(document);
 
-  // A card grows into its post, and shrinks back into its place on close. On phones the card and the post are the
-  // same width and laid out in the same order, so the whole card travels and lands as the top of the post, and the
-  // story appears below it. On wider screens the post is wider than the card, so only the card's shape grows, and
-  // the post settles in on it. Everything moves by transform alone, which phones hand to their graphics chip.
+  // A card grows into its post, and shrinks back into its place on close. Posts are laid out in the card's order,
+  // so the card, with what's on it, can travel and land as the top of its post; the story then paints below it.
+  // Everything moves by transform (and the corners alongside), which phones hand to their graphics chip.
   var morphOK = 'animate' in Element.prototype && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   var morphCard = null, openGhost = null, morphBusy = false, M_MS = 380, M_EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
   var narrowScreen = function () { return window.innerWidth <= 760; };
   function ownBox(el) { var r = el.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight; return { x: r.left + r.width / 2 - w / 2, y: r.top + r.height / 2 - h / 2, w: w, h: h }; }
-  function seenBox(el) { var r = el.getBoundingClientRect(), t = Math.max(r.top, 0), b = Math.min(r.bottom, window.innerHeight); return { x: r.left, y: t, w: r.width, h: Math.max(b - t, 80) }; }
   function tiltOf(card) { return getComputedStyle(card).getPropertyValue('--tilt').trim() || '0deg'; }
   function makeGhost(card, empty, box) {
     var g = card.cloneNode(true);
@@ -2932,57 +2930,86 @@
     };
     if (img.complete && img.naturalWidth) go(); else img.addEventListener('load', go, { once: true });
   }
+  // The post's own corner radius, the card's, and their images'
+  function radiusOf(el, d) { return el ? (parseFloat(getComputedStyle(el).borderTopLeftRadius) || d) : d; }
+  // The card as it lands on the post: the same proportions, scaled to the post's width, at the post's top
+  // Corners that change smoothly on screen while the box is scaled: at each moment the radius is set so that,
+  // multiplied by the scale at that moment, it's the right step between the start and end corners on screen.
+  // Both the scaling and these steps follow the same easing, so they stay in step.
+  function cornerFrames(r0, r1, s0, s1) {
+    var f = [];
+    for (var k = 0; k <= 12; k++) { var t = k / 12, s = s0 + (s1 - s0) * t; f.push({ offset: t, borderRadius: ((r0 + (r1 - r0) * t) / s).toFixed(2) + 'px' }); }
+    return f;
+  }
+  function landing(cardBox, panelRect) { var s = panelRect.width / cardBox.w; return { s: s, x: panelRect.left, y: panelRect.top, w: cardBox.w * s, h: cardBox.h * s }; }
+  // The real card, content and all, grows into the post and lands as its top part. Scaling would swell its
+  // corners, so they're animated alongside, compensated for the scale: on screen they go smoothly from the
+  // card's to the post's. Then the post's own top takes over (a very short crossfade where the two don't
+  // line up exactly), and the story paints downward below it. Closing is the exact reverse.
   function morphOpen(card) {
     var panel = body.querySelector('.post-panel'); if (!panel) { reader.classList.remove('morph-hide', 'is-morphing'); return; }
-    var tilt = tiltOf(card), from = ownBox(card), p = panel.getBoundingClientRect();
-    var whole = narrowScreen() && p.top < window.innerHeight - 120, g, anim;
-    if (whole) {
-      var s = p.width / from.w, land = { x: p.left, y: p.top, w: from.w * s, h: from.h * s };
-      g = makeGhost(card, false, from);
-      anim = g.animate([{ transform: 'rotate(' + tilt + ')' }, { transform: onto(from, land, '0deg') }], { duration: M_MS, easing: M_EASE, fill: 'forwards' });
-    } else {
-      var to = seenBox(panel);
-      g = makeGhost(card, true, to);
-      anim = g.animate([{ transform: onto(to, from, tilt) }, { transform: 'none' }], { duration: M_MS, easing: M_EASE, fill: 'forwards' });
-    }
+    var fig = panel.querySelector(':scope > .panel-image'); if (fig) fig.classList.add('is-level'); // level, as on the card, until it lands
+    var tilt = tiltOf(card), from = ownBox(card), p = panel.getBoundingClientRect(), land = landing(from, p);
+    var cR = radiusOf(card, 14), pR = radiusOf(panel, 20), media = card.querySelector('.card-media');
+    var mR = radiusOf(media, 10), fR = radiusOf(fig && fig.querySelector('img'), 10);
+    var g = makeGhost(card, false, from), gm = g.querySelector('.card-media');
+    var timing = { duration: M_MS, easing: M_EASE, fill: 'forwards' };
+    var anim = g.animate([{ transform: 'translate(0px, 0px) scale(1, 1) rotate(' + tilt + ')' }, { transform: onto(from, land, '0deg') }], timing);
+    g.animate(cornerFrames(cR, pR, 1, land.s), timing);
+    if (gm) gm.animate(cornerFrames(mR, fR, 1, land.s), timing);
     card.style.visibility = 'hidden'; // the card has become the post
     morphCard = card; openGhost = g;
     requestAnimationFrame(function () { reader.classList.remove('is-morphing'); }); // the page dims while it grows
     anim.onfinish = function () {
       if (openGhost !== g) return; // closed before it finished opening: the close has taken over
       openGhost = null;
+      var H = panel.offsetHeight, top = Math.min(land.h, H), seen = Math.max(top, Math.min(H, window.innerHeight - p.top));
+      var clipAt = function (h) { return 'inset(0 0 ' + Math.max(0, H - h).toFixed(1) + 'px 0 round ' + pR + 'px)'; };
+      panel.style.clipPath = clipAt(top); // only the part the card covers, for now
       reader.classList.remove('morph-hide');
-      [].forEach.call(panel.children, function (c) {
-        if (whole && c.matches('.panel-image, .panel-head')) return; // already in place: it's what the card showed
-        c.animate({ opacity: [0, 1] }, { duration: 220, easing: 'ease-out' });
-      });
-      g.animate({ opacity: [1, 0] }, { duration: whole ? 140 : 180, fill: 'forwards' }).onfinish = function () { g.remove(); };
-      extendImage(panel);
+      g.animate({ opacity: [1, 0] }, { duration: narrowScreen() ? 80 : 110, fill: 'forwards' }).onfinish = function () {
+        g.remove();
+        if (fig) fig.classList.remove('is-level'); // the image eases into its tilt
+        var paint = panel.animate({ clipPath: [clipAt(top), clipAt(seen)] }, { duration: 300, easing: 'cubic-bezier(0.3, 0.7, 0.2, 1)' }); // the story paints downward
+        paint.onfinish = function () { panel.style.clipPath = ''; extendImage(panel); };
+      };
     };
   }
   function morphClose() {
     var card = morphCard, panel = body.querySelector('.post-panel'); morphCard = null;
     var cr = card.getBoundingClientRect();
-    if (!panel || !card.isConnected || cr.bottom < 0 || cr.top > window.innerHeight) { card.style.visibility = ''; reader.close(); return; } // its card is off screen: just close
+    if (!panel || !card.isConnected || cr.bottom < 0 || cr.top > window.innerHeight) { card.style.visibility = ''; reader.close(); reader.classList.remove('no-rise'); return; } // its card is off screen: just close
     morphBusy = true;
     if (openGhost) { openGhost.remove(); openGhost = null; reader.classList.remove('morph-hide'); } // closed while still opening
-    var tilt = tiltOf(card), to = ownBox(card), p = panel.getBoundingClientRect();
-    var whole = narrowScreen() && p.top > -40 && p.top < window.innerHeight - 120, g, anim;
-    reader.classList.add('morph-out', 'is-morphing'); // the post and the dimming fade under the card
-    if (whole) {
-      var s = p.width / to.w, land = { x: p.left, y: p.top, w: to.w * s, h: to.h * s };
-      g = makeGhost(card, false, to);
-      anim = g.animate([{ transform: onto(to, land, '0deg') }, { transform: 'rotate(' + tilt + ')' }], { duration: M_MS, easing: M_EASE, fill: 'forwards' });
-    } else {
-      var from = seenBox(panel);
-      g = makeGhost(card, true, from);
-      anim = g.animate([{ transform: 'none' }, { transform: onto(from, to, tilt) }], { duration: M_MS, easing: M_EASE, fill: 'forwards' });
-    }
-    anim.onfinish = function () {
-      card.style.visibility = ''; g.remove(); morphBusy = false;
-      reader.close();
-      reader.classList.remove('morph-out', 'is-morphing', 'no-rise');
+    panel.getAnimations().forEach(function (a) { a.finish(); }); panel.style.clipPath = '';
+    var fig = panel.querySelector(':scope > .panel-image'); if (fig) fig.classList.add('is-level'); // the image levels first
+    var tilt = tiltOf(card), to = ownBox(card), p = panel.getBoundingClientRect(), land = landing(to, p);
+    var cR = radiusOf(card, 14), pR = radiusOf(panel, 20), mR = radiusOf(card.querySelector('.card-media'), 10), fR = radiusOf(fig && fig.querySelector('img'), 10);
+    var H = panel.offsetHeight, top = Math.min(land.h, H), seen = Math.max(top, Math.min(H, window.innerHeight - p.top));
+    var clipAt = function (h) { return 'inset(0 0 ' + Math.max(0, H - h).toFixed(1) + 'px 0 round ' + pR + 'px)'; };
+    reader.classList.add('is-morphing'); // the dimming lifts
+    var shrink = function () {
+      var g = makeGhost(card, false, to), gm = g.querySelector('.card-media');
+      var start = { transform: onto(to, land, '0deg') }, timing = { duration: M_MS, easing: M_EASE, fill: 'forwards' };
+      g.style.transform = start.transform; g.style.borderRadius = (pR / land.s).toFixed(2) + 'px';
+      if (gm) gm.style.borderRadius = (fR / land.s).toFixed(2) + 'px';
+      g.animate({ opacity: [0, 1] }, { duration: narrowScreen() ? 80 : 110, fill: 'forwards' }).onfinish = function () {
+        reader.classList.add('morph-hide'); // the post's top hands back to the card
+        var anim = g.animate([start, { transform: 'translate(0px, 0px) scale(1, 1) rotate(' + tilt + ')' }], timing);
+        g.animate(cornerFrames(pR, cR, land.s, 1), timing);
+        if (gm) gm.animate(cornerFrames(fR, mR, land.s, 1), timing);
+        anim.onfinish = function () {
+          card.style.visibility = ''; g.remove(); morphBusy = false;
+          reader.close();
+          reader.classList.remove('morph-out', 'morph-hide', 'is-morphing', 'no-rise');
+        };
+      };
     };
+    if (p.top > -top && seen > top + 4) { // the story wipes back up into the top part, then the card shrinks away
+      panel.animate({ clipPath: [clipAt(seen), clipAt(top)] }, { duration: 240, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)', fill: 'forwards' }).onfinish = shrink;
+    } else { // read far down the post: its top is off screen, so the post fades and the card comes back down to its place
+      reader.classList.add('morph-out'); shrink();
+    }
   }
   function closeReader() {
     if (!reader || !reader.open || morphBusy) return;
