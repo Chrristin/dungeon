@@ -3,6 +3,20 @@
 {{#post}}
 <div class="post-stage">
     <article class="post-panel {{post_class}}" data-key="{{slug}}">
+        {{!-- Card order: the image comes first, then the code line, title and excerpt, as on the card, so a card can
+              open into its post without anything changing place. The internal tag #hide-image keeps the feature
+              image off the post itself; it still shows on cards and in social previews --}}
+        {{#if feature_image}}{{^has tag="#hide-image"}}
+        <figure class="panel-image">
+            <img
+                srcset="{{img_url feature_image size="s"}} 600w,
+                        {{img_url feature_image size="m"}} 1200w"
+                sizes="(max-width: 800px) 92vw, 760px"
+                src="{{img_url feature_image size="m"}}"
+                alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">
+            {{#if feature_image_caption}}<figcaption>{{feature_image_caption}}</figcaption>{{/if}}
+        </figure>
+        {{/has}}{{/if}}
         <header class="panel-head">
             <div class="panel-meta">
                 <span class="code" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</span>
@@ -15,19 +29,6 @@
             {{#if custom_excerpt}}<p class="panel-lede">{{custom_excerpt}}</p>{{/if}}
         </header>
 
-        {{!-- The internal tag #hide-image keeps the feature image off the post itself; it still shows
-              on cards and in social previews --}}
-        {{#if feature_image}}{{^has tag="#hide-image"}}
-        <figure class="panel-image">
-            <img
-                srcset="{{img_url feature_image size="s"}} 600w,
-                        {{img_url feature_image size="m"}} 1200w"
-                sizes="(max-width: 800px) 92vw, 760px"
-                src="{{img_url feature_image size="m"}}"
-                alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">
-            {{#if feature_image_caption}}<figcaption>{{feature_image_caption}}</figcaption>{{/if}}
-        </figure>
-        {{/has}}{{/if}}
 
         <div class="panel-content gh-content">
             {{content}}

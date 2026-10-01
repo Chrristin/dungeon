@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{meta_title}}</title>
     <link rel="preload" href="{{asset "fonts/geist-sans-latin-400-normal.woff2"}}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.0.6">
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.1.0">
     {{ghost_head}}
 </head>
 <body class="{{body_class}}{{#if @custom.floating_nav}}{{#if @site.navigation}} has-dock{{/if}}{{/if}}" data-tilt="{{#match @custom.card_tilt "None"}}0{{else match @custom.card_tilt "Playful"}}5{{else match @custom.card_tilt "Wild"}}10{{else}}2.5{{/match}}">
@@ -109,7 +109,7 @@
 </footer>
 
 
-<script src="{{asset "js/site.js"}}&r=2.0.6" defer></script>
+<script src="{{asset "js/site.js"}}&r=2.1.0" defer></script>
 {{ghost_foot}}
 <div class="gk" hidden data-labels='{"search":"{{t "Search the garden"}}","keys":"{{t "Keyboard shortcuts"}}","close":"{{t "Close"}}","s":"{{t "search the garden"}}","r":"{{t "a random note"}}","g":"{{t "go to the garden"}}","h":"{{t "show these shortcuts"}}","none":"{{t "No notes match."}}"}' data-garden="{{@site.url}}/garden/"></div>
 </body>

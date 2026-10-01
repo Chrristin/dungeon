@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 2.0.6. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 2.1.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -197,7 +197,7 @@ Use `<img src="..." alt="Their Name">` in place of the initials span for a photo
 
 ## routes.yaml
 
-[`docs/routes.yaml`](docs/routes.yaml) keeps `#now` and `#note` posts off your homepage, so they appear only on their own pages. The theme also skips them on the homepage as a safety net.
+Upload [`docs/routes.yaml`](docs/routes.yaml) in Ghost Admin (Settings > Labs > Routes). It keeps Now entries, Scatter notes and garden notes out of the homepage's list, each on its own page, while garden notes keep their addresses through a second collection at `/notes/`. Leaving garden notes out matters: the theme never shows them as cards, so if the homepage list included them they'd still take up places on each page, and a page of 25 could show only a handful of cards. Ghost doesn't apply a theme's routes file by itself when the theme updates, so upload it again whenever this file changes. [`docs/redirects.yaml`](docs/redirects.yaml) optionally sends visitors of `/notes/` to the Garden page.
 
 ## The demo site
 

@@ -419,7 +419,9 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
    moving area stays within the card's margins, so nothing pokes out past its edge. */
 .post-panel .stickies { max-width: none; margin: 1.4rem 0 0; }
 .post-panel .stickies-stage { margin: -1.2rem; padding: 1.2rem; }
-.post-panel .post-panel .stickies-toggle { border-color: rgba(23, 25, 30, 0.2); color: #17191e; }
+/* Inside the post's card the stickies' controls take the card's ink, not the page's: dark on a light card in either mode */
+.post-panel .stickies { --ink: var(--on-card); --graphite: var(--on-card-soft); --rule: var(--on-card-rule); --wash: rgba(255, 255, 255, 0.4); }
+.post-panel .stickies-toggle { border-color: var(--on-card-rule); color: var(--on-card); }
 @media (min-width: 900px) { .post-panel .stickies-compose { right: -0.6rem; } }
 .reader-close {
     position: sticky;
@@ -440,9 +442,14 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
 .reader-close:hover { background: rgba(255, 255, 255, 0.26); }
 .reader-close:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 html.reader-open { overflow: hidden; }
+/* The post arrives solid and slides up into place; the page behind dims around it. (It used to fade in,
+   which let the cards behind show through the post for a moment.) When a card grows into the post, the
+   card does the arriving instead. */
 @media (prefers-reduced-motion: no-preference) {
-    .reader[open] .post-panel { animation: reader-in 240ms ease-out; }
-    @keyframes reader-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .reader[open]:not(.no-rise) .post-panel { animation: reader-in 240ms ease-out; }
+    @keyframes reader-in { from { transform: translateY(12px); } to { transform: none; } }
+    .reader[open]:not(.no-rise)::backdrop { animation: reader-dim 240ms ease-out; }
+    @keyframes reader-dim { from { background-color: rgba(12, 13, 16, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } }
 }
 
 
@@ -2221,3 +2228,60 @@ html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); 
     .plot-etch, .plot-rows a { transition: none; }
     .plot:hover .plot-etch, .plot:focus-within .plot-etch, .plot-rows a:hover { transform: none; }
 }
+
+
+/* ---------- 2.1: posts open from their card ---------- */
+
+/* Card order: the feature image sits first, level and with the card's corners, then the code line, title and excerpt */
+.post-panel > .panel-image { margin: 0 0 1.4rem; transform: none; }
+.post-panel > .panel-image img { border-radius: 10px; }
+.post-panel > .panel-image:hover { transform: none; }
+/* An excerpt you wrote sits in a light box; the story starts after it */
+.panel-lede { padding: 0.8rem 1rem; border-radius: 12px; background: rgba(255, 255, 255, 0.1); }
+/* While a card opens, the image keeps the card's crop, then extends to the whole photo */
+.panel-image.is-cropped img { aspect-ratio: 16 / 10; object-fit: cover; }
+/* An image that isn't here yet keeps its place and fades in when it arrives */
+.panel-image img { transition: opacity 320ms ease; }
+.panel-image img.is-waiting { opacity: 0; }
+
+/* Phones: the post's top has the card's proportions, so the card lands as the top of the post */
+@media (max-width: 760px) {
+    .post-panel { padding: 0.85rem 0.85rem 2rem; }
+    .post-panel > .panel-image { margin-bottom: 0.55rem; }
+    .panel-meta { margin-bottom: 0.45rem; padding: 0 0.3rem; }
+    .panel-head > .panel-title { margin: 0 0.3rem; font-size: 1.35rem; line-height: 1.2; letter-spacing: -0.02em; }
+    .panel-sub { margin: 0.4rem 0.3rem 0; font-size: 0.85rem; }
+    .panel-lede { margin: 0.8rem 0 0; font-size: 1rem; }
+    .panel-head { margin-bottom: 1.4rem; }
+    .panel-content { padding: 0 0.3rem; }
+}
+
+/* The card on its way: a copy of the card that grows into the post (or shrinks back into the card) */
+.morph-ghost { position: fixed; margin: 0; z-index: 5; pointer-events: none; transition: none; transform-origin: center; box-sizing: border-box; }
+.morph-ghost .card-title a::after { display: none; }
+.reader.morph-hide .post-panel { opacity: 0; }
+.reader.morph-out .post-panel { opacity: 0; transition: opacity 160ms ease; }
+.reader::backdrop { transition: background-color 380ms ease, backdrop-filter 380ms ease, -webkit-backdrop-filter 380ms ease; }
+.reader.is-morphing::backdrop { background-color: rgba(12, 13, 16, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
+.reader.morph-hide .reader-close, .reader.morph-out .reader-close { opacity: 0; }
+.reader-close { transition: opacity 180ms ease; }
+
+/* Phones and tablets draw cards without colour-blending: some phones can't draw blended images at all, and
+   leave them blank. The image, the colour wash over it and the paper grain are drawn plainly instead,
+   tuned to look close to the blended version. Desktop keeps the blending. */
+@media (hover: none) {
+    .card-media img, .card:hover .card-media img, .card:focus-within .card-media img { mix-blend-mode: normal; }
+    .card-media::after { mix-blend-mode: normal; opacity: calc(var(--img-wash, 0.42) * 0.55); }
+    .card:hover .card-media::after, .card:focus-within .card-media::after { opacity: calc(var(--img-wash-hover, 0.18) * 0.55); }
+    .card::before, .post-panel::before { mix-blend-mode: normal; opacity: 0.1; }
+}
+
+/* Stickies can be picked up and moved around the board */
+.stickies:not(.is-list) .sticky { touch-action: manipulation; }
+.sticky.is-dragging { cursor: grabbing; transition: none; filter: drop-shadow(0 14px 16px rgba(0, 0, 0, 0.28)); }
+@media (hover: hover) { .stickies:not(.is-list) .sticky { cursor: grab; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .panel-image img, .reader-close { transition: none; }
+}
+

@@ -1166,8 +1166,9 @@
       var menu = shareBtn.parentNode.querySelector('.post-share-menu');
       var opening = menu.hidden;
       if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
+        // The share sheet opens straight away (browsers only allow it right after a tap), and the plane takes off with it
+        navigator.share({ title: title, url: url }).catch(function () {});
         if (!calmStamps) launchPlane(shareBtn, 130);
-        setTimeout(function () { navigator.share({ title: title, url: url }).catch(function () {}); }, calmStamps ? 0 : 600);
         return;
       }
       closeShareMenus(menu);
@@ -1631,7 +1632,81 @@
       board.appendChild(n); fitSticky(n); addDoodle(el, n, item.s); addBorder(el, n, item.s);
     });
     el._landing = null;
+    // Stickies this reader has moved go back where they put them (in this browser only), on top, in the order moved
+    var spots = stickySpots(el), z = all.length + 1;
+    Object.keys(spots).sort(function (a, b) { return spots[a][2] - spots[b][2]; }).forEach(function (id) {
+      var n = board.querySelector('.sticky[data-id="' + id + '"]'); if (!n) return;
+      n.style.left = Math.max(0, Math.min(W - nw, spots[id][0] * W)) + 'px';
+      n.style.top = Math.max(0, Math.min(H - nh, spots[id][1] * H)) + 'px';
+      n.style.zIndex = z++;
+    });
   }
+  // Moved stickies, per post, in this browser: where each was dropped, as a share of the board's size
+  var spotsKey = function (el) { return 'dungeon-sticky-spots:' + el.getAttribute('data-slug'); };
+  function stickySpots(el) { try { return JSON.parse(localStorage.getItem(spotsKey(el)) || '{}'); } catch (e) { return {}; } }
+  function saveStickySpot(el, n) {
+    var board = el.querySelector('.stickies-board'), W = board.clientWidth, H = board.clientHeight; if (!W || !H) return;
+    var spots = stickySpots(el);
+    spots[n.getAttribute('data-id')] = [parseFloat(n.style.left) / W, parseFloat(n.style.top) / H, Date.now()];
+    try { localStorage.setItem(spotsKey(el), JSON.stringify(spots)); } catch (e) {}
+  }
+  // Picking a sticky up and moving it: with a mouse, press and move; on a touchscreen, press and hold briefly first,
+  // so a swipe across the stickies still scrolls the page. A press without a move is still a tap (lift to read).
+  (function () {
+    var drag = null;
+    function canDrag(n) { var el = n && n.closest('.stickies'); return el && !el.classList.contains('is-list') && !el._focus && !n.getAttribute('data-moving') && n.getAttribute('aria-hidden') !== 'true' ? el : null; }
+    function begin(n, el, x, y) {
+      var board = el.querySelector('.stickies-board');
+      drag = { n: n, el: el, board: board, x0: x, y0: y, l0: parseFloat(n.style.left) || 0, t0: parseFloat(n.style.top) || 0, moved: false };
+    }
+    function lift() {
+      drag.moved = true; drag.n.classList.add('is-dragging');
+      var notes = [].slice.call(drag.board.children), top = Math.max.apply(null, notes.map(function (x) { return +x.style.zIndex || 0; }));
+      drag.n.style.zIndex = top + 1;
+    }
+    function move(x, y) {
+      var W = drag.board.clientWidth, H = drag.board.clientHeight, w = drag.n.offsetWidth, h = drag.n.offsetHeight;
+      drag.n.style.left = Math.max(0, Math.min(W - w, drag.l0 + x - drag.x0)) + 'px';
+      drag.n.style.top = Math.max(0, Math.min(H - h, drag.t0 + y - drag.y0)) + 'px';
+    }
+    function end() {
+      if (!drag) return;
+      if (drag.moved) { drag.n.classList.remove('is-dragging'); saveStickySpot(drag.el, drag.n); drag.el._dragged = Date.now(); }
+      drag = null;
+    }
+    document.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'touch' || e.button !== 0) return;
+      var n = e.target.closest && e.target.closest('.sticky'), el = canDrag(n); if (!el) return;
+      begin(n, el, e.clientX, e.clientY);
+    });
+    document.addEventListener('pointermove', function (e) {
+      if (!drag || e.pointerType === 'touch') return;
+      if (!drag.moved) { if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 5) return; lift(); }
+      e.preventDefault(); move(e.clientX, e.clientY);
+    });
+    document.addEventListener('pointerup', function (e) { if (e.pointerType !== 'touch') end(); });
+    // touch: hold still for a moment to pick it up
+    var hold = null;
+    function onTouchMove(e) {
+      var t = e.touches[0]; if (!drag || !t) return;
+      if (!drag.moved) { // still waiting for the hold: moving first means scrolling, so let it go
+        if (Math.hypot(t.clientX - drag.x0, t.clientY - drag.y0) > 8) { clearTimeout(hold); drag.n.removeEventListener('touchmove', onTouchMove); drag = null; }
+        return;
+      }
+      e.preventDefault(); move(t.clientX, t.clientY);
+    }
+    document.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) return;
+      var n = e.target.closest && e.target.closest('.sticky'), el = canDrag(n); if (!el) return;
+      var t = e.touches[0]; begin(n, el, t.clientX, t.clientY);
+      n.addEventListener('touchmove', onTouchMove, { passive: false });
+      clearTimeout(hold);
+      hold = setTimeout(function () { if (drag && drag.n === n) { lift(); if (navigator.vibrate) navigator.vibrate(8); } }, 320);
+    }, { passive: true });
+    document.addEventListener('touchend', function () { clearTimeout(hold); if (drag) { drag.n.removeEventListener('touchmove', onTouchMove); end(); } });
+    document.addEventListener('touchcancel', function () { clearTimeout(hold); if (drag) { drag.n.removeEventListener('touchmove', onTouchMove); drag.n.classList.remove('is-dragging'); drag = null; } });
+    document.addEventListener('contextmenu', function (e) { if (drag && drag.moved) e.preventDefault(); }); // a long press shouldn't open the phone's menu
+  })();
   // Sending a sticky to the back, as one motion: it's pulled out just far enough to clear its neighbours
   // (so passing beneath them never "pops"), slides back underneath, and the neighbours react: nudged
   // aside as it pulls away, lifting a touch to let it under, then settling.
@@ -1923,6 +1998,7 @@
       if (!on) layoutStickies(el); else listAroundComposer(el);
       return;
     }
+    if (el._dragged && Date.now() - el._dragged < 400) return; // that was a drop, not a tap
     var n = ev.target.closest('.sticky'); if (n && n.getAttribute('aria-hidden') !== 'true') tapSticky(el, n);
   });
   document.addEventListener('click', function (ev) { // a tap anywhere else puts a lifted sticky back
@@ -2785,20 +2861,149 @@
   initGardenNote(document, readJson(document.getElementById('garden-note')));
   initPostGarden(document);
 
-  function closeReader() { if (reader && reader.open) reader.close(); }
+  // Posts preload: a post's text downloads as its card comes within a screen of view (and when a finger or
+  // pointer lands on a card), so opening it doesn't wait. Skipped with Data Saver on or on very slow connections.
+  var postCache = {}, preQueue = [], preBusy = 0;
+  var conn = navigator.connection || {}, slowNet = !!conn.saveData || /(^|-)2g$/.test(conn.effectiveType || '');
+  function loadPost(url) {
+    var key = url.split('#')[0];
+    if (!postCache[key]) {
+      postCache[key] = fetch(key, { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); });
+      postCache[key].catch(function () { delete postCache[key]; }); // a failed download is tried again next time
+    }
+    return postCache[key];
+  }
+  function pumpPreload() {
+    while (preBusy < 2 && preQueue.length) {
+      var u = preQueue.shift(); if (postCache[u]) continue;
+      preBusy++; loadPost(u).catch(function () {}).then(function () { preBusy--; pumpPreload(); });
+    }
+  }
+  var cardUrl = function (card) { var a = card && card.querySelector('.card-title a'); return a && a.origin === location.origin ? a.href.split('#')[0] : null; };
+  if (!slowNet && 'IntersectionObserver' in window) {
+    var preWatch = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (!e.isIntersecting) return; preWatch.unobserve(e.target); var u = cardUrl(e.target); if (u) { preQueue.push(u); pumpPreload(); } });
+    }, { rootMargin: '100% 0px' });
+    document.querySelectorAll('.cards .card, .hero-card .card').forEach(function (c) { preWatch.observe(c); });
+  }
+  document.addEventListener('pointerdown', function (e) { var c = e.target.closest && e.target.closest('.cards .card, .hero-card .card'); var u = cardUrl(c); if (u) loadPost(u).catch(function () {}); }, { passive: true });
+
+  // An image that hasn't arrived keeps its place and fades in when it does
+  function softImages(root) {
+    root.querySelectorAll('.post-panel > .panel-image img').forEach(function (img) {
+      if (img.complete && img.naturalWidth) return;
+      img.classList.add('is-waiting');
+      var done = function () { img.classList.remove('is-waiting'); };
+      img.addEventListener('load', done, { once: true }); img.addEventListener('error', done, { once: true });
+    });
+  }
+  softImages(document);
+
+  // A card grows into its post, and shrinks back into its place on close. On phones the card and the post are the
+  // same width and laid out in the same order, so the whole card travels and lands as the top of the post, and the
+  // story appears below it. On wider screens the post is wider than the card, so only the card's shape grows, and
+  // the post settles in on it. Everything moves by transform alone, which phones hand to their graphics chip.
+  var morphOK = 'animate' in Element.prototype && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var morphCard = null, openGhost = null, morphBusy = false, M_MS = 380, M_EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+  var narrowScreen = function () { return window.innerWidth <= 760; };
+  function ownBox(el) { var r = el.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight; return { x: r.left + r.width / 2 - w / 2, y: r.top + r.height / 2 - h / 2, w: w, h: h }; }
+  function seenBox(el) { var r = el.getBoundingClientRect(), t = Math.max(r.top, 0), b = Math.min(r.bottom, window.innerHeight); return { x: r.left, y: t, w: r.width, h: Math.max(b - t, 80) }; }
+  function tiltOf(card) { return getComputedStyle(card).getPropertyValue('--tilt').trim() || '0deg'; }
+  function makeGhost(card, empty, box) {
+    var g = card.cloneNode(true);
+    g.classList.add('morph-ghost'); g.classList.remove('is-opening'); g.setAttribute('aria-hidden', 'true');
+    g.querySelectorAll('[id]').forEach(function (n) { n.removeAttribute('id'); });
+    if (empty) g.textContent = '';
+    g.style.visibility = 'visible'; // the card itself is hidden while it's open as the post
+    g.style.left = box.x + 'px'; g.style.top = box.y + 'px'; g.style.width = box.w + 'px'; g.style.height = box.h + 'px';
+    reader.appendChild(g); return g;
+  }
+  // the transform that carries a box placed at `at` onto `to`
+  function onto(at, to, rot) {
+    return 'translate(' + (to.x + to.w / 2 - at.x - at.w / 2).toFixed(1) + 'px,' + (to.y + to.h / 2 - at.y - at.h / 2).toFixed(1) + 'px) scale(' + (to.w / at.w).toFixed(4) + ',' + (to.h / at.h).toFixed(4) + ') rotate(' + rot + ')';
+  }
+  function extendImage(panel) { // from the card's crop to the whole photo, once it has loaded
+    var fig = panel.querySelector(':scope > .panel-image.is-cropped'); if (!fig) return;
+    var img = fig.querySelector('img');
+    var go = function () {
+      var w = img.clientWidth, now = img.clientHeight, full = img.naturalWidth ? w * img.naturalHeight / img.naturalWidth : now;
+      if (!morphOK || Math.abs(full - now) < 4) { fig.classList.remove('is-cropped'); return; }
+      img.animate({ height: [now + 'px', full + 'px'] }, { duration: 460, easing: M_EASE }).onfinish = function () { fig.classList.remove('is-cropped'); };
+    };
+    if (img.complete && img.naturalWidth) go(); else img.addEventListener('load', go, { once: true });
+  }
+  function morphOpen(card) {
+    var panel = body.querySelector('.post-panel'); if (!panel) { reader.classList.remove('morph-hide', 'is-morphing'); return; }
+    var tilt = tiltOf(card), from = ownBox(card), p = panel.getBoundingClientRect();
+    var whole = narrowScreen() && p.top < window.innerHeight - 120, g, anim;
+    if (whole) {
+      var s = p.width / from.w, land = { x: p.left, y: p.top, w: from.w * s, h: from.h * s };
+      g = makeGhost(card, false, from);
+      anim = g.animate([{ transform: 'rotate(' + tilt + ')' }, { transform: onto(from, land, '0deg') }], { duration: M_MS, easing: M_EASE, fill: 'forwards' });
+    } else {
+      var to = seenBox(panel);
+      g = makeGhost(card, true, to);
+      anim = g.animate([{ transform: onto(to, from, tilt) }, { transform: 'none' }], { duration: M_MS, easing: M_EASE, fill: 'forwards' });
+    }
+    card.style.visibility = 'hidden'; // the card has become the post
+    morphCard = card; openGhost = g;
+    requestAnimationFrame(function () { reader.classList.remove('is-morphing'); }); // the page dims while it grows
+    anim.onfinish = function () {
+      if (openGhost !== g) return; // closed before it finished opening: the close has taken over
+      openGhost = null;
+      reader.classList.remove('morph-hide');
+      [].forEach.call(panel.children, function (c) {
+        if (whole && c.matches('.panel-image, .panel-head')) return; // already in place: it's what the card showed
+        c.animate({ opacity: [0, 1] }, { duration: 220, easing: 'ease-out' });
+      });
+      g.animate({ opacity: [1, 0] }, { duration: whole ? 140 : 180, fill: 'forwards' }).onfinish = function () { g.remove(); };
+      extendImage(panel);
+    };
+  }
+  function morphClose() {
+    var card = morphCard, panel = body.querySelector('.post-panel'); morphCard = null;
+    var cr = card.getBoundingClientRect();
+    if (!panel || !card.isConnected || cr.bottom < 0 || cr.top > window.innerHeight) { card.style.visibility = ''; reader.close(); return; } // its card is off screen: just close
+    morphBusy = true;
+    if (openGhost) { openGhost.remove(); openGhost = null; reader.classList.remove('morph-hide'); } // closed while still opening
+    var tilt = tiltOf(card), to = ownBox(card), p = panel.getBoundingClientRect();
+    var whole = narrowScreen() && p.top > -40 && p.top < window.innerHeight - 120, g, anim;
+    reader.classList.add('morph-out', 'is-morphing'); // the post and the dimming fade under the card
+    if (whole) {
+      var s = p.width / to.w, land = { x: p.left, y: p.top, w: to.w * s, h: to.h * s };
+      g = makeGhost(card, false, to);
+      anim = g.animate([{ transform: onto(to, land, '0deg') }, { transform: 'rotate(' + tilt + ')' }], { duration: M_MS, easing: M_EASE, fill: 'forwards' });
+    } else {
+      var from = seenBox(panel);
+      g = makeGhost(card, true, from);
+      anim = g.animate([{ transform: 'none' }, { transform: onto(from, to, tilt) }], { duration: M_MS, easing: M_EASE, fill: 'forwards' });
+    }
+    anim.onfinish = function () {
+      card.style.visibility = ''; g.remove(); morphBusy = false;
+      reader.close();
+      reader.classList.remove('morph-out', 'is-morphing', 'no-rise');
+    };
+  }
+  function closeReader() {
+    if (!reader || !reader.open || morphBusy) return;
+    if (morphCard && morphOK) { morphClose(); return; }
+    reader.close(); reader.classList.remove('no-rise');
+  }
   // In the overlay, the browser closes the dialog on Escape by itself. If the blank sticky has writing
   // on it, Escape clears that first and keeps the overlay open; pressed again, it closes as usual.
   if (reader) reader.addEventListener('cancel', function (e) {
     var liftedHere = document.querySelector('.reader .stickies');
     if (liftedHere && liftedHere._focus) { e.preventDefault(); dismissSticky(liftedHere); return; } // a lifted sticky goes back first
     var written = document.querySelector('.reader .stickies-compose');
-    if (written && (written.querySelector('textarea').value || written.querySelector('input').value)) { e.preventDefault(); throwComposer(written.closest('.stickies')); }
+    if (written && (written.querySelector('textarea').value || written.querySelector('input').value)) { e.preventDefault(); throwComposer(written.closest('.stickies')); return; }
+    if (morphCard || morphBusy) { e.preventDefault(); closeReader(); } // shrinks back into its card
   });
 
   function openPost(url, card) {
+    if (morphBusy) return;
     if (card) card.classList.add('is-opening');
-    fetch(url, { credentials: 'same-origin' })
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+    if (!card && morphCard) { morphCard.style.visibility = ''; morphCard = null; } // a link inside the post: it no longer belongs to the card
+    loadPost(url)
       .then(function (html) {
         var doc = new DOMParser().parseFromString(html, 'text/html');
         var panel = doc.querySelector('.post-panel');
@@ -2818,11 +3023,18 @@
         liteYouTube(body);
         document.documentElement.classList.add('reader-open');
         var already = reader.open; // following a link inside the overlay: still one history step, not one per note
+        var morphing = !already && morphOK && card && card.isConnected && card.classList.contains('card') && !!card.closest('.cards, .hero-card');
+        if (morphing) {
+          reader.classList.add('no-rise', 'morph-hide', 'is-morphing');
+          var fig = body.querySelector('.post-panel > .panel-image'); if (fig) fig.classList.add('is-cropped');
+        }
+        softImages(body);
         if (!already) reader.showModal();
         initStickies(body); // after it's open, so the pile can be measured
         if (gardenMeta) initGardenNote(body, readJson(gardenMeta));
         else initPostGarden(body);
         reader.scrollTop = 0;
+        if (morphing) morphOpen(card);
         document.title = doc.title || baseTitle;
         if (already) history.replaceState({ reader: true }, '', url);
         else { baseUrl = location.href; history.pushState({ reader: true }, '', url); pushed = true; }

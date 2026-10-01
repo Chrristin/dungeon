@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.1.0
+
+- **A card opens into its post.** Tapping a card grows it into the post and closing shrinks the post back into the card's place. On phones the whole card travels and lands as the top of the post, and the story appears below it; on wider screens the card's shape grows and the post settles in on it. Everything moves by transform alone. Reduced motion, garden notes and links inside a post open as before.
+- **Posts are laid out in card order:** the feature image first (level, with the card's corners), then the code line, title and excerpt. On phones the top of a post has the card's proportions, including a card-sized title. An excerpt you wrote sits in a light box; the story starts after it.
+- **Posts preload.** A post's text downloads as its card comes within a screen of view, and when a finger or pointer lands on a card, so opening doesn't wait. Skipped with Data Saver on or on very slow connections.
+- **Images arrive gently:** a post's image that hasn't loaded keeps its place and fades in. When a card opens, the image starts in the card's crop and extends to the whole photo.
+- **The reader opens solid.** The post no longer fades in (the cards behind showed through it for a moment); it slides up into place while the page behind dims.
+- **Phones draw cards without colour-blending.** Some phones (Android Chrome, reported) leave blended card images blank. On phones and tablets the image, its colour wash and the paper grain are drawn plainly, tuned to look close. Desktop keeps the blending.
+- **Stickies can be moved:** press and move with a mouse, or press and hold on a touchscreen, then drag. They stay on the board, and the arrangement is remembered in the reader's own browser, per post; everyone else still sees the original pile.
+- **Stickies' controls in a post take the card's ink,** dark on a light card in either mode. A mistyped rule meant they never had.
+- **Share on phones** opens the phone's share sheet straight away, as the plane takes off, without the short wait.
+- **`docs/routes.yaml` leaves garden notes out of the homepage list,** so each page shows its full count of cards, with a second collection at `/notes/` keeping their addresses. Upload it in Labs: themes can't apply routes themselves. `docs/redirects.yaml` optionally sends `/notes/` to the Garden page.
+
 ## 2.0.6
 
 - Lighter on phones. On Android Chrome, scrolling the homepage could make every card image vanish at once. It didn't reproduce in a test browser, so these cut what the page asks of a phone rather than fix a known fault:
