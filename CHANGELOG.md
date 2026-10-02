@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.0
+
+- **A stack in Most connected fans out over the page.** The page stays as it is under an 80% veil (dark in dark mode, light in light) and the stack's cards spread out of it, its top card in the middle and its connected cards round it, joined by their vines. Click a card to open it; Escape, a click on the veil or "Fold back" gathers them back into the stack. Nothing on the page disappears any more.
+- **The card growing into a post is visible again.** In 2.1.2 the rule that hides the post while the card grows also hid the card itself, so it looked as if the card vanished and the post appeared.
+- **Everything inside a post's card takes the card's ink in dark mode.** Garden links, the tending log's dates, related chips and quiet labels were drawn in the page's light dark-mode ink on the light card. The garden heading and the stamp's red are a shade deeper inside posts, so every text in the card reads at 4.5:1 or better.
+- **A garden note's "Mentioned in" chips keep their colours:** a broader link style painted them near-black in dark mode, under dark text.
+- **The nearby map** is only as tall as its neighbours need, every label fits inside its box, and pointing at a box (or tabbing to it) grows it to the note's whole title. Related notes no longer look smudged: they shared a class name with the dotted line's style, so their labels were drawn with a dashed outline.
+- The excerpt box in posts is 20% white.
+
 ## 2.1.2
 
 - **The card grows into its post by being laid out live, not zoomed.** Its width, padding, spacing, font sizes, corners and colour move from the card's to the post's while the text re-wraps (a three-line title becomes two as the space opens up); the date line opens, the read-time line folds away, and the excerpt moves into its box. It lands as the post's own top, so nothing is swapped, and the story paints downward below. Closing is the exact reverse, landing in whatever state the card is really in, hovered or not.

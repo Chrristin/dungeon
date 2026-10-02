@@ -419,6 +419,12 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
    moving area stays within the card's margins, so nothing pokes out past its edge. */
 .post-panel .stickies { max-width: none; margin: 1.4rem 0 0; }
 .post-panel .stickies-stage { margin: -1.2rem; padding: 1.2rem; }
+/* Everything inside the post's card takes the card's ink, not the page's: the card stays light in dark mode, so
+   anything coloured with the page's ink (garden links, rules, quiet labels) would otherwise turn light on light */
+.post-panel { --ink: var(--on-card); --graphite: var(--on-card-meta); --rule: var(--on-card-rule); --wash: rgba(255, 255, 255, 0.35); }
+/* ...and the two fixed colours that fell short on the light card: the green garden heading and the stamp's red */
+.post-panel .post-garden-h { color: #0b6b48; }
+.post-panel .stamp { --ink: #a8202f; } /* the stamp's red, a shade deeper so its small "Seen" reads on the light card */
 /* Inside the post's card the stickies' controls take the card's ink, not the page's: dark on a light card in either mode */
 .post-panel .stickies { --ink: var(--on-card); --graphite: var(--on-card-soft); --rule: var(--on-card-rule); --wash: rgba(255, 255, 255, 0.4); }
 .post-panel .stickies-toggle { border-color: var(--on-card-rule); color: var(--on-card); }
@@ -1695,7 +1701,7 @@ html.is-theming, html.is-theming * {
 .garden-tended { padding: 0.25rem 0.55rem; border: 2px solid #c42b3c; border-radius: 4px; color: #c42b3c; font: 600 0.66rem/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; rotate: -4deg; opacity: 0.9; }
 .garden-after { max-width: 47rem; margin: 0 auto; padding: 2.5rem 0 3rem; }
 .garden-after ul { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-.garden-after li a { display: inline-block; padding: 0.5rem 0.8rem; border-radius: 10px; background: var(--wash); text-decoration: none; }
+.garden-after li a:not(.gn-chip) { display: inline-block; padding: 0.5rem 0.8rem; border-radius: 10px; background: var(--wash); text-decoration: none; } /* (not the coloured chips: their own colours stand) */
 .garden-after li a:hover { text-decoration: underline; }
 .garden-quiet { margin: 0; font: 0.8rem var(--mono); color: var(--graphite); }
 .garden-back { display: inline-block; margin-top: 1.6rem; font: 0.78rem var(--mono); }
@@ -1843,7 +1849,9 @@ html[data-scheme="dark"] .og-link-stem, html[data-scheme="dark"] .og-sv-stem, ht
 .gn-chip[data-g="seedling"] { background: #eef9d6; } .gn-chip[data-g="evergreen"] { background: #1f6b4f; color: #f3f7ee; }
 .gn-chip.is-rel { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--rule); border: 0; outline: 1.5px dashed var(--graphite); outline-offset: -1.5px; }
 .gn-chip:hover { text-decoration: underline; }
-.lm { display: block; width: 100%; max-width: 40rem; height: auto; overflow: visible; }
+.lm { display: block; width: 100%; max-width: 34rem; height: auto; overflow: visible; }
+.lm-to-rel rect { stroke: rgba(23, 25, 30, 0.5); stroke-dasharray: 3 3; } /* a related note: a dashed box, its label left plain */
+.lm-node rect { transition: none; }
 .lm-vine { fill: none; stroke: #3f8a3a; stroke-width: 2.2; stroke-linecap: round; }
 .lm-rel { fill: none; stroke: var(--graphite); stroke-width: 1.5; stroke-dasharray: 2 6; stroke-linecap: round; opacity: 0.8; }
 .lm-node rect { fill: #d5f5e6; stroke: rgba(23, 25, 30, 0.3); } .lm-node rect[data-g="seedling"] { fill: #eef9d6; } .lm-node rect[data-g="evergreen"] { fill: #1f6b4f; }
@@ -2238,7 +2246,7 @@ html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); 
 /* Level while a card opens into the post (as the card's image is), easing into its tilt once it's landed */
 .post-panel > .panel-image.is-level { transform: none; }
 /* An excerpt you wrote sits in a light box; the story starts after it */
-.panel-lede { padding: 0.8rem 1rem; border-radius: 12px; background: rgba(255, 255, 255, 0.1); }
+.panel-lede { padding: 0.8rem 1rem; border-radius: 12px; background: rgba(255, 255, 255, 0.2); }
 /* An image that isn't here yet keeps its place and fades in when it arrives */
 .panel-image img { transition: opacity 320ms ease; }
 .panel-image img.is-waiting { opacity: 0; }
@@ -2255,8 +2263,8 @@ html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); 
     .panel-content { padding: 0 0.3rem; }
 }
 
-.reader.morph-hide .post-panel { opacity: 0; }
-.reader.morph-out .post-panel { opacity: 0; transition: opacity 160ms ease; }
+.reader.morph-hide .reader-body .post-panel { opacity: 0; } /* the post itself, never the card growing into it */
+.reader.morph-out .reader-body .post-panel { opacity: 0; transition: opacity 160ms ease; }
 .reader::backdrop { transition: background-color 380ms ease, backdrop-filter 380ms ease, -webkit-backdrop-filter 380ms ease; }
 .reader.is-morphing::backdrop { background-color: rgba(12, 13, 16, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
 .reader.morph-hide .reader-close, .reader.morph-out .reader-close { opacity: 0; }
@@ -2305,4 +2313,13 @@ html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); 
 .post-panel > .panel-image { position: relative; }
 .panel-image .morph-sharp { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; opacity: 0; transition: opacity 320ms ease; }
 .panel-image .morph-sharp.is-in { opacity: 1; }
+
+/* ---------- 2.2.0: a stack fans out over the page ---------- */
+.og-fan { position: fixed; inset: 0; z-index: 60; overflow-y: auto; overscroll-behavior: contain; display: flex; justify-content: center; align-items: flex-start;
+    padding: clamp(4.5rem, 10vh, 7rem) clamp(1rem, 5vw, 4rem) 3rem; background: color-mix(in srgb, var(--paper) 80%, transparent); }
+.og-fan-inner { position: relative; width: min(100%, 68rem); margin: auto 0; }
+.og-fan .og-fold { position: fixed; top: 1.25rem; right: 1.25rem; display: inline-flex; align-items: center; gap: 0.45rem; min-height: 2.5rem; padding: 0 0.9rem; } /* always in the same corner, whatever is behind it */
+.og-fan .og-fold kbd { padding: 0.1rem 0.35rem; border: 1px solid var(--rule); border-radius: 4px; font: 0.62rem/1 var(--mono); }
+html.og-fan-open { overflow: hidden; }
+.og.is-fanned { visibility: hidden; } /* the stack has lifted off the page into the fan */
 

@@ -2170,6 +2170,26 @@
   // a garden note's page (or the same note in the reader overlay): stage, TENDED stamp, source label, backlinks
   var STAGE_BG = { seedling: '#eef9d6', growing: '#d5f5e6', evergreen: '#1f6b4f' };
   var CONF = { certain: 4, likely: 3, speculative: 2, hunch: 1 };
+  // In the nearby map, a node pointed at (or focused) grows to its whole title, its box widening with it and
+  // staying inside the map; it's brought to the front so nothing covers it.
+  function growMapNodes(svg) {
+    if (!svg) return;
+    var W = +svg.getAttribute('data-w') || 560;
+    [].forEach.call(svg.querySelectorAll('a.lm-node'), function (a) {
+      var rect = a.querySelector('rect'), text = a.querySelector('text'); if (!rect || !text) return;
+      var keep = { t: text.textContent, x: rect.getAttribute('x'), w: rect.getAttribute('width'), tx: text.getAttribute('x') };
+      var grow = function () {
+        text.textContent = a.getAttribute('data-full') || keep.t;
+        var w = text.getComputedTextLength() + 22, cx = parseFloat(keep.x) + parseFloat(keep.w) / 2;
+        cx = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, cx));
+        rect.setAttribute('x', (cx - w / 2).toFixed(1)); rect.setAttribute('width', w.toFixed(1)); text.setAttribute('x', cx.toFixed(1));
+        a.parentNode.appendChild(a);
+      };
+      var shrink = function () { text.textContent = keep.t; rect.setAttribute('x', keep.x); rect.setAttribute('width', keep.w); text.setAttribute('x', keep.tx); };
+      a.addEventListener('pointerenter', grow); a.addEventListener('focus', grow);
+      a.addEventListener('pointerleave', shrink); a.addEventListener('blur', shrink);
+    });
+  }
   // a small map of one note's neighbours: links out and in as vines, related notes dotted; each a tiny card
   function localMap(meta, L) {
     var nb = [], seen = {};
@@ -2177,22 +2197,24 @@
     (meta.links || []).forEach(function (x) { add(x, 'out'); }); (meta.backlinks || []).forEach(function (x) { add(x, 'in'); }); (meta.related || []).forEach(function (x) { add(x, 'rel'); });
     if (!nb.length) return '';
     nb = nb.slice(0, 10);
-    var W = 560, H = 230, cx = W / 2, cy = H / 2, s = '';
-    var pos = nb.map(function (n, i) { var a = -Math.PI / 2 + i * 2 * Math.PI / nb.length; return [cx + Math.cos(a) * 210, cy + Math.sin(a) * 82]; });
+    // as tall as the neighbours need: two sit close above and below, ten get the full ring
+    var W = 560, H = nb.length <= 2 ? 130 : nb.length <= 4 ? 170 : nb.length <= 7 ? 200 : 230, cx = W / 2, cy = H / 2, s = '';
+    var pos = nb.map(function (n, i) { var a = -Math.PI / 2 + i * 2 * Math.PI / nb.length; return [cx + Math.cos(a) * 210, cy + Math.sin(a) * (H / 2 - 33)]; });
     nb.forEach(function (n, i) {
       var p = pos[i], mx = (cx + p[0]) / 2, my = (cy + p[1]) / 2, dx = p[0] - cx, dy = p[1] - cy, d = 'M' + cx + ' ' + cy + 'Q' + (mx - dy * 0.15).toFixed(1) + ' ' + (my + dx * 0.15).toFixed(1) + ' ' + p[0].toFixed(1) + ' ' + p[1].toFixed(1);
       s += '<path class="' + (n.kind === 'rel' ? 'lm-rel' : 'lm-vine') + '" d="' + d + '"/>';
       if (n.kind !== 'rel') s += gleaf(mx - dy * 0.07, my + dx * 0.07, i * 57, 7, 'var(--og-leaf2, #8fd65a)');
     });
     var node = function (x, y, label, g, cls, href) {
-      var w = Math.min(170, label.length * 6.2 + 20), t = label.length > 26 ? label.slice(0, 25) + '...' : label;
-      return (href ? '<a class="lm-node ' + cls + '" href="' + esc(href) + '">' : '<g class="lm-node ' + cls + '">') + '<title>' + esc(label) + '</title>' +
+      // the box is sized to the label as drawn, so the text never runs outside it; pointing at it shows the whole title
+      var t = label.length > 24 ? label.slice(0, 23) + '\u2026' : label, w = t.length * 6.35 + 22;
+      return (href ? '<a class="lm-node ' + cls + '" href="' + esc(href) + '" data-full="' + esc(label) + '">' : '<g class="lm-node ' + cls + '">') + '<title>' + esc(label) + '</title>' +
         '<rect x="' + (x - w / 2).toFixed(1) + '" y="' + (y - 11) + '" width="' + w.toFixed(1) + '" height="22" rx="6" data-g="' + esc(g) + '"/>' +
         '<text x="' + x.toFixed(1) + '" y="' + (y + 4) + '" text-anchor="middle">' + esc(t) + '</text>' + (href ? '</a>' : '</g>');
     };
-    nb.forEach(function (n, i) { s += node(pos[i][0], pos[i][1], n.t, n.g, 'lm-' + n.kind, n.u); });
+    nb.forEach(function (n, i) { s += node(pos[i][0], pos[i][1], n.t, n.g, 'lm-to-' + n.kind, n.u); }); // (not lm-rel: that's the dotted line's style)
     s += node(cx, cy, L.thisNote || 'this note', meta.stage || 'seedling', 'lm-self', null);
-    return '<svg class="lm" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(L.map || '') + '">' + s + '</svg>';
+    return '<svg class="lm" viewBox="0 0 ' + W + ' ' + H + '" data-w="' + W + '" role="img" aria-label="' + esc(L.map || '') + '">' + s + '</svg>';
   }
   var chipList = function (items, cls) { return '<ul class="gn-chips">' + items.map(function (b) { return '<li><a class="gn-chip ' + (cls || '') + '" data-g="' + esc(b.g || 'seedling') + '" href="' + esc(b.u) + '">' + esc(b.t) + '</a></li>'; }).join('') + '</ul>'; };
   // a garden note's page (or the same note in the reader overlay), in the lab-notebook look
@@ -2225,7 +2247,7 @@
       out += '<section><h2 class="garden-h">' + esc(after.getAttribute('data-mentioned')) + '</h2>' + (bl.length ? chipList(bl) : '<p class="garden-quiet">' + esc(after.getAttribute('data-none')) + '</p>') + '</section>';
       if (rel.length) out += '<section><h2 class="garden-h">' + esc(L.related || 'Related') + '</h2>' + chipList(rel, 'is-rel') + '</section>';
       var map = localMap(meta, L); if (map) out += '<section><h2 class="garden-h">' + esc(L.map || 'Nearby in the garden') + '</h2>' + map + '</section>';
-      var list = after.querySelector('.garden-backlinks'); if (list) list.innerHTML = out;
+      var list = after.querySelector('.garden-backlinks'); if (list) { list.innerHTML = out; growMapNodes(list.querySelector('svg.lm')); }
       var back = after.querySelector('.garden-back'); if (back && !after.querySelector('.gn-keys')) back.insertAdjacentHTML('afterend', '<button type="button" class="gn-keys" data-gk="help"><kbd>?</kbd> ' + esc(L.keys || 'shortcuts') + '</button>');
     }
   }
@@ -2746,47 +2768,67 @@
       });
       return out;
     };
-    var heroGroup = function () { return spreadHero ? groups.filter(function (g) { return g.h.s === spreadHero; })[0] : null; };
-    var drawConnected = function () {
+    var drawConnected = function () { // the stacks stay as they are; a clicked one fans out over the page instead
       closeLinkPanel(); cs.removeAttribute('data-linked'); cs.classList.remove('is-spread');
       groups = groupsOf(shown); cs.closest('.garden-section').hidden = !groups.length;
-      var g = heroGroup();
-      if (!g) { spreadHero = null; cs.innerHTML = groups.map(function (x) { return card(x.h, { group: x.ms.length }); }).join(''); return; }
+      cs.innerHTML = groups.map(function (x) { return card(x.h, { group: x.ms.length }); }).join('');
+    };
+    var growConnected = function () { if (!cs.closest('.garden-section').hidden) { growCards(cs); linkCards(cs, bySlug, L); } };
+    // A stack fans out: the page stays where it is under an 80% veil (dark in dark mode, light in light), and the
+    // stack's cards spread out of it, the top card in the middle and its connected cards round it. Clicking a card
+    // opens it; Escape, the backdrop or "Fold back" gathers them back into the stack.
+    var fanEl = null, fanFrom = null;
+    var spread = function (slug, from) {
+      var g = groups.filter(function (x) { return x.h.s === slug; })[0]; if (!g || fanEl) return;
+      spreadHero = slug; fanFrom = from;
       var side = function (odd) { return g.ms.filter(function (m, i) { return i % 2 === odd; }).map(function (m) { return card(m.n, { how: m.how }); }).join(''); };
-      cs.classList.add('is-spread');
-      cs.innerHTML = '<div class="og-spread"><div class="og-spread-side">' + side(0) + '</div><div class="og-spread-hero">' + card(g.h, { spread: true }) + '</div><div class="og-spread-side">' + side(1) + '</div></div>' +
-        '<button type="button" class="og-fold">' + esc(L.fold || 'Fold back') + '</button>';
-    };
-    var growConnected = function () {
-      if (cs.closest('.garden-section').hidden) return; growCards(cs);
-      var g = heroGroup(); if (g) spreadVines(cs, g.h.s, g.ms); else linkCards(cs, bySlug, L);
-    };
-    var spread = function (slug, from) { // the first click on a stack lays its group out round the hero; a second click opens the hero
-      var before = from.getBoundingClientRect(); spreadHero = slug; drawConnected(); growConnected();
-      var hero = cs.querySelector('.og-spread-hero .og'); if (!hero) return;
-      hero.focus({ preventScroll: true });
-      var sec = cs.closest('.garden-section'), top = sec.getBoundingClientRect().top; if (top < 0 || top > window.innerHeight * 0.6) sec.scrollIntoView({ behavior: calm() ? 'auto' : 'smooth', block: 'start' });
-      if (calm() || !hero.animate) return;
-      var after = hero.getBoundingClientRect(), hx = after.left + after.width / 2, hy = after.top + after.height / 2;
-      hero.animate([{ transform: 'translate(' + (before.left - after.left).toFixed(0) + 'px,' + (before.top - after.top).toFixed(0) + 'px)' }, { transform: 'none' }], { duration: 480, easing: 'cubic-bezier(.3,.9,.3,1)' });
-      [].forEach.call(cs.querySelectorAll('.og-spread-side .og'), function (c, i) {
-        var r = c.getBoundingClientRect();
-        c.animate([{ transform: 'translate(' + (hx - r.left - r.width / 2).toFixed(0) + 'px,' + (hy - r.top - r.height / 2).toFixed(0) + 'px) scale(0.6)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 520, delay: 60 * i, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'backwards' });
+      var fan = document.createElement('div'); fan.className = 'og-fan'; fan.setAttribute('role', 'dialog'); fan.setAttribute('aria-modal', 'true'); fan.setAttribute('aria-label', g.h.t);
+      fan.innerHTML = '<div class="og-fan-inner"><button type="button" class="og-fold">' + esc(L.fold || 'Fold back') + ' <kbd>Esc</kbd></button>' +
+        '<div class="og-spread"><div class="og-spread-side">' + side(0) + '</div><div class="og-spread-hero">' + card(g.h, { spread: true }) + '</div><div class="og-spread-side">' + side(1) + '</div></div></div>';
+      el.appendChild(fan); fanEl = fan;
+      document.documentElement.classList.add('og-fan-open');
+      from.classList.add('is-fanned'); from.setAttribute('aria-expanded', 'true');
+      var inner = fan.querySelector('.og-fan-inner');
+      growCards(inner); spreadVines(inner, g.h.s, g.ms);
+      var hero = inner.querySelector('.og-spread-hero .og'); if (hero) hero.focus({ preventScroll: true });
+      if (calm() || !fan.animate) return;
+      fan.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' });
+      var b = from.getBoundingClientRect(), bx = b.left + b.width / 2, by = b.top + b.height / 2;
+      [].forEach.call(inner.querySelectorAll('.og'), function (c, n) {
+        var r = c.getBoundingClientRect(), isHero = c === hero;
+        var start = isHero ? 'translate(' + (b.left - r.left).toFixed(0) + 'px,' + (b.top - r.top).toFixed(0) + 'px)'
+                           : 'translate(' + (bx - r.left - r.width / 2).toFixed(0) + 'px,' + (by - r.top - r.height / 2).toFixed(0) + 'px) rotate(' + ((n % 2 ? 1 : -1) * (4 + n * 2)) + 'deg) scale(0.7)';
+        c.animate([{ transform: start, opacity: isHero ? 1 : 0 }, { transform: 'none', opacity: 1 }], { duration: isHero ? 440 : 520, delay: isHero ? 0 : 60 + n * 45, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'backwards' });
       });
-      var vines = cs.querySelector('.og-spread-vines'); if (vines) vines.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: 320, fill: 'backwards' });
+      var vines = inner.querySelector('.og-spread-vines'); if (vines) vines.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: 420, fill: 'backwards' });
     };
     var fold = function () {
-      var slug = spreadHero; spreadHero = null; drawConnected(); growConnected();
-      var c = slug && cs.querySelector('.og[data-note="' + slug + '"]'); if (c) c.focus({ preventScroll: true });
+      if (!fanEl) return;
+      var fan = fanEl, from = fanFrom; fanEl = null; fanFrom = null; spreadHero = null;
+      var done = function () { fan.remove(); document.documentElement.classList.remove('og-fan-open'); from.classList.remove('is-fanned'); from.setAttribute('aria-expanded', 'false'); if (from.isConnected) from.focus({ preventScroll: true }); };
+      if (calm() || !fan.animate || !from.isConnected) { done(); return; }
+      var b = from.getBoundingClientRect(), bx = b.left + b.width / 2, by = b.top + b.height / 2, hero = fan.querySelector('.og-spread-hero .og');
+      [].forEach.call(fan.querySelectorAll('.og'), function (c, n) {
+        var r = c.getBoundingClientRect(), isHero = c === hero;
+        var end = isHero ? 'translate(' + (b.left - r.left).toFixed(0) + 'px,' + (b.top - r.top).toFixed(0) + 'px)'
+                         : 'translate(' + (bx - r.left - r.width / 2).toFixed(0) + 'px,' + (by - r.top - r.height / 2).toFixed(0) + 'px) rotate(' + ((n % 2 ? 1 : -1) * (4 + n * 2)) + 'deg) scale(0.7)';
+        c.animate([{ transform: 'none', opacity: 1 }, { transform: end, opacity: isHero ? 1 : 0 }], { duration: 360, easing: 'cubic-bezier(.5,0,.7,.4)', fill: 'forwards' });
+      });
+      var v = fan.querySelector('.og-spread-vines'); if (v) v.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, fill: 'forwards' });
+      fan.animate([{ backgroundColor: getComputedStyle(fan).backgroundColor }, { backgroundColor: 'transparent' }], { duration: 360, fill: 'forwards' }).onfinish = done;
     };
-    cs.addEventListener('click', function (e) {
+    el.addEventListener('click', function (e) {
+      if (!fanEl || !fanEl.contains(e.target)) return;
       if (e.target.closest('.og-fold')) { fold(); return; }
+      if (!e.target.closest('.og')) fold(); // the backdrop
+    });
+    cs.addEventListener('click', function (e) {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       var c = e.target.closest('.og[data-group]'); if (!c || !+c.getAttribute('data-group')) return;
       e.preventDefault(); spread(c.getAttribute('data-note'), c);
     });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && spreadHero && !document.documentElement.classList.contains('reader-open') && !document.querySelector('.og-panel, .gk-panel')) fold();
+      if (e.key === 'Escape' && fanEl && !document.documentElement.classList.contains('reader-open') && !document.querySelector('.og-panel, .gk-panel')) fold();
     });
     var growAll = function () { if (!recentBox.closest('.garden-section').hidden) { growCards(recentBox); linkCards(recentBox, bySlug, L); } growConnected(); };
     var drawAll = function () {
