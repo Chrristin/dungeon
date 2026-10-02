@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{meta_title}}</title>
     <link rel="preload" href="{{asset "fonts/geist-sans-latin-400-normal.woff2"}}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.2.0">
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.4.1">
+    {{#is "post"}}{{#post}}{{#has tag="#thing"}}{{^if html}}<meta name="robots" content="noindex">{{/if}}{{/has}}{{/post}}{{/is}}
     {{ghost_head}}
 </head>
 <body class="{{body_class}}{{#if @custom.floating_nav}}{{#if @site.navigation}} has-dock{{/if}}{{/if}}" data-tilt="{{#match @custom.card_tilt "None"}}0{{else match @custom.card_tilt "Playful"}}5{{else match @custom.card_tilt "Wild"}}10{{else}}2.5{{/match}}">
@@ -35,6 +36,21 @@
 <dialog class="reader" aria-label="{{t "Post"}}">
     <button class="reader-close" type="button" aria-label="{{t "Close post"}}">&times;</button>
     <div class="reader-body"></div>
+</dialog>
+
+<dialog class="thing-sheet" aria-label="{{t "Item"}}" data-page="{{t "Read more"}}" data-affiliate="{{t "Affiliate link. I may earn a commission if you buy."}}">
+    <button class="thing-sheet-close" type="button" aria-label="{{t "Close"}}">&times;</button>
+    <button class="thing-sheet-step" type="button" data-dir="-1" aria-label="{{t "Previous"}}">&larr;</button>
+    <button class="thing-sheet-step" type="button" data-dir="1" aria-label="{{t "Next"}}">&rarr;</button>
+    <div class="thing-sheet-media"></div>
+    <div class="thing-sheet-body">
+        <p class="thing-sheet-cat"></p>
+        <h2 class="thing-sheet-name"></h2>
+        <div class="thing-sheet-tags"></div>
+        <div class="thing-sheet-text"></div>
+        <div class="thing-sheet-acts"></div>
+        <p class="thing-sheet-note"></p>
+    </div>
 </dialog>
 
 {{#if @custom.floating_nav}}
@@ -109,7 +125,7 @@
 </footer>
 
 
-<script src="{{asset "js/site.js"}}&r=2.2.0" defer></script>
+<script src="{{asset "js/site.js"}}&r=2.4.1" defer></script>
 {{ghost_foot}}
 <div class="gk" hidden data-labels='{"search":"{{t "Search the garden"}}","keys":"{{t "Keyboard shortcuts"}}","close":"{{t "Close"}}","s":"{{t "search the garden"}}","r":"{{t "a random note"}}","g":"{{t "go to the garden"}}","h":"{{t "show these shortcuts"}}","none":"{{t "No notes match."}}"}' data-garden="{{@site.url}}/garden/"></div>
 </body>

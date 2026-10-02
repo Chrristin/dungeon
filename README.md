@@ -4,7 +4,7 @@ A playful theme for [Ghost](https://ghost.org). Posts sit on the page as pastel 
 
 **[See the live demo](https://dungeon-demo.pages.dev)**, with sample content that shows every feature.
 
-Version 2.2.0. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
+Version 2.4.1. Works with Ghost 5 and 6. Built for [christingeorge.com](https://christingeorge.com).
 
 ![Dungeon: homepage](docs/screenshots/home.jpg)
 
@@ -183,6 +183,25 @@ With the stamps Worker and a Turnstile site key set, readers can rate what you'v
 
 A page with the address `/ratings/` lists everything you've rated (up to 100), by topic, with readers' averages.
 
+## Uses
+
+A page with the address `/uses/` shows what you use as a grid of tiles, with a bar of categories and one overlay for details. Each thing is a post:
+
+- **A thing** is a post with the internal tag `#thing`. Its title is the name, its feature image the photo, its excerpt the line under the tile, and its body a longer note for the overlay (leave it empty if there's nothing more to say).
+- **Its category** is an internal tag that starts with `#uses-`, such as `#uses-desk`.
+- **Labels** are any other internal tags, such as `#preethi` or `#recommended`.
+- **Retired things** take `#retired`. They keep their category tag but are shown in the last section, with their excerpt labelled "Cause of death".
+- **A buy link** is a Button card in the body. It's marked `sponsored nofollow`, and Amazon links get a disclosure line.
+- **Order:** oldest first within a category, by publish date. Change a thing's date to move it.
+
+The Uses page itself holds the introduction and the categories: each heading (H2) names a category and sets its place in the order ("Desk" matches `#uses-desk`), and a paragraph under a heading is that category's line. A heading that starts with "Retired" names the retired section. Categories without a heading follow, named after their tag.
+
+To show a thing in a post, paste its link (`/things/its-name/`) on a line of its own. It becomes the thing's tile; neighbouring ones form a shelf. The tile is read from the thing's page, so there's one place to edit.
+
+Photos are shown as they are, with rounded corners: cut-out PNGs with a transparent background sit best, and a filled photo shows as a rounded picture in the tile. Around 800px is plenty. Each tile leans slightly (following the Card tilt setting) and wiggles upright on hover. A thing without a photo shows its initials. In the overlay, the arrows, the arrow keys or a swipe step to the previous and next thing.
+
+Upload `docs/routes.yaml` so things get their addresses (`/things/<name>/`) and stay off the homepage and feed. `docs/redirects.yaml` sends `/things/` to the Uses page. If you run garden-sync, update it too: it now leaves things out of the garden.
+
 ## A row of people
 
 For a thank-you section, put round faces in a row; each shows a small card with a name and a line on hover, or on tap on a phone. In a Markdown or HTML card:
@@ -197,7 +216,7 @@ Use `<img src="..." alt="Their Name">` in place of the initials span for a photo
 
 ## routes.yaml
 
-Upload [`docs/routes.yaml`](docs/routes.yaml) in Ghost Admin (Settings > Labs > Routes). It keeps Now entries, Scatter notes and garden notes out of the homepage's list, each on its own page, while garden notes keep their addresses through a second collection at `/notes/`. Leaving garden notes out matters: the theme never shows them as cards, so if the homepage list included them they'd still take up places on each page, and a page of 25 could show only a handful of cards. Ghost doesn't apply a theme's routes file by itself when the theme updates, so upload it again whenever this file changes. [`docs/redirects.yaml`](docs/redirects.yaml) optionally sends visitors of `/notes/` to the Garden page.
+Upload [`docs/routes.yaml`](docs/routes.yaml) in Ghost Admin (Settings > Labs > Routes). It keeps Now entries, Scatter notes, garden notes and things out of the homepage's list, each on its own page, while garden notes keep their addresses through a second collection at `/notes/`. Leaving garden notes out matters: the theme never shows them as cards, so if the homepage list included them they'd still take up places on each page, and a page of 25 could show only a handful of cards. Ghost doesn't apply a theme's routes file by itself when the theme updates, so upload it again whenever this file changes. [`docs/redirects.yaml`](docs/redirects.yaml) optionally sends visitors of `/notes/` to the Garden page.
 
 ## The demo site
 

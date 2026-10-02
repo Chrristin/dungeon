@@ -63,7 +63,7 @@
     </div>
 
     <div class="plots-after">
-        {{#get "posts" limit="5" order="published_at desc" filter="tag:-hash-now" include="tags"}}
+        {{#get "posts" limit="5" order="published_at desc" filter="tag:-[hash-now,hash-thing]" include="tags"}}
         {{#if posts}}
         <section class="plots-tended" aria-labelledby="plots-tended-h">
             <h2 id="plots-tended-h" class="section-heading">{{t "Recently planted"}}</h2>

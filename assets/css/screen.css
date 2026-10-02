@@ -2323,3 +2323,104 @@ html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); 
 html.og-fan-open { overflow: hidden; }
 .og.is-fanned { visibility: hidden; } /* the stack has lifted off the page into the fan */
 
+
+/* ---------- 2.4.0: things you use ---------- */
+/* A thing is a post with the internal tag #thing. It's drawn as a tile on the Uses page, and wherever a post links
+   to it on a line of its own; one overlay shows its details, with previous and next. */
+.uses-head { border-bottom: 0; padding-top: clamp(1rem, 3vw, 2rem); padding-bottom: 0.5rem; }
+.uses-intro { max-width: 38rem; margin-top: 1.25rem; color: var(--graphite); }
+.uses-intro > * { margin: 0; }
+.uses-intro > * + * { margin-top: 1em; }
+.uses-intro:empty { display: none; }
+.uses-bar { position: sticky; top: 0; z-index: 4; display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.7rem 0; background: var(--paper); border-bottom: 1px solid var(--rule); scrollbar-width: none; }
+.uses-bar::-webkit-scrollbar { display: none; }
+.uses-bar a { flex: none; padding: 0.42rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px; font: 0.72rem/1 var(--mono); text-decoration: none; color: var(--ink); white-space: nowrap; }
+.uses-bar a span { margin-left: 0.45rem; color: var(--graphite); }
+.uses-bar a[aria-current="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.uses-bar a[aria-current="true"] span { color: inherit; opacity: 0.7; }
+
+.uses, .things-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 1.7rem 1.25rem; }
+.uses { padding: 0.5rem 0 4rem; }
+.uses > h2, .uses > .uses-sub { grid-column: 1 / -1; margin: 0; }
+.uses > h2 { display: flex; align-items: baseline; gap: 0.7rem; margin: 2rem 0 -0.6rem; font-size: 1.5rem; line-height: 1.2; scroll-margin-top: 4.2rem; }
+.uses > .uses-sub { margin-top: -0.9rem; max-width: 38rem; color: var(--graphite); }
+.uses-count { font: 400 0.72rem/1 var(--mono); color: var(--graphite); }
+.uses-empty { color: var(--graphite); padding: 2rem 0 4rem; }
+.thing { min-width: 0; cursor: pointer; }
+.thing-link { display: block; color: inherit; text-decoration: none; border-radius: 14px; }
+.thing-link:focus-visible { outline-offset: 5px; }
+/* The tile is light in both colour modes, so dark products don't sink into a dark page. It rests at its own slight
+   lean (set from the thing's name, within the theme's tilt setting) and wiggles upright when pointed at. */
+.thing-tile { position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 14px; background: #f1f2ef; overflow: hidden; transform: rotate(var(--tilt, 0deg)); transition: transform 0.22s ease; }
+/* Photos are shown as they are, at their own shape, with rounded corners: a cut-out PNG is unaffected, a filled photo sits in the tile as a rounded picture */
+.thing-tile img, .thing-sheet-media img { position: absolute; inset: 0; width: auto; height: auto; max-width: 76%; max-height: 76%; margin: auto; filter: none; border-radius: 10px; }
+.thing-sheet-media img { border-radius: 14px; }
+.thing-ph { font: 500 1.7rem/1 var(--mono); letter-spacing: 0.04em; color: #9a9d98; }
+.thing:hover .thing-tile, .thing-link:focus-visible .thing-tile { transform: rotate(0deg) translateY(-3px); animation: thing-wiggle 460ms ease-out; }
+@keyframes thing-wiggle {
+    0% { transform: rotate(var(--tilt, 0deg)); } 28% { transform: rotate(calc(var(--tilt, 0deg) * -0.9)) translateY(-3px); }
+    52% { transform: rotate(calc(var(--tilt, 0deg) * 0.5)) translateY(-3px); } 76% { transform: rotate(calc(var(--tilt, 0deg) * -0.22)) translateY(-3px); }
+    100% { transform: rotate(0deg) translateY(-3px); } }
+.thing-badges { position: absolute; top: 0.55rem; left: 0.55rem; right: 0.55rem; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.thing-badge { padding: 0.28rem 0.55rem; border-radius: 999px; background: #fff; color: #17191e; font: 500 0.64rem/1 var(--mono); }
+.thing-name { display: block; margin-top: 0.7rem; font-size: 0.95rem; font-weight: 600; line-height: 1.3; color: var(--ink); }
+.thing-line { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; margin: 0.2rem 0 0; font-size: 0.84rem; line-height: 1.42; color: var(--graphite); }
+.thing-cod { font-weight: 600; color: var(--ink); }
+/* Retired things keep the light tile, faded, with a dashed edge */
+.thing.is-retired .thing-tile { background: #e6e7e3; border: 1.5px dashed #a9aca6; }
+.thing.is-retired .thing-tile img, .thing-sheet.is-retired .thing-sheet-media img { filter: grayscale(1); opacity: 0.6; }
+.thing.is-retired .thing-name { text-decoration: line-through; text-decoration-color: var(--graphite); }
+
+/* In a post: links to things, each on a line of its own, become a shelf of tiles; one alone is a small row */
+.gh-content .things-shelf { margin-top: 1.6em; margin-bottom: 1.6em; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 1.3rem 1rem; }
+.gh-content .things-shelf.is-single { display: block; }
+.things-shelf.is-single .thing { display: grid; grid-template-columns: 6.5rem 1fr; column-gap: 1rem; align-items: center; max-width: 30rem; padding: 0.6rem; border: 1px solid var(--on-card-rule, var(--rule)); border-radius: 18px; }
+.things-shelf.is-single .thing-link { display: contents; }
+.things-shelf.is-single .thing-tile { grid-row: 1 / span 2; }
+.things-shelf.is-single .thing-badges { display: none; }
+.things-shelf.is-single .thing-name { margin: 0; align-self: end; }
+.things-shelf.is-single .thing-line { align-self: start; }
+.things-shelf.is-single .thing:not(:has(.thing-line)) .thing-name { grid-row: 1 / span 2; align-self: center; }
+.things-shelf .thing-name { color: var(--on-card, var(--ink)); }
+.things-shelf .thing-line { color: var(--on-card-meta, var(--graphite)); }
+
+.thing-sheet { width: min(54rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); padding: 0; border: 0; border-radius: 20px; background: var(--paper); color: var(--ink); overflow: auto; overscroll-behavior: contain; box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.5); }
+.thing-sheet[open] { display: grid; grid-template-columns: 1fr 1fr; }
+.thing-sheet::backdrop { background: rgba(12, 13, 16, 0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.thing-sheet-media { position: relative; display: grid; place-items: center; min-height: 22rem; background: #f1f2ef; }
+.thing-sheet-media .thing-ph { font-size: 4rem; }
+.thing-sheet-body { display: flex; flex-direction: column; padding: 2.4rem 3.6rem 1.8rem 2rem; min-width: 0; }
+.thing-sheet button { border: 0; cursor: pointer; }
+.thing-sheet-close { position: absolute; z-index: 2; top: 0.7rem; right: 0.8rem; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: transparent; color: var(--graphite); font-size: 1.6rem; line-height: 1; }
+.thing-sheet-close:hover { color: var(--ink); background: var(--wash); }
+.thing-sheet-step { position: absolute; z-index: 2; top: 50%; width: 2.4rem; height: 2.4rem; margin-top: -1.2rem; border-radius: 50%; background: var(--paper); color: var(--ink); font-size: 1rem; line-height: 1; box-shadow: 0 2px 10px -2px rgba(12, 13, 16, 0.35); }
+.thing-sheet-step[data-dir="-1"] { left: 0.7rem; }
+.thing-sheet-step[data-dir="1"] { right: 0.7rem; }
+.thing-sheet-step:hover { background: var(--ink); color: var(--paper); }
+.thing-sheet-cat { margin: 0; font: 0.72rem/1.3 var(--mono); color: var(--graphite); }
+.thing-sheet-name { margin: 0.5rem 0 0.7rem; font-size: 1.55rem; line-height: 1.2; }
+.thing-sheet-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.thing-sheet-tags:empty { display: none; }
+.thing-sheet-tags span { padding: 0.35rem 0.65rem; border-radius: 999px; background: var(--wash); color: var(--ink); font: 500 0.7rem/1 var(--mono); }
+.thing-sheet-text { margin: 1rem 0 1.4rem; color: var(--graphite); line-height: 1.6; }
+.thing-sheet-text > * { margin: 0; max-width: 100%; }
+.thing-sheet-text > * + * { margin-top: 0.8em; }
+.thing-sheet-text a { color: var(--ink); text-decoration-color: var(--led); }
+.thing-sheet-lede { color: var(--ink); }
+.thing-sheet-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-top: auto; }
+.thing-sheet-acts:empty { display: none; }
+.thing-buy { padding: 0.6rem 1rem; border-radius: 999px; background: var(--ink); color: var(--paper); font-size: 0.86rem; font-weight: 600; text-decoration: none; }
+.thing-page { font: 0.76rem/1 var(--mono); color: var(--graphite); text-decoration: none; }
+.thing-page:hover { color: var(--led); }
+.thing-sheet-note { margin: 0.8rem 0 0; font-size: 0.74rem; color: var(--graphite); }
+.thing-sheet-note:empty { display: none; }
+@media (max-width: 640px) {
+    .uses { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem 0.9rem; }
+    .gh-content .things-shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .thing-sheet[open] { grid-template-columns: 1fr; }
+    .thing-sheet-media { min-height: 0; aspect-ratio: 4 / 3; }
+    .thing-sheet-body { padding: 1.4rem 1.25rem; }
+    .thing-sheet-close { background: var(--paper); }
+    .thing-sheet-step { top: calc((100vw - 2rem) * 0.375); }
+}
+@media (prefers-reduced-motion: reduce) { .thing-tile { transition: none; } .thing:hover .thing-tile, .thing-link:focus-visible .thing-tile { transform: rotate(var(--tilt, 0deg)); animation: none; } }

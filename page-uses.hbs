@@ -1,0 +1,21 @@
+{{!< default}}
+{{!-- Uses (the page with the address /uses/): everything you use, as a grid of tiles.
+      Each thing is a post with the internal tag #thing: its title is the name, its feature image the photo,
+      its excerpt the line under the tile and its body the longer note in the overlay. An internal tag such as
+      #uses-desk puts it in a category; #retired moves it to the last section; other internal tags are labels.
+      This page's own text is the introduction; its headings (H2) set the categories' order, names and, with a
+      paragraph under a heading, their lines. Ghost hands a theme 100 posts at a time, so three lots are asked for. --}}
+{{#post}}
+<section class="statement statement--small uses-head">
+    <h1 class="statement-text">{{title}}</h1>
+    {{#if custom_excerpt}}<p class="statement-desc">{{custom_excerpt}}</p>{{/if}}
+    <div class="uses-intro gh-content">{{content}}</div>
+</section>
+{{/post}}
+<nav class="uses-bar" aria-label="{{t "Categories"}}" hidden></nav>
+<div class="uses" data-retired="{{t "Retired"}}" data-other="{{t "Other"}}" data-cod="{{t "Cause of death"}}">
+    {{#get "posts" filter="tag:hash-thing" limit="100" page="1" include="tags" order="published_at asc"}}{{#foreach posts}}{{> "thing"}}{{/foreach}}{{/get}}
+    {{#get "posts" filter="tag:hash-thing" limit="100" page="2" include="tags" order="published_at asc"}}{{#foreach posts}}{{> "thing"}}{{/foreach}}{{/get}}
+    {{#get "posts" filter="tag:hash-thing" limit="100" page="3" include="tags" order="published_at asc"}}{{#foreach posts}}{{> "thing"}}{{/foreach}}{{/get}}
+</div>
+<p class="uses-empty" hidden>{{t "Nothing here yet. Add a post with the internal tag"}} <code>#thing</code> {{t "and it appears here."}}</p>

@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.4.1
+
+- **A thing's photo is shown as it is.** The tile no longer blends photos into its grey, so white products stay white. Every photo keeps its own shape and has rounded corners: a cut-out PNG looks the same, and a filled photo sits in the tile as a rounded picture.
+- **Tiles lean and wiggle.** Each tile rests at its own slight lean (the same on every visit, within the Card tilt setting; "None" keeps them level) and wiggles upright with a small lift when pointed at. Still for visitors who prefer reduced motion.
+
+## 2.4.0
+
+- **Things are posts now.** Each thing on the Uses page is a post with the internal tag `#thing`: the title is its name, the feature image its photo, the excerpt its line and the body its longer note. An internal tag such as `#uses-desk` sets its category, `#retired` moves it to the last section, and any other internal tag (`#preethi`) is a label. This replaces 2.3.0's Product cards, which the Uses page no longer reads. Things live at `/things/<name>/` and stay off the homepage, the feed and the garden: upload the new `docs/routes.yaml` (and `docs/redirects.yaml`, which sends `/things/` to `/uses/`).
+- **The Uses page writes itself.** It gathers every thing under its category. The page's own headings set the categories' order and names, and a paragraph under a heading is that category's line. Up to 300 things.
+- **A thing can be shown in any post.** Paste its link on a line of its own and it becomes its tile, read from the thing's own page, so editing the thing updates every place it appears. Neighbouring links gather into a shelf; one alone is a small row. Without JavaScript the link stays as Ghost's bookmark.
+- **Previous and next in the overlay:** buttons on either side, the arrow keys, or a sideways swipe, with the position shown ("12 / 61"). It runs through the whole Uses page (or the shelf, in a post) and wraps round. A Button card in a thing's body is its buy link.
+- A thing with no body is kept out of search engines. garden-sync leaves things out of the garden.
+
+## 2.3.0
+
+- **A Uses page.** A page with the address `/uses/` shows everything you use as a grid of tiles. Write it in Ghost's editor: a heading starts a category, and each item is a Product card (photo, name, description, optional button). A bar of categories with counts stays at the top as you scroll and marks where you are.
+- **One overlay for details.** A tile opens the item's photo, category, full description and links; left and right arrows step through items. The Product card's button becomes the buy link, marked as sponsored for search engines, with a disclosure line when it points to Amazon. A link to one of your own posts in the description becomes "Read the post".
+- **Labels and retired things.** Hashtags at the end of a description (`#preethi`, `#recommended`) become labels on the tile. A category whose heading starts with "Retired" is drawn with dashed tiles and struck-through names, and each description is labelled "Cause of death".
+- Items without a photo show their initials, so the page can be filled in a bit at a time.
+
 ## 2.2.0
 
 - **A stack in Most connected fans out over the page.** The page stays as it is under an 80% veil (dark in dark mode, light in light) and the stack's cards spread out of it, its top card in the middle and its connected cards round it, joined by their vines. Click a card to open it; Escape, a click on the veil or "Fold back" gathers them back into the stack. Nothing on the page disappears any more.

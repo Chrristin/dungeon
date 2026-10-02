@@ -2119,6 +2119,156 @@
       stars.addEventListener('blur', function () { if (!busy && hover) { hover = 0; paint(); settled(); } });
     });
   }
+  // Things you use: posts with the internal tag #thing, drawn as tiles. One overlay shows a thing's details and steps
+  // to the previous and next one (buttons, arrow keys, or a swipe); the set it steps through is the page or the shelf.
+  var thingSheet = document.querySelector('.thing-sheet'), thingSet = [], thingAt = 0;
+  var thingInitials = function (s) { return s.replace(/\(.*?\)/g, ' ').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w.charAt(0).toUpperCase(); }).join(''); };
+  var thingLabel = function (t) { t = t.replace(/[-_]+/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1); };
+  var thingEl = function (tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
+  // What a thing's internal tags say: its category (#uses-desk), whether it's retired, and its labels (anything else)
+  function thingTags(list) {
+    var out = { cat: '', retired: false, labels: [] };
+    list.forEach(function (s) {
+      if (s.indexOf('hash-') !== 0) return; s = s.slice(5);
+      if (s === 'thing' || s === 'hide-image' || /^(rated|filler|import)-/.test(s)) return; // Ghost tags imported posts with #Import <date>
+      if (s === 'retired') out.retired = true; else if (s.indexOf('uses-') === 0) { if (!out.cat) out.cat = s.slice(5); } else out.labels.push(s);
+    });
+    return out;
+  }
+  function dressThing(t) { // initials where there's no photo, and the labels on the tile
+    if (t.getAttribute('data-ready')) return; t.setAttribute('data-ready', '1');
+    var info = thingTags((t.getAttribute('data-tags') || '').split(/\s+/)), tile = t.querySelector('.thing-tile'), name = t.querySelector('.thing-name').textContent.trim();
+    var ph = t.querySelector('.thing-ph'); if (ph) ph.textContent = thingInitials(name);
+    if (tile && maxTilt > 0) { // its own lean, the same on every visit, never close to straight
+      var lean = ((hash('thing:' + name) >>> 8) % 2001) / 1000 - 1; lean = (lean < 0 ? -1 : 1) * Math.max(Math.abs(lean), 0.4);
+      tile.style.setProperty('--tilt', (lean * Math.min(maxTilt, 5)).toFixed(2) + 'deg');
+    }
+    if (info.labels.length && tile) { var badges = thingEl('span', 'thing-badges'); info.labels.forEach(function (l) { badges.appendChild(thingEl('span', 'thing-badge', thingLabel(l))); }); tile.appendChild(badges); }
+    t.classList.toggle('is-retired', info.retired);
+    t._thing = info;
+  }
+  function showThing(i) {
+    if (!thingSheet || !thingSet.length) return;
+    var t = thingSet[thingAt = (i + thingSet.length) % thingSet.length], info = t._thing || {}, part = function (k) { return thingSheet.querySelector('.thing-sheet-' + k); };
+    var L = function (k) { return thingSheet.getAttribute('data-' + k) || ''; };
+    var name = t.querySelector('.thing-name').textContent.trim(), img = t.querySelector('.thing-tile img'), line = t.querySelector('.thing-line'), body = t.querySelector('.thing-body'), link = t.querySelector('.thing-link');
+    var media = part('media'); media.replaceChildren();
+    if (img) { var im = document.createElement('img'); im.src = img.getAttribute('data-full') || img.currentSrc || img.src; im.alt = name; media.appendChild(im); } else media.appendChild(thingEl('span', 'thing-ph', thingInitials(name)));
+    var cat = t.getAttribute('data-cat') || '';
+    part('cat').textContent = (cat ? cat + ' · ' : '') + (thingSet.length > 1 ? (thingAt + 1) + ' / ' + thingSet.length : '');
+    part('name').textContent = name;
+    var tg = part('tags'); tg.replaceChildren(); (info.labels || []).forEach(function (l) { tg.appendChild(thingEl('span', '', thingLabel(l))); });
+    var text = part('text'), acts = part('acts'), buy = null; text.replaceChildren(); acts.replaceChildren();
+    if (line) { var lede = thingEl('p', 'thing-sheet-lede'); lede.innerHTML = line.innerHTML; text.appendChild(lede); }
+    if (body) { // the post's body, as Ghost rendered it; its first button is the buy link
+      var copy = document.createElement('div'); copy.innerHTML = body.innerHTML;
+      var btn = copy.querySelector('.kg-button-card a[href]'); if (btn) { buy = btn; btn.closest('.kg-button-card').remove(); }
+      while (copy.firstChild) text.appendChild(copy.firstChild);
+    }
+    if (buy) { var b = thingEl('a', 'thing-buy', buy.textContent.trim() + ' ↗'); b.href = buy.href; b.target = '_blank'; b.rel = 'sponsored nofollow noopener'; acts.appendChild(b); }
+    if (link && body && body.textContent.trim().length > 400) { var pg = thingEl('a', 'thing-page', L('page') + ' →'); pg.href = link.href; acts.appendChild(pg); }
+    part('note').textContent = buy && /(^|\.)(amazon\.[a-z.]+|amzn\.[a-z]+)$/i.test(buy.hostname) ? L('affiliate') : '';
+    thingSheet.classList.toggle('is-retired', !!info.retired);
+    [].forEach.call(thingSheet.querySelectorAll('.thing-sheet-step'), function (s) { s.hidden = thingSet.length < 2; });
+    if (!thingSheet.open) thingSheet.showModal();
+    thingSheet.scrollTop = 0;
+  }
+  if (thingSheet && thingSheet.showModal) {
+    document.addEventListener('click', function (e) {
+      var t = e.target.closest && e.target.closest('.thing'); if (!t || e.defaultPrevented) return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; // a new tab still opens the thing's own page
+      var a = e.target.closest('a'); if (a && !a.classList.contains('thing-link')) return;
+      e.preventDefault();
+      thingSet = [].slice.call((t.closest('.uses, .things-shelf') || t.parentNode).querySelectorAll('.thing'));
+      showThing(thingSet.indexOf(t));
+    });
+    thingSheet.addEventListener('click', function (e) {
+      var step = e.target.closest('.thing-sheet-step');
+      if (step) { showThing(thingAt + Number(step.getAttribute('data-dir'))); return; }
+      if (e.target === thingSheet || e.target.closest('.thing-sheet-close') || e.target.closest('.thing-sheet-text a, .thing-page')) thingSheet.close();
+    });
+    thingSheet.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') e.stopPropagation(); // closes this overlay only, not a post open underneath
+      else if (e.key === 'ArrowRight') showThing(thingAt + 1); else if (e.key === 'ArrowLeft') showThing(thingAt - 1);
+    });
+    var swipe = null; // a clearly sideways swipe steps; scrolling a long note up and down doesn't
+    thingSheet.addEventListener('touchstart', function (e) { swipe = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null; }, { passive: true });
+    thingSheet.addEventListener('touchend', function (e) {
+      if (!swipe || !e.changedTouches.length) return;
+      var dx = e.changedTouches[0].clientX - swipe.x, dy = e.changedTouches[0].clientY - swipe.y; swipe = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) showThing(thingAt + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+  }
+  // The Uses page: things gathered under their categories, in the order of the page's own headings, retired ones last
+  function initUses() {
+    var el = document.querySelector('.uses'); if (!el) return;
+    var things = [].slice.call(el.querySelectorAll('.thing')), bar = document.querySelector('.uses-bar'), intro = document.querySelector('.uses-intro'), empty = document.querySelector('.uses-empty');
+    if (!things.length) { if (empty) empty.hidden = false; return; }
+    var L = function (k) { return el.getAttribute('data-' + k) || ''; }, slug = function (s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+    var cats = {}, order = [], retired = { key: 'retired', name: L('retired'), items: [], sub: [] };
+    var catFor = function (key, name) { if (!cats[key]) { cats[key] = { key: key, name: name || thingLabel(key), items: [], sub: [] }; order.push(cats[key]); } return cats[key]; };
+    if (intro) { // the page's headings: each names a category, and the paragraphs under it are its line
+      var cur = null;
+      [].slice.call(intro.children).forEach(function (n) {
+        if (n.tagName === 'H2') { var name = n.textContent.trim(); if (/^retired/i.test(name)) { cur = retired; retired.name = name; } else cur = catFor(slug(name), name); n.remove(); }
+        else if (cur) { cur.sub.push(n); n.remove(); }
+      });
+      if (!intro.children.length) intro.hidden = true;
+    }
+    things.forEach(function (t) {
+      dressThing(t);
+      var info = t._thing, c = info.retired ? retired : catFor(info.cat || 'other', info.cat ? '' : L('other'));
+      c.items.push(t); t.setAttribute('data-cat', c.name);
+      if (info.retired) { var line = t.querySelector('.thing-line'); if (line) line.insertBefore(thingEl('span', 'thing-cod', L('cod') + ': '), line.firstChild); }
+    });
+    order = order.filter(function (c) { return c.items.length; }); if (retired.items.length) order.push(retired);
+    el.replaceChildren();
+    order.forEach(function (c) {
+      c.h = thingEl('h2', '', c.name); c.h.id = 'uses-' + c.key; c.h.appendChild(thingEl('span', 'uses-count', String(c.items.length))); el.appendChild(c.h);
+      c.sub.forEach(function (n) { n.classList.add('uses-sub'); el.appendChild(n); });
+      c.items.forEach(function (t) { el.appendChild(t); });
+      if (bar) { c.a = thingEl('a', '', c.name); c.a.href = '#' + c.h.id; c.a.appendChild(thingEl('span', '', String(c.items.length))); bar.appendChild(c.a); }
+    });
+    if (bar && order.length > 1) {
+      bar.hidden = false;
+      var mark = function () { // the category you're in is the last heading above the bar
+        var on = order[0]; order.forEach(function (c) { if (c.h.getBoundingClientRect().top < 140) on = c; });
+        order.forEach(function (c) { if ((c.a.getAttribute('aria-current') === 'true') !== (c === on)) { c.a.setAttribute('aria-current', c === on ? 'true' : 'false'); if (c === on) bar.scrollTo({ left: c.a.offsetLeft - bar.clientWidth / 2 + c.a.offsetWidth / 2, behavior: 'smooth' }); } });
+      }, ticking = false;
+      window.addEventListener('scroll', function () { if (ticking) return; ticking = true; requestAnimationFrame(function () { ticking = false; mark(); }); }, { passive: true });
+      mark();
+    }
+  }
+  // In a post: a link to a thing on a line of its own (Ghost makes it a bookmark card) becomes the thing's live tile.
+  // Neighbouring ones gather into a shelf. The thing's own page is the source, so editing it updates every place.
+  function initThings(root) {
+    var isThing = function (a) { return a && a.origin === location.origin && /^\/things\/[^/]+\/?$/.test(a.pathname); };
+    var spots = [];
+    [].forEach.call(root.querySelectorAll('.gh-content .kg-bookmark-card, .gh-content > p'), function (n) {
+      if (n.closest('.thing, .things-shelf, .uses-intro')) return;
+      var a = n.classList.contains('kg-bookmark-card') ? n.querySelector('a.kg-bookmark-container') : (n.children.length === 1 && n.firstElementChild.tagName === 'A' && n.textContent.trim() === n.firstElementChild.textContent.trim() ? n.firstElementChild : null);
+      if (isThing(a)) spots.push({ node: n, url: a.href.split('#')[0] });
+    });
+    spots.forEach(function (s) {
+      loadPost(s.url).then(function (html) {
+        var doc = new DOMParser().parseFromString(html, 'text/html'), panel = doc.querySelector('.post-panel'); if (!panel || !s.node.isConnected) return;
+        var title = panel.querySelector('.panel-title'), lede = panel.querySelector('.panel-lede'), img = panel.querySelector('.panel-image img'), content = panel.querySelector('.panel-content');
+        var t = thingEl('article', 'thing'), link = thingEl('a', 'thing-link'), tile = thingEl('span', 'thing-tile');
+        t.setAttribute('data-tags', (panel.className.match(/\btag-hash-[\w-]+/g) || []).map(function (c) { return c.slice(4); }).join(' '));
+        link.href = s.url;
+        if (img) { var im = document.createElement('img'); im.src = img.getAttribute('src'); im.alt = ''; im.loading = 'lazy'; tile.appendChild(im); } else tile.appendChild(thingEl('span', 'thing-ph'));
+        link.appendChild(tile); link.appendChild(thingEl('span', 'thing-name', title ? title.textContent.trim() : '')); t.appendChild(link);
+        if (lede) t.appendChild(thingEl('p', 'thing-line', lede.textContent.trim()));
+        var body = thingEl('div', 'thing-body'); body.hidden = true; if (content) body.innerHTML = content.innerHTML; t.appendChild(body);
+        dressThing(t);
+        var prev = s.node.previousElementSibling, shelf = prev && prev.classList.contains('things-shelf') ? prev : null;
+        if (!shelf) { shelf = thingEl('div', 'things-shelf'); s.node.parentNode.insertBefore(shelf, s.node); }
+        shelf.appendChild(t); s.node.remove();
+        var next = shelf.nextElementSibling; if (next && next.classList.contains('things-shelf')) { while (next.firstChild) shelf.appendChild(next.firstChild); next.remove(); } // a neighbour that arrived first
+        shelf.classList.toggle('is-single', shelf.children.length === 1);
+      }).catch(function () {}); // the link stays as it was
+    });
+  }
   // The Ratings page: everything you've rated, filtered by topic and sorted three ways; readers' averages from the Worker
   function initRatings() {
     var el = document.querySelector('.ratings'); if (!el) return;
@@ -2900,6 +3050,7 @@
   }
   initGarden();
   initRatings(); // after esc() exists
+  initUses();
   initGardenNote(document, readJson(document.getElementById('garden-note')));
   initPostGarden(document);
 
@@ -2940,6 +3091,7 @@
     });
   }
   softImages(document);
+  initThings(document); // after loadPost() and its cache exist
 
   // A card grows into its post, and shrinks back into its place on close. Posts are laid out in the card's order,
   // so the card, with what's on it, can travel and land as the top of its post; the story then paints below it.
@@ -3154,6 +3306,7 @@
         initStickies(body); // after it's open, so the pile can be measured
         if (gardenMeta) initGardenNote(body, readJson(gardenMeta));
         else initPostGarden(body);
+        initThings(body);
         reader.scrollTop = 0;
         if (morphing) morphOpen(card);
         document.title = doc.title || baseTitle;

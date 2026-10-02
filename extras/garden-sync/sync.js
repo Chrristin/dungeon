@@ -118,7 +118,7 @@ function scanVault() {
 }
 
 // ---------------------------------------------------------------- the site's posts (read only)
-const SKIP_TAGS = new Set(['hash-garden', 'hash-note', 'hash-now', 'hash-scatter']);
+const SKIP_TAGS = new Set(['hash-garden', 'hash-note', 'hash-now', 'hash-scatter', 'hash-thing']);
 // Ratings: out of 5, in halves. A post carries one as an internal tag, #rated-4-5 for 4.5 or #rated-4 for 4.
 function ratingOf(v) {
   const n = Number(String(v === undefined || v === null ? '' : v).replace(',', '.'));
