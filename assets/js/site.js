@@ -2905,111 +2905,166 @@
   var morphOK = 'animate' in Element.prototype && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   var morphCard = null, openGhost = null, morphBusy = false, M_MS = 380, M_EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
   var narrowScreen = function () { return window.innerWidth <= 760; };
-  function ownBox(el) { var r = el.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight; return { x: r.left + r.width / 2 - w / 2, y: r.top + r.height / 2 - h / 2, w: w, h: h }; }
-  function tiltOf(card) { return getComputedStyle(card).getPropertyValue('--tilt').trim() || '0deg'; }
-  function makeGhost(card, empty, box) {
-    var g = card.cloneNode(true);
-    g.classList.add('morph-ghost'); g.classList.remove('is-opening'); g.setAttribute('aria-hidden', 'true');
-    g.querySelectorAll('[id]').forEach(function (n) { n.removeAttribute('id'); });
-    if (empty) g.textContent = '';
-    g.style.visibility = 'visible'; // the card itself is hidden while it's open as the post
-    g.style.left = box.x + 'px'; g.style.top = box.y + 'px'; g.style.width = box.w + 'px'; g.style.height = box.h + 'px';
-    reader.appendChild(g); return g;
+  // The card grows into its post by being laid out live, not zoomed: a copy of the post's own top (image, code
+  // line, title, date, excerpt) starts styled exactly as the card is, and every size moves to the post's: the
+  // box's place and width, padding and spacing, font sizes, the image's shape, corners and colour. The text
+  // re-wraps as the box widens. Pieces only one side has open up or fold away (the date line, the card's
+  // read-time line, a preview excerpt the post doesn't have). At the end it is the post's top, so the real
+  // post simply takes its place, and the story paints downward below. Closing runs the same thing backwards.
+  var MG_MS = 460;
+  function px(v) { return (Math.round(v * 100) / 100) + 'px'; }
+  function boxOf(el) { var s = getComputedStyle(el); return { pt: s.paddingTop, pr: s.paddingRight, pb: s.paddingBottom, pl: s.paddingLeft }; }
+  function textOf(el) { var s = getComputedStyle(el); return { fontSize: s.fontSize, lineHeight: s.lineHeight, letterSpacing: s.letterSpacing }; }
+  function gapOf(card) { return parseFloat(getComputedStyle(card).rowGap) || 8; }
+  // The card's own box, without its tilt
+  function cardRect(card) { var r = card.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight; return { x: r.left + r.width / 2 - w / 2, y: r.top + r.height / 2 - h / 2, w: w, h: h }; }
+  // Builds the growing copy and, for each of its pieces, how that piece looks on the card and in the post
+  function growPlan(card, panel) {
+    var cs = function (el) { return getComputedStyle(el); };
+    var pf = panel.querySelector(':scope > .panel-image'), ph = panel.querySelector(':scope > .panel-head');
+    var cm = card.querySelector('.card-media'), cimg = cm && cm.querySelector('img'), pimg = pf && pf.querySelector('img');
+    var gap = gapOf(card), cr = cardRect(card), pr = panel.getBoundingClientRect(), cst = cs(card), pst = cs(panel);
+    var g = document.createElement('div');
+    g.className = panel.className + ' morph-grow'; g.setAttribute('aria-hidden', 'true');
+    [].forEach.call(panel.attributes, function (a) { if (/^data-/.test(a.name) || a.name === 'style') g.setAttribute(a.name, a.value); });
+    var parts = [];
+    var add = function (el, a, b) { parts.push({ el: el, a: a, b: b }); };
+    // the box
+    var cb = boxOf(card), pb = boxOf(panel);
+    add(g, { left: px(cr.x), top: px(cr.y), width: px(cr.w), minHeight: px(cr.h), paddingTop: cb.pt, paddingRight: cb.pr, paddingBottom: cb.pb, paddingLeft: cb.pl,
+             borderRadius: cst.borderTopLeftRadius, backgroundColor: cst.backgroundColor, boxShadow: cst.boxShadow, transform: cst.transform === 'none' ? 'matrix(1, 0, 0, 1, 0, 0)' : cst.transform },
+           { left: px(pr.left), top: px(pr.top), width: px(pr.width), minHeight: '0px', paddingTop: pb.pt, paddingRight: pb.pr, paddingBottom: '0px', paddingLeft: pb.pl,
+             borderRadius: pst.borderTopLeftRadius, backgroundColor: pst.backgroundColor, boxShadow: cst.boxShadow, transform: 'matrix(1, 0, 0, 1, 0, 0)' });
+    // the image: the card's crop and tint become the post's shape and plain colours
+    if (cm && pimg && cimg) {
+      var fig = document.createElement('figure'); fig.className = 'panel-image';
+      var gi = document.createElement('img'); gi.alt = ''; gi.src = (pimg.complete && pimg.naturalWidth) ? pimg.currentSrc : cimg.currentSrc;
+      var wash = document.createElement('div'); wash.className = 'morph-wash';
+      fig.appendChild(gi); fig.appendChild(wash); g.appendChild(fig);
+      var ca = getComputedStyle(cm, '::after');
+      add(fig, { marginBottom: px(gap) }, { marginBottom: cs(pf).marginBottom });
+      add(gi, { height: px(cm.offsetHeight), borderRadius: cs(cm).borderTopLeftRadius, filter: cs(cimg).filter === 'none' ? 'grayscale(0)' : cs(cimg).filter },
+              { height: px(pimg.offsetHeight), borderRadius: cs(pimg).borderTopLeftRadius, filter: 'grayscale(0)' });
+      add(wash, { opacity: ca.opacity, backgroundColor: ca.backgroundColor, borderRadius: cs(cm).borderTopLeftRadius }, { opacity: '0', backgroundColor: ca.backgroundColor, borderRadius: cs(pimg).borderTopLeftRadius });
+    } else if (cm) { // the post hides its image: the card's folds away
+      var cmc = cm.cloneNode(true); g.appendChild(cmc);
+      add(cmc, { height: px(cm.offsetHeight), marginBottom: px(gap), opacity: '1' }, { height: '0px', marginBottom: '0px', opacity: '0' });
+    }
+    // the code line, title, date and excerpt
+    var head = ph.cloneNode(true); head.querySelectorAll('[id]').forEach(function (n) { n.removeAttribute('id'); }); head.style.marginTop = '0'; head.style.marginBottom = '0';
+    g.appendChild(head);
+    var phs = cs(ph); add(head, { marginLeft: '0px', marginRight: '0px' }, { marginLeft: phs.marginLeft, marginRight: phs.marginRight }); // the post's text column is inset; the card's isn't
+    var hm = head.querySelector('.panel-meta'), pm = ph.querySelector('.panel-meta'), ch = card.querySelector('.card-head');
+    if (hm && pm && ch) { var chb = boxOf(ch); add(hm, { paddingTop: chb.pt, paddingLeft: chb.pl, paddingRight: chb.pr, marginBottom: px(gap), fontSize: cs(ch).fontSize }, { paddingTop: cs(pm).paddingTop, paddingLeft: cs(pm).paddingLeft, paddingRight: cs(pm).paddingRight, marginBottom: cs(pm).marginBottom, fontSize: cs(pm).fontSize }); }
+    var ht = head.querySelector('.panel-title'), pt = ph.querySelector('.panel-title'), ct = card.querySelector('.card-title');
+    if (ht && pt && ct) {
+      var a = textOf(ct), b = textOf(pt), cts = cs(ct), pts = cs(pt);
+      a.marginTop = cts.marginTop; a.marginLeft = cts.marginLeft; a.marginRight = cts.marginRight; a.marginBottom = px(gap);
+      b.marginTop = pts.marginTop; b.marginLeft = pts.marginLeft; b.marginRight = pts.marginRight; b.marginBottom = pts.marginBottom;
+      add(ht, a, b);
+    }
+    var hr = head.querySelector(':scope > .rated'); if (hr) add(hr, { opacity: '0' }, { opacity: '1' });
+    var hs = head.querySelector('.panel-sub'), ps = ph.querySelector('.panel-sub');
+    if (hs && ps) add(hs, { height: '0px', marginTop: '0px', opacity: '0' }, { height: px(ps.offsetHeight), marginTop: cs(ps).marginTop, opacity: '1' });
+    var hl = head.querySelector('.panel-lede'), pl = ph.querySelector('.panel-lede'), ce = card.querySelector('.card-excerpt');
+    if (hl && pl && ce) { // an excerpt you wrote: the card's text moves into its box
+      var ces = cs(ce), pls = cs(pl), la = textOf(ce), lb = textOf(pl);
+      la.marginTop = '0px'; la.marginLeft = ces.marginLeft; la.marginRight = ces.marginRight; la.marginBottom = px(gap); la.paddingTop = '0px'; la.paddingBottom = '0px'; la.paddingLeft = '0px'; la.paddingRight = '0px'; la.backgroundColor = 'rgba(255, 255, 255, 0)'; la.color = ces.color;
+      lb.marginTop = pls.marginTop; lb.marginLeft = pls.marginLeft; lb.marginRight = pls.marginRight; lb.marginBottom = '0px'; lb.paddingTop = pls.paddingTop; lb.paddingBottom = pls.paddingBottom; lb.paddingLeft = pls.paddingLeft; lb.paddingRight = pls.paddingRight; lb.backgroundColor = pls.backgroundColor; lb.color = pls.color;
+      add(hl, la, lb);
+    } else if (ce) { // no excerpt of yours: the card's preview of the story folds away as the story takes over
+      var cec = ce.cloneNode(true); head.appendChild(cec);
+      add(cec, { height: px(ce.offsetHeight), marginBottom: px(gap), opacity: '1' }, { height: '0px', marginBottom: '0px', opacity: '0' });
+    }
+    var cf = card.querySelector('.card-foot'); // the card's read-time line folds away
+    if (cf) { var cfc = cf.cloneNode(true); g.appendChild(cfc); var cfb = boxOf(cf); add(cfc, { height: px(cf.offsetHeight), paddingTop: cfb.pt, opacity: '1' }, { height: '0px', paddingTop: '0px', opacity: '0' }); }
+    return { g: g, parts: parts, pimg: pimg, cimg: cimg };
   }
-  // the transform that carries a box placed at `at` onto `to`
-  function onto(at, to, rot) {
-    return 'translate(' + (to.x + to.w / 2 - at.x - at.w / 2).toFixed(1) + 'px,' + (to.y + to.h / 2 - at.y - at.h / 2).toFixed(1) + 'px) scale(' + (to.w / at.w).toFixed(4) + ',' + (to.h / at.h).toFixed(4) + ') rotate(' + rot + ')';
+  function runPlan(plan, forward) {
+    var timing = { duration: MG_MS, easing: M_EASE, fill: 'forwards' }, main = null;
+    plan.parts.forEach(function (p) {
+      var an = p.el.animate(forward ? [p.a, p.b] : [p.b, p.a], timing);
+      if (p.el === plan.g) main = an;
+    });
+    return main;
   }
-  function extendImage(panel) { // from the card's crop to the whole photo, once it has loaded
-    var fig = panel.querySelector(':scope > .panel-image.is-cropped'); if (!fig) return;
-    var img = fig.querySelector('img');
-    var go = function () {
-      var w = img.clientWidth, now = img.clientHeight, full = img.naturalWidth ? w * img.naturalHeight / img.naturalWidth : now;
-      if (!morphOK || Math.abs(full - now) < 4) { fig.classList.remove('is-cropped'); return; }
-      img.animate({ height: [now + 'px', full + 'px'] }, { duration: 460, easing: M_EASE }).onfinish = function () { fig.classList.remove('is-cropped'); };
+  // The post's image, when the sharper size hasn't arrived: it shows the card's (already here, so nothing is
+  // blank), and the sharper one fades in over it when it lands.
+  function sharpenLater(pimg, cimg) {
+    if (!pimg || !cimg || (pimg.complete && pimg.naturalWidth)) return;
+    var srcset = pimg.getAttribute('srcset'), sizes = pimg.getAttribute('sizes');
+    pimg.classList.remove('is-waiting'); pimg.removeAttribute('srcset'); pimg.src = cimg.currentSrc;
+    if (cimg.naturalWidth) pimg.style.aspectRatio = cimg.naturalWidth + ' / ' + cimg.naturalHeight;
+    var hi = new Image(); hi.className = 'morph-sharp'; hi.alt = ''; hi.setAttribute('aria-hidden', 'true'); hi.sizes = sizes; hi.srcset = srcset;
+    hi.onload = function () {
+      if (!pimg.isConnected) return;
+      hi.style.top = pimg.offsetTop + 'px'; hi.style.left = pimg.offsetLeft + 'px'; hi.style.width = pimg.offsetWidth + 'px'; hi.style.height = pimg.offsetHeight + 'px';
+      pimg.parentNode.appendChild(hi); void hi.offsetWidth; hi.classList.add('is-in');
+      setTimeout(function () { pimg.setAttribute('srcset', srcset); hi.remove(); }, 400);
     };
-    if (img.complete && img.naturalWidth) go(); else img.addEventListener('load', go, { once: true });
   }
-  // The post's own corner radius, the card's, and their images'
-  function radiusOf(el, d) { return el ? (parseFloat(getComputedStyle(el).borderTopLeftRadius) || d) : d; }
-  // The card as it lands on the post: the same proportions, scaled to the post's width, at the post's top
-  // Corners that change smoothly on screen while the box is scaled: at each moment the radius is set so that,
-  // multiplied by the scale at that moment, it's the right step between the start and end corners on screen.
-  // Both the scaling and these steps follow the same easing, so they stay in step.
-  function cornerFrames(r0, r1, s0, s1) {
-    var f = [];
-    for (var k = 0; k <= 12; k++) { var t = k / 12, s = s0 + (s1 - s0) * t; f.push({ offset: t, borderRadius: ((r0 + (r1 - r0) * t) / s).toFixed(2) + 'px' }); }
-    return f;
-  }
-  function landing(cardBox, panelRect) { var s = panelRect.width / cardBox.w; return { s: s, x: panelRect.left, y: panelRect.top, w: cardBox.w * s, h: cardBox.h * s }; }
-  // The real card, content and all, grows into the post and lands as its top part. Scaling would swell its
-  // corners, so they're animated alongside, compensated for the scale: on screen they go smoothly from the
-  // card's to the post's. Then the post's own top takes over (a very short crossfade where the two don't
-  // line up exactly), and the story paints downward below it. Closing is the exact reverse.
   function morphOpen(card) {
     var panel = body.querySelector('.post-panel'); if (!panel) { reader.classList.remove('morph-hide', 'is-morphing'); return; }
-    var fig = panel.querySelector(':scope > .panel-image'); if (fig) fig.classList.add('is-level'); // level, as on the card, until it lands
-    var tilt = tiltOf(card), from = ownBox(card), p = panel.getBoundingClientRect(), land = landing(from, p);
-    var cR = radiusOf(card, 14), pR = radiusOf(panel, 20), media = card.querySelector('.card-media');
-    var mR = radiusOf(media, 10), fR = radiusOf(fig && fig.querySelector('img'), 10);
-    var g = makeGhost(card, false, from), gm = g.querySelector('.card-media');
-    var timing = { duration: M_MS, easing: M_EASE, fill: 'forwards' };
-    var anim = g.animate([{ transform: 'translate(0px, 0px) scale(1, 1) rotate(' + tilt + ')' }, { transform: onto(from, land, '0deg') }], timing);
-    g.animate(cornerFrames(cR, pR, 1, land.s), timing);
-    if (gm) gm.animate(cornerFrames(mR, fR, 1, land.s), timing);
-    card.style.visibility = 'hidden'; // the card has become the post
+    var pf = panel.querySelector(':scope > .panel-image'); if (pf) pf.classList.add('is-level'); // level, as on the card, until it lands
+    var cimg = card.querySelector('.card-media img'), pimg = pf && pf.querySelector('img');
+    if (pimg && cimg && cimg.naturalWidth && !pimg.naturalWidth) pimg.style.aspectRatio = cimg.naturalWidth + ' / ' + cimg.naturalHeight; // so its shape is known before it loads
+    sharpenLater(pimg, cimg);
+    var plan = growPlan(card, panel), g = plan.g;
+    reader.appendChild(g);
+    var anim = runPlan(plan, true);
+    card.style.opacity = '0'; // the card has become the post (still there to be pointed at, so its hover state stays real)
     morphCard = card; openGhost = g;
     requestAnimationFrame(function () { reader.classList.remove('is-morphing'); }); // the page dims while it grows
     anim.onfinish = function () {
       if (openGhost !== g) return; // closed before it finished opening: the close has taken over
       openGhost = null;
-      var H = panel.offsetHeight, top = Math.min(land.h, H), seen = Math.max(top, Math.min(H, window.innerHeight - p.top));
-      var clipAt = function (h) { return 'inset(0 0 ' + Math.max(0, H - h).toFixed(1) + 'px 0 round ' + pR + 'px)'; };
-      panel.style.clipPath = clipAt(top); // only the part the card covers, for now
+      var pr = panel.getBoundingClientRect(), H = panel.offsetHeight, head = panel.querySelector(':scope > .panel-head');
+      var top = Math.min(H, head.getBoundingClientRect().bottom - pr.top), seen = Math.max(top, Math.min(H, window.innerHeight - pr.top));
+      var pR = getComputedStyle(panel).borderTopLeftRadius;
+      var clipAt = function (h) { return 'inset(0 0 ' + Math.max(0, H - h).toFixed(1) + 'px 0 round ' + pR + ')'; };
+      panel.style.clipPath = clipAt(top); // the post's own top, identical to the copy, takes its place
       reader.classList.remove('morph-hide');
-      g.animate({ opacity: [1, 0] }, { duration: narrowScreen() ? 80 : 110, fill: 'forwards' }).onfinish = function () {
-        g.remove();
-        if (fig) fig.classList.remove('is-level'); // the image eases into its tilt
-        var paint = panel.animate({ clipPath: [clipAt(top), clipAt(seen)] }, { duration: 300, easing: 'cubic-bezier(0.3, 0.7, 0.2, 1)' }); // the story paints downward
-        paint.onfinish = function () { panel.style.clipPath = ''; extendImage(panel); };
-      };
+      g.remove();
+      if (pf) pf.classList.remove('is-level'); // the image eases into its tilt
+      var paint = panel.animate({ clipPath: [clipAt(top), clipAt(seen)] }, { duration: 300, easing: 'cubic-bezier(0.3, 0.7, 0.2, 1)' }); // the story paints downward
+      paint.onfinish = function () { panel.style.clipPath = ''; };
     };
   }
   function morphClose() {
     var card = morphCard, panel = body.querySelector('.post-panel'); morphCard = null;
     var cr = card.getBoundingClientRect();
-    if (!panel || !card.isConnected || cr.bottom < 0 || cr.top > window.innerHeight) { card.style.visibility = ''; reader.close(); reader.classList.remove('no-rise'); return; } // its card is off screen: just close
+    if (!panel || !card.isConnected || cr.bottom < 0 || cr.top > window.innerHeight) { card.style.opacity = ''; reader.close(); reader.classList.remove('no-rise'); return; } // its card is off screen: just close
     morphBusy = true;
     if (openGhost) { openGhost.remove(); openGhost = null; reader.classList.remove('morph-hide'); } // closed while still opening
     panel.getAnimations().forEach(function (a) { a.finish(); }); panel.style.clipPath = '';
-    var fig = panel.querySelector(':scope > .panel-image'); if (fig) fig.classList.add('is-level'); // the image levels first
-    var tilt = tiltOf(card), to = ownBox(card), p = panel.getBoundingClientRect(), land = landing(to, p);
-    var cR = radiusOf(card, 14), pR = radiusOf(panel, 20), mR = radiusOf(card.querySelector('.card-media'), 10), fR = radiusOf(fig && fig.querySelector('img'), 10);
-    var H = panel.offsetHeight, top = Math.min(land.h, H), seen = Math.max(top, Math.min(H, window.innerHeight - p.top));
-    var clipAt = function (h) { return 'inset(0 0 ' + Math.max(0, H - h).toFixed(1) + 'px 0 round ' + pR + 'px)'; };
+    var pf = panel.querySelector(':scope > .panel-image'); if (pf) pf.classList.add('is-level'); // the image levels first
+    var pr = panel.getBoundingClientRect(), H = panel.offsetHeight, head = panel.querySelector(':scope > .panel-head');
+    var top = Math.min(H, head.getBoundingClientRect().bottom - pr.top), seen = Math.max(top, Math.min(H, window.innerHeight - pr.top));
+    var pR = getComputedStyle(panel).borderTopLeftRadius;
+    var clipAt = function (h) { return 'inset(0 0 ' + Math.max(0, H - h).toFixed(1) + 'px 0 round ' + pR + ')'; };
     reader.classList.add('is-morphing'); // the dimming lifts
     var shrink = function () {
-      var g = makeGhost(card, false, to), gm = g.querySelector('.card-media');
-      var start = { transform: onto(to, land, '0deg') }, timing = { duration: M_MS, easing: M_EASE, fill: 'forwards' };
-      g.style.transform = start.transform; g.style.borderRadius = (pR / land.s).toFixed(2) + 'px';
-      if (gm) gm.style.borderRadius = (fR / land.s).toFixed(2) + 'px';
-      g.animate({ opacity: [0, 1] }, { duration: narrowScreen() ? 80 : 110, fill: 'forwards' }).onfinish = function () {
-        reader.classList.add('morph-hide'); // the post's top hands back to the card
-        var anim = g.animate([start, { transform: 'translate(0px, 0px) scale(1, 1) rotate(' + tilt + ')' }], timing);
-        g.animate(cornerFrames(pR, cR, land.s, 1), timing);
-        if (gm) gm.animate(cornerFrames(fR, mR, land.s, 1), timing);
-        anim.onfinish = function () {
-          card.style.visibility = ''; g.remove(); morphBusy = false;
-          reader.close();
-          reader.classList.remove('morph-out', 'morph-hide', 'is-morphing', 'no-rise');
-        };
+      var plan = growPlan(card, panel), g = plan.g; // the card's state is read now: hovered or not, it lands as it is
+      reader.appendChild(g); reader.classList.add('morph-hide');
+      runPlan(plan, false).onfinish = function () {
+        card.style.opacity = ''; g.remove(); morphBusy = false;
+        reader.close();
+        reader.classList.remove('morph-out', 'morph-hide', 'is-morphing', 'no-rise');
       };
     };
-    if (p.top > -top && seen > top + 4) { // the story wipes back up into the top part, then the card shrinks away
-      panel.animate({ clipPath: [clipAt(seen), clipAt(top)] }, { duration: 240, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)', fill: 'forwards' }).onfinish = shrink;
-    } else { // read far down the post: its top is off screen, so the post fades and the card comes back down to its place
-      reader.classList.add('morph-out'); shrink();
-    }
+    if (pr.top > -top && seen > top + 4) { // the story wipes back up into the top part, then the card shrinks home
+      panel.animate({ clipPath: [clipAt(seen), clipAt(top)] }, { duration: 240, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)', fill: 'forwards' }).onfinish = function () { setTimeout(shrink, 0); };
+    } else { setTimeout(shrink, 230); } // read far down: its top is off screen, so the card comes back down from above once the image has levelled
+  }
+  // Desktop: resting the pointer on a card fetches the post-sized image, so it's sharp the moment the card grows
+  if (window.matchMedia && matchMedia('(hover: hover)').matches) {
+    var sharpFor = new WeakSet(), keep = [];
+    document.addEventListener('pointerover', function (e) {
+      var card = e.target.closest && e.target.closest('.cards .card, .hero-card .card'); if (!card || sharpFor.has(card)) return;
+      var img = card.querySelector('.card-media img'); if (!img || !img.getAttribute('srcset')) return;
+      sharpFor.add(card);
+      setTimeout(function () { var i = new Image(); i.sizes = '(max-width: 800px) 92vw, 760px'; i.srcset = img.getAttribute('srcset'); keep.push(i); if (keep.length > 12) keep.shift(); }, 120);
+    }, { passive: true });
   }
   function closeReader() {
     if (!reader || !reader.open || morphBusy) return;
@@ -3029,7 +3084,7 @@
   function openPost(url, card) {
     if (morphBusy) return;
     if (card) card.classList.add('is-opening');
-    if (!card && morphCard) { morphCard.style.visibility = ''; morphCard = null; } // a link inside the post: it no longer belongs to the card
+    if (!card && morphCard) { morphCard.style.opacity = ''; morphCard = null; } // a link inside the post: it no longer belongs to the card
     loadPost(url)
       .then(function (html) {
         var doc = new DOMParser().parseFromString(html, 'text/html');
@@ -3051,11 +3106,8 @@
         document.documentElement.classList.add('reader-open');
         var already = reader.open; // following a link inside the overlay: still one history step, not one per note
         var morphing = !already && morphOK && card && card.isConnected && card.classList.contains('card') && !!card.closest('.cards, .hero-card');
-        if (morphing) {
-          reader.classList.add('no-rise', 'morph-hide', 'is-morphing');
-          var fig = body.querySelector('.post-panel > .panel-image'); if (fig) fig.classList.add('is-cropped');
-        }
-        softImages(body);
+        if (morphing) reader.classList.add('no-rise', 'morph-hide', 'is-morphing');
+        else softImages(body); // (when a card opens it, the card's own image stands in until the sharper one arrives)
         if (!already) reader.showModal();
         initStickies(body); // after it's open, so the pile can be measured
         if (gardenMeta) initGardenNote(body, readJson(gardenMeta));

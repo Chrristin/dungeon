@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.2
+
+- **The card grows into its post by being laid out live, not zoomed.** Its width, padding, spacing, font sizes, corners and colour move from the card's to the post's while the text re-wraps (a three-line title becomes two as the space opens up); the date line opens, the read-time line folds away, and the excerpt moves into its box. It lands as the post's own top, so nothing is swapped, and the story paints downward below. Closing is the exact reverse, landing in whatever state the card is really in, hovered or not.
+- **The image's shape changes during the growth,** from the card's crop to its shape in the post, instead of extending after the post has landed.
+- **No more image jump at the end.** The post first shows the card's own copy of the photo; the sharper post-sized one fades in over it when it arrives. On desktop, resting the pointer on a card fetches that sharper image ahead of time.
+- **Desktop posts show more of the story when they open:** the feature image is at most about 40% of the screen's height (cropped to fill), the title is smaller (2.25rem at most), and the top of the post is tighter.
+- **The page no longer shifts sideways** when a post opens or closes: the scrollbar's space is kept while scrolling is locked.
+
 ## 2.1.1
 
 - **The card grows into its post with everything on it.** The card's image, code line, title and excerpt scale up together and land as the top of the post, on every screen size; then the story paints downward below. Closing is the exact reverse: the story wipes back up and the card, content and all, shrinks into its place. Where the post's own top doesn't line up exactly with the grown card (on wide screens, where the card grows about three times), a very short crossfade hands over at the landing.

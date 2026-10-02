@@ -57,7 +57,7 @@ html[data-scheme="dark"] {
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; background: var(--paper); -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; background: var(--paper); -webkit-tap-highlight-color: transparent; scrollbar-gutter: stable; } /* the scrollbar's space is kept while a post is open, so the page never shifts sideways */
 
 body {
     margin: 0;
@@ -305,7 +305,7 @@ html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255,
 }
 .panel-head { margin-bottom: 2rem; }
 .panel-meta { margin-bottom: 1.4rem; }
-.panel-title { margin: 0; font-size: clamp(2rem, 4.6vw, 3rem); line-height: 1.06; letter-spacing: -0.03em; font-weight: 600; text-wrap: balance; }
+.panel-title { margin: 0; font-size: clamp(1.9rem, 3.4vw, 2.25rem); line-height: 1.1; letter-spacing: -0.025em; font-weight: 600; }
 .panel-sub { margin: 0.6rem 0 0; color: var(--on-card-soft); font-size: 1rem; }
 .panel-lede { margin: 1.2rem 0 0; font-size: 1.15rem; line-height: 1.5; }
 
@@ -2239,8 +2239,6 @@ html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); 
 .post-panel > .panel-image.is-level { transform: none; }
 /* An excerpt you wrote sits in a light box; the story starts after it */
 .panel-lede { padding: 0.8rem 1rem; border-radius: 12px; background: rgba(255, 255, 255, 0.1); }
-/* While a card opens, the image keeps the card's crop, then extends to the whole photo */
-.panel-image.is-cropped img { aspect-ratio: 16 / 10; object-fit: cover; }
 /* An image that isn't here yet keeps its place and fades in when it arrives */
 .panel-image img { transition: opacity 320ms ease; }
 .panel-image img.is-waiting { opacity: 0; }
@@ -2257,9 +2255,6 @@ html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); 
     .panel-content { padding: 0 0.3rem; }
 }
 
-/* The card on its way: a copy of the card that grows into the post (or shrinks back into the card) */
-.morph-ghost { position: fixed; margin: 0; z-index: 5; pointer-events: none; transition: none; transform-origin: center; box-sizing: border-box; }
-.morph-ghost .card-title a::after { display: none; }
 .reader.morph-hide .post-panel { opacity: 0; }
 .reader.morph-out .post-panel { opacity: 0; transition: opacity 160ms ease; }
 .reader::backdrop { transition: background-color 380ms ease, backdrop-filter 380ms ease, -webkit-backdrop-filter 380ms ease; }
@@ -2285,4 +2280,29 @@ html[data-scheme="dark"] .plot:has(.plot-empty) .plot-etch { filter: invert(1); 
 @media (prefers-reduced-motion: reduce) {
     .panel-image img, .reader-close { transition: none; }
 }
+
+/* ---------- 2.1.2 ---------- */
+/* Desktop: more of the story on screen when a post opens. The image is at most about 40% of the screen's
+   height (cropped to fill, not shrunk), and the top of the post is tighter. */
+@media (min-width: 761px) {
+    .post-panel { padding-top: 2rem; }
+    .post-panel > .panel-image { margin-bottom: 1rem; }
+    .post-panel > .panel-image img { max-height: 40vh; object-fit: cover; }
+    .panel-meta { margin-bottom: 0.8rem; }
+    .panel-sub { margin-top: 0.4rem; }
+    .panel-lede { margin-top: 0.9rem; }
+    .panel-head { margin-bottom: 1.5rem; }
+}
+/* The card while it grows into the post: the post's own top, laid out live as it widens */
+.morph-grow { position: fixed; margin: 0; z-index: 5; pointer-events: none; box-sizing: border-box; overflow: hidden; transform-origin: center; }
+.morph-grow .panel-image { position: relative; overflow: hidden; }
+.morph-grow .panel-image img { display: block; width: 100%; max-height: none; object-fit: cover; }
+.morph-grow .morph-wash { position: absolute; inset: 0; pointer-events: none; }
+.morph-grow .panel-title { text-wrap: wrap; }
+.morph-grow .card-excerpt, .morph-grow .card-foot { overflow: hidden; }
+.morph-grow .panel-sub { overflow: hidden; }
+/* the post's sharper image, fading in over the card's when it arrives late */
+.post-panel > .panel-image { position: relative; }
+.panel-image .morph-sharp { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; opacity: 0; transition: opacity 320ms ease; }
+.panel-image .morph-sharp.is-in { opacity: 1; }
 
