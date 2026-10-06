@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- The page extras/shelves/build.mjs opens to photograph the bookcases for the Library landing. It is the real
+     library.js and library.css, drawing the landing live from assets/data/library.json, with nothing else around it.
+     ?scheme=dark gives the dark wood. Lights and flames are held still so every run makes the same picture. -->
+<html lang="en" data-scheme="light">
+<head>
+<meta charset="utf-8">
+<title>Shelves</title>
+<script>var q = /scheme=(dark|light)/.exec(location.search); if (q) document.documentElement.setAttribute('data-scheme', q[1]);</script>
+<link rel="stylesheet" href="/assets/css/library.css">
+<style>
+    html, body { margin: 0; background: transparent !important; }
+    body { font-family: sans-serif; }
+    .lib { width: 1000px; margin: 0 auto; padding: 0; }
+    .lb-glow0, .lb-glow1, .lb-glow2 { animation: none !important; opacity: 0.55; }
+    .lb-flame { animation: none !important; }
+    .lb-cap { visibility: hidden; }
+</style>
+</head>
+<body>
+<main>
+<div class="lib" data-src="/assets/data/library.json" data-render="landing">
+    <div class="lib-nav" id="lib-nav"></div>
+    <div id="lib-vp"><div id="lib-sizer"><div id="lib-case"></div></div></div>
+    <p class="lib-msg" id="lib-msg"></p>
+    <div class="lib-bar">
+        <select id="lib-sortSel"></select><select id="lib-patSel"></select>
+        <button id="lib-topicBtn" type="button"></button><div id="lib-topicPanel" hidden></div>
+        <button id="lib-handBtn" type="button"></button><button id="lib-curioBtn" type="button" hidden></button><button id="lib-curioReset" type="button" hidden></button>
+    </div>
+    <div id="lib-tools" hidden><a id="lib-send" hidden></a><button id="lib-link" type="button"></button><button id="lib-restart" type="button"></button></div>
+    <div id="lib-palette"></div>
+    <div id="lib-info"></div>
+</div>
+</main>
+<script src="/assets/js/library.js"></script>
+</body>
+</html>

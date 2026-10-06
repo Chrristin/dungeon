@@ -15,11 +15,36 @@ html[data-scheme="dark"] .lib { --lb-under: 0.62; --lb-ground: 0.5; --lb-wood: #
     html[data-scheme="auto"] .lib { --lb-under: 0.62; --lb-ground: 0.5; --lb-wood: #7A4A26; --lb-wood-l: #94602F; --lb-wood-d: #2E1A0D; --lb-edge: #170B03; }
 }
 
-.lib-hint, .lib-msg { max-width: 44rem; margin: 0 0 1rem; color: var(--graphite); font-size: 0.95rem; }
-.lib-msg { max-width: none; margin: 1rem 0 0.75rem; min-height: 1.5em; }
-.lib-hint { max-width: none; text-align: center; white-space: nowrap; }
-.lib-hint:empty { display: none; }
-@media (max-width: 1000px) { .lib-hint { white-space: normal; } }
+.lib-msg { max-width: none; margin: 1rem 0 0.75rem; min-height: 1.5em; color: var(--graphite); font-size: 0.95rem; }
+.lib[hidden] { display: none; }
+
+/* The landing: pictures of the bookcases, made ahead of time by extras/shelves (npm run shelves) and already in the page.
+   Each is one button. The row fits the text column, up to a tenth wider; on a phone they stand one under another. */
+.lib-shelves { display: flex; align-items: flex-end; width: min(110%, calc(100vw - 32px)); margin: 0.5rem 0 4rem calc((100% - min(110%, calc(100vw - 32px))) / 2); }
+.lib-shelves[hidden] { display: none; }
+.lib-shelf { position: relative; flex: none; display: block; margin: 0; padding: 0; font: inherit; color: inherit; background: none; border: 0; cursor: pointer; container-type: inline-size; transition: translate 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.lib-shelf:hover, .lib-shelf:focus-visible { translate: 0 -14px; }
+.lib-shelf:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 8px; }
+.lib-shelf-img { display: block; width: 100%; height: auto; pointer-events: none; -webkit-user-select: none; user-select: none; }
+.lib-shelf-dark { display: none; }
+html[data-scheme="dark"] .lib-shelf-light { display: none; }
+html[data-scheme="dark"] .lib-shelf-dark { display: block; }
+@media (prefers-color-scheme: dark) {
+    html[data-scheme="auto"] .lib-shelf-light { display: none; }
+    html[data-scheme="auto"] .lib-shelf-dark { display: block; }
+}
+.lib-shelf-cap { position: absolute; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: var(--cap); color: var(--graphite); white-space: nowrap; pointer-events: none; }
+.lib-shelf-wait { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.9rem; color: var(--ink); pointer-events: none; }
+.lib-shelf.lib-opening { cursor: progress; }
+.lib-shelf.lib-opening .lib-shelf-img { opacity: 0.45; }
+.lib-shelf.lib-opening .lib-shelf-wait { display: flex; }
+.lib-shelves-msg { margin: 0 0 1rem; text-align: center; color: var(--graphite); font-size: 0.95rem; }
+.lib-shelves-msg[hidden] { display: none; }
+@media (max-width: 899px) {
+    .lib-shelves { flex-direction: column; align-items: center; width: 100%; margin-left: 0; margin-bottom: 2rem; }
+    .lib-shelf { width: min(100%, 560px) !important; margin: 0 0 1.5rem !important; }
+}
+@media (prefers-reduced-motion: reduce) { .lib-shelf { transition: none; } }
 /* Nothing on the shelves can be text-selected, so a long press on a phone picks a thing up instead of opening the copy menu */
 /* The shelves use the whole width of the page and nothing crops them: a zoomed case grows across and down the page */
 #lib-vp { width: 100vw; margin-left: calc(50% - 50vw); overflow: visible; touch-action: pan-x pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
@@ -105,7 +130,7 @@ html.lib-zoomed, html.lib-zoomed body { overflow-x: auto; }
 /* The bookcases */
 .lb-fr { position: absolute; }
 /* The landing: every bookcase drawn small, for choosing. Nothing inside responds; each bookcase is one button. */
-.lib-over > *:not(#lib-vp):not(#lib-hint) { display: none !important; }
+.lib-over > *:not(#lib-vp) { display: none !important; }
 .lib-over .lb-box { cursor: pointer; transition: translate 0.2s ease; }
 .lib-over .lb-box:hover, .lib-over .lb-box:focus-visible { translate: 0 -14px; outline: none; }
 .lib-over .lb-box * { pointer-events: none; }

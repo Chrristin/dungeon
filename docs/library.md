@@ -62,9 +62,18 @@ Later lines are drawn in front of earlier ones. A visitor can drag a curio anywh
 - **Add a book:** add a line where it stands, with at least `t`, `s`, `h`, `w`, `c` and `cn`.
 - **Move a book:** move its line and change `s` if it changed shelf.
 - **Correct a title, author or genre:** edit that line.
-- Commit and push as usual. The release carries the new file to your site.
+- **Make the shelf pictures again.** The page opens on pictures of the bookcases, not the live drawing, so after any change to `library.json` (or to `library.js` or `library.css`) run `npm run shelves` and commit what it writes: `assets/images/shelves/` and `partials/library-shelves.hbs`. It needs Chrome or Chromium on your computer (`npm install` once first).
+- Commit and push as usual. The release carries the new file to your site. It stops, saying why, if the pictures were not made again.
 
 Changing the number of books makes earlier arrangement links stop working, because a link records a position for every book. The page tells the visitor and shows the real shelves instead.
+
+## The shelf pictures
+
+The landing is a picture of each bookcase, in light and dark wood, already in the page. `extras/shelves/build.mjs` makes them: it opens `extras/shelves/harness.html`, which runs the real `library.js` and `library.css` on the data file, and photographs each bookcase with a transparent background at twice its shown size. It also writes `partials/library-shelves.hbs`, which places them. Choosing a bookcase fetches the data and draws that bookcase live.
+
+- `npm run shelves` makes them. `npm run shelves:check` only says whether they are up to date; the release runs it and stops if they are not.
+- The release also tries to make them itself before building the zip, and falls back to the ones in the repository if the browser there is not available.
+- Lights and flames are held still in the pictures, so every run makes the same ones.
 
 ## What is fixed in the script
 

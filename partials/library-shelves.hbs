@@ -1,0 +1,25 @@
+{{!-- The Library landing: a picture of each bookcase, already in the page, each one button. Made by "npm run shelves"
+      (extras/shelves/build.mjs) from the real drawing code and assets/data/library.json. Do not edit by hand; make it again
+      whenever the data file, library.js or library.css change. data-std is the width of a standard bookcase, in drawing units. --}}
+{{!-- shelves-input-hash: b40fe3513caa7636 --}}
+<div class="lib-shelves" id="lib-shelves" data-std="978">
+    <button class="lib-shelf" type="button" data-shelf="0" aria-label="Open Shelf 1" style="width:30.989%;margin-left:0%;--cap:2.20cqw">
+        <img class="lib-shelf-img lib-shelf-light" src="{{asset "images/shelves/shelf-1-light.webp"}}" width="704" height="1456" alt="" loading="lazy" decoding="async">
+        <img class="lib-shelf-img lib-shelf-dark" src="{{asset "images/shelves/shelf-1-dark.webp"}}" width="704" height="1456" alt="" loading="lazy" decoding="async">
+        <span class="lib-shelf-cap" style="left:7.316%;top:93.604%;width:83.899%;height:1.472%" aria-hidden="true">Shelf 1</span>
+        <span class="lib-shelf-wait" aria-hidden="true">Opening…</span>
+    </button>
+    <button class="lib-shelf" type="button" data-shelf="1" aria-label="Open Shelf 2" style="width:30.989%;margin-left:-2.145%;--cap:2.20cqw">
+        <img class="lib-shelf-img lib-shelf-light" src="{{asset "images/shelves/shelf-2-light.webp"}}" width="704" height="1456" alt="" loading="lazy" decoding="async">
+        <img class="lib-shelf-img lib-shelf-dark" src="{{asset "images/shelves/shelf-2-dark.webp"}}" width="704" height="1456" alt="" loading="lazy" decoding="async">
+        <span class="lib-shelf-cap" style="left:7.316%;top:93.604%;width:83.899%;height:1.472%" aria-hidden="true">Shelf 2</span>
+        <span class="lib-shelf-wait" aria-hidden="true">Opening…</span>
+    </button>
+    <button class="lib-shelf" type="button" data-shelf="2" aria-label="Open Shelf 3" style="width:42.311%;margin-left:-2.145%;--cap:1.61cqw">
+        <img class="lib-shelf-img lib-shelf-light" src="{{asset "images/shelves/shelf-3-light.webp"}}" width="960" height="1296" alt="" loading="lazy" decoding="async">
+        <img class="lib-shelf-img lib-shelf-dark" src="{{asset "images/shelves/shelf-3-dark.webp"}}" width="960" height="1296" alt="" loading="lazy" decoding="async">
+        <span class="lib-shelf-cap" style="left:5.358%;top:92.642%;width:88.207%;height:1.694%" aria-hidden="true">Shelf 3</span>
+        <span class="lib-shelf-wait" aria-hidden="true">Opening…</span>
+    </button>
+</div>
+<p class="lib-shelves-msg" id="lib-shelves-msg" role="status" hidden></p>

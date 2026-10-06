@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.14.0
+
+Library only.
+
+- **The Library opens at once.** The page used to draw all 535 books to show three small bookcases, which took several seconds and froze the page while it did. It now opens on a picture of each bookcase, already in the page, with nothing to fetch or draw. Choosing a bookcase draws just that one, as before. Going back to the shelves is instant.
+- **The pictures are made, not drawn by hand.** `npm run shelves` (in `extras/shelves`) opens the real Library code, photographs each bookcase in light and dark wood, and writes the pictures and `partials/library-shelves.hbs`. Run it whenever `library.json`, `library.js` or `library.css` change; the release stops with a plain message if the pictures are out of date.
+- **Fewer words on the page.** The how-to line is gone. "All shelves" now sits with Sort, Pattern and Topic, under the bookcase; Escape still goes back.
+
 ## 2.13.6
 
 Library only.

@@ -6,23 +6,60 @@
   var root = document.querySelector('.lib');
   if (!root || root.dataset.ready) return;
   root.dataset.ready = '1';
-  fetch(root.dataset.src).then(function (r) { return r.json(); }).then(boot).catch(function () {
-    var m = document.getElementById('lib-msg'); if (m) m.textContent = 'The shelves could not be loaded. Reload the page to try again.';
+  /* The page opens on pictures of the bookcases, made ahead of time by extras/shelves (npm run shelves) and already in the
+     page, so nothing is fetched or drawn to show them. Choosing one fetches the data and draws that bookcase alone, larger,
+     with everything working. The same code can draw the landing live (data-render="landing"): extras/shelves does that to
+     make the pictures. */
+  var TPL = root.innerHTML, shelves = document.getElementById('lib-shelves'), DATA = null, api = null;
+  function load() {
+    if (!DATA) DATA = fetch(root.dataset.src).then(function (r) { if (!r.ok) throw new Error('data'); return r.json(); }).catch(function (e) { DATA = null; throw e; });
+    return DATA;
+  }
+  if (root.dataset.render === 'landing') { load().then(function (d) { boot(d, true); }); return; }
+  var btns = shelves ? Array.prototype.slice.call(shelves.querySelectorAll('[data-shelf]')) : [], note = document.getElementById('lib-shelves-msg');
+  function go(i) {
+    var b = btns[i]; if (!b) return;
+    b.classList.add('lib-opening'); if (note) note.hidden = true;
+    /* Let the browser show the "Opening" state before the drawing starts, since drawing holds the page for a moment */
+    var ran = false;
+    function run() {
+      if (ran) return; ran = true;
+      load().then(function (d) {
+        if (!api) api = boot(d, false);
+        btns.forEach(function (x) { x.classList.remove('lib-opened'); }); b.classList.add('lib-opened'); b.classList.remove('lib-opening');
+        api.open(i);
+      }).catch(function (e) {
+        if (window.console) console.error(e);
+        b.classList.remove('lib-opening');
+        if (note) { note.textContent = 'The shelves could not be loaded. Tap a bookcase to try again.'; note.hidden = false; }
+      });
+    }
+    requestAnimationFrame(function () { setTimeout(run, 0); });
+    setTimeout(run, 120);
+  }
+  btns.forEach(function (b, i) {
+    b.addEventListener('click', function () { go(i); });
+    /* The data is fetched ahead of the click, so choosing a bookcase only pays for drawing it */
+    ['pointerenter', 'focus', 'touchstart'].forEach(function (t) { b.addEventListener(t, function () { load().catch(function () {}); }, { once: true, passive: true }); });
   });
-  /* The page opens on every bookcase, drawn small by the same code as an open one but only for choosing: nothing inside
-     responds, and each bookcase is one button. Choosing one draws that bookcase alone, larger, with everything working. */
-  function boot(d){
-    const books=d.books||d,cases=d.cases&&d.cases.length?d.cases:[{name:'Shelf 1',n:6},{name:'Shelf 2',n:6}],curios=d.curios||[],TPL=root.innerHTML,CS=[];
+  (window.requestIdleCallback || function (f) { setTimeout(f, 2000); })(function () { load().catch(function () {}); });
+  var hm = /^#CG(\d+)\./.exec(location.hash); if (hm) go(+hm[1] - 1);
+  function boot(d, render){
+    const books=d.books||d,cases=d.cases&&d.cases.length?d.cases:[{name:'Shelf 1',n:6},{name:'Shelf 2',n:6}],curios=d.curios||[],CS=[];
     {let a=0;cases.forEach(c=>{CS.push(a);a+=c.n})}
-    let AC=null,STD=0;
-    function fresh(over){if(AC)AC.abort();AC=new AbortController();document.documentElement.classList.remove('lib-zoomed');root.innerHTML=TPL;root.classList.toggle('lib-over',over)}
-    function overview(){fresh(true);start(books,d.covers,curios,cases,{landing:true,signal:AC.signal,pick:i=>setTimeout(()=>openShelf(i),0),std:w=>{STD=w}})}
-    function openShelf(ci){fresh(false);const c=cases[ci];
+    let AC=null,STD=shelves&&+shelves.dataset.std||0;
+    function fresh(over){if(AC)AC.abort();AC=new AbortController();document.documentElement.classList.remove('lib-zoomed');root.innerHTML=TPL;root.classList.toggle('lib-over',over);root.hidden=false}
+    function overview(){
+      /* Back to the pictures: the live bookcase is thrown away, so this is instant */
+      if(!render){if(AC)AC.abort();AC=null;root.innerHTML='';root.hidden=true;document.documentElement.classList.remove('lib-zoomed');if(shelves){shelves.hidden=false;const b=shelves.querySelector('.lib-opened');if(b)b.focus({preventScroll:true})}return}
+      fresh(true);start(books,d.covers,curios,cases,{landing:true,signal:AC.signal,pick:()=>{},std:w=>{STD=w;window.__libStd=w},ready:()=>{window.__libReady=true}})}
+    function openShelf(ci){fresh(false);if(shelves)shelves.hidden=true;const c=cases[ci];
       const bs=books.filter(b=>b.s>=CS[ci]&&b.s<CS[ci]+c.n).map(b=>Object.assign({},b,{s:b.s-CS[ci]})),
         cu=curios.filter(q=>q.s===-1-ci||(q.s>=CS[ci]&&q.s<CS[ci]+c.n)).map(q=>Object.assign({},q,{s:q.s<0?-1:q.s-CS[ci]}));
       start(bs,d.covers,cu,[c],{ci,stdW:STD,signal:AC.signal,close:overview});
       if(root.scrollIntoView&&root.getBoundingClientRect().top<0)root.scrollIntoView({block:'start'})}
-    const m=/^#CG(\d+)\./.exec(location.hash);if(m&&cases[+m[1]-1])openShelf(+m[1]-1);else overview()}
+    if(render)overview();
+    return{open:openShelf,home:overview}}
   function start(DATA, COVERS, CURIOS, CASES0, CTX) {
     CTX=CTX||{};const KS=CTX.ci!=null?'-'+CTX.ci:'',PFX='CG'+((CTX.ci||0)+1),SIG=CTX.signal?{signal:CTX.signal}:undefined,
       onDoc=(t,fn)=>document.addEventListener(t,fn,SIG),onWin=(t,fn)=>addEventListener(t,fn,SIG);
@@ -467,7 +504,7 @@
     function toRing(){if(view!=='open')return;view='ring';zoom=1;select(null);arrange()}
     const navEl=document.getElementById('lib-nav');
     if(navEl){const B=(txt,lab,fn,attr,val)=>{const b=document.createElement('button');b.type='button';b.className='lib-ctl lib-navb';b.textContent=txt;if(lab)b.setAttribute('aria-label',lab);if(attr)b.setAttribute(attr,val);b.onclick=fn;navEl.appendChild(b);return b};
-      if(CTX.close)B('\u2039 All shelves',null,()=>CTX.close(),'data-back','1');
+      if(CTX.close){const bar=root.querySelector('.lib-bar'),bk=document.createElement('button');bk.type='button';bk.className='lib-ctl';bk.id='lib-back';bk.textContent='\u2039 All shelves';bk.onclick=()=>CTX.close();if(bar)bar.insertBefore(bk,bar.firstChild)}
       if(!CTX.landing&&CASES.some(c=>c.layers))B('How it really is',null,()=>{tucked=!tucked;render(MODES[current].real?current:'shelved')},'data-tuck','1')}
     if(CTX.landing)boxes.forEach((b,i)=>{b.tabIndex=0;b.setAttribute('role','button');b.setAttribute('aria-label','Open '+CASES[i].name);b.addEventListener('click',()=>CTX.pick(i));
       b.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();CTX.pick(i)}})});
@@ -576,11 +613,11 @@
     document.getElementById('lib-restart').onclick=()=>{manual=null;render('manual');saveManual()};
     (function(){const c={};books.forEach(b=>{(c[b.cn]=c[b.cn]||{n:0,b}).n++});const p=document.getElementById('lib-palette');
       Object.values(c).sort((x,y)=>byHue(x.b,y.b)).forEach(v=>{const s=document.createElement('span'),i=document.createElement('i');i.style.background=v.b.c;s.appendChild(i);s.appendChild(document.createTextNode(v.n));s.title=v.b.cn;p.appendChild(s)})})();
-    {const h=document.getElementById('lib-hint'),touch=typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
-      if(h)h.textContent=CTX.landing?'':touch?'Tap a book for its cover and details. Tap and hold to move things. Pinch to zoom.':'Click a book for its cover and details. Hold Ctrl and scroll to zoom. Escape, or a click outside the bookcase, takes you back.';
+    {const touch=typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
       if(touch)MODES.manual.note=' On a touch screen, tap and hold a book to pick it up.'}
     render('shelved');
     if(location.hash.indexOf('#'+PFX+'.')===0){const sh=dec(location.hash.slice(1));if(sh){manual=normalise(sh);render('manual')}else msg.textContent='That link does not match the books on the shelves now, so the shelves are shown as they really are.'}
-    if(document.fonts&&document.fonts.load)document.fonts.load("12px 'IM Fell English SC'").then(()=>{books.forEach(b=>b.f=null);render(current)}).catch(()=>{});
+    const done=()=>{if(CTX.ready)setTimeout(CTX.ready,50)};
+    if(document.fonts&&document.fonts.load)document.fonts.load("12px 'IM Fell English SC'").then(()=>{books.forEach(b=>b.f=null);render(current)}).catch(()=>{}).then(done);else done();
   }
 })();

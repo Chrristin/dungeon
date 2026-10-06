@@ -1,7 +1,7 @@
 {
   "name": "dungeon",
   "description": "A playful Ghost theme of tilted pastel index cards, an optional homepage of plots, a floating menu, a Now page, a Scatter wall and a lightsaber colour switch.",
-  "version": "2.13.6",
+  "version": "2.14.0",
   "license": "MIT",
   "author": {
     "name": "Christin Emmanuel George",
@@ -17,6 +17,10 @@
     "ghost",
     "ghost-theme"
   ],
+  "scripts": {
+    "shelves": "node extras/shelves/build.mjs",
+    "shelves:check": "node extras/shelves/build.mjs --check"
+  },
   "config": {
     "posts_per_page": 25,
     "image_sizes": {
@@ -150,5 +154,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Chrristin/dungeon"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.63.0",
+    "sharp": "^0.35.5"
   }
 }

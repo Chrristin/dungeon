@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Library shelf pictures match the data and the drawing code
+        run: node extras/shelves/build.mjs --check
       - name: Validate for Ghost 5 and 6
         run: |
           npx --yes gscan . --v5
@@ -48,11 +50,24 @@ jobs:
           else
             echo "released=false" >> "$GITHUB_OUTPUT"
           fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Make the Library shelf pictures again
+        # Tried first, so the pictures in the zip always come from the code in it. If the browser here is unreliable the
+        # step is allowed to fail, and the zip carries the pictures committed to the repository, which the check above
+        # has already shown to be up to date.
+        if: steps.exists.outputs.released == 'false'
+        continue-on-error: true
+        run: |
+          npm ci
+          npx playwright-core install --with-deps chromium
+          npm run shelves
       - name: Build the zip and release notes
         if: steps.exists.outputs.released == 'false'
         run: |
           V="${{ steps.version.outputs.version }}"
-          zip -r dungeon.zip . -x '.git/*' '.github/*' 'docs/*' 'demo/*' 'extras/*' '.gitignore'
+          zip -r dungeon.zip . -x '.git/*' '.github/*' 'docs/*' 'demo/*' 'extras/*' 'node_modules/*' 'package-lock.json' '.gitignore'
           awk -v v="$V" '$0 == "## " v {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md
           [ -s notes.md ] || echo "Dungeon $V" > notes.md
           cat notes.md
@@ -94,7 +109,7 @@ jobs:
           echo "Ghost did not start"; docker logs ghost | tail -50; exit 1
       - name: Build the demo site
         run: |
-          zip -qr dungeon.zip . -x '.git/*' '.github/*' 'docs/*' 'demo/*' 'extras/*' '.gitignore'
+          zip -qr dungeon.zip . -x '.git/*' '.github/*' 'docs/*' 'demo/*' 'extras/*' 'node_modules/*' 'package-lock.json' '.gitignore'
           GHOST_URL=http://localhost:2368 THEME_ZIP=dungeon.zip OUT_DIR=demo-site node demo/build.mjs
       - name: Keep a copy of the built demo
         uses: actions/upload-artifact@v4
