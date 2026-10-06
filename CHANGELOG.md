@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.15.0
+
+- **A bookcase is ready before you choose it.** Pointing at a picture on the Library page (or touching it) draws that one bookcase out of sight. When you choose it the picture gives a small shake and the live bookcase fades in, in about a third of a second, however slow the drawing is. The plain "Opening" label only appears if it takes longer than a second and a half.
+- **The Collection and Watchlists boxes read left to right.** Title and figures on the left, the picture on the right still overlapping the top edge, with its "Must Buy" label under it. The line of figures sits right under the title and takes no extra row: "23 cars · updated 6 Oct".
+- **The Library box counts bookcases.** It said "17 shelves", which was every row of every bookcase. It now says "3 shelves · 535 books", and the "shelves" label under the picture is gone. A long title wraps on a narrow screen instead of being cut.
+- **Quicker releases.** The release no longer redraws the Library pictures; it only checks they are up to date, which is what it was already guaranteeing.
+
 ## 2.14.0
 
 Library only.

@@ -406,7 +406,7 @@
       var rules = rulesOf(d), musts = d.items.map(function (it) { return judge(it, rules); }).filter(function (o) { return o.verdict === 'must'; });
       musts.sort(function (x, y) { return y.off - x.off; });
       var line = a.querySelector('.plot-page-line'); if (!line) return; line.textContent = '';
-      line.appendChild(el('span', '', d.items.length + ' ' + (d.unit || 'items')));
+      var tally = d.items.length + ' ' + (d.unit || 'items');
       /* The featured item: the Must Buy with the deepest discount. Its picture sits on the right, overlapping the
          box's top edge, with "Must Buy" and a green dot under it. A picture that doesn't load is dropped; the
          label stays. With no Must Buy, nothing is featured. */
@@ -422,7 +422,8 @@
         a.insertBefore(feature, a.querySelector('.plot-page-go'));
       }
       var when = /^(\d{4})-(\d{2})-(\d{2})/.exec(d.updated || '');
-      if (when) { var age = (Date.now() - Date.UTC(+when[1], +when[2] - 1, +when[3])) / 864e5; if (age >= -1 && age <= 7) line.appendChild(el('span', '', 'updated ' + (+when[3]) + ' ' + MONTHS[+when[2] - 1])); }
+      if (when) { var age = (Date.now() - Date.UTC(+when[1], +when[2] - 1, +when[3])) / 864e5; if (age >= -1 && age <= 7) tally += ' · updated ' + (+when[3]) + ' ' + MONTHS[+when[2] - 1]; }
+      line.appendChild(el('span', '', tally));
     }).catch(function () {});
   });
 
@@ -436,8 +437,9 @@
     if (kind) { if (title && /library/i.test(title.textContent)) kind.remove(); else kind.textContent = 'library'; }
     fetch(src).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
       var books = d && (d.books || d); if (!Array.isArray(books) || !books.length) return;
-      var shelves = {}, count = 0; books.forEach(function (b) { if (!shelves[b.s]) { shelves[b.s] = 1; count++; } });
-      var line = a.querySelector('.plot-page-line'); if (line) { line.textContent = ''; line.appendChild(el('span', '', books.length + ' books')); }
+      /* Shelves are the bookcases, not the rows inside them */
+      var count = (d.cases && d.cases.length) || 1;
+      var line = a.querySelector('.plot-page-line'); if (line) { line.textContent = ''; line.appendChild(el('span', '', count + (count === 1 ? ' shelf' : ' shelves') + ' · ' + books.length + ' books')); }
       [].forEach.call(a.querySelectorAll('.plot-page-feature'), function (n) { n.remove(); });
       var feature = el('span', 'plot-page-feature'), box = el('span', 'plot-page-shot'), pic = a.getAttribute('data-image');
       if (pic) { var img = el('img'); img.alt = ''; img.loading = 'lazy'; img.src = pic; box.appendChild(img); }
@@ -451,7 +453,6 @@
         box.appendChild(row); box.appendChild(el('span', 'plot-page-board'));
       }
       feature.appendChild(box);
-      feature.appendChild(el('span', 'plot-page-must', count + ' shelves'));
       a.insertBefore(feature, a.querySelector('.plot-page-go'));
     }).catch(function () {});
   });

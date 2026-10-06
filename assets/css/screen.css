@@ -2185,13 +2185,22 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
 .plot-pages:has(.is-watchlist) > li:has(.is-watchlist) { flex: 1 1 calc(50% - 0.3rem); }
 .plot-pages:has(.is-watchlist) > li > .plot-page { flex: 1; }
 @media (max-width: 600px) { .plot-pages:has(.is-watchlist) > li:has(.is-watchlist) { flex-basis: 100%; } }
-.plot-page.is-watchlist { position: relative; flex-direction: column; align-items: flex-start; gap: 0.6rem; background: color-mix(in srgb, #e0a80f 17%, color-mix(in srgb, var(--on-card) 5%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, #e6bb3c 42%, transparent); }
+.plot-page.is-watchlist { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "kind feat" "title feat" "line feat"; column-gap: 0.6rem; row-gap: 0.4rem; align-items: start; background: color-mix(in srgb, #e0a80f 17%, color-mix(in srgb, var(--on-card) 5%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, #e6bb3c 42%, transparent); }
 .plot-page.is-library { background: color-mix(in srgb, #a0642f 26%, color-mix(in srgb, var(--on-card) 5%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, #c08a55 45%, transparent); }
 /* A box's title stays on one line: it shrinks a little in a narrow box, and a very long one is cut with an ellipsis */
 .plot-page.is-watchlist { container-type: inline-size; }
-.plot-page.is-watchlist .plot-page-text { flex: none; align-self: stretch; min-width: 0; }
-.plot-page.is-watchlist .plot-page-title { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: clamp(0.95rem, 9cqi, 1.2rem); }
-.plot-page.is-watchlist .plot-page-feature { order: -1; align-items: flex-start; }
+/* Text on the left (label, title, and the one line of figures right under it), the picture and its label on the right overlapping the top edge */
+.plot-page.is-watchlist .plot-page-text { display: contents; }
+.plot-page.is-watchlist .plot-page-kind { grid-area: kind; }
+.plot-page.is-watchlist .plot-page-title { grid-area: title; }
+.plot-page.is-watchlist .plot-page-line { grid-area: line; flex-wrap: nowrap; white-space: nowrap; font-size: clamp(0.52rem, 3.7cqi, 0.78rem); }
+/* The picture and its label are kept small so the title and the figures have room beside them */
+.plot-page.is-watchlist .plot-page-shot { width: 4.4rem; height: 4.4rem; margin-top: -2.2rem; }
+.plot-page.is-watchlist .plot-page-must { gap: 0.35rem; padding: 0.38rem 0.55rem; font-size: 0.64rem; }
+.plot-page.is-watchlist .plot-page-title { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: clamp(0.85rem, 6.2cqi, 1.2rem); }
+.plot-page.is-watchlist .plot-page-feature { grid-area: feat; align-items: flex-end; }
+/* The Library box has room for a longer title, so on a narrow screen it wraps rather than being cut */
+.plot-page.is-library .plot-page-title { white-space: normal; overflow: visible; text-overflow: clip; }
 .plot-page.is-watchlist .plot-page-must { background: color-mix(in srgb, var(--on-card) 18%, transparent); }
 .plot-page.is-watchlist .plot-page-go { display: none; }
 .plot-page-shelf { display: flex; flex-direction: column; justify-content: flex-end; place-items: normal; padding: 0.55rem 0.5rem 0.6rem; }

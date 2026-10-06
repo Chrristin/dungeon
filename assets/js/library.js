@@ -7,9 +7,10 @@
   if (!root || root.dataset.ready) return;
   root.dataset.ready = '1';
   /* The page opens on pictures of the bookcases, made ahead of time by extras/shelves (npm run shelves) and already in the
-     page, so nothing is fetched or drawn to show them. Choosing one fetches the data and draws that bookcase alone, larger,
-     with everything working. The same code can draw the landing live (data-render="landing"): extras/shelves does that to
-     make the pictures. */
+     page, so nothing is fetched or drawn to show them. Pointing at one (or touching it) fetches the data and draws that
+     bookcase out of sight, so by the time it is chosen it is ready: the picture gives a little shake and the live bookcase
+     takes its place. The same code can draw the landing live (data-render="landing"): extras/shelves does that to make the
+     pictures. */
   var TPL = root.innerHTML, shelves = document.getElementById('lib-shelves'), DATA = null, api = null;
   function load() {
     if (!DATA) DATA = fetch(root.dataset.src).then(function (r) { if (!r.ok) throw new Error('data'); return r.json(); }).catch(function (e) { DATA = null; throw e; });
@@ -17,49 +18,77 @@
   }
   if (root.dataset.render === 'landing') { load().then(function (d) { boot(d, true); }); return; }
   var btns = shelves ? Array.prototype.slice.call(shelves.querySelectorAll('[data-shelf]')) : [], note = document.getElementById('lib-shelves-msg');
-  function go(i) {
-    var b = btns[i]; if (!b) return;
-    b.classList.add('lib-opening'); if (note) note.hidden = true;
-    /* Let the browser show the "Opening" state before the drawing starts, since drawing holds the page for a moment */
-    var ran = false;
+  var SHAKE = 360, busy = false, dwell = 0, quiet = 0;
+  /* Draw a bookcase out of sight, ready to be shown. Drawing holds the page for a moment, so it is only done for the one
+     being pointed at, never for all three. */
+  function warm(i) {
+    if (Date.now() < quiet) return;
+    load().then(function (d) { if (!api) api = boot(d, false); if (!busy) api.prepare(i); }).catch(function () {});
+  }
+  function go(i, now) {
+    var b = btns[i]; if (!b || busy) return;
+    busy = true; if (note) note.hidden = true;
+    if (!now) b.classList.add('lib-opening');
+    var t0 = Date.now(), ran = false;
+    function fail(e) {
+      if (window.console) console.error(e);
+      busy = false; b.classList.remove('lib-opening');
+      if (note) { note.textContent = 'The shelves could not be loaded. Tap a bookcase to try again.'; note.hidden = false; }
+    }
+    /* Let the browser start the shake before any drawing begins, since drawing holds the page for a moment */
     function run() {
       if (ran) return; ran = true;
       load().then(function (d) {
         if (!api) api = boot(d, false);
-        btns.forEach(function (x) { x.classList.remove('lib-opened'); }); b.classList.add('lib-opened'); b.classList.remove('lib-opening');
-        api.open(i);
-      }).catch(function (e) {
-        if (window.console) console.error(e);
-        b.classList.remove('lib-opening');
-        if (note) { note.textContent = 'The shelves could not be loaded. Tap a bookcase to try again.'; note.hidden = false; }
-      });
+        api.prepare(i);
+        setTimeout(function () {
+          try {
+            btns.forEach(function (x) { x.classList.remove('lib-opened'); }); b.classList.add('lib-opened');
+            api.open(i);
+          } catch (e) { return fail(e); }
+          b.classList.remove('lib-opening'); busy = false;
+        }, now ? 0 : Math.max(0, SHAKE - (Date.now() - t0)));
+      }).catch(fail);
     }
-    requestAnimationFrame(function () { setTimeout(run, 0); });
-    setTimeout(run, 120);
+    if (now) run(); else { requestAnimationFrame(function () { setTimeout(run, 0); }); setTimeout(run, 120); }
   }
   btns.forEach(function (b, i) {
     b.addEventListener('click', function () { go(i); });
-    /* The data is fetched ahead of the click, so choosing a bookcase only pays for drawing it */
-    ['pointerenter', 'focus', 'touchstart'].forEach(function (t) { b.addEventListener(t, function () { load().catch(function () {}); }, { once: true, passive: true }); });
+    /* The data is fetched as soon as a bookcase is pointed at, and the bookcase is drawn a moment later if the pointer stays */
+    b.addEventListener('pointerenter', function (e) { load().catch(function () {}); if (e.pointerType !== 'touch') dwell = setTimeout(function () { warm(i); }, 120); });
+    b.addEventListener('pointerleave', function () { clearTimeout(dwell); });
+    ['focus', 'touchstart'].forEach(function (t) { b.addEventListener(t, function () { warm(i); }, { passive: true }); });
   });
   (window.requestIdleCallback || function (f) { setTimeout(f, 2000); })(function () { load().catch(function () {}); });
-  var hm = /^#CG(\d+)\./.exec(location.hash); if (hm) go(+hm[1] - 1);
+  var hm = /^#CG(\d+)\./.exec(location.hash); if (hm) go(+hm[1] - 1, true);
   function boot(d, render){
     const books=d.books||d,cases=d.cases&&d.cases.length?d.cases:[{name:'Shelf 1',n:6},{name:'Shelf 2',n:6}],curios=d.curios||[],CS=[];
     {let a=0;cases.forEach(c=>{CS.push(a);a+=c.n})}
     let AC=null,STD=shelves&&+shelves.dataset.std||0;
     function fresh(over){if(AC)AC.abort();AC=new AbortController();document.documentElement.classList.remove('lib-zoomed');root.innerHTML=TPL;root.classList.toggle('lib-over',over);root.hidden=false}
+    let warmed=-1;
+    function clear(){if(AC)AC.abort();AC=null;warmed=-1;root.innerHTML='';root.hidden=true;root.classList.remove('lib-warm','lib-fadein');root.style.width=root.style.left='';document.documentElement.classList.remove('lib-zoomed')}
     function overview(){
       /* Back to the pictures: the live bookcase is thrown away, so this is instant */
-      if(!render){if(AC)AC.abort();AC=null;root.innerHTML='';root.hidden=true;document.documentElement.classList.remove('lib-zoomed');if(shelves){shelves.hidden=false;const b=shelves.querySelector('.lib-opened');if(b)b.focus({preventScroll:true})}return}
+      if(!render){clear();if(shelves){shelves.hidden=false;const b=shelves.querySelector('.lib-opened');if(b){quiet=Date.now()+600;b.focus({preventScroll:true})}}return}
       fresh(true);start(books,d.covers,curios,cases,{landing:true,signal:AC.signal,pick:()=>{},std:w=>{STD=w;window.__libStd=w},ready:()=>{window.__libReady=true}})}
-    function openShelf(ci){fresh(false);if(shelves)shelves.hidden=true;const c=cases[ci];
+    function draw(ci){const c=cases[ci];
       const bs=books.filter(b=>b.s>=CS[ci]&&b.s<CS[ci]+c.n).map(b=>Object.assign({},b,{s:b.s-CS[ci]})),
         cu=curios.filter(q=>q.s===-1-ci||(q.s>=CS[ci]&&q.s<CS[ci]+c.n)).map(q=>Object.assign({},q,{s:q.s<0?-1:q.s-CS[ci]}));
-      start(bs,d.covers,cu,[c],{ci,stdW:STD,signal:AC.signal,close:overview});
+      start(bs,d.covers,cu,[c],{ci,stdW:STD,signal:AC.signal,close:overview})}
+    /* Draw a bookcase out of sight, at the size it will have when shown: the page's column, not in the page's flow */
+    function prepare(ci){if(warmed===ci)return;if(warmed>=0||AC)clear();
+      const p=root.parentNode,cs=getComputedStyle(p),r=p.getBoundingClientRect();
+      root.classList.add('lib-warm');root.style.width=(p.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))+'px';root.style.left=(r.left+parseFloat(cs.paddingLeft)+p.clientLeft)+'px';
+      fresh(false);draw(ci);warmed=ci}
+    function openShelf(ci){
+      if(warmed!==ci)prepare(ci);
+      /* Bring the drawn bookcase into the page, in place of the pictures, fading in */
+      warmed=-1;root.classList.remove('lib-warm');root.style.width=root.style.left='';if(shelves)shelves.hidden=true;
+      root.classList.add('lib-fadein');setTimeout(()=>root.classList.remove('lib-fadein'),320);
       if(root.scrollIntoView&&root.getBoundingClientRect().top<0)root.scrollIntoView({block:'start'})}
     if(render)overview();
-    return{open:openShelf,home:overview}}
+    return{open:openShelf,prepare,home:overview}}
   function start(DATA, COVERS, CURIOS, CASES0, CTX) {
     CTX=CTX||{};const KS=CTX.ci!=null?'-'+CTX.ci:'',PFX='CG'+((CTX.ci||0)+1),SIG=CTX.signal?{signal:CTX.signal}:undefined,
       onDoc=(t,fn)=>document.addEventListener(t,fn,SIG),onWin=(t,fn)=>addEventListener(t,fn,SIG);
@@ -508,8 +537,8 @@
       if(!CTX.landing&&CASES.some(c=>c.layers))B('How it really is',null,()=>{tucked=!tucked;render(MODES[current].real?current:'shelved')},'data-tuck','1')}
     if(CTX.landing)boxes.forEach((b,i)=>{b.tabIndex=0;b.setAttribute('role','button');b.setAttribute('aria-label','Open '+CASES[i].name);b.addEventListener('click',()=>CTX.pick(i));
       b.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();CTX.pick(i)}})});
-    if(document.addEventListener){onDoc('click',ev=>{const t=ev.target;if(CTX.close&&t&&t.closest&&t.isConnected!==false&&!t.closest('.lb-box,.lib-bar,.lib-nav,#lib-info,.lib-zoomreset,.lib-tools,.lib-msg,.lib-menu,.lib-topics,#lib-palette'))CTX.close()});
-      onDoc('keydown',ev=>{if(ev.altKey||ev.ctrlKey||ev.metaKey)return;const t=ev.target&&ev.target.tagName;if(t&&/INPUT|SELECT|TEXTAREA/.test(t))return;if(ev.target&&ev.target.closest&&ev.target.closest('.lib-menu,.lib-topics'))return;
+    if(document.addEventListener){onDoc('click',ev=>{const t=ev.target;if(root.classList.contains('lib-warm'))return;if(CTX.close&&t&&t.closest&&t.isConnected!==false&&!t.closest('.lb-box,.lib-bar,.lib-nav,#lib-info,.lib-zoomreset,.lib-tools,.lib-msg,.lib-menu,.lib-topics,#lib-palette'))CTX.close()});
+      onDoc('keydown',ev=>{if(ev.altKey||ev.ctrlKey||ev.metaKey||root.classList.contains('lib-warm'))return;const t=ev.target&&ev.target.tagName;if(t&&/INPUT|SELECT|TEXTAREA/.test(t))return;if(ev.target&&ev.target.closest&&ev.target.closest('.lib-menu,.lib-topics'))return;
         if(ev.key==='Escape'){if(zoom>1.01)resetZoom();else if(sel)select(null);else if(CTX.close)CTX.close()}
         else if(view==='ring'&&cols===2){if(ev.key==='ArrowLeft')turn(focus-1);else if(ev.key==='ArrowRight')turn(focus+1);else if(ev.key==='Enter'&&ev.target===document.body)openCase(focus)}})}
     /* Zoom lays the case out again at the new size, so lettering is redrawn sharp at every level, and nothing crops it:

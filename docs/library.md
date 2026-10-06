@@ -72,7 +72,7 @@ Changing the number of books makes earlier arrangement links stop working, becau
 The landing is a picture of each bookcase, in light and dark wood, already in the page. `extras/shelves/build.mjs` makes them: it opens `extras/shelves/harness.html`, which runs the real `library.js` and `library.css` on the data file, and photographs each bookcase with a transparent background at twice its shown size. It also writes `partials/library-shelves.hbs`, which places them. Choosing a bookcase fetches the data and draws that bookcase live.
 
 - `npm run shelves` makes them. `npm run shelves:check` only says whether they are up to date; the release runs it and stops if they are not.
-- The release also tries to make them itself before building the zip, and falls back to the ones in the repository if the browser there is not available.
+- The release does not make them: it only checks, and stops if they are out of date, so a release never carries pictures that do not match the data.
 - Lights and flames are held still in the pictures, so every run makes the same ones.
 
 ## What is fixed in the script

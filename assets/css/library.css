@@ -35,16 +35,28 @@ html[data-scheme="dark"] .lib-shelf-dark { display: block; }
 }
 .lib-shelf-cap { position: absolute; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: var(--cap); color: var(--graphite); white-space: nowrap; pointer-events: none; }
 .lib-shelf-wait { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.9rem; color: var(--ink); pointer-events: none; }
+/* Chosen: the picture gives a small shake while the live bookcase is made ready, then the live one takes its place. The words
+   only appear if that is taking a while. */
 .lib-shelf.lib-opening { cursor: progress; }
-.lib-shelf.lib-opening .lib-shelf-img { opacity: 0.45; }
-.lib-shelf.lib-opening .lib-shelf-wait { display: flex; }
+.lib-shelf.lib-opening .lib-shelf-img { transform-origin: 50% 100%; animation: lib-shake 0.36s ease-in-out infinite; }
+.lib-shelf.lib-opening .lib-shelf-wait { display: flex; opacity: 0; animation: lib-wait-in 0.3s 1.6s forwards; }
+@keyframes lib-shake { 0%, 100% { transform: none; } 15% { transform: translateX(-3px) rotate(-0.8deg); } 35% { transform: translateX(3px) rotate(0.8deg); } 55% { transform: translateX(-2px) rotate(-0.5deg); } 75% { transform: translateX(2px) rotate(0.4deg); } }
+@keyframes lib-wait-in { to { opacity: 1; } }
+/* The live bookcase is drawn out of sight while one is pointed at: in the page's column, so it measures as it will be shown */
+.lib.lib-warm { position: fixed; top: 0; visibility: hidden; pointer-events: none; }
+.lib.lib-fadein { animation: lib-fade 0.28s ease-out; }
+@keyframes lib-fade { from { opacity: 0; } to { opacity: 1; } }
 .lib-shelves-msg { margin: 0 0 1rem; text-align: center; color: var(--graphite); font-size: 0.95rem; }
 .lib-shelves-msg[hidden] { display: none; }
 @media (max-width: 899px) {
     .lib-shelves { flex-direction: column; align-items: center; width: 100%; margin-left: 0; margin-bottom: 2rem; }
     .lib-shelf { width: min(100%, 560px) !important; margin: 0 0 1.5rem !important; }
 }
-@media (prefers-reduced-motion: reduce) { .lib-shelf { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+    .lib-shelf { transition: none; }
+    .lib-shelf.lib-opening .lib-shelf-img { animation: none; opacity: 0.6; }
+    .lib.lib-fadein { animation: none; }
+}
 /* Nothing on the shelves can be text-selected, so a long press on a phone picks a thing up instead of opening the copy menu */
 /* The shelves use the whole width of the page and nothing crops them: a zoomed case grows across and down the page */
 #lib-vp { width: 100vw; margin-left: calc(50% - 50vw); overflow: visible; touch-action: pan-x pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
