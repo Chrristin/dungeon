@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.16.2
+
+Garden only.
+
+- **Watchlist items stay out of the Garden unless you tag them `#garden`.** The Garden page was filling with a card for every Lego set and diecast car (103 of its 210 entries). Posts tagged `#watch-item`, and things (`#thing`), are now left out of it unless you also add `#garden` by hand; ordinary posts, Scatter notes and Now entries are as before. This needs the updated garden-sync (`extras/garden-sync`) running: rebuild its container, and the cards go on the next pass.
+- **An item you do add links to its real address.** The sync now records each post's own address, and the Garden page uses it, so a Lego set in the garden opens at `/lego/42223-…/` and not at a page that does not exist. Notes and ordinary posts are unchanged.
+
 ## 2.16.1
 
 Library only.

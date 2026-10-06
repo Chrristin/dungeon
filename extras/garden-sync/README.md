@@ -84,6 +84,15 @@ Everything goes in a note's properties (the block at the top in Obsidian). Only 
 | `not_related` | Notes never to show as related to this one, like `["[[Some note]]"]`. Works in both directions. |
 | `title` | The title, if it should differ from the file name. |
 
+## Which posts reach the garden
+
+Your ordinary Ghost posts appear on the Garden page as paper cards, with no tag needed. These stay out unless you add the internal tag `#garden` to them by hand:
+
+- **Watchlist items** (posts tagged `#watch-item`, such as the Lego sets and diecast cars). With `#garden` they appear as cards and link to their real address, such as `/lego/42223-…/`.
+- **Things** (`#thing`), the same way.
+
+Now entries (`#now`) and Scatter notes (`#note`) are unchanged. A post tagged only `#garden`, with nothing else, is treated as one of the sync's own notes and ignored, so the tag is an opt-in only for the two kinds above. After changing this file, rebuild the container (Portainer: update the stack's image and restart); the next pass applies it.
+
 ## Good to know
 
 - **Private notes stay private, but their names can show.** A link to an unpublished note becomes its name as plain text, so "details are in [[My passwords]]" would show "My passwords". The sync lists every such mention in its log; to hide one, give the link an alias: `[[My passwords|my notes]]`.

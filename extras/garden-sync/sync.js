@@ -119,6 +119,8 @@ function scanVault() {
 
 // ---------------------------------------------------------------- the site's posts (read only)
 const SKIP_TAGS = new Set(['hash-garden', 'hash-note', 'hash-now', 'hash-scatter', 'hash-thing', 'hash-watch-item']);
+// Things and watchlist items stay out of the garden unless you tag them #garden yourself; ordinary posts need no tag
+const OPT_IN = new Set(['hash-thing', 'hash-watch-item']);
 // Ratings: out of 5, in halves. A post carries one as an internal tag, #rated-4-5 for 4.5 or #rated-4 for 4.
 function ratingOf(v) {
   const n = Number(String(v === undefined || v === null ? '' : v).replace(',', '.'));
@@ -137,9 +139,11 @@ async function readPosts() {
   for (;;) {
     const res = await api('GET', `/posts/?filter=status:published&formats=html,plaintext&include=tags&fields=id,slug,title,html,plaintext,custom_excerpt,published_at,updated_at,url&limit=50&page=${page}`);
     for (const p of res.posts) {
-      if ((p.tags || []).some((t) => SKIP_TAGS.has(t.slug))) continue;
+      const tagSlugs = (p.tags || []).map((t) => t.slug), optedIn = tagSlugs.includes('hash-garden') && tagSlugs.some((x) => OPT_IN.has(x));
+      if (!optedIn && tagSlugs.some((x) => SKIP_TAGS.has(x))) continue;
+      let path = `/${p.slug}/`; try { path = new URL(p.url).pathname; } catch { /* keep the default */ } // an item lives at /lego/<name>/, not /<name>/
       const text = String(p.plaintext || '').replace(/\s+/g, ' ').trim();
-      out.push({ slug: p.slug, title: p.title, html: p.html || '', text, words: text ? text.split(' ').length : 0,
+      out.push({ slug: p.slug, path, title: p.title, html: p.html || '', text, words: text ? text.split(' ').length : 0,
         topics: (p.tags || []).filter((t) => t.visibility === 'public').map((t) => t.name), date: String(p.updated_at || p.published_at || '').slice(0, 10),
         excerpt: String(p.custom_excerpt || text).slice(0, 160), custom: p.custom_excerpt || null, rating: ratingFromTags(p.tags) });
     }
@@ -250,7 +254,7 @@ async function render(note, vault, state) {
     const t = target(name), label = (alias || (heading ? name + heading.replace('#', ' > ') : name)).trim();
     if (!t) { if (!alias) privateMentions.push(name.trim()); return label; } // its name shows as plain text: reported, so you can alias it
     if (t !== note) links.add(t.slug);
-    return `[${label.replace(/[[\]]/g, '')}](/${t.slug}/${heading ? '#' + slugify(heading.slice(1)) : ''})`;
+    return `[${label.replace(/[[\]]/g, '')}](${t.path || `/${t.slug}/`}${heading ? '#' + slugify(heading.slice(1)) : ''})`;
   });
   body = body.replace(/==([^=\n]+)==/g, '**$1**'); // Obsidian highlights: bold, the nearest thing Ghost keeps
   const fn = []; // footnotes, as plain text, for the theme's sidenotes
@@ -333,7 +337,7 @@ async function upsert(note, data, known, state) {
 async function pass() {
   const vault = scanVault(), state = loadState();
   const posts = await readPosts();
-  vault.postsByName = new Map(); for (const p of posts) { vault.postsByName.set(p.title.toLowerCase(), { slug: p.slug, title: p.title, stage: 'post', published: true, post: true }); vault.postsByName.set(p.slug, vault.postsByName.get(p.title.toLowerCase())); }
+  vault.postsByName = new Map(); for (const p of posts) { vault.postsByName.set(p.title.toLowerCase(), { slug: p.slug, path: p.path, title: p.title, stage: 'post', published: true, post: true }); vault.postsByName.set(p.slug, vault.postsByName.get(p.title.toLowerCase())); }
   const rendered = new Map();
   for (const n of vault.published) rendered.set(n, await render(n, vault, state));
   for (const [n, r] of rendered) for (const name of new Set(r.privateMentions)) // private notes stay private, but their names can show in your sentences
@@ -342,9 +346,9 @@ async function pass() {
   for (const p of posts) p.links = [...linkedSlugs(p.html)].filter((s) => known.has(s) && s !== p.slug);
   const backlinks = new Map(vault.published.map((n) => [n.slug, []]));
   for (const [n, r] of rendered) for (const s of r.links) if (backlinks.has(s)) backlinks.get(s).push({ t: n.title, u: `/${n.slug}/`, g: n.stage });
-  for (const p of posts) for (const s of p.links) if (backlinks.has(s)) backlinks.get(s).push({ t: p.title, u: `/${p.slug}/`, g: 'post' });
+  for (const p of posts) for (const s of p.links) if (backlinks.has(s)) backlinks.get(s).push({ t: p.title, u: p.path, g: 'post' });
   const bySlug = new Map(vault.published.map((n) => [n.slug, n]));
-  for (const p of posts) bySlug.set(p.slug, { slug: p.slug, title: p.title, stage: 'post' });
+  for (const p of posts) bySlug.set(p.slug, { slug: p.slug, path: p.path, title: p.title, stage: 'post' });
   const slugOfName = (name) => { const t = vault.byName.get(name); return t && t.published ? t.slug : slugify(name); };
   const related = relatedByWording(vault.published.map((n) => ({ slug: n.slug, title: n.title, text: rendered.get(n).html.replace(/<[^>]+>/g, ' '), words: rendered.get(n).words,
     topics: n.topics.map((t) => t.toLowerCase()), links: new Set(rendered.get(n).links), never: new Set(n.notRelated.map(slugOfName)) }))
@@ -361,7 +365,7 @@ async function pass() {
   const seen = new Set();
   for (const [n, r] of rendered) {
     seen.add(n.rel);
-    const tlog = logOf(n), card = (s) => { const t = bySlug.get(s); return t ? { t: t.title, u: `/${t.slug}/`, g: t.stage } : null; };
+    const tlog = logOf(n), card = (s) => { const t = bySlug.get(s); return t ? { t: t.title, u: t.path || `/${t.slug}/`, g: t.stage } : null; };
     const data = payload(n, r, backlinks.get(n.slug).sort((a, b) => a.t.localeCompare(b.t)), { log: tlog, links: r.links.map(card).filter(Boolean), related: (related[n.slug] || []).map(card).filter(Boolean) });
     const h = hashOf(data), known = state.notes[n.rel];
     if (known && known.hash === h) { known.log = tlog; known.stage = n.stage; known.bh = n.bodyHash; continue; }
@@ -386,7 +390,7 @@ async function pass() {
   // the Garden page carries the whole garden's map, so the theme can draw it without asking for every note
   const nodes = vault.published.map((n) => ({ s: n.slug, t: n.title, g: n.stage, k: n.type, kind: n.kind, p: n.topics, d: n.tended, sc: n.scatter || undefined,
     l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said, r: related[n.slug] || [], c: n.confidence || undefined, rt: n.rating || undefined }));
-  for (const p of posts) nodes.push({ s: p.slug, t: p.title, g: 'post', k: 'post', p: p.topics, d: p.date, l: p.links, x: p.excerpt, w: p.words, r: related[p.slug] || [], tl: p.tldr || undefined, rt: p.rating || undefined });
+  for (const p of posts) nodes.push({ s: p.slug, u: p.path !== `/${p.slug}/` ? p.path : undefined, t: p.title, g: 'post', k: 'post', p: p.topics, d: p.date, l: p.links, x: p.excerpt, w: p.words, r: related[p.slug] || [], tl: p.tldr || undefined, rt: p.rating || undefined });
   const garden = { v: 2, updated: new Date().toISOString().slice(0, 10), notes: nodes.sort((a, b) => a.t.localeCompare(b.t)) };
   const ph = hashOf(garden.notes);
   if (state.page !== ph && !cfg.dry) {

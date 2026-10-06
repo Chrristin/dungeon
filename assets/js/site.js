@@ -2316,6 +2316,9 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var gardenDay = function (iso) { var d = new Date(iso); return isNaN(d) ? '' : String(d.getUTCDate()).padStart(2, '0') + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
   var readJson = function (node) { try { return node ? JSON.parse(node.textContent) : null; } catch (e) { return null; } };
+  // Where a garden entry lives. Notes and ordinary posts are at /<slug>/; a post the sync gives an address (u), such as a
+  // watchlist item tagged #garden at /lego/<name>/, is there.
+  var gardenPath = function (n) { return (n && n.u) || '/' + (n && n.s) + '/'; };
 
   // a garden note's page (or the same note in the reader overlay): stage, TENDED stamp, source label, backlinks
   var STAGE_BG = { seedling: '#eef9d6', growing: '#d5f5e6', evergreen: '#1f6b4f' };
@@ -2508,7 +2511,7 @@
     edges.forEach(function (e, k) { svg += '<path class="gm-hit" data-e="v' + k + '" d="' + vineOf[k].d + '"/>'; });
     notes.forEach(function (n, i) {
       var w = size[i][0], x = P[i].x - w / 2, y = P[i].y - 11;
-      svg += '<a href="/' + esc(n.s) + '/" class="garden-node" data-i="' + i + '" data-g="' + esc(n.g) + '" aria-label="' + esc(n.t) + '"><rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="22" rx="' + (n.k === 'source' ? 2 : 6) + '" data-k="' + esc(n.k) + '"/>' +
+      svg += '<a href="' + esc(gardenPath(n)) + '" class="garden-node" data-i="' + i + '" data-g="' + esc(n.g) + '" aria-label="' + esc(n.t) + '"><rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="22" rx="' + (n.k === 'source' ? 2 : 6) + '" data-k="' + esc(n.k) + '"/>' +
         '<circle class="gm-dot" cx="' + P[i].x.toFixed(1) + '" cy="' + P[i].y.toFixed(1) + '" r="5" data-k="' + esc(n.k) + '"/>' +
         '<text x="' + P[i].x.toFixed(1) + '" y="' + (P[i].y + 4).toFixed(1) + '" text-anchor="middle">' + esc(label(n.t)) + '</text></a>';
     });
@@ -2821,7 +2824,7 @@
         .then(function (h) { var d = readJson(new DOMParser().parseFromString(h, 'text/html').getElementById('garden-data')); return (d && d.notes) || []; }).catch(function () { return []; });
       return data;
     };
-    var open = function (slug) { closePanel(); if (window.dungeonOpen) window.dungeonOpen('/' + slug + '/'); else location.href = '/' + slug + '/'; };
+    var open = function (x) { closePanel(); var p = typeof x === 'string' ? '/' + x + '/' : gardenPath(x); if (window.dungeonOpen) window.dungeonOpen(p); else location.href = p; };
     var panel = null;
     var closePanel = function () { if (panel) { panel.remove(); panel = null; } };
     var show = function (html) {
@@ -2850,9 +2853,9 @@
         input.addEventListener('keydown', function (e) {
           if (e.key === 'ArrowDown') { sel = Math.min(found.length - 1, sel + 1); draw(); e.preventDefault(); }
           else if (e.key === 'ArrowUp') { sel = Math.max(0, sel - 1); draw(); e.preventDefault(); }
-          else if (e.key === 'Enter' && found[sel]) open(found[sel].s);
+          else if (e.key === 'Enter' && found[sel]) open(found[sel]);
         });
-        res.addEventListener('click', function (e) { var li = e.target.closest('li[data-s]'); if (li) open(li.getAttribute('data-s')); });
+        res.addEventListener('click', function (e) { var li = e.target.closest('li[data-s]'); if (li) open(found.filter(function (n) { return n.s === li.getAttribute('data-s'); })[0] || li.getAttribute('data-s')); });
       });
       input.focus();
     };
@@ -2863,7 +2866,7 @@
       var t = e.target; if (t && (t.isContentEditable || /^(input|textarea|select)$/i.test(t.tagName))) return;
       if (e.key === '/') { e.preventDefault(); search(); }
       else if (e.key === '?') { e.preventDefault(); help(); }
-      else if (e.key === 'r') { e.preventDefault(); notes().then(function (all) { if (all.length) open(all[Math.floor(Math.random() * all.length)].s); }); }
+      else if (e.key === 'r') { e.preventDefault(); notes().then(function (all) { if (all.length) open(all[Math.floor(Math.random() * all.length)]); }); }
       else if (e.key === 'g') { e.preventDefault(); closePanel(); location.href = gardenUrl; }
     }, true);
   })();
@@ -2894,7 +2897,7 @@
       for (var i = Math.min(grp, 3); i >= 1; i--) stack += '<span class="og-page' + (i > 1 ? ' og-page-' + i : '') + '" aria-hidden="true"></span>';
       var label = isPost(n) ? (L.post || 'Post') + (n.p && n.p[0] ? ' · ' + n.p[0] : '') : n.k === 'source' ? L.source + (n.kind ? ' · ' + n.kind : '') : (L[n.g] || n.g) + (n.p && n.p[0] ? ' · ' + n.p[0] : '');
       var how = o.how ? ' · ' + (o.how === 'link' ? (L.linked || 'linked') : (L.relword || 'Related by wording')) : '';
-      return '<a class="og" href="/' + esc(n.s) + '/" data-note="' + esc(n.s) + '" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" data-links="' + (ins + outs) + '"' +
+      return '<a class="og" href="' + esc(gardenPath(n)) + '" data-note="' + esc(n.s) + '" data-g="' + esc(n.g) + '" data-k="' + esc(n.k) + '" data-links="' + (ins + outs) + '"' +
         (grp ? ' data-group="' + grp + '" aria-expanded="false"' : o.spread ? ' aria-expanded="true"' : '') + '>' + stack +
         '<span class="og-sheet" aria-hidden="true"></span>' + etch(n.w) + '<span class="og-text"><span class="og-meta">' + esc(label) + '</span><span class="og-title">' + esc(n.t) + '</span>' +
         (isPost(n) && n.tl ? '<span class="og-tldr"><b>TL;DR</b>' + esc(trim(n.tl, 220)) + '</span>' : n.x ? '<span class="og-ex">' + esc(trim(n.x, 150)) + '</span>' : '') + '</span><span class="og-foot">' + ins + ' in · ' + outs + ' out' + esc(how) + (n.rt ? '<span class="rated rated--small og-rated" style="--r: ' + Number(n.rt) + '" role="img" aria-label="' + esc((L.rated || 'Rated') + ' ' + n.rt + ' / 5') + '"><span class="rated-stars" aria-hidden="true"></span><span class="rated-num" aria-hidden="true">' + esc(String(n.rt)) + '/5</span></span>' : '') + '</span>' +
@@ -2983,7 +2986,7 @@
     var growAll = function () { if (!recentBox.closest('.garden-section').hidden) { growCards(recentBox); linkCards(recentBox, bySlug, L); } growConnected(); };
     var drawAll = function () {
       var list = shown.slice().sort(sortHow === 'recent' ? function (a, b) { return (b.d || '').localeCompare(a.d || ''); } : sortHow === 'stage' ? function (a, b) { return order[a.g] - order[b.g] || a.t.localeCompare(b.t); } : function (a, b) { return a.t.localeCompare(b.t); });
-      all.innerHTML = list.map(function (n) { return '<li><a href="/' + esc(n.s) + '/">' + esc(n.t) + '</a><span class="garden-dots" aria-hidden="true"></span>' + sprout(n.g) + '<time datetime="' + esc(n.d) + '">' + esc(gardenDay(n.d)) + '</time></li>'; }).join('');
+      all.innerHTML = list.map(function (n) { return '<li><a href="' + esc(gardenPath(n)) + '">' + esc(n.t) + '</a><span class="garden-dots" aria-hidden="true"></span>' + sprout(n.g) + '<time datetime="' + esc(n.d) + '">' + esc(gardenDay(n.d)) + '</time></li>'; }).join('');
     };
     var draw = function () { // every section, from what the filter shows
       closeLinkPanel();
@@ -2994,7 +2997,7 @@
       shown.forEach(function (n) { (n.p && n.p.length ? n.p : [L.other]).forEach(function (t) { (topics[t] = topics[t] || []).push(n); }); });
       el.querySelector('.garden-topics').innerHTML = Object.keys(topics).sort(function (a, b) { return topics[b].length - topics[a].length || a.localeCompare(b); }).map(function (t) {
         return '<div class="garden-topic"><h3>' + esc(t) + ' <span>' + topics[t].length + '</span></h3><ul>' + topics[t].sort(function (a, b) { return a.t.localeCompare(b.t); }).map(function (n) {
-          return '<li><a href="/' + esc(n.s) + '/">' + sprout(n.g) + esc(n.t) + '</a></li>'; }).join('') + '</ul></div>';
+          return '<li><a href="' + esc(gardenPath(n)) + '">' + sprout(n.g) + esc(n.t) + '</a></li>'; }).join('') + '</ul></div>';
       }).join('');
       drawAll();
       if (!el.hidden) { growAll(); drawGardenMap(el.querySelector('.garden-map'), shown, L); }
@@ -3012,7 +3015,7 @@
     });
     el.querySelector('.garden-random').addEventListener('click', function () { // pull a card from the deck
       var pick = shown[Math.floor(Math.random() * shown.length)], btn = this;
-      var go = function () { if (window.dungeonOpen) window.dungeonOpen('/' + pick.s + '/'); else location.href = '/' + pick.s + '/'; };
+      var go = function () { var p = gardenPath(pick); if (window.dungeonOpen) window.dungeonOpen(p); else location.href = p; };
       if (calmStamps) { go(); return; }
       btn.classList.add('is-pulling'); setTimeout(function () { btn.classList.remove('is-pulling'); go(); }, 460);
     });
@@ -3038,7 +3041,7 @@
     gardenData(box.getAttribute('data-garden')).then(function (list) {
       var by = {}; list.forEach(function (n) { by[n.s] = n; });
       var me = by[slug]; if (!me) return;
-      var chip = function (n) { return { t: n.t, u: '/' + n.s + '/', g: n.g }; };
+      var chip = function (n) { return { t: n.t, u: gardenPath(n), g: n.g }; };
       var inb = list.filter(function (n) { return (n.l || []).indexOf(slug) >= 0; }).map(chip);
       var outs = (me.l || []).map(function (s) { return by[s]; }).filter(Boolean).map(chip);
       var rel = (me.r || []).map(function (s) { return by[s]; }).filter(Boolean).map(chip);
