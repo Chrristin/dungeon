@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.13.6
+
+Library only.
+
+- **Books stay put.** Books no longer fly in from the corner of the case when a shelf opens, or glide when you change the sort or pattern. They are simply there. That includes Shelf 3 when you press "How it really is". A curio still settles into place after you drop it, and only then.
+- **The page title sits under the shelves,** not above them, and the line "Pick a shelf to open it" is gone.
+- **Calmer fairy lights.** Fewer bulbs along the string, two loops in a coil instead of five, smaller and softer glows, and a slower, dimmer pulse.
+
 ## 2.13.5
 
 - **Housekeeping.** The Worker in `extras/stamps-worker` serves stamps, stickies and ratings only. Watchlist pages read any JSON list, as before. If a Worker you already run also serves a watchlist, leave that one in place.

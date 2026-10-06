@@ -16,8 +16,7 @@
     {let a=0;cases.forEach(c=>{CS.push(a);a+=c.n})}
     let AC=null,STD=0;
     function fresh(over){if(AC)AC.abort();AC=new AbortController();document.documentElement.classList.remove('lib-zoomed');root.innerHTML=TPL;root.classList.toggle('lib-over',over)}
-    function overview(){fresh(true);start(books,d.covers,curios,cases,{landing:true,signal:AC.signal,pick:i=>setTimeout(()=>openShelf(i),0),std:w=>{STD=w}});
-      const hint=document.getElementById('lib-hint');if(hint)hint.textContent='Pick a shelf to open it.'}
+    function overview(){fresh(true);start(books,d.covers,curios,cases,{landing:true,signal:AC.signal,pick:i=>setTimeout(()=>openShelf(i),0),std:w=>{STD=w}})}
     function openShelf(ci){fresh(false);const c=cases[ci];
       const bs=books.filter(b=>b.s>=CS[ci]&&b.s<CS[ci]+c.n).map(b=>Object.assign({},b,{s:b.s-CS[ci]})),
         cu=curios.filter(q=>q.s===-1-ci||(q.s>=CS[ci]&&q.s<CS[ci]+c.n)).map(q=>Object.assign({},q,{s:q.s<0?-1:q.s-CS[ci]}));
@@ -343,7 +342,7 @@
     function dropCurio(c){const cx=c.wx+c.w/2,gc=(G[c.s]||G[0]).c;let best=null,bd=1e9;
       Object.keys(G).forEach(k=>{const g=G[k];if(g.c!==gc||cx<g.ox-40||cx>g.ox+g.colW+40)return;const d=Math.abs(c.wy-(g.by+(cx-g.ox)*Math.sin(g.th)));if(d<bd){bd=d;best=+k}});
       if(best!==null){const g=G[best];c.s=best;c.x=Math.max(0,Math.min(1,(cx-g.ox)/g.colW));cpos[c.id]={s:c.s,x:+c.x.toFixed(3)};try{localStorage.setItem('dungeon-library-curios'+KS,JSON.stringify(cpos))}catch(err){}}
-      putCurio(c)}
+      c.el.classList.add('lb-settle');putCurio(c);setTimeout(()=>c.el.classList.remove('lb-settle'),500)}
     curios.forEach((c,i)=>{const sp=CURIO[c.k];c.id=c.id||c.k+'-'+i;c.curio=true;c.w=sp[0];c.h=sp[1];c.s0=c.s;c.x0=c.x;if(cpos[c.id]){c.s=cpos[c.id].s;c.x=cpos[c.id].x}
       const el=document.createElement('button');el.type='button';el.className='lb-curio';el.style.zIndex=500+i;el.setAttribute('aria-label',c.name||'Curio');
       el.innerHTML=`<svg width="${c.w}" height="${c.h}" viewBox="0 0 ${c.w} ${c.h}" aria-hidden="true">${shadowOf(c,i)}<g ${SK}>${shade(sp[2],c.k)}</g></svg>`;c.el=el;caseEl.appendChild(el);
@@ -386,21 +385,21 @@
      CHAIR='<svg width="160" height="178" viewBox="0 0 160 178" aria-hidden="true"><rect x="24" y="158" width="10" height="20" fill="#3A2412"/><rect x="126" y="158" width="10" height="20" fill="#3A2412"/><path d="M26 96V34Q26 6 80 6Q134 6 134 34V96Z" fill="#8E2F2A"/><path d="M40 92V40Q40 22 80 22Q120 22 120 40V92Z" fill="#A53C34"/><rect x="8" y="78" width="30" height="84" rx="14" fill="#7A2622"/><rect x="122" y="78" width="30" height="84" rx="14" fill="#7A2622"/><rect x="30" y="104" width="100" height="54" rx="10" fill="#8E2F2A"/><rect x="36" y="96" width="88" height="24" rx="10" fill="#B8463C"/><rect x="58" y="70" width="44" height="34" rx="8" fill="#E3B23C"/></svg>';
     /* Fairy lights: a string hung along the back of each shelf, behind the books, and a coil of it lying in any empty stretch */
     function fairy(si,ox,by,W,x0,x1){const R=rng(977+si*31),f=n=>n.toFixed(1),COL=['#FFD98A','#FFC56B','#FFE9B8'],B=['','',''];let wire='M0 12';
-      const bulb=(x,y)=>{const k=Math.floor(R()*3);B[k]+=`<circle cx="${f(x)}" cy="${f(y)}" r="8" fill="url(#lbh${si})"/><circle cx="${f(x)}" cy="${f(y)}" r="3" fill="${COL[Math.floor(R()*3)]}"/>`};
+      const bulb=(x,y)=>{const k=Math.floor(R()*3);B[k]+=`<circle cx="${f(x)}" cy="${f(y)}" r="5" fill="url(#lbh${si})"/><circle cx="${f(x)}" cy="${f(y)}" r="2.2" fill="${COL[Math.floor(R()*3)]}"/>`};
       const n=Math.max(2,Math.round(W/150));
       for(let i=0;i<n;i++){const a=i*W/n,b=(i+1)*W/n,sag=24+R()*14;wire+=`Q${f((a+b)/2)} ${f(12+2*(sag-12))} ${f(b)} 12`;
-        const k=Math.max(3,Math.round((b-a)/26));for(let j=1;j<k;j++){const t=j/k;bulb(a+(b-a)*t,15+(sag-12)*4*t*(1-t))}}
+        const k=Math.max(3,Math.round((b-a)/60));for(let j=1;j<k;j++){const t=j/k;bulb(a+(b-a)*t,15+(sag-12)*4*t*(1-t))}}
       [[PAD,x0-6],[x1+6,W-PAD]].forEach(([g0,g1])=>{if(g1-g0<90)return;const cw=Math.min(g1-g0-24,190),cx=(g0+g1)/2;
-        for(let l=0;l<5;l++){const ex=cx+(R()-.5)*cw*.35,ey=SH-FD-2-l*5-R()*4,rx=cw*(.28+R()*.22),ry=9+R()*8,rot=(R()-.5)*16;
+        for(let l=0;l<2;l++){const ex=cx+(R()-.5)*cw*.35,ey=SH-FD-2-l*5-R()*4,rx=cw*(.28+R()*.22),ry=9+R()*8,rot=(R()-.5)*16;
           wire+=`M${f(ex-rx)} ${f(ey)}a${f(rx)} ${f(ry)} ${f(rot)} 1 0 ${f(rx*2)} 0a${f(rx)} ${f(ry)} ${f(rot)} 1 0 ${f(-rx*2)} 0`;
-          const m=5+Math.floor(R()*3),a0=R()*6;for(let q=0;q<m;q++){const a=a0+q*2*Math.PI/m;bulb(ex+rx*Math.cos(a),ey+ry*Math.sin(a))}}
+          const m=3+Math.floor(R()*2),a0=R()*6;for(let q=0;q<m;q++){const a=a0+q*2*Math.PI/m;bulb(ex+rx*Math.cos(a),ey+ry*Math.sin(a))}}
         const right=g1>=W-PAD-1,ex=right?W-9:9,fy=SH-9,tx=right?cx+cw*.34:cx-cw*.34;wire+=`M${f(ex)} 12V${f(fy)}H${f(tx)}`;
-        for(let y=38;y<fy-8;y+=26)bulb(ex,y);for(let x=ex+(right?-22:22);right?x>tx+10:x<tx-10;x+=right?-26:26)bulb(x,fy)});
+        for(let y=38;y<fy-8;y+=60)bulb(ex,y);for(let x=ex+(right?-40:40);right?x>tx+10:x<tx-10;x+=right?-60:60)bulb(x,fy)});
       const svg=inner=>`<svg width="${f(W)}" height="${SH}" viewBox="0 0 ${f(W)} ${SH}" aria-hidden="true">${inner}</svg>`,org='0 '+SH+'px';
       mk('fairy',ox,by-SH,W,SH,TILT[si],org).innerHTML=svg(`<path d="${wire}" fill="none" stroke="#EFEADB" stroke-width="1.2" opacity=".5"/>`);
       /* The bulbs are split into three layers that each fade as a whole, so the glow costs the browser almost nothing */
       B.forEach((b,k)=>{if(!b)return;const d=mk('fairy lb-glow'+k,ox,by-SH,W,SH,TILT[si],org);d.style.animationDelay=(-(si*.7+k*1.9)).toFixed(1)+'s';
-        d.innerHTML=svg(`<defs><radialGradient id="lbh${si}"><stop offset="0" stop-color="#FFD27A" stop-opacity=".75"/><stop offset="1" stop-color="#FFC060" stop-opacity="0"/></radialGradient></defs>${b}`)})}
+        d.innerHTML=svg(`<defs><radialGradient id="lbh${si}"><stop offset="0" stop-color="#FFD27A" stop-opacity=".35"/><stop offset="1" stop-color="#FFC060" stop-opacity="0"/></radialGradient></defs>${b}`)})}
     function mk(cls,x,y,w,h,rot,org){const d=document.createElement('div');d.className='lb-fr lb-'+cls;d.style.left=x+'px';d.style.top=y+'px';d.style.width=w+'px';d.style.height=h+'px';
       if(rot)d.style.transform='rotate('+rot+'deg)';if(org)d.style.transformOrigin=org;(BOX?(/^(back|tshade|fairy)/.test(cls)?BOX._deep:BOX):caseEl).appendChild(d);return d}
     function kid(parent,cls){const d=document.createElement('i');d.className='lb-'+cls;parent.appendChild(d);return d}
@@ -424,7 +423,7 @@
           L[si].place.forEach(([e,x,y,ang,drag],i)=>{e.geo=geo;e.drag=!!drag;e.lx=x+off;e.ly2=0;e.ly_=y+e.dh-FD;e.ang=ang||0;
             const pln=tk&&e.ly?bx['_books'+e.ly]:bx._books;if(e.el.parentNode!==pln){pln.appendChild(e.el);void e.el.offsetWidth}
             if(drag){e.lim=[PAD,colW-e.dw-PAD];e.lx=Math.max(e.lim[0],Math.min(e.lim[1],e.lx+(dxs[e.i]||0)))}
-            e.el.style.zIndex=drag?400:10+i;e.el.style.transitionDelay=Math.min(i*6,300)+'ms';put(e)});
+            e.el.style.zIndex=drag?400:10+i;put(e)});
           fairy(si,ox,by,colW,off+PAD,off+L[si].width-PAD);
           const pl=mk('plank',ox-6,by,colW+12,PL,TILT[si],'6px 0');if(rw<n-1)kid(pl,'shade');
           if(m.labels){let last=null;r.sh[si].forEach(e=>{if(e.g!==last){const sp=document.createElement('span');sp.textContent=e.g;sp.style.left=Math.round(off+e._x+6)+'px';pl.appendChild(sp);last=e.g}})}}
@@ -578,7 +577,7 @@
     (function(){const c={};books.forEach(b=>{(c[b.cn]=c[b.cn]||{n:0,b}).n++});const p=document.getElementById('lib-palette');
       Object.values(c).sort((x,y)=>byHue(x.b,y.b)).forEach(v=>{const s=document.createElement('span'),i=document.createElement('i');i.style.background=v.b.c;s.appendChild(i);s.appendChild(document.createTextNode(v.n));s.title=v.b.cn;p.appendChild(s)})})();
     {const h=document.getElementById('lib-hint'),touch=typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
-      if(h)h.textContent=touch?'Tap a book for its cover and details. Tap and hold to move things. Pinch to zoom.':'Click a book for its cover and details. Hold Ctrl and scroll to zoom. Escape, or a click outside the bookcase, takes you back.';
+      if(h)h.textContent=CTX.landing?'':touch?'Tap a book for its cover and details. Tap and hold to move things. Pinch to zoom.':'Click a book for its cover and details. Hold Ctrl and scroll to zoom. Escape, or a click outside the bookcase, takes you back.';
       if(touch)MODES.manual.note=' On a touch screen, tap and hold a book to pick it up.'}
     render('shelved');
     if(location.hash.indexOf('#'+PFX+'.')===0){const sh=dec(location.hash.slice(1));if(sh){manual=normalise(sh);render('manual')}else msg.textContent='That link does not match the books on the shelves now, so the shelves are shown as they really are.'}
