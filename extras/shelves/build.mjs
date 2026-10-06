@@ -88,7 +88,7 @@ async function generate() {
             const info = await page.evaluate(() => {
                 const boxes = [...document.querySelectorAll('.lb-box')];
                 return {
-                    std: window.__libStd,
+                    std: window.__libStd, fixw: window.__libFixW,
                     boxes: boxes.map(b => {
                         const r = b.getBoundingClientRect(), c = b.querySelector('.lb-cap').getBoundingClientRect();
                         return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, nat: parseFloat(b.style.width), name: b.querySelector('.lb-cap').textContent, cap: { x: c.left + scrollX, y: c.top + scrollY, w: c.width, h: c.height } };
@@ -122,10 +122,11 @@ async function generate() {
         const capL = (b.cap.x - (b.x - PAD)) / s / imgW, capT = (b.cap.y - (b.y - PAD)) / s / imgH, capW = b.cap.w / s / imgW, capH = b.cap.h / s / imgH;
         const dim = sizes['shelf-' + (i + 1) + '-light'];
         const img = scheme => '<img class="lib-shelf-img lib-shelf-' + scheme + '" src="{{asset "images/shelves/shelf-' + (i + 1) + '-' + scheme + '.webp"}}" width="' + dim.w + '" height="' + dim.h + '" alt="" loading="lazy" decoding="async">';
-        html += '    <button class="lib-shelf" type="button" data-shelf="' + i + '" aria-label="Open ' + b.name + '" style="width:' + pct(imgW / T) + '%;margin-left:' + pct(gap / T) + '%;--cap:' + (24 / imgW * 100).toFixed(2) + 'cqw">\n'
+        /* data-px and data-py: the transparent margin round the artwork, as a fraction of the picture's width and height, so
+           the page can grow the live bookcase from exactly where the artwork is */
+        html += '    <button class="lib-shelf" type="button" data-shelf="' + i + '" data-px="' + (padU / imgW).toFixed(5) + '" data-py="' + (padU / imgH).toFixed(5) + '" aria-label="Open ' + b.name + '" style="width:' + pct(imgW / T) + '%;margin-left:' + pct(gap / T) + '%;--cap:' + (24 / imgW * 100).toFixed(2) + 'cqw">\n'
             + '        ' + img('light') + '\n        ' + img('dark') + '\n'
             + '        <span class="lib-shelf-cap" style="left:' + pct(capL) + '%;top:' + pct(capT) + '%;width:' + pct(capW) + '%;height:' + pct(capH) + '%" aria-hidden="true">' + b.name + '</span>\n'
-            + '        <span class="lib-shelf-wait" aria-hidden="true"><i class="lib-spin"></i></span>\n'
             + '    </button>\n';
     });
     const partial = '{{!-- The Library landing: a picture of each bookcase, already in the page, each one button. Made by "npm run shelves"\n'
@@ -133,7 +134,7 @@ async function generate() {
         + '      whenever the data file, library.js or library.css change. data-std is the width of a standard bookcase, in drawing units. --}}\n'
         + stamp(hash) + '\n'
         + '<div class="lib-landing" id="lib-landing">\n'
-        + '<div class="lib-shelves" id="lib-shelves" data-std="' + Math.round(layout.std) + '">\n' + html + '</div>\n'
+        + '<div class="lib-shelves" id="lib-shelves" data-std="' + Math.round(layout.std) + '" data-fixw="' + Math.round(layout.fixw) + '">\n' + html + '</div>\n'
         + '<p class="lib-allbooks"><a id="lib-allbooks" href="#books">Or see all ' + bookCount + ' books as a list <span aria-hidden="true">→</span></a></p>\n'
         + '<p class="lib-shelves-msg" id="lib-shelves-msg" role="status" hidden></p>\n</div>\n';
     /* Nothing is written until every picture has been made, so a failed run leaves the last good set alone */

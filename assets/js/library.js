@@ -7,10 +7,12 @@
   if (!root || root.dataset.ready) return;
   root.dataset.ready = '1';
   /* The page opens on pictures of the bookcases, made ahead of time by extras/shelves (npm run shelves) and already in the
-     page, so nothing is fetched or drawn to show them. Pointing at one (or touching it) fetches the data and draws that
-     bookcase out of sight, so by the time it is chosen it is ready: sparkles burst from the picture and the live bookcase
-     blooms in its place. A plain list of every book (or of one bookcase's books) lives at #books and #books-2. The same
-     code can draw the landing live (data-render="landing"): extras/shelves does that to make the pictures. */
+     page, so nothing is fetched or drawn to show them. Choosing one starts gold sparkles at once, and they keep drifting
+     up round the picture while the bookcase is fetched and drawn. When it is ready, the live bookcase is shrunk to exactly
+     the picture's size and place, and the two grow together to the open size while the picture fades into the live one: at
+     every moment they are the same size, and neither is ever bigger than the picture or the open bookcase. A plain list of
+     every book (or of one bookcase's books) lives at #books and #books-2. The same code can draw the landing live
+     (data-render="landing"): extras/shelves does that to make the pictures. */
   var TPL = root.innerHTML, landing = document.getElementById('lib-landing'), shelves = document.getElementById('lib-shelves'), DATA = null, api = null;
   var REDUCE = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   function load() {
@@ -19,45 +21,79 @@
   }
   if (root.dataset.render === 'landing') { load().then(function (d) { boot(d, true); }); return; }
   var btns = shelves ? Array.prototype.slice.call(shelves.querySelectorAll('[data-shelf]')) : [], note = document.getElementById('lib-shelves-msg');
-  var SWAP = 260, busy = false, dwell = 0, quiet = 0;
-  /* A burst of gold sparkles and a soft glow from a point on the page, in the colours of the fairy lights. Where the lengths
-     and counts can be changed: SWAP above (how long before the live bookcase takes over), the 34 here, and the durations
-     in library.css (lib-spark, lib-glow-burst, lib-bloom). */
-  function burst(x, y) {
-    if (REDUCE) return;
-    var h = document.createElement('div'), g = document.createElement('i'), COL = ['#FFD98A', '#FFC56B', '#FFE9B8', '#FFF4D6'];
+  /* Where the lengths and counts can be changed: MIN (the least time, in ms, before the bookcase takes over, so the sparkles
+     are seen), MORPH_MS (how long the grow-and-fade takes), the counts in sparkle(), and the durations in library.css
+     (lib-spark, lib-glow-burst, lib-bloom). */
+  var MIN = 180, MORPH_MS = 520, busy = false, MORPH = null;
+  var SPARK_COL = ['#FFD98A', '#FFC56B', '#FFE9B8', '#FFF4D6'];
+  /* Gold sparkles and a soft glow in the colours of the fairy lights. They start with a burst at (x, y) and, until stop() is
+     called, keep drifting up from inside box; what is already in the air then finishes by itself. */
+  function sparkle(x, y, box) {
+    if (REDUCE) return { stop: function () {} };
+    var h = document.createElement('div'), g = document.createElement('i'), over = false, tick = 0, cap = 0;
     h.className = 'lib-sparks'; h.setAttribute('aria-hidden', 'true'); g.className = 'lib-glow'; g.style.left = x + 'px'; g.style.top = y + 'px'; h.appendChild(g);
-    for (var k = 0; k < 34; k++) {
-      var a = Math.random() * Math.PI * 2, r = 80 + Math.random() * 240, s = 8 + Math.random() * 18, e = document.createElement('i');
-      e.className = 'lib-spark';
-      e.style.cssText = 'left:' + x + 'px;top:' + y + 'px;--s:' + s.toFixed(1) + 'px;--c:' + COL[k % 4] + ';--dx:' + (Math.cos(a) * r).toFixed(0) + 'px;--dy:' + (Math.sin(a) * r - 50).toFixed(0) + 'px;--r:' + (Math.random() * 180 - 90).toFixed(0) + 'deg;--d:' + (850 + Math.random() * 550).toFixed(0) + 'ms;--w:' + (Math.random() * 200).toFixed(0) + 'ms';
-      h.appendChild(e);
+    function add(n, px, py, reach) {
+      for (var k = 0; k < n; k++) {
+        var a = Math.random() * Math.PI * 2, r = (80 + Math.random() * 240) * reach, s = 8 + Math.random() * 18, e = document.createElement('i');
+        e.className = 'lib-spark';
+        e.style.cssText = 'left:' + px + 'px;top:' + py + 'px;--s:' + s.toFixed(1) + 'px;--c:' + SPARK_COL[k % 4] + ';--dx:' + (Math.cos(a) * r).toFixed(0) + 'px;--dy:' + (Math.sin(a) * r - 50 * reach).toFixed(0) + 'px;--r:' + (Math.random() * 180 - 90).toFixed(0) + 'deg;--d:' + (850 + Math.random() * 550).toFixed(0) + 'ms;--w:' + (Math.random() * 200).toFixed(0) + 'ms';
+        e.addEventListener('animationend', function () { if (this.parentNode) this.parentNode.removeChild(this); });
+        h.appendChild(e);
+      }
     }
-    document.body.appendChild(h); setTimeout(function () { if (h.parentNode) h.parentNode.removeChild(h); }, 1900);
+    function stop() { if (over) return; over = true; clearInterval(tick); clearTimeout(cap); setTimeout(function () { if (h.parentNode) h.parentNode.removeChild(h); }, 2000); }
+    add(34, x, y, 1);
+    tick = setInterval(function () { add(9, box.left + Math.random() * box.width, box.top + box.height * (0.25 + Math.random() * 0.6), 0.6); }, 260);
+    cap = setTimeout(stop, 8000);
+    document.body.appendChild(h);
+    return { stop: stop };
   }
-  /* Draw a bookcase out of sight, ready to be shown. Drawing holds the page for a moment, so it is only done for the one
-     being pointed at, never for all three. */
-  function warm(i) {
-    /* Just after coming back to the pictures, focus returns to one and must not start a draw; if the pointer is still on a
-       picture when that window ends, draw then */
-    if (Date.now() < quiet) { dwell = setTimeout(function () { warm(i); }, quiet - Date.now() + 30); return; }
-    load().then(function (d) { if (!api) api = boot(d, false); if (!busy && !LV.on) api.prepare(i); }).catch(function () {});
+  /* Back on the pictures (or the list's way out): focus goes to the page area, not to a picture, so no outline appears round
+     one; tabbing to a picture still shows it. */
+  function focusLanding() { if (!landing) return; landing.setAttribute('tabindex', '-1'); try { landing.focus({ preventScroll: true }); } catch (e) {} }
+  /* One burst and no more, from a point (a book chosen in the list) */
+  function burst(x, y) { sparkle(x, y, { left: x, top: y, width: 0, height: 0 }).stop(); }
+  /* The picture and the live bookcase, the same size and place at every moment. pic is the picture shown, P its rectangle on
+     the page, px and py the transparent margin round the artwork as a fraction of its width and height; sizer is the live
+     bookcase, already in its place. The live bookcase is shrunk to where the picture's artwork is and grown back, and a copy
+     of the picture is grown with it, from where it is to the live bookcase's rectangle. */
+  function playMorph(pic, P, px, py, sizer) {
+    if (MORPH) MORPH.cancel();
+    var Sx = P.left + P.width * px, Sy = P.top + P.height * py, Sw = P.width * (1 - 2 * px), T = sizer.getBoundingClientRect();
+    if (!T.width || !Sw) return false;
+    var k = Sw / T.width, kk = T.width / Sw, gx = T.left - P.left - kk * (Sx - P.left), gy = T.top - P.top - kk * (Sy - P.top);
+    var ghost = new Image(); ghost.alt = ''; ghost.className = 'lib-ghost'; ghost.src = pic.currentSrc || pic.src;
+    ghost.style.cssText = 'left:' + P.left + 'px;top:' + P.top + 'px;width:' + P.width + 'px;height:' + P.height + 'px';
+    document.body.appendChild(ghost);
+    sizer.style.transformOrigin = '0 0';
+    var o = { duration: MORPH_MS, easing: 'cubic-bezier(0.45, 0, 0.2, 1)', fill: 'both' };
+    var a = [
+      ghost.animate([{ transform: 'translate(0px, 0px) scale(1)', opacity: 1 }, { opacity: 1, offset: 0.35 }, { transform: 'translate(' + gx + 'px, ' + gy + 'px) scale(' + kk + ')', opacity: 0 }], o),
+      sizer.animate([{ transform: 'translate(' + (Sx - T.left) + 'px, ' + (Sy - T.top) + 'px) scale(' + k + ')' }, { transform: 'translate(0px, 0px) scale(1)' }], o),
+      root.animate([{ opacity: 0 }, { opacity: 1, offset: 0.65 }, { opacity: 1 }], o)
+    ];
+    function end() { a.forEach(function (x) { try { x.cancel(); } catch (e) {} }); if (ghost.parentNode) ghost.parentNode.removeChild(ghost); sizer.style.transformOrigin = ''; if (MORPH === m) MORPH = null; }
+    var m = MORPH = { cancel: end };
+    a[1].onfinish = end;
+    return true;
   }
   function go(i, now) {
     var b = btns[i]; if (!b || busy) return;
     busy = true; if (note) note.hidden = true;
+    var pic = null, sp = null, t0 = Date.now(), ran = false;
     if (!now) {
       b.classList.add('lib-opening');
-      if (!REDUCE) { var rc = b.getBoundingClientRect(); b.classList.add('lib-burst'); burst(rc.left + rc.width / 2, rc.top + rc.height / 2); }
+      [].forEach.call(b.querySelectorAll('.lib-shelf-img'), function (x) { if (!pic && getComputedStyle(x).display !== 'none') pic = x; });
+      var rc = (pic || b).getBoundingClientRect();
+      sp = sparkle(rc.left + rc.width / 2, rc.top + rc.height / 2, rc);
     }
-    var t0 = Date.now(), ran = false;
-    function done() { b.classList.remove('lib-opening', 'lib-burst'); busy = false; }
+    function done() { b.classList.remove('lib-opening'); busy = false; if (sp) sp.stop(); }
     function fail(e) {
       if (window.console) console.error(e);
       done();
       if (note) { note.textContent = 'The shelves could not be loaded. Tap a bookcase to try again.'; note.hidden = false; }
     }
-    /* Let the browser start the burst before any drawing begins, since drawing holds the page for a moment */
+    /* Two frames are shown before any drawing begins, so the sparkles are already moving when the page is held for the draw */
     function run() {
       if (ran) return; ran = true;
       load().then(function (d) {
@@ -66,22 +102,22 @@
         setTimeout(function () {
           try {
             btns.forEach(function (x) { x.classList.remove('lib-opened'); }); b.classList.add('lib-opened');
-            api.open(i);
+            /* measured now, while the pictures are still on the page, in case it was scrolled meanwhile */
+            api.open(i, pic && !REDUCE ? { pic: pic, rect: pic.getBoundingClientRect(), px: +b.dataset.px || 0, py: +b.dataset.py || 0 } : null);
           } catch (e) { return fail(e); }
           done();
-        }, now ? 0 : Math.max(0, SWAP - (Date.now() - t0)));
+        }, now ? 0 : Math.max(0, MIN - (Date.now() - t0)));
       }).catch(fail);
     }
-    if (now) run(); else { requestAnimationFrame(function () { setTimeout(run, 0); }); setTimeout(run, 120); }
+    if (now) run(); else { requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(run, 0); }); }); setTimeout(run, 150); }
   }
   btns.forEach(function (b, i) {
     b.addEventListener('click', function () { go(i); });
-    /* The data is fetched as soon as a bookcase is pointed at, and the bookcase is drawn a moment later if the pointer stays */
-    b.addEventListener('pointerenter', function (e) { load().catch(function () {}); if (e.pointerType !== 'touch') dwell = setTimeout(function () { warm(i); }, 120); });
-    b.addEventListener('pointerleave', function () { clearTimeout(dwell); });
-    ['focus', 'touchstart'].forEach(function (t) { b.addEventListener(t, function () { warm(i); }, { passive: true }); });
+    /* The data and the lettering font are fetched as soon as a bookcase is pointed at or touched, so choosing one only waits for the drawing */
+    ['pointerenter', 'focus', 'touchstart'].forEach(function (t) { b.addEventListener(t, ahead, { once: true, passive: true }); });
   });
-  (window.requestIdleCallback || function (f) { setTimeout(f, 2000); })(function () { load().catch(function () {}); });
+  function ahead() { load().catch(function () {}); try { if (document.fonts && document.fonts.load) document.fonts.load("12px 'IM Fell English SC'"); } catch (e) {} }
+  (window.requestIdleCallback || function (f) { setTimeout(f, 2000); })(ahead);
 
   /* The list of books: one plain row each, drawn a screenful at a time. #books lists every book, #books-2 only Shelf 2's.
      Choosing a row opens that book's bookcase with the book selected. */
@@ -164,7 +200,7 @@
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
     if (from >= 0) { openAt(from, null, null, false); return; }
     if (landing) landing.hidden = false;
-    var a = $('lib-allbooks'); if (a) { quiet = Date.now() + 600; a.focus({ preventScroll: true }); }
+    focusLanding();
   }
   function reshow() { LV.live = false; api.hide(); if (landing) landing.hidden = true; listEl.hidden = false; LV.on = true; window.scrollTo(0, LV.y || 0); }
   function openAt(ci, gi, ev, fromList) {
@@ -212,29 +248,32 @@
   function boot(d, render){
     const books=d.books||d,cases=d.cases&&d.cases.length?d.cases:[{name:'Shelf 1',n:6},{name:'Shelf 2',n:6}],curios=d.curios||[],CS=[];
     {let a=0;cases.forEach(c=>{CS.push(a);a+=c.n})}
-    let AC=null,STD=shelves&&+shelves.dataset.std||0;
+    let AC=null,STD=shelves&&+shelves.dataset.std||0,FIXW0=shelves&&+shelves.dataset.fixw||0;
     function fresh(over){if(AC)AC.abort();AC=new AbortController();document.documentElement.classList.remove('lib-zoomed');root.innerHTML=TPL;root.classList.toggle('lib-over',over);root.hidden=false}
     let warmed=-1;
     function clear(){if(AC)AC.abort();AC=null;warmed=-1;root.innerHTML='';root.hidden=true;root.classList.remove('lib-warm','lib-fadein','lib-bloom');root.style.width=root.style.left='';document.documentElement.classList.remove('lib-zoomed')}
     function overview(){
       /* Back to the pictures: the live bookcase is thrown away, so this is instant */
-      if(!render){clear();if(landing)landing.hidden=false;const b=shelves&&shelves.querySelector('.lib-opened');if(b){quiet=Date.now()+600;b.focus({preventScroll:true})}return}
-      fresh(true);start(books,d.covers,curios,cases,{landing:true,signal:AC.signal,pick:()=>{},std:w=>{STD=w;window.__libStd=w},ready:()=>{window.__libReady=true}})}
+      if(!render){clear();if(landing)landing.hidden=false;focusLanding();return}
+      fresh(true);start(books,d.covers,curios,cases,{landing:true,signal:AC.signal,pick:()=>{},std:w=>{STD=w;window.__libStd=w},fixw:w=>{window.__libFixW=w},ready:()=>{window.__libReady=true}})}
     function draw(ci,sel,opt){const c=cases[ci];
       const bs=books.map((b,gi)=>Object.assign({},b,{_g:gi})).filter(b=>b.s>=CS[ci]&&b.s<CS[ci]+c.n).map(b=>Object.assign(b,{s:b.s-CS[ci]})),
         cu=curios.filter(q=>q.s===-1-ci||(q.s>=CS[ci]&&q.s<CS[ci]+c.n)).map(q=>Object.assign({},q,{s:q.s<0?-1:q.s-CS[ci]}));
-      start(bs,d.covers,cu,[c],{ci,stdW:STD,signal:AC.signal,close:opt&&opt.back||overview,backLabel:opt&&opt.label,sel,list:()=>listFromShelf(ci)})}
+      start(bs,d.covers,cu,[c],{ci,stdW:STD,fixW:FIXW0,signal:AC.signal,close:opt&&opt.back||overview,backLabel:opt&&opt.label,sel,list:()=>listFromShelf(ci)})}
     /* Draw a bookcase out of sight, at the size it will have when shown: the page's column, not in the page's flow */
     function prepare(ci,sel,opt){if(warmed===ci&&sel==null&&!opt)return;if(warmed>=0||AC)clear();
       const p=root.parentNode,cs=getComputedStyle(p),r=p.getBoundingClientRect();
       root.classList.add('lib-warm');root.style.width=(p.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))+'px';root.style.left=(r.left+parseFloat(cs.paddingLeft)+p.clientLeft)+'px';
       fresh(false);draw(ci,sel,opt);warmed=ci}
-    function openShelf(ci){
+    function openShelf(ci,mo){
       if(warmed!==ci)prepare(ci);
-      /* Bring the drawn bookcase into the page, in place of the pictures: it blooms outward from its middle */
+      /* Bring the drawn bookcase into the page, in place of the pictures: grown from the picture's own size and place when a
+         picture was chosen, otherwise blooming outward from its middle */
       warmed=-1;root.classList.remove('lib-warm');root.style.width=root.style.left='';if(landing)landing.hidden=true;
-      const k=REDUCE?'lib-fadein':'lib-bloom';root.classList.add(k);setTimeout(()=>root.classList.remove(k),620);
-      if(root.scrollIntoView&&root.getBoundingClientRect().top<0)root.scrollIntoView({block:'start'})}
+      if(root.scrollIntoView&&root.getBoundingClientRect().top<0)root.scrollIntoView({block:'start'});
+      const sz=root.querySelector('#lib-sizer');
+      if(mo&&sz&&root.animate&&playMorph(mo.pic,mo.rect,mo.px,mo.py,sz))return;
+      const k=REDUCE?'lib-fadein':'lib-bloom';root.classList.add(k);setTimeout(()=>root.classList.remove(k),620)}
     if(render)overview();
     return{open:openShelf,prepare,home:overview,hide:clear}}
   function start(DATA, COVERS, CURIOS, CASES0, CTX) {
@@ -622,7 +661,7 @@
       caseEl.classList.toggle('lb-manual',mode==='manual');document.getElementById('lib-tools').hidden=mode!=='manual';if(mode==='manual')shareLinks();
       caseEl.querySelectorAll('.lb-fr').forEach(p=>p.remove());
       const tk=!!m.real&&tucked,hasL=c=>!!CASES[c].layers;
-      const L=r.sh.map(s=>layoutShelf(s,!!m.real,tk));if(m.real)FIXW=Math.max(420,...L.filter((l,q)=>!hasL(caseOf(q))).map(l=>l.width));
+      const L=r.sh.map(s=>layoutShelf(s,!!m.real,tk));if(m.real){FIXW=Math.max(420,CTX.fixW||0,...L.filter((l,q)=>!hasL(caseOf(q))).map(l=>l.width));if(CTX.fixw)CTX.fixw(FIXW)}
       geos=[];G={};sortSel.value=m.pat||m.own?'':mode;patSel.value=m.pat?mode:'';menus.forEach(x=>x.update());
       for(let c=0;c<CASES.length;c++){const n=CASES[c].n,st=!!CASES[c].straight,bx=boxes[c],LM=24,cx=LM,ty=STUFF,bot=ty+TB+n*ROW-30,D=DEPTH,
           colW=Math.max(m.real&&hasL(c)?420:FIXW,...L.slice(CS[c],CS[c]+n).map(l=>l.width)),CW=colW+2*SIDE,BW=LM+CW+40;
@@ -635,7 +674,7 @@
         for(let rw=0;rw<n;rw++){const si=CS[c]+rw,th=TILT[si]*RAD,ox=cx+SIDE,by=ty+TB+rw*ROW+SH+JIT[si]-(colW/2)*Math.sin(th),geo={ox,by,th,colW,c},
             off=m.centre?(colW-L[si].width)/2:0;geos[si]=geo;G[si]={ox,by,th,colW,front:0,c};
           L[si].place.forEach(([e,x,y,ang,drag],i)=>{e.geo=geo;e.drag=!!drag;e.lx=x+off;e.ly2=0;e.ly_=y+e.dh-FD;e.ang=ang||0;
-            const pln=tk&&e.ly?bx['_books'+e.ly]:bx._books;if(e.el.parentNode!==pln){pln.appendChild(e.el);void e.el.offsetWidth}
+            const pln=tk&&e.ly?bx['_books'+e.ly]:bx._books;if(e.el.parentNode!==pln){pln.appendChild(e.el)}
             if(drag){e.lim=[PAD,colW-e.dw-PAD];e.lx=Math.max(e.lim[0],Math.min(e.lim[1],e.lx+(dxs[e.i]||0)))}
             e.el.style.zIndex=drag?400:10+i;put(e)});
           fairy(si,ox,by,colW,off+PAD,off+L[si].width-PAD);
@@ -797,6 +836,9 @@
     if(CTX.sel!=null){const e=books.find(b=>b._g===CTX.sel);if(e)select(e)}
     if(location.hash.indexOf('#'+PFX+'.')===0){const sh=dec(location.hash.slice(1));if(sh){manual=normalise(sh);render('manual')}else msg.textContent='That link does not match the books on the shelves now, so the shelves are shown as they really are.'}
     const done=()=>{if(CTX.ready)setTimeout(CTX.ready,50)};
-    if(document.fonts&&document.fonts.load)document.fonts.load("12px 'IM Fell English SC'").then(()=>{books.forEach(b=>b.f=null);render(current)}).catch(()=>{}).then(done);else done();
+    /* The lettering is measured with its own font. If that font is already loaded (it is fetched ahead of time) the first draw is
+       right; otherwise draw again once it arrives. */
+    const fontReady=!!(document.fonts&&document.fonts.check&&document.fonts.check("12px 'IM Fell English SC'"));
+    if(!fontReady&&document.fonts&&document.fonts.load)document.fonts.load("12px 'IM Fell English SC'").then(()=>{books.forEach(b=>b.f=null);render(current)}).catch(()=>{}).then(done);else done();
   }
 })();

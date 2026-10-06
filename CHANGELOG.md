@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.17.0
+
+Library only.
+
+- **Choosing a bookcase no longer freezes the page.** Every book put on the shelf made the browser re-measure the whole page, a leftover from the old fly-in. A cold click used to hold the page for one to two seconds (2.1 s on Shelf 3); it now takes about a quarter of a second, most of that the sparkles being seen. The drawing itself takes under a tenth of a second, so the pre-drawing on hover is gone.
+- **The picture becomes the bookcase.** Sparkles start the moment you click and keep drifting up round the picture while the bookcase loads; the ones already in the air finish over it. When it is ready, the live bookcase is drawn exactly the picture's size and place, and the two grow together to the open size, the picture fading into the live one. At every moment they are the same size, and neither is ever bigger than the picture or the open bookcase. It takes about half a second. The little ring and the dissolve are gone; with reduced motion there is only a fade.
+- **No box round a bookcase after Escape.** Going back put the keyboard focus ring on the picture you had opened. Focus now returns to the page area; tabbing to a picture still shows the ring.
+- **An opened bookcase is as wide as its picture,** so the picture and the live bookcase match. (Shelf 1 was about 2% narrower than its picture.)
+- **The lettering font is fetched ahead of time,** so the first bookcase you open is not drawn twice.
+- **The pictures keep their whole margin** at the top (they lost a strip of it), and each records its margin so the live bookcase can start exactly where the artwork is. Run `npm run shelves` to make them again.
+
 ## 2.16.2
 
 Garden only.

@@ -34,12 +34,10 @@ html[data-scheme="dark"] .lib-shelf-dark { display: block; }
     html[data-scheme="auto"] .lib-shelf-dark { display: block; }
 }
 .lib-shelf-cap { position: absolute; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: var(--cap); color: var(--graphite); white-space: nowrap; pointer-events: none; }
-.lib-shelf-wait { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.9rem; color: var(--ink); pointer-events: none; }
-/* Chosen: see the burst below. The ring only appears if the bookcase is slow to come. */
+/* Chosen: sparkles start at once and keep drifting while the bookcase loads; the picture and the live bookcase then grow together
+   (library.js, playMorph). */
 .lib-shelf.lib-opening { cursor: progress; }
 
-.lib-shelf.lib-opening .lib-shelf-wait { display: flex; opacity: 0; animation: lib-wait-in 0.2s 0.6s forwards; }
-@keyframes lib-wait-in { to { opacity: 1; } }
 /* The live bookcase is drawn out of sight while one is pointed at: in the page's column, so it measures as it will be shown */
 .lib.lib-warm { position: fixed; top: 0; visibility: hidden; pointer-events: none; }
 .lib.lib-fadein { animation: lib-fade 0.28s ease-out; }
@@ -53,7 +51,6 @@ html[data-scheme="dark"] .lib-shelf-dark { display: block; }
 @media (prefers-reduced-motion: reduce) {
     .lib-shelf { transition: none; }
         .lib.lib-bloom { animation: none; }
-    .lib-spin { animation-duration: 2s; }
 }
 /* Nothing on the shelves can be text-selected, so a long press on a phone picks a thing up instead of opening the copy menu */
 /* The shelves use the whole width of the page and nothing crops them: a zoomed case grows across and down the page */
@@ -254,19 +251,18 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
 .lib-allbooks a:hover, .lib-allbooks a:focus-visible { color: var(--ink); text-decoration-color: currentColor; outline: none; }
 @media (max-width: 899px) { .lib-allbooks { margin-top: 0.5rem; } }
 
-/* Chosen: sparkles burst from the picture (made by library.js), the picture dissolves, and the live bookcase blooms outward
-   from its middle. A small ring turns on the picture only if the bookcase is slow to come. */
+/* Sparkles (made by library.js): a burst when a bookcase is chosen, more drifting up while it loads. A book chosen in the list
+   gets one burst and the live bookcase blooms outward from its middle. */
 .lib-sparks { position: fixed; inset: 0; z-index: 70; overflow: hidden; pointer-events: none; }
 .lib-spark { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); background: var(--c); opacity: 0; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: lib-spark var(--d) cubic-bezier(0.15, 0.7, 0.3, 1) var(--w) forwards; }
 @keyframes lib-spark { 0% { opacity: 0; transform: translate(0, 0) scale(0.2) rotate(0deg); } 12% { opacity: 1; } 55% { opacity: 0.85; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--r)); } }
 .lib-glow { position: absolute; width: 360px; height: 360px; margin: -180px 0 0 -180px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 217, 138, 0.55), rgba(255, 197, 107, 0.18) 45%, transparent 70%); opacity: 0; animation: lib-glow-burst 0.7s ease-out forwards; }
 @keyframes lib-glow-burst { 0% { opacity: 0; transform: scale(0.2); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5); } }
-.lib-shelf.lib-burst .lib-shelf-img { animation: lib-dissolve 0.32s ease-in forwards; }
-@keyframes lib-dissolve { to { opacity: 0.35; transform: scale(1.03); filter: brightness(1.3); } }
+/* The copy of the picture that grows into the live bookcase */
+.lib-ghost { position: fixed; z-index: 65; max-width: none; margin: 0; transform-origin: 0 0; pointer-events: none; will-change: transform, opacity; }
+.lib-landing:focus { outline: none; }
 .lib.lib-bloom { transform-origin: 50% 40%; animation: lib-bloom 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes lib-bloom { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
-.lib-spin { display: block; width: 28px; height: 28px; border: 3px solid color-mix(in srgb, var(--ink) 25%, transparent); border-top-color: var(--ink); border-radius: 50%; animation: lib-spin 0.8s linear infinite; }
-@keyframes lib-spin { to { transform: rotate(360deg); } }
 
 /* The list of books */
 .lib-books { padding: 0.5rem 0 4rem; }
