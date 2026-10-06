@@ -2,7 +2,7 @@
    carries an lb- class, so nothing here touches the rest of the theme. */
 @font-face { font-family: "IM Fell English SC"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/im-fell-english-sc-latin-400-normal.woff2") format("woff2"); }
 
-.library-head { border-bottom: 0; padding-top: clamp(1rem, 3vw, 2rem); padding-bottom: 0.5rem; text-align: center; }
+.library-head { border-bottom: 0; padding-top: 0; padding-bottom: 0.5rem; text-align: center; }
 .library-head .statement-text, .library-head .statement-desc, .library-head .library-intro { margin-left: auto; margin-right: auto; }
 .library-intro { max-width: 38rem; margin-top: 1.25rem; color: var(--graphite); }
 .library-intro > * { margin: 0; }
@@ -18,6 +18,7 @@ html[data-scheme="dark"] .lib { --lb-under: 0.62; --lb-ground: 0.5; --lb-wood: #
 .lib-hint, .lib-msg { max-width: 44rem; margin: 0 0 1rem; color: var(--graphite); font-size: 0.95rem; }
 .lib-msg { max-width: none; margin: 1rem 0 0.75rem; min-height: 1.5em; }
 .lib-hint { max-width: none; text-align: center; white-space: nowrap; }
+.lib-hint:empty { display: none; }
 @media (max-width: 1000px) { .lib-hint { white-space: normal; } }
 /* Nothing on the shelves can be text-selected, so a long press on a phone picks a thing up instead of opening the copy menu */
 /* The shelves use the whole width of the page and nothing crops them: a zoomed case grows across and down the page */
@@ -147,13 +148,13 @@ html.lib-zoomed, html.lib-zoomed body { overflow-x: auto; }
 /* Fairy lights behind the books: the bulbs brighten and dim slowly, in three groups on different timings */
 .lb-fairy { z-index: 1; pointer-events: none; }
 .lb-fairy svg { display: block; overflow: visible; }
-.lb-glow0, .lb-glow1, .lb-glow2 { animation: lb-glow 2.4s ease-in-out infinite alternate; }
-.lb-glow1 { animation-duration: 3.1s; }
-.lb-glow2 { animation-duration: 3.9s; }
-@keyframes lb-glow { from { opacity: 0.1; } to { opacity: 1; } }
+.lb-glow0, .lb-glow1, .lb-glow2 { animation: lb-glow 4s ease-in-out infinite alternate; }
+.lb-glow1 { animation-duration: 5.3s; }
+.lb-glow2 { animation-duration: 6.7s; }
+@keyframes lb-glow { from { opacity: 0.1; } to { opacity: 0.7; } }
 /* While zoomed in, the lights hold still: animating them at that size is what made the page crawl */
 html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 { animation: none; }
-@keyframes lb-glow-soft { from { opacity: 0.55; } to { opacity: 1; } }
+@keyframes lb-glow-soft { from { opacity: 0.4; } to { opacity: 0.7; } }
 .lb-plank span { position: absolute; top: 19px; font-family: var(--sans); font-size: 12px; font-style: italic; white-space: nowrap; color: var(--ink); }
 /* The top of each shelf board: books stand at its back, curios in front of them, and a little board shows in front of those */
 .lb-floor { display: none; position: absolute; left: 0; bottom: 100%; width: 100%; height: 22px; pointer-events: none; background-color: var(--lb-wood-l); background-image: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.18) 55%, rgba(255,255,255,.12)), var(--lb-grain-h); }
@@ -168,7 +169,7 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
 .lb-book {
     position: absolute; left: 0; top: 0; z-index: 2; display: flex; align-items: center; justify-content: center;
     margin: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; appearance: none; -webkit-appearance: none;
-    transform-origin: 0 100%; transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s, scale 0.15s;
+    transform-origin: 0 100%; transition: opacity 0.35s, scale 0.15s;
     background-color: var(--c);
     background-image: linear-gradient(90deg, rgba(0,0,0,.44), rgba(0,0,0,0) 20%, rgba(255,255,255,.22) 36%, rgba(0,0,0,0) 58%, rgba(0,0,0,.46));
     border: 1px solid rgba(20, 10, 4, 0.8); border-radius: 2px 2px 1px 1px;
@@ -188,7 +189,9 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
 }
 .lb-book.lb-hz span, .lb-book.lb-flat span, .lb-book.lb-face span { writing-mode: horizontal-tb; }
 /* Curios: in front of the books, movable, and hidden all at once by the Hide curios button */
-.lb-curio { position: absolute; left: 0; top: 0; z-index: 500; margin: 0; padding: 0; border: 0; background: none; cursor: grab; touch-action: pan-x pan-y; appearance: none; -webkit-appearance: none; transform-origin: 0 100%; transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), scale 0.15s; }
+.lb-curio { position: absolute; left: 0; top: 0; z-index: 500; margin: 0; padding: 0; border: 0; background: none; cursor: grab; touch-action: pan-x pan-y; appearance: none; -webkit-appearance: none; transform-origin: 0 100%; transition: scale 0.15s; }
+/* A curio glides into place only after being dropped, never on first draw or a sort */
+.lb-curio.lb-settle { transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), scale 0.15s; }
 .lb-curio svg { display: block; overflow: visible; filter: drop-shadow(2px 1px 2px rgba(0, 0, 0, 0.4)); }
 .lb-curio:focus-visible { outline: 2px solid #E3B23C; outline-offset: 3px; }
 .lb-nocurios .lb-curio { display: none; }
