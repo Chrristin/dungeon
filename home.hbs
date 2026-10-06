@@ -1,0 +1,11 @@
+{{!< default}}
+{{!-- The homepage. With a published page at /plots/, the plots come first and the post list follows it;
+      without one, the homepage is the classic hero and cards. --}}
+{{#get "pages" filter="slug:plots" limit="1" include="tags"}}
+{{#if pages}}
+    {{#foreach pages}}{{> "plots"}}{{/foreach}}
+    {{> "feed" posts=../posts pagination=../pagination plots=true}}
+{{else}}
+    {{> "feed" posts=../posts pagination=../pagination}}
+{{/if}}
+{{/get}}

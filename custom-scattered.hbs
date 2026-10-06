@@ -1,0 +1,42 @@
+{{!< default}}
+
+{{#post}}
+<section class="statement statement--small now-head">
+    <h1 class="statement-text">{{title}}</h1>
+    {{#if custom_excerpt}}<p class="statement-desc">{{custom_excerpt}}</p>{{/if}}
+    <div class="now-intro gh-content">{{content}}</div>
+</section>
+{{/post}}
+
+{{!-- Short notes: garden notes marked for the wall (#scatter) and older posts with the internal tag #note, newest first.
+      Optional kind label from #reading, #code, #found or #thought. --}}
+{{#get "posts" filter="tag:[hash-note,hash-scatter]" limit="100" order="published_at desc" include="tags"}}
+<section class="scatter" aria-label="{{t "Notes"}}">
+    {{#foreach posts}}
+    <article class="card scatter-card{{#has tag="#quote, #lyric"}} scatter-card--quote{{/has}}" data-key="{{slug}}" data-color="{{#has tag="#pistachio"}}0{{else has tag="#mint"}}1{{else has tag="#sky"}}2{{else has tag="#periwinkle"}}3{{else has tag="#lilac"}}4{{else has tag="#blush"}}5{{else has tag="#peach"}}6{{else has tag="#butter"}}7{{else has tag="#sage"}}8{{else has tag="#seafoam"}}9{{else has tag="#red"}}red{{else has tag="#tangerine"}}tangerine{{else has tag="#sunflower"}}sunflower{{else has tag="#cobalt"}}cobalt{{else has tag="#emerald"}}emerald{{else has tag="#ink"}}ink{{/has}}">
+        {{#if feature_image}}
+        <figure class="scatter-media">
+            <img src="{{img_url feature_image size="s"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}" loading="lazy">
+        </figure>
+        {{/if}}
+        <header class="card-head">
+            <time class="code" datetime="{{date format="YYYY-MM-DD[T]HH:mm"}}" title="{{date format="D MMM YYYY, HH:mm"}}" data-prefix="{{#has tag="#quote"}}QT{{else has tag="#lyric"}}LY{{else has tag="#reading"}}RD{{else has tag="#code"}}CD{{else has tag="#found"}}FD{{else has tag="#thought"}}TH{{else}}NO{{/has}}" data-date="{{date format="YYMMDD"}}" data-time="{{date format="HHmm"}}">#{{#has tag="#quote"}}QT{{else has tag="#lyric"}}LY{{else has tag="#reading"}}RD{{else has tag="#code"}}CD{{else has tag="#found"}}FD{{else has tag="#thought"}}TH{{else}}NO{{/has}}{{date format="YYMMDD"}}·{{date format="HHmm"}}</time>
+            <span class="card-line" aria-hidden="true"></span>
+            {{#has tag="#reading"}}<span class="card-tag">{{t "Reading"}}</span>{{else has tag="#code"}}<span class="card-tag">{{t "Code"}}</span>{{else has tag="#found"}}<span class="card-tag">{{t "Found"}}</span>{{else has tag="#thought"}}<span class="card-tag">{{t "Thought"}}</span>{{else has tag="#lyric"}}<span class="card-tag">{{t "Lyric"}}</span>{{else has tag="#quote"}}<span class="card-tag">{{t "Quote"}}</span>{{/has}}
+        </header>
+        {{#has tag="#garden"}}
+        <div class="scatter-body gh-content">{{#if custom_excerpt}}<p>{{custom_excerpt}}</p>{{else}}{{content}}{{/if}}</div>
+        {{else}}
+        <div class="scatter-body gh-content">{{content}}</div>
+        {{/has}}
+        {{#has tag="#quote, #lyric"}}<p class="quote-by"><span class="quote-by-text">{{title}}</span></p>{{/has}}
+        {{#has tag="#garden"}}
+        {{!-- a small patch of grass, bottom right, after everything else: flowers bloom on hover, and it opens the note in the garden --}}
+        <a class="scatter-patch" href="{{url}}" aria-label="{{t "Read in the garden"}}"><svg viewBox="0 0 44 24" aria-hidden="true"><path class="patch-ground" d="M3 21.5c7-2.2 31-2.6 38 0"/><path class="patch-blade" d="M8 21c-.5-4-2-6.5-4-8.5"/><path class="patch-blade" d="M12 21c0-5 1-8 3-11"/><path class="patch-blade patch-blade--dark" d="M16 21.5c-.8-4.5-.5-8 1-10.5"/><path class="patch-blade" d="M21 21.5c.3-4.8 2-8 4.5-10"/><path class="patch-blade patch-blade--light" d="M26 21.5c-.5-3.8-2.2-6.5-4.5-8"/><path class="patch-blade patch-blade--dark" d="M30 21.5c.2-4.2 1.8-7 4-9"/><path class="patch-blade" d="M35 21.5c-.2-3.4-1.4-5.8-3.2-7.6"/><path class="patch-blade patch-blade--light" d="M39 21.5c.4-3 1.6-5 3.5-6.4"/></svg></a>
+        {{/has}}
+    </article>
+    {{else}}
+    <p class="now-empty">{{t "Nothing here yet. Add a post with the internal tag"}} <code>#note</code> {{t "and it appears here."}}</p>
+    {{/foreach}}
+</section>
+{{/get}}

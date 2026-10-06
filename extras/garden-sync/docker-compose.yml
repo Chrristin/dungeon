@@ -1,0 +1,21 @@
+# garden-sync: keeps the garden on your Ghost site in step with your Obsidian vault.
+# The vault reaches this folder through Syncthing (see README). Build and start with:
+#   sudo docker compose up -d --build
+services:
+  garden-sync:
+    build: .
+    container_name: garden-sync
+    restart: unless-stopped
+    environment:
+      GHOST_URL: http://ghost:2368          # Ghost on your network, not through Cloudflare (its admin is behind Access)
+      GHOST_HTTPS: "1"                      # Ghost's public address is https, so say the request is secure
+      GHOST_ADMIN_KEY: ${GHOST_ADMIN_KEY}   # from Ghost > Settings > Integrations > Garden sync; kept in .env, never in this file
+      INTERVAL_SECONDS: "60"
+    volumes:
+      - /volume2/docker/syncthing/vault:/vault:ro   # the synced vault, read-only
+      - ./data:/data                                 # what it remembers between runs
+    networks: [ghost]
+networks:
+  ghost:
+    external: true
+    name: ghost_default   # the network your Ghost container is on (check with: sudo docker network ls)

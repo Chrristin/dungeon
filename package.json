@@ -1,0 +1,154 @@
+{
+  "name": "dungeon",
+  "description": "A playful Ghost theme of tilted pastel index cards, an optional homepage of plots, a floating menu, a Now page, a Scatter wall and a lightsaber colour switch.",
+  "version": "2.13.5",
+  "license": "MIT",
+  "author": {
+    "name": "Christin Emmanuel George",
+    "email": "theme@christingeorge.com",
+    "url": "https://christingeorge.com"
+  },
+  "engines": {
+    "ghost": ">=5.0.0"
+  },
+  "keywords": [
+    "blog",
+    "cards",
+    "ghost",
+    "ghost-theme"
+  ],
+  "config": {
+    "posts_per_page": 25,
+    "image_sizes": {
+      "s": {
+        "width": 600
+      },
+      "m": {
+        "width": 1200
+      },
+      "l": {
+        "width": 2000
+      }
+    },
+    "card_assets": true,
+    "custom": {
+      "role_line": {
+        "type": "text",
+        "default": "",
+        "group": "homepage"
+      },
+      "now_items": {
+        "type": "text",
+        "default": "",
+        "group": "homepage"
+      },
+      "color_scheme": {
+        "type": "select",
+        "options": [
+          "Auto",
+          "Light",
+          "Dark"
+        ],
+        "default": "Auto"
+      },
+      "card_tilt": {
+        "type": "select",
+        "options": [
+          "None",
+          "Subtle",
+          "Playful",
+          "Wild"
+        ],
+        "default": "Subtle",
+        "group": "homepage"
+      },
+      "hero_card": {
+        "type": "boolean",
+        "default": true,
+        "group": "homepage"
+      },
+      "show_index": {
+        "type": "boolean",
+        "default": true
+      },
+      "logo_invert_dark": {
+        "type": "boolean",
+        "default": true
+      },
+      "list_heading": {
+        "type": "text",
+        "default": "",
+        "group": "homepage"
+      },
+      "floating_nav": {
+        "type": "boolean",
+        "default": true
+      },
+      "footer_name": {
+        "type": "text",
+        "default": ""
+      },
+      "now_filler": {
+        "type": "select",
+        "options": [
+          "Floral",
+          "Circuit board",
+          "Cityscape",
+          "Topographic",
+          "None"
+        ],
+        "default": "Floral",
+        "description": "Pattern in the empty space of Now cards. Tag a month #filler-circuit etc. to override."
+      },
+      "scheme_switch": {
+        "type": "boolean",
+        "default": true,
+        "description": "Lightsaber light/dark switch in the footer"
+      },
+      "saber_light_message": {
+        "type": "text",
+        "default": "Let there be light.",
+        "description": "Toast when switching to light mode"
+      },
+      "saber_dark_message": {
+        "type": "text",
+        "default": "Back to the dungeon.",
+        "description": "Toast when switching to dark mode"
+      },
+      "saber_sound": {
+        "type": "boolean",
+        "default": false,
+        "description": "Play a synthesised saber sound when switching"
+      },
+      "footer_note": {
+        "type": "text",
+        "default": "",
+        "description": "Short line after your name in the footer"
+      },
+      "footer_line_two": {
+        "type": "text",
+        "default": "",
+        "description": "Second footer line, bottom left (fonts, a note, anything)"
+      },
+      "show_credit": {
+        "type": "boolean",
+        "default": true,
+        "description": "Show the design credit in the footer"
+      },
+      "stamps_endpoint": {
+        "type": "text",
+        "default": "",
+        "description": "Address of your stamps Worker (see extras/stamps-worker). Empty hides the stamps"
+      },
+      "stickies_site_key": {
+        "type": "text",
+        "default": "",
+        "description": "Turnstile site key. With the stamps endpoint, shows stickies instead of comments"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Chrristin/dungeon"
+  }
+}

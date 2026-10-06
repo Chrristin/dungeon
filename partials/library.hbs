@@ -1,0 +1,38 @@
+{{!-- Library: your bookshelves, drawn spine by spine. Used by the "Library" page template (any address; docs/routes.yaml
+      puts the page with the address /library/ at /collection/library/). Every book is one line in
+      assets/data/library.json: its title, author, the shelf it stands on, its size and its two spine colours.
+      The curios standing on the shelves are listed there too, and can be dragged about or hidden.
+      Visitors can re-sort the shelves, try patterns, or arrange them by hand and send you the result: the first
+      email link in this page's text is where "Send" goes. See docs/library.md. Context: the page. --}}
+<link rel="stylesheet" href="{{asset "css/library.css"}}&r=2.13.5">
+{{#post}}
+<section class="statement statement--small library-head">
+    <h1 class="statement-text">{{title}}</h1>
+    {{#if custom_excerpt}}<p class="statement-desc">{{custom_excerpt}}</p>{{/if}}
+    <div class="library-intro gh-content">{{content}}</div>
+</section>
+{{/post}}
+<div class="lib" data-src="{{asset "data/library.json"}}">
+    <p class="lib-hint" id="lib-hint">{{t "Tap a book for its cover and details."}}</p>
+    <div class="lib-nav" id="lib-nav"></div>
+    <div id="lib-vp"><div id="lib-sizer"><div id="lib-case"></div></div></div>
+    <p class="lib-msg" id="lib-msg" aria-live="polite">{{t "Loading the shelves"}}…</p>
+    <div class="lib-bar">
+        <div class="lib-field"><span class="lib-lab">{{t "Sort"}}</span><select id="lib-sortSel" aria-label="{{t "Sort"}}"></select></div>
+        <div class="lib-field"><span class="lib-lab">{{t "Pattern"}}</span><select id="lib-patSel" aria-label="{{t "Pattern"}}"></select></div>
+        <div class="lib-field"><span class="lib-lab">{{t "Topic"}}</span><button class="lib-pill" id="lib-topicBtn" type="button" aria-expanded="false"></button><div class="lib-topics" id="lib-topicPanel" hidden></div></div>
+        <button class="lib-ctl" id="lib-handBtn" type="button" data-mode="manual">{{t "Arrange by hand"}}</button>
+        <button class="lib-ctl lib-icon" id="lib-curioBtn" type="button" aria-pressed="false" aria-label="{{t "Hide curios"}}" title="{{t "Hide curios"}}" hidden></button>
+        <button class="lib-ctl lib-icon" id="lib-curioReset" type="button" aria-label="{{t "Put curios back"}}" title="{{t "Put curios back"}}" hidden></button>
+    </div>
+    <div class="lib-tools" id="lib-tools" hidden>
+        <a class="lib-ctl" id="lib-send" hidden>{{t "Send this arrangement to me"}}</a>
+        <button class="lib-ctl" id="lib-link" type="button">{{t "Copy a link to it"}}</button>
+        <button class="lib-ctl" id="lib-restart" type="button">{{t "Restart from last sort"}}</button>
+    </div>
+    <p class="lib-cap">{{t "Spine colours in the collection"}}</p>
+    <div id="lib-palette" aria-label="{{t "How many spines there are of each colour"}}"></div>
+    <div id="lib-info" aria-live="polite"></div>
+</div>
+<noscript><p class="lib-msg">{{t "This page needs JavaScript to draw the shelves."}}</p></noscript>
+<script src="{{asset "js/library.js"}}&r=2.13.5" defer></script>

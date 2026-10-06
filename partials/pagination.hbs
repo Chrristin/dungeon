@@ -1,0 +1,9 @@
+{{#if pages}}
+{{#match pages ">" 1}}
+<nav class="pager" aria-label="{{t "Pages"}}">
+    {{#if prev}}<a class="pager-link" href="{{page_url prev}}">{{t "Newer posts"}}</a>{{/if}}
+    <span class="pager-count">Page {{page}} of {{pages}}</span>
+    {{#if next}}<a class="pager-link" href="{{page_url next}}">{{t "Older posts"}}</a>{{/if}}
+</nav>
+{{/match}}
+{{/if}}

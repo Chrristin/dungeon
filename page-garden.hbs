@@ -1,0 +1,24 @@
+{{!< default}}
+{{!-- The Garden (the page with the address /garden/): notes that grow over time, written in Obsidian and
+      published by garden-sync (see extras/garden-sync). The sync puts the whole garden's map into this page's
+      header data; the sections below are drawn from it. --}}
+{{#post}}
+<section class="statement statement--small garden-head">
+    <h1 class="statement-text">{{title}}</h1>
+    {{#if custom_excerpt}}<p class="statement-desc">{{custom_excerpt}}</p>{{/if}}
+    <div class="garden-intro gh-content">{{content}}</div>
+</section>
+{{/post}}
+<div class="garden" data-labels='{"seedling":"{{t "seedling"}}","seedlings":"{{t "seedlings"}}","growing":"{{t "growing"}}","evergreen":"{{t "evergreen"}}","notes":"{{t "notes"}}","tended":"{{t "Tended"}}","source":"{{t "Source"}}","links":"{{t "links"}}","other":"{{t "Other"}}","link":"{{t "A link you wrote"}}","posts":"{{t "posts"}}","post":"{{t "Post"}}","linked":"{{t "linked"}}","relword":"{{t "Related by wording"}}","fold":"{{t "Fold back"}}","spread":"{{t "related: select to spread them"}}","mapHint":"{{t "Click the map, then scroll to zoom"}}","mapArmed":"{{t "Scrolling zooms the map"}}","rated":"{{t "Rated"}}"}' hidden>
+    <div class="garden-bar"><div class="garden-stats"></div><div class="garden-filter" role="group" aria-label="{{t "Show"}}"><button type="button" data-f="all" aria-pressed="true">{{t "Everything"}}</button><button type="button" data-f="note" aria-pressed="false">{{t "Notes"}}</button><button type="button" data-f="post" aria-pressed="false">{{t "Posts"}}</button></div></div>
+    <button class="garden-random" type="button">{{t "Pull a random note"}}</button>
+    <section class="garden-section" aria-labelledby="garden-recent"><h2 id="garden-recent" class="garden-h">{{t "Recently tended"}}</h2><div class="garden-cards" data-list="recent"></div></section>
+    <section class="garden-section" aria-labelledby="garden-connected"><h2 id="garden-connected" class="garden-h">{{t "Most connected"}}</h2><div class="garden-cards" data-list="connected"></div></section>
+    <section class="garden-section garden-map-section" aria-label="{{t "The map"}}"><div class="garden-map" data-zoom-in="{{t "Zoom in"}}" data-zoom-out="{{t "Zoom out"}}" data-fit="{{t "Fit"}}"></div></section>
+    <section class="garden-section" aria-labelledby="garden-topics"><h2 id="garden-topics" class="garden-h">{{t "By topic"}}</h2><div class="garden-topics"></div></section>
+    <section class="garden-section" aria-labelledby="garden-all"><h2 id="garden-all" class="garden-h">{{t "All notes"}}</h2>
+        <div class="garden-sort" role="group" aria-label="{{t "Sort"}}"><button type="button" data-sort="az" aria-pressed="true">{{t "A to Z"}}</button><button type="button" data-sort="recent" aria-pressed="false">{{t "Recent"}}</button><button type="button" data-sort="stage" aria-pressed="false">{{t "Stage"}}</button></div>
+        <ol class="garden-all" data-list="all"></ol>
+    </section>
+</div>
+<p class="garden-empty" hidden>{{t "The garden is empty for now. Notes appear here once garden-sync publishes them."}}</p>

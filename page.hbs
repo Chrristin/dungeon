@@ -1,0 +1,23 @@
+{{!< default}}
+
+{{#post}}
+<div class="post-stage">
+    <article class="post-panel {{post_class}}" data-key="{{slug}}">
+        {{#match @page.show_title_and_feature_image}}
+        <header class="panel-head">
+            <h1 class="panel-title">{{title}}</h1>
+            {{#if custom_excerpt}}<p class="panel-lede">{{custom_excerpt}}</p>{{/if}}
+        </header>
+        {{#if feature_image}}
+        <figure class="panel-image">
+            <img src="{{img_url feature_image size="m"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">
+            {{#if feature_image_caption}}<figcaption>{{feature_image_caption}}</figcaption>{{/if}}
+        </figure>
+        {{/if}}
+        {{/match}}
+        <div class="panel-content gh-content">
+            {{content}}
+        </div>
+    </article>
+</div>
+{{/post}}

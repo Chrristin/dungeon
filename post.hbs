@@ -1,0 +1,90 @@
+{{!< default}}
+
+{{#post}}
+{{!-- A watchlist item (the internal tag #watch-item) has a page of its own shape --}}
+{{#has tag="#watch-item"}}
+{{> "watch-item"}}
+{{else}}
+<div class="post-stage">
+    <article class="post-panel {{post_class}}" data-key="{{slug}}">
+        {{!-- Card order: the image comes first, then the code line, title and excerpt, as on the card, so a card can
+              open into its post without anything changing place. The internal tag #hide-image keeps the feature
+              image off the post itself; it still shows on cards and in social previews --}}
+        {{#if feature_image}}{{^has tag="#hide-image"}}
+        <figure class="panel-image">
+            <img
+                srcset="{{img_url feature_image size="s"}} 600w,
+                        {{img_url feature_image size="m"}} 1200w"
+                sizes="(max-width: 800px) 92vw, 760px"
+                src="{{img_url feature_image size="m"}}"
+                alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">
+            {{#if feature_image_caption}}<figcaption>{{feature_image_caption}}</figcaption>{{/if}}
+        </figure>
+        {{/has}}{{/if}}
+        <header class="panel-head">
+            <div class="panel-meta">
+                <span class="code" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</span>
+                <span class="card-line" aria-hidden="true"></span>
+                {{#primary_tag}}<span class="card-tag">{{name}}</span>{{/primary_tag}}
+            </div>
+            {{> "rating-stamp"}}
+            <h1 class="panel-title">{{title}}</h1>
+            <p class="panel-sub"><time datetime="{{date format="YYYY-MM-DD"}}">{{date format="D MMM YYYY"}}</time>, {{reading_time minute="1 min read" minutes="% min read"}}</p>
+            {{#if custom_excerpt}}<p class="panel-lede">{{custom_excerpt}}</p>{{/if}}
+        </header>
+
+
+        <div class="panel-content gh-content">
+            {{content}}
+        </div>
+
+        {{#if tags}}
+        <ul class="chips panel-tags">
+            {{#foreach tags}}<li><a href="{{url}}">{{name}}</a></li>{{/foreach}}
+        </ul>
+        {{/if}}
+
+        {{> "post-actions"}}
+        {{!-- Readers can rate what you've rated: out of 5 in halves, through the stamps Worker, with the stickies' spam check --}}
+        {{#has tag="#rated-0-5, #rated-1, #rated-1-5, #rated-2, #rated-2-5, #rated-3, #rated-3-5, #rated-4, #rated-4-5, #rated-5"}}{{#if @custom.stamps_endpoint}}{{#if @custom.stickies_site_key}}
+        <section class="rate" data-endpoint="{{@custom.stamps_endpoint}}" data-slug="{{slug}}" data-sitekey="{{@custom.stickies_site_key}}"{{#if @member}} data-member="1"{{/if}} aria-labelledby="rate-title-{{id}}"
+            data-none="{{t "No reader ratings yet"}}" data-few="{{t "so far"}}" data-one="{{t "reader rating"}}" data-many="{{t "reader ratings"}}" data-readers="{{t "Readers"}}" data-from="{{t "from"}}"
+            data-hint="{{t "Tap a star; its left half gives a half star"}}" data-checking="{{t "Checking you're a person..."}}" data-thanks="{{t "Thanks!"}}" data-yours="{{t "Your rating"}}"
+            data-err-spam="{{t "The spam check didn't pass. Please try again."}}" data-err-slow="{{t "That's a lot of ratings at once. Try again in a minute."}}" data-err-other="{{t "Couldn't save that right now. Please try again."}}" hidden>
+            <div class="rate-head"><h2 class="rate-title" id="rate-title-{{id}}">{{t "Seen it? Rate it too"}}</h2><p class="rate-readers" aria-live="polite"></p></div>
+            <div class="rate-row">
+                <div class="rate-stars" role="slider" tabindex="0" aria-labelledby="rate-title-{{id}}" aria-valuemin="0.5" aria-valuemax="5" aria-valuenow="0" aria-valuetext="{{t "Not rated"}}"><span class="rate-fill" aria-hidden="true"></span></div>
+                <p class="rate-msg" aria-live="polite"></p>
+            </div>
+            <div class="rate-turnstile"></div>
+        </section>
+        {{/if}}{{/if}}{{/has}}
+    </article>
+
+    {{!-- Stickies replace Ghost's comments when the stamps Worker and a Turnstile site key are set --}}
+    {{#if @custom.stickies_site_key}}{{#if @custom.stamps_endpoint}}
+    {{> "stickies"}}
+    {{/if}}{{else}}
+    {{#if comments}}
+    <div class="post-comments">{{comments}}</div>
+    {{/if}}
+    {{/if}}
+
+    {{#has tag="#garden"}}
+    {{!-- A garden note: what links here (filled in from the note's garden data), and the way back to the garden --}}
+    <nav class="garden-after" aria-label="{{t "In the garden"}}" data-mentioned="{{t "Mentioned in"}}" data-none="{{t "Nothing links here yet."}}" data-labels='{"log":"{{t "Tending log"}}","related":"{{t "Related"}}","map":"{{t "Nearby in the garden"}}","planted":"{{t "planted"}}","tended":"{{t "tended"}}","stage":"{{t "Stage"}}","confidence":"{{t "Confidence"}}","links":"{{t "Links"}}","plantedH":"{{t "Planted"}}","tendedH":"{{t "Tended"}}","length":"{{t "Length"}}","words":"{{t "words"}}","min":"{{t "min"}}","in":"{{t "in"}}","out":"{{t "out"}}","times":"{{t "times"}}","time":"{{t "time"}}","source":"{{t "Source"}}","thisNote":"{{t "this note"}}","keys":"{{t "shortcuts"}}"}'>
+        <div class="garden-backlinks"></div>
+        <a class="garden-back" href="{{@site.url}}/garden/">&larr; {{t "Back to the garden"}}</a>
+    </nav>
+    {{else}}
+    {{!-- A post in the garden: what links to it, what it links to, and related notes and posts (from the Garden page's data) --}}
+    <section class="post-garden" hidden data-labels='{"title":"{{t "In the garden"}}","mentioned":"{{t "Mentioned in"}}","links":"{{t "Links to"}}","related":"{{t "Related"}}"}' data-garden="{{@site.url}}/garden/"></section>
+    <nav class="post-next" aria-label="{{t "More posts"}}">
+        {{!-- Neighbouring posts, skipping Now months (#now) and Scatter notes (#note), which have no page of their own. Shown as horizontal cards: image (or a patterned block) on the left, title and excerpt on the right. --}}
+        {{#get "posts" filter="published_at:<'{{published_at}}'+tag:-hash-now+tag:-hash-note+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item+id:-{{id}}" order="published_at desc" limit="1" include="tags"}}{{#foreach posts}}<div class="post-next-item"><span class="post-next-label">{{t "Older"}}</span><article class="card card--row" data-key="{{slug}}"><div class="card-row-media" aria-hidden="true">{{#if feature_image}}<img src="{{img_url feature_image size="s"}}" alt="" loading="lazy">{{else}}<div class="card-fill" data-key="{{slug}}"></div>{{/if}}</div><div class="card-row-body"><header class="card-head"><time class="code" datetime="{{date format="YYYY-MM-DD"}}" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</time><span class="card-line" aria-hidden="true"></span>{{#primary_tag}}<span class="card-tag">{{name}}</span>{{/primary_tag}}</header><h2 class="card-title"><a href="{{url}}">{{title}}</a></h2><p class="card-excerpt">{{#if custom_excerpt}}{{custom_excerpt}}{{else}}{{excerpt words="22"}}{{/if}}</p></div></article></div>{{/foreach}}{{/get}}
+        {{#get "posts" filter="published_at:>'{{published_at}}'+tag:-hash-now+tag:-hash-note+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item+id:-{{id}}" order="published_at asc" limit="1" include="tags"}}{{#foreach posts}}<div class="post-next-item post-next-item--newer"><span class="post-next-label">{{t "Newer"}}</span><article class="card card--row" data-key="{{slug}}"><div class="card-row-media" aria-hidden="true">{{#if feature_image}}<img src="{{img_url feature_image size="s"}}" alt="" loading="lazy">{{else}}<div class="card-fill" data-key="{{slug}}"></div>{{/if}}</div><div class="card-row-body"><header class="card-head"><time class="code" datetime="{{date format="YYYY-MM-DD"}}" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</time><span class="card-line" aria-hidden="true"></span>{{#primary_tag}}<span class="card-tag">{{name}}</span>{{/primary_tag}}</header><h2 class="card-title"><a href="{{url}}">{{title}}</a></h2><p class="card-excerpt">{{#if custom_excerpt}}{{custom_excerpt}}{{else}}{{excerpt words="22"}}{{/if}}</p></div></article></div>{{/foreach}}{{/get}}
+    </nav>
+    {{/has}}
+</div>
+{{/has}}
+{{/post}}

@@ -1,0 +1,211 @@
+/* Library: the bookshelves drawn by assets/js/library.js on the Library page template. Everything the script makes
+   carries an lb- class, so nothing here touches the rest of the theme. */
+@font-face { font-family: "IM Fell English SC"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/im-fell-english-sc-latin-400-normal.woff2") format("woff2"); }
+
+.library-head { border-bottom: 0; padding-top: clamp(1rem, 3vw, 2rem); padding-bottom: 0.5rem; text-align: center; }
+.library-head .statement-text, .library-head .statement-desc, .library-head .library-intro { margin-left: auto; margin-right: auto; }
+.library-intro { max-width: 38rem; margin-top: 1.25rem; color: var(--graphite); }
+.library-intro > * { margin: 0; }
+.library-intro > * + * { margin-top: 1em; }
+.library-intro:empty { display: none; }
+
+.lib { --lb-grain-h: repeating-linear-gradient(0deg, rgba(0,0,0,.07) 0 1px, transparent 1px 3px, rgba(255,255,255,.035) 3px 4px, transparent 4px 9px, rgba(0,0,0,.04) 9px 10px, transparent 10px 15px); --lb-grain-v: repeating-linear-gradient(90deg, rgba(0,0,0,.07) 0 1px, transparent 1px 3px, rgba(255,255,255,.035) 3px 4px, transparent 4px 9px, rgba(0,0,0,.04) 9px 10px, transparent 10px 15px); --lb-under: 0.72; --lb-ground: 0.34; --lb-wood: #9A6236; --lb-wood-l: #B8794A; --lb-wood-d: #4E2E18; --lb-edge: #2A1608; padding: 0.5rem 0 4rem; }
+html[data-scheme="dark"] .lib { --lb-under: 0.62; --lb-ground: 0.5; --lb-wood: #7A4A26; --lb-wood-l: #94602F; --lb-wood-d: #2E1A0D; --lb-edge: #170B03; }
+@media (prefers-color-scheme: dark) {
+    html[data-scheme="auto"] .lib { --lb-under: 0.62; --lb-ground: 0.5; --lb-wood: #7A4A26; --lb-wood-l: #94602F; --lb-wood-d: #2E1A0D; --lb-edge: #170B03; }
+}
+
+.lib-hint, .lib-msg { max-width: 44rem; margin: 0 0 1rem; color: var(--graphite); font-size: 0.95rem; }
+.lib-msg { max-width: none; margin: 1rem 0 0.75rem; min-height: 1.5em; }
+.lib-hint { max-width: none; text-align: center; white-space: nowrap; }
+@media (max-width: 1000px) { .lib-hint { white-space: normal; } }
+/* Nothing on the shelves can be text-selected, so a long press on a phone picks a thing up instead of opening the copy menu */
+/* The shelves use the whole width of the page and nothing crops them: a zoomed case grows across and down the page */
+#lib-vp { width: 100vw; margin-left: calc(50% - 50vw); overflow: visible; touch-action: pan-x pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+#lib-sizer { position: relative; margin: 0 auto; }
+/* The page's main column clips anything wider than itself; on the Library page that clip is lifted so the shelves can
+   use the full width. The page itself is kept from scrolling sideways until a case is zoomed. */
+main:has(.lib) { overflow-x: visible; }
+html:has(.lib):not(.lib-zoomed) { overflow-x: clip; }
+html.lib-zoomed, html.lib-zoomed body { overflow-x: auto; }
+.lib-zoomreset { position: fixed; right: 1rem; bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); z-index: 60; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: 0; padding: 0; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 999px; box-shadow: 0 10px 26px -12px rgba(12, 13, 16, 0.6); cursor: pointer; }
+.lib-zoomreset[hidden] { display: none; }
+@media (min-width: 900px) { .lib-zoomreset { bottom: 1.25rem; } }
+#lib-case { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+
+.lib-bar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; margin-bottom: 0.75rem; }
+.lib-lab, .lib-cap, #lib-palette, .lib-group { font-family: var(--mono); font-size: 0.75rem; color: var(--graphite); }
+.lib-field { position: relative; display: flex; flex-direction: column; gap: 0.2rem; }
+/* Menus: a pill that opens a panel in the page's own paper and ink. A phone keeps its own picker behind the same pill. */
+.lib select, .lib-pill { border-radius: 999px; min-width: 9.5rem; }
+.lib select { appearance: none; -webkit-appearance: none; padding-right: 2.2rem; background-repeat: no-repeat; background-position: right 0.8rem center; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+.lib select.lib-native { position: absolute; width: 1px; height: 1px; min-width: 0; min-height: 0; padding: 0; opacity: 0; pointer-events: none; }
+.lib-pill { display: inline-flex; align-items: center; justify-content: space-between; gap: 0.6rem; min-height: 44px; margin: 0; padding: 0 0.9rem 0 1rem; font-family: var(--sans); font-size: 0.875rem; font-weight: 500; line-height: 1.2; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); cursor: pointer; }
+.lib-pill:hover { background: var(--wash); }
+.lib-pill i { display: inline-flex; color: var(--graphite); transition: transform 0.15s; }
+.lib-pill[aria-expanded="true"] i { transform: rotate(180deg); }
+.lib-menu, .lib-topics { position: absolute; top: calc(100% + 6px); left: 0; z-index: 45; max-height: 60vh; overflow: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; box-shadow: 0 16px 36px -14px rgba(12, 13, 16, 0.55); }
+.lib-menu { display: flex; flex-direction: column; min-width: 100%; padding: 0.35rem; }
+.lib-menu[hidden], .lib-topics[hidden], .lib-opt[hidden] { display: none; }
+.lib-menu.lib-up, .lib-topics.lib-up { top: auto; bottom: calc(100% - 1.1rem + 6px); }
+.lib-opt { margin: 0; padding: 0.55rem 0.8rem; text-align: left; white-space: nowrap; font-family: var(--sans); font-size: 0.875rem; font-weight: 500; color: var(--ink); background: none; border: 0; border-radius: 9px; cursor: pointer; }
+.lib-opt:hover, .lib-opt:focus-visible { background: var(--wash); outline: none; }
+.lib-opt[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+.lib-topics { width: min(34rem, 92vw); padding: 0.9rem; }
+.lib-group { margin: 0.8rem 0 0.4rem; }
+.lib-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.lib-chip { min-height: 36px; margin: 0; padding: 0.3rem 0.75rem; font-family: var(--sans); font-size: 0.8rem; font-weight: 500; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 999px; cursor: pointer; }
+.lib-chip:hover { background: var(--wash); }
+.lib-chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+@media (max-width: 600px) { .lib-topics { position: fixed; top: auto; left: 0.5rem; right: 0.5rem; bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); width: auto; max-height: 60vh; } }
+.lib-icon { justify-content: center; width: 44px; padding: 0; }
+.lib-icon svg { display: block; }
+.lib select, .lib-ctl, .lb-ctl {
+    display: inline-flex; align-items: center; min-height: 44px; margin: 0; padding: 0 0.9rem;
+    font-family: var(--sans); font-size: 0.875rem; font-weight: 500; line-height: 1.2; text-decoration: none;
+    color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer;
+}
+.lib-ctl:hover, .lb-ctl:hover { background: var(--wash); }
+.lib-ctl[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.lib select:focus-visible, .lib-pill:focus-visible, .lib-chip:focus-visible, .lib-ctl:focus-visible, .lb-ctl:focus-visible, .lb-book:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.lib-tools { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+.lib-tools[hidden], .lib-ctl[hidden] { display: none; }
+.lib-cap { margin: 1rem 0 0.4rem; }
+#lib-palette { display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; }
+#lib-palette span { display: flex; align-items: center; gap: 0.25rem; }
+#lib-palette i { display: block; width: 14px; height: 14px; border: 1px solid var(--rule); border-radius: 3px; }
+
+/* The card for the selected book: fixed to the corner, clear of the floating menu */
+#lib-info {
+    position: fixed; right: 1rem; bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); z-index: 40;
+    display: none; gap: 0.9rem; align-items: flex-start; width: min(420px, calc(100vw - 2rem)); max-height: 70vh; overflow: auto;
+    padding: 0.9rem; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+#lib-info.lb-on { display: flex; }
+#lib-info h2 { margin: 0 0 0.25rem; font-size: 1.05rem; font-weight: 600; line-height: 1.25; }
+#lib-info p { margin: 0 0 0.15rem; font-size: 0.875rem; color: var(--graphite); }
+#lib-info .lb-f { flex: 1; min-width: 0; }
+#lib-info .lb-ctl { margin-top: 0.6rem; }
+.lb-cover {
+    position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    width: 132px; height: 192px; padding: 18px 12px; text-align: center; font-family: "IM Fell English SC", Georgia, serif;
+    background-color: var(--c);
+    background-image: linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,0) 8%, rgba(255,255,255,.08) 50%, rgba(0,0,0,.22));
+    border: 1px solid rgba(20, 10, 4, 0.8); border-radius: 2px 5px 5px 2px; box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.45);
+}
+.lb-cover::before { content: ""; position: absolute; inset: 7px; border: 1px solid currentColor; border-radius: 3px; opacity: 0.65; }
+.lb-cover b { font-weight: 400; line-height: 1.15; overflow-wrap: anywhere; }
+.lb-cover small { font-size: 10px; line-height: 1.2; }
+.lb-cover.lb-photo { padding: 0; overflow: hidden; }
+.lb-cover.lb-photo::before { content: none; }
+.lb-cover.lb-photo img { width: 100%; height: 100%; max-width: none; object-fit: cover; }
+
+/* The bookcases */
+.lb-fr { position: absolute; }
+/* The landing: every bookcase drawn small, for choosing. Nothing inside responds; each bookcase is one button. */
+.lib-over > *:not(#lib-vp):not(#lib-hint) { display: none !important; }
+.lib-over .lb-box { cursor: pointer; transition: translate 0.2s ease; }
+.lib-over .lb-box:hover, .lib-over .lb-box:focus-visible { translate: 0 -14px; outline: none; }
+.lib-over .lb-box * { pointer-events: none; }
+.lib-over .lb-glow0, .lib-over .lb-glow1, .lib-over .lb-glow2 { animation: none; }
+@media (prefers-reduced-motion: reduce) { .lib-over .lb-box { transition: none; } }
+/* One box per bookcase. They stand side by side in rows, or one under another on a narrow screen. Each box holds flat
+   layers for the back panel, the books and the curios; nothing is turned in 3D, which keeps the page quick to draw. */
+.lb-box { position: absolute; left: 0; top: 0; }
+.lb-plane { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+.lb-plane > * { pointer-events: auto; }
+.lb-cap { z-index: 3; font-family: var(--mono); font-size: 24px; line-height: 34px; text-align: center; color: var(--graphite); }
+/* A darker, straighter bookcase */
+.lb-dark { --lb-wood: #4A382F; --lb-wood-l: #5C473B; --lb-wood-d: #241A16; --lb-edge: #120C09; }
+.lib-nav { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; justify-content: center; margin: 0 0 1rem; }
+.lib-nav:empty { display: none; }
+.lib .lib-navb { min-height: 40px; padding: 0 0.9rem; border-radius: 999px; color: var(--ink); background: var(--paper); }
+.lib .lib-navb[aria-pressed="true"] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.lib .lib-navb[data-step] { width: 40px; padding: 0; justify-content: center; font-size: 1.25rem; line-height: 1; }
+.lib .lib-navb[data-view] { margin-left: 0.6rem; }
+.lb-back {
+    z-index: 0; background-color: var(--lb-wood-d); border: 2px solid var(--lb-edge); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+    background-image: linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,0) 7%, rgba(0,0,0,0) 93%, rgba(0,0,0,.55)), repeating-linear-gradient(90deg, transparent 0 60px, rgba(0,0,0,.2) 60px 62px), radial-gradient(ellipse 9px 22px at 31% 27%, rgba(20,8,2,.5), transparent), radial-gradient(ellipse 7px 16px at 78% 64%, rgba(20,8,2,.45), transparent), var(--lb-grain-v);
+}
+/* The wood has some age: grain, a knot or two, uneven tone, a worn lighter edge and the odd scratch */
+.lb-post, .lb-topb, .lb-skirt, .lb-foot, .lb-plank { background-color: var(--lb-wood); border: 2px solid var(--lb-edge); border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(255, 226, 180, 0.16); }
+.lb-post { z-index: 3; background-image: linear-gradient(90deg, rgba(255,255,255,.24), rgba(255,255,255,0) 35%, rgba(0,0,0,.34)), radial-gradient(ellipse 6px 13px at 46% 22%, rgba(40,18,5,.6), rgba(40,18,5,.2) 60%, transparent), radial-gradient(ellipse 5px 10px at 60% 71%, rgba(40,18,5,.5), transparent), linear-gradient(176deg, transparent 0 41%, rgba(255,235,200,.2) 41% 41.3%, transparent 41.3%), linear-gradient(180deg, rgba(0,0,0,.1), transparent 30%, rgba(255,255,255,.05) 55%, rgba(0,0,0,.16)), var(--lb-grain-v); }
+.lb-topb, .lb-skirt { z-index: 3; background-image: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 40%, rgba(0,0,0,.3)), radial-gradient(ellipse 15px 5px at 18% 55%, rgba(40,18,5,.55), rgba(40,18,5,.2) 60%, transparent), radial-gradient(ellipse 11px 4px at 67% 42%, rgba(40,18,5,.5), transparent), linear-gradient(94deg, transparent 0 58%, rgba(255,235,200,.22) 58% 58.2%, transparent 58.2%), linear-gradient(90deg, rgba(0,0,0,.12), transparent 28%, rgba(255,255,255,.06) 60%, rgba(0,0,0,.14)), var(--lb-grain-h); }
+.lb-topb { display: flex; align-items: flex-end; justify-content: center; }
+.lb-foot { z-index: 2; background-image: var(--lb-grain-v); }
+.lb-wedge { z-index: 2; background: #C8281E; border: 2px solid var(--lb-edge); border-radius: 2px; box-shadow: inset 0 -3px 0 #F4F2EC; }
+.lb-plank {
+    z-index: 1; background-color: var(--lb-wood-l); box-shadow: 0 7px 9px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 226, 180, 0.16);
+    background-image: linear-gradient(180deg, rgba(255,255,255,.34) 0 3px, rgba(255,255,255,.06) 3px, rgba(0,0,0,.34)), radial-gradient(ellipse 13px 4px at 24% 60%, rgba(40,18,5,.55), rgba(40,18,5,.2) 60%, transparent), radial-gradient(ellipse 9px 3px at 81% 45%, rgba(40,18,5,.5), transparent), linear-gradient(92deg, transparent 0 37%, rgba(255,235,200,.22) 37% 37.15%, transparent 37.15%), linear-gradient(90deg, rgba(0,0,0,.14), transparent 22%, rgba(255,255,255,.07) 48%, transparent 70%, rgba(0,0,0,.16)), var(--lb-grain-h);
+}
+/* The shadow under the top board stays inside the case */
+.lb-tshade { z-index: 1; pointer-events: none; background: linear-gradient(rgba(0,0,0,var(--lb-under)), rgba(0,0,0,.3) 40%, rgba(0,0,0,.08) 75%, rgba(0,0,0,0)); }
+.lb-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* The shadow on the page under each case */
+.lb-ground { z-index: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,var(--lb-ground)), rgba(0,0,0,0) 68%); }
+/* Fairy lights behind the books: the bulbs brighten and dim slowly, in three groups on different timings */
+.lb-fairy { z-index: 1; pointer-events: none; }
+.lb-fairy svg { display: block; overflow: visible; }
+.lb-glow0, .lb-glow1, .lb-glow2 { animation: lb-glow 2.4s ease-in-out infinite alternate; }
+.lb-glow1 { animation-duration: 3.1s; }
+.lb-glow2 { animation-duration: 3.9s; }
+@keyframes lb-glow { from { opacity: 0.1; } to { opacity: 1; } }
+/* While zoomed in, the lights hold still: animating them at that size is what made the page crawl */
+html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 { animation: none; }
+@keyframes lb-glow-soft { from { opacity: 0.55; } to { opacity: 1; } }
+.lb-plank span { position: absolute; top: 19px; font-family: var(--sans); font-size: 12px; font-style: italic; white-space: nowrap; color: var(--ink); }
+/* The top of each shelf board: books stand at its back, curios in front of them, and a little board shows in front of those */
+.lb-floor { display: none; position: absolute; left: 0; bottom: 100%; width: 100%; height: 22px; pointer-events: none; background-color: var(--lb-wood-l); background-image: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.18) 55%, rgba(255,255,255,.12)), var(--lb-grain-h); }
+.lb-inner, .lb-rshade { display: none; }
+.lb-shade { position: absolute; left: 0; top: calc(100% + 2px); width: 100%; height: 140px; pointer-events: none; z-index: 1; background: linear-gradient(rgba(0,0,0,var(--lb-under)), rgba(0,0,0,.3) 40%, rgba(0,0,0,.08) 75%, rgba(0,0,0,0)); }
+.lb-deco { z-index: 3; transform-origin: 50% 100%; }
+.lb-deco svg { display: block; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.5)); }
+.lb-flame { animation: lb-flicker 1.1s ease-in-out infinite; }
+@keyframes lb-flicker { 50% { opacity: 0.45; } }
+
+/* The books */
+.lb-book {
+    position: absolute; left: 0; top: 0; z-index: 2; display: flex; align-items: center; justify-content: center;
+    margin: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; appearance: none; -webkit-appearance: none;
+    transform-origin: 0 100%; transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s, scale 0.15s;
+    background-color: var(--c);
+    background-image: linear-gradient(90deg, rgba(0,0,0,.44), rgba(0,0,0,0) 20%, rgba(255,255,255,.22) 36%, rgba(0,0,0,0) 58%, rgba(0,0,0,.46));
+    border: 1px solid rgba(20, 10, 4, 0.8); border-radius: 2px 2px 1px 1px;
+    box-shadow: 3px -3px 7px rgba(0,0,0,.42), inset 0 6px 5px rgba(0,0,0,.24), inset 0 -4px 4px rgba(0,0,0,.26);
+}
+.lb-book.lb-flat {
+    background-image: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.22) 30%, rgba(0,0,0,0) 55%, rgba(0,0,0,.46));
+    box-shadow: 2px 3px 6px rgba(0,0,0,.45), inset 5px 0 5px rgba(0,0,0,.22), inset -5px 0 5px rgba(0,0,0,.22);
+}
+.lb-book.lb-face {
+    cursor: grab; touch-action: pan-x pan-y; border-radius: 2px 5px 5px 2px; box-shadow: 4px 3px 8px rgba(0, 0, 0, 0.5);
+    background-image: linear-gradient(90deg, rgba(0,0,0,.4), rgba(0,0,0,0) 9%, rgba(255,255,255,.08) 50%, rgba(0,0,0,.22));
+}
+.lb-book span {
+    position: relative; z-index: 1; flex: none; writing-mode: vertical-rl; text-align: center;
+    font-family: "IM Fell English SC", Georgia, serif; font-size: 12px; line-height: 13px; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+.lb-book.lb-hz span, .lb-book.lb-flat span, .lb-book.lb-face span { writing-mode: horizontal-tb; }
+/* Curios: in front of the books, movable, and hidden all at once by the Hide curios button */
+.lb-curio { position: absolute; left: 0; top: 0; z-index: 500; margin: 0; padding: 0; border: 0; background: none; cursor: grab; touch-action: pan-x pan-y; appearance: none; -webkit-appearance: none; transform-origin: 0 100%; transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), scale 0.15s; }
+.lb-curio svg { display: block; overflow: visible; filter: drop-shadow(2px 1px 2px rgba(0, 0, 0, 0.4)); }
+.lb-curio:focus-visible { outline: 2px solid #E3B23C; outline-offset: 3px; }
+.lb-nocurios .lb-curio { display: none; }
+.lb-orn { position: absolute; left: 0; top: 0; pointer-events: none; }
+.lb-orn svg { display: block; }
+.lb-sel { outline: 3px solid #E3B23C; outline-offset: 2px; }
+.lb-drag { transition: none !important; }
+/* By hand on a touch screen: a swipe still scrolls the page; press and hold a book to pick it up */
+.lb-manual .lb-book { cursor: grab; touch-action: pan-x pan-y; }
+/* Picked up: a little larger and brighter, so it is clear what is in hand. Faded: outside the chosen topic */
+.lb-lift { scale: 1.08; filter: brightness(1.12); cursor: grabbing; }
+.lb-curio.lb-lift { scale: 1.12; filter: none; }
+.lb-dim { opacity: 0.16; filter: grayscale(0.7); }
+@media (prefers-reduced-motion: reduce) {
+    .lb-book, .lb-curio { transition: none; }
+    .lb-flame { animation: none; }
+    .lb-ring .lb-box, .lb-box { transition: none; }
+    /* A slow fade in place is not movement, so the lights keep a gentle glow */
+    .lb-glow0, .lb-glow1, .lb-glow2 { animation-name: lb-glow-soft; animation-duration: 9s; }
+}

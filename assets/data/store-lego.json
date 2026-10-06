@@ -1,0 +1,890 @@
+{
+ "shelf": "Lego",
+ "unit": "sets",
+ "currency": "₹",
+ "locale": "en-IN",
+ "updated": "2026-10-05",
+ "hand": "Buy it in India. Just wait for the sale.",
+ "sale": {
+  "label": "Festival sale opens 8 Oct",
+  "windows": [
+   "Sep to Oct",
+   "May",
+   "July"
+  ]
+ },
+ "linkLabel": "Buy on Amazon",
+ "pageBase": "/lego/",
+ "home": "/lego-watchlist/",
+ "imagePattern": "https://images.brickset.com/sets/images/{code}-1.jpg",
+ "method": "Amazon India prices.",
+ "rules": {
+  "mustOff": 0.4,
+  "nearLow": 0.03,
+  "nearLowOff": 0.25,
+  "fairOff": 0.15,
+  "newDays": 200,
+  "newOff": 0.15,
+  "lowRowOff": 0.1
+ },
+ "items": [
+  {
+   "code": "77256",
+   "name": "Time Machine from Back to the Future",
+   "group": "Speed Champions",
+   "url": "https://www.amazon.in/dp/B0FPXDXXYR",
+   "price": 2159,
+   "mrp": 2999,
+   "low": 1949,
+   "lowDate": "2026-07-11",
+   "days": 245,
+   "lows": [
+    "July"
+   ],
+   "pieces": 357,
+   "image": "https://cdn.rebrickable.com/media/sets/77256-1.jpg",
+   "slug": "77256-time-machine-from-back-to-the-future"
+  },
+  {
+   "code": "77243",
+   "name": "Oracle Red Bull Racing RB20",
+   "group": "Speed Champions",
+   "url": "https://www.amazon.in/dp/B0DHSFBRPB",
+   "price": 2474,
+   "mrp": 2794,
+   "low": 1369,
+   "lowDate": "2025-09-24",
+   "days": 592,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 251,
+   "image": "https://cdn.rebrickable.com/media/sets/77243-1.jpg",
+   "slug": "77243-oracle-red-bull-racing-rb20"
+  },
+  {
+   "code": "11375",
+   "name": "Ferrari F2004 & Michael Schumacher",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0FPXDC8V2",
+   "price": 9910,
+   "mrp": 9999,
+   "low": 9898,
+   "lowDate": "2026-10-02",
+   "days": 175,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 735,
+   "image": "https://cdn.rebrickable.com/media/sets/11375-1.jpg",
+   "slug": "11375-ferrari-f2004-and-michael-schumacher"
+  },
+  {
+   "code": "10330",
+   "name": "McLaren MP4/4 & Ayrton Senna",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0CFW274ZS",
+   "price": 6569,
+   "mrp": 7999,
+   "low": 3998,
+   "lowDate": "2024-09-28",
+   "days": 899,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 693,
+   "image": "https://cdn.rebrickable.com/media/sets/10330-1.jpg",
+   "slug": "10330-mclaren-mp4-4-and-ayrton-senna"
+  },
+  {
+   "code": "10341",
+   "name": "NASA Artemis Space Launch System",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B00C1DIRXQ",
+   "price": 20609,
+   "mrp": 22899,
+   "low": 11449,
+   "lowDate": "2025-09-23",
+   "days": 742,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 3601,
+   "image": "https://cdn.rebrickable.com/media/sets/10341-1.jpg",
+   "slug": "10341-nasa-artemis-space-launch-system"
+  },
+  {
+   "code": "10318",
+   "name": "Concorde",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0CGNQ929S",
+   "price": 16469,
+   "mrp": 18299,
+   "low": 9149,
+   "lowDate": "2026-05-13",
+   "days": 999,
+   "lows": [
+    "May"
+   ],
+   "pieces": 2083,
+   "image": "https://cdn.rebrickable.com/media/sets/10318-1.jpg",
+   "slug": "10318-concorde"
+  },
+  {
+   "code": "11389",
+   "name": "Project Hail Mary",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0GQT31L1G",
+   "price": 11999,
+   "low": 11999,
+   "lowDate": "2026-09-08",
+   "days": 186,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 830,
+   "image": "https://cdn.rebrickable.com/media/sets/11389-1.jpg",
+   "slug": "11389-project-hail-mary"
+  },
+  {
+   "code": "11382",
+   "name": "Hubble Space Telescope",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0GGSLFWNB",
+   "price": 13995,
+   "mrp": 13999,
+   "low": 13980,
+   "lowDate": "2026-10-02",
+   "days": 23,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 1252,
+   "image": "https://cdn.rebrickable.com/media/sets/11382-1.jpg",
+   "slug": "11382-hubble-space-telescope"
+  },
+  {
+   "code": "11373",
+   "name": "The Lord of the Rings: Sauron's Helmet",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B01N4NJ3HX",
+   "price": 7999,
+   "low": 7964,
+   "lowDate": "2026-08-08",
+   "days": 158,
+   "pieces": 538,
+   "image": "https://cdn.rebrickable.com/media/sets/11373-1.jpg",
+   "slug": "11373-the-lord-of-the-rings-sauron-s-helmet"
+  },
+  {
+   "code": "42223",
+   "name": "1966 Ford GT40 MKII",
+   "group": "Technic",
+   "url": "https://www.amazon.in/dp/B0FPXDNT2N",
+   "mrp": 7999,
+   "low": 5598,
+   "lowDate": "2026-09-25",
+   "days": 220,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 793,
+   "image": "https://cdn.rebrickable.com/media/sets/42223-1.jpg",
+   "slug": "42223-1966-ford-gt40-mkii",
+   "flags": [
+    "Out of stock"
+   ]
+  },
+  {
+   "code": "11376",
+   "name": "Ford Model T",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0FPXD6XW2",
+   "price": 13455,
+   "mrp": 13999,
+   "low": 13440,
+   "lowDate": "2026-09-29",
+   "days": 175,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 1060,
+   "image": "https://cdn.rebrickable.com/media/sets/11376-1.jpg",
+   "slug": "11376-ford-model-t"
+  },
+  {
+   "code": "11380",
+   "name": "Road Bike",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B01N10IAFG",
+   "price": 10399,
+   "low": 10399,
+   "lowDate": "2026-10-05",
+   "days": 96,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 1015,
+   "image": "https://cdn.rebrickable.com/media/sets/11380-1.jpg",
+   "slug": "11380-road-bike",
+   "mrp": 12999
+  },
+  {
+   "code": "10365",
+   "name": "Captain Jack Sparrow's Pirate Ship",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B01MRT54RB",
+   "price": 36499,
+   "low": 23431,
+   "lowDate": "2026-07-06",
+   "days": 349,
+   "lows": [
+    "July"
+   ],
+   "pieces": 2862,
+   "image": "https://cdn.rebrickable.com/media/sets/10365-1.jpg",
+   "slug": "10365-captain-jack-sparrow-s-pirate-ship"
+  },
+  {
+   "code": "72046",
+   "name": "Game Boy",
+   "group": "Nintendo",
+   "url": "https://www.amazon.in/dp/B0DWDGVHM6",
+   "price": 6461,
+   "mrp": 6499,
+   "low": 4549,
+   "lowDate": "2026-05-08",
+   "days": 218,
+   "lows": [
+    "May"
+   ],
+   "pieces": 421,
+   "image": "https://cdn.rebrickable.com/media/sets/72046-1.jpg",
+   "slug": "72046-game-boy"
+  },
+  {
+   "code": "10368",
+   "name": "Chrysanthemum",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B00CALHYF6",
+   "price": 2879,
+   "mrp": 3499,
+   "low": 1918,
+   "lowDate": "2026-05-14",
+   "days": 769,
+   "lows": [
+    "May"
+   ],
+   "pieces": 278,
+   "image": "https://cdn.rebrickable.com/media/sets/10368-1.jpg",
+   "slug": "10368-chrysanthemum"
+  },
+  {
+   "code": "42213",
+   "name": "Ford Bronco",
+   "group": "Technic",
+   "url": "https://www.amazon.in/dp/B0DWDQ8BN5",
+   "price": 5759,
+   "mrp": 6399,
+   "low": 4450,
+   "lowDate": "2026-07-04",
+   "days": 277,
+   "lows": [
+    "July"
+   ],
+   "pieces": 943,
+   "image": "https://cdn.rebrickable.com/media/sets/42213-1.jpg",
+   "slug": "42213-ford-bronco"
+  },
+  {
+   "code": "21351",
+   "name": "The Nightmare Before Christmas",
+   "group": "Ideas",
+   "url": "https://www.amazon.in/dp/B0CY9WT12K",
+   "price": 13839,
+   "mrp": 18999,
+   "low": 8649,
+   "lowDate": "2026-07-07",
+   "days": 662,
+   "lows": [
+    "July"
+   ],
+   "flags": [
+    "Owned"
+   ],
+   "paid": "₹9,209 · March",
+   "pieces": 2193,
+   "image": "https://cdn.rebrickable.com/media/sets/21351-1.jpg",
+   "slug": "21351-the-nightmare-before-christmas"
+  },
+  {
+   "code": "10356",
+   "name": "Star Trek: U.S.S. Enterprise",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B01N7DWPKK",
+   "price": 36404,
+   "mrp": 39399,
+   "low": 24943,
+   "lowDate": "2026-07-17",
+   "days": 108,
+   "lows": [
+    "July"
+   ],
+   "pieces": 3600,
+   "image": "https://cdn.rebrickable.com/media/sets/10356-1.jpg",
+   "slug": "10356-star-trek-u-s-s-enterprise"
+  },
+  {
+   "code": "42158",
+   "name": "NASA Mars Rover Perseverance",
+   "group": "Technic",
+   "url": "https://www.amazon.in/dp/B0BPC8W2GD",
+   "price": 8189,
+   "mrp": 9099,
+   "low": 4999,
+   "lowDate": "2025-01-14",
+   "days": 1198,
+   "flags": [
+    "Owned"
+   ],
+   "paid": "₹6,373",
+   "pieces": 1132,
+   "image": "https://cdn.rebrickable.com/media/sets/42158-1.jpg",
+   "slug": "42158-nasa-mars-rover-perseverance"
+  },
+  {
+   "code": "10327",
+   "name": "Dune Atreides Royal Ornithopter",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0CGXZS3J6",
+   "price": 35939,
+   "low": 15999,
+   "lowDate": "2025-06-15",
+   "days": 961,
+   "seller": "other",
+   "pieces": 1370,
+   "image": "https://cdn.rebrickable.com/media/sets/10327-1.jpg",
+   "slug": "10327-dune-atreides-royal-ornithopter"
+  },
+  {
+   "code": "76330",
+   "name": "Batman Logo",
+   "group": "DC",
+   "url": "https://www.amazon.in/dp/B0FPXD2Y9T",
+   "price": 6799,
+   "mrp": 8499,
+   "low": 5763,
+   "lowDate": "2026-05-31",
+   "days": 175,
+   "lows": [
+    "May"
+   ],
+   "pieces": 678,
+   "image": "https://cdn.rebrickable.com/media/sets/76330-1.jpg",
+   "slug": "76330-batman-logo"
+  },
+  {
+   "code": "42210",
+   "name": "2 Fast 2 Furious Nissan Skyline GT-R",
+   "group": "Technic",
+   "url": "https://www.amazon.in/dp/B0DRCXL888",
+   "price": 13949,
+   "mrp": 16999,
+   "low": 7749,
+   "lowDate": "2026-05-11",
+   "days": 481,
+   "lows": [
+    "May"
+   ],
+   "pieces": 1410,
+   "image": "https://cdn.rebrickable.com/media/sets/42210-1.jpg",
+   "slug": "42210-2-fast-2-furious-nissan-skyline-gt-r"
+  },
+  {
+   "code": "21063",
+   "name": "Neuschwanstein Castle",
+   "group": "Architecture",
+   "url": "https://www.amazon.in/dp/B0DWDX63HC",
+   "price": 30199,
+   "low": 18198,
+   "lowDate": "2026-09-05",
+   "days": 395,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 3455,
+   "image": "https://cdn.rebrickable.com/media/sets/21063-1.jpg",
+   "slug": "21063-neuschwanstein-castle"
+  },
+  {
+   "code": "42207",
+   "name": "Ferrari SF-24 F1 Car",
+   "group": "Technic",
+   "url": "https://www.amazon.in/dp/B0DHSCYDL2",
+   "price": 20609,
+   "mrp": 22899,
+   "low": 11449,
+   "lowDate": "2025-09-26",
+   "days": 589,
+   "lows": [
+    "Sep to Oct",
+    "July"
+   ],
+   "flags": [
+    "Owned"
+   ],
+   "paid": "about ₹18,000 · Jul 2025",
+   "pieces": 1361,
+   "image": "https://cdn.rebrickable.com/media/sets/42207-1.jpg",
+   "slug": "42207-ferrari-sf-24-f1-car"
+  },
+  {
+   "code": "10325",
+   "name": "Alpine Lodge",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0CGY27KV4",
+   "low": 8999,
+   "lowDate": "2025-07-16",
+   "days": 982,
+   "seller": "other",
+   "lows": [
+    "July"
+   ],
+   "pieces": 1517,
+   "image": "https://cdn.rebrickable.com/media/sets/10325-1.jpg",
+   "slug": "10325-alpine-lodge"
+  },
+  {
+   "code": "42154",
+   "name": "2022 Ford GT",
+   "group": "Technic",
+   "url": "https://www.amazon.in/dp/B0BBRZXX8B",
+   "price": 13425,
+   "mrp": 13699,
+   "low": 7499,
+   "lowDate": "2025-07-11",
+   "days": 1256,
+   "lows": [
+    "July"
+   ],
+   "pieces": 1466,
+   "image": "https://cdn.rebrickable.com/media/sets/42154-1.jpg",
+   "slug": "42154-2022-ford-gt"
+  },
+  {
+   "code": "60443",
+   "name": "F1 Pit Stop with Ferrari car",
+   "group": "City",
+   "url": "https://www.amazon.in/dp/B0DHSHH218",
+   "price": 2474,
+   "mrp": 2999,
+   "low": 1511,
+   "lowDate": "2026-05-15",
+   "days": 613,
+   "lows": [
+    "May"
+   ],
+   "flags": [
+    "Spotted: Instamart ₹1,700"
+   ],
+   "pieces": 322,
+   "image": "https://cdn.rebrickable.com/media/sets/60443-1.jpg",
+   "slug": "60443-f1-pit-stop-with-ferrari-car"
+  },
+  {
+   "code": "10341",
+   "name": "NASA Artemis Space Launch System (reseller listing)",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0CRWGX5NH",
+   "price": 74963,
+   "low": 68760,
+   "lowDate": "2026-06-27",
+   "days": 100,
+   "seller": "other",
+   "pieces": 3601,
+   "image": "https://cdn.rebrickable.com/media/sets/10341-1.jpg",
+   "slug": "10341-nasa-artemis-space-launch-system-reseller-listing"
+  },
+  {
+   "code": "76269",
+   "name": "Avengers Tower",
+   "group": "Marvel",
+   "url": "https://www.amazon.in/dp/B0CN78FNTY",
+   "price": 48019,
+   "mrp": 48999,
+   "low": 24499,
+   "lowDate": "2025-09-23",
+   "days": 532,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 5202,
+   "image": "https://cdn.rebrickable.com/media/sets/76269-1.jpg",
+   "slug": "76269-avengers-tower"
+  },
+  {
+   "code": "43022",
+   "name": "Scuderia Ferrari Lewis Hamilton helmet",
+   "group": "Editions",
+   "url": "https://www.amazon.in/dp/B0FPXFB54W",
+   "price": 11990,
+   "mrp": 9999,
+   "low": 6034,
+   "lowDate": "2026-10-04",
+   "days": 123,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "flags": [
+    "Owned"
+   ],
+   "paid": "about $95",
+   "pieces": 884,
+   "image": "https://cdn.rebrickable.com/media/sets/43022-1.jpg",
+   "slug": "43022-scuderia-ferrari-lewis-hamilton-helmet",
+   "seller": "other"
+  },
+  {
+   "code": "76327",
+   "name": "Iron Man MK4 Bust",
+   "group": "Marvel",
+   "url": "https://www.amazon.in/dp/B0DHZ5X3K3",
+   "price": 5319,
+   "mrp": 7299,
+   "low": 3299,
+   "lowDate": "2026-05-12",
+   "days": 476,
+   "lows": [
+    "May"
+   ],
+   "pieces": 436,
+   "image": "https://cdn.rebrickable.com/media/sets/76327-1.jpg",
+   "slug": "76327-iron-man-mk4-bust"
+  },
+  {
+   "code": "31212",
+   "name": "The Milky Way Galaxy",
+   "group": "Art",
+   "url": "https://www.amazon.in/dp/B0CWH1RMBZ",
+   "price": 15569,
+   "mrp": 17299,
+   "low": 10379,
+   "lowDate": "2026-07-03",
+   "days": 749,
+   "lows": [
+    "July"
+   ],
+   "pieces": 3091,
+   "image": "https://cdn.rebrickable.com/media/sets/31212-1.jpg",
+   "slug": "31212-the-milky-way-galaxy"
+  },
+  {
+   "code": "75406",
+   "name": "Kylo Ren's Command Shuttle",
+   "group": "Star Wars",
+   "url": "https://www.amazon.in/dp/B0DNZST4X7",
+   "price": 7789,
+   "mrp": 8999,
+   "low": 5800,
+   "lowDate": "2026-03-29",
+   "days": 481,
+   "pieces": 387,
+   "image": "https://cdn.rebrickable.com/media/sets/75406-1.jpg",
+   "slug": "75406-kylo-ren-s-command-shuttle"
+  },
+  {
+   "code": "43279",
+   "name": "WALL-E and EVE",
+   "group": "Disney and Pixar",
+   "url": "https://www.amazon.in/dp/B0DWDR21C4",
+   "low": 4261,
+   "lowDate": "2026-04-27",
+   "days": 372,
+   "seller": "other",
+   "pieces": 811,
+   "image": "https://cdn.rebrickable.com/media/sets/43279-1.jpg",
+   "slug": "43279-wall-e-and-eve"
+  },
+  {
+   "code": "21066",
+   "name": "New York City",
+   "group": "Architecture",
+   "url": "https://www.amazon.in/dp/B0FPXFP95Y",
+   "price": 14982,
+   "mrp": 14999,
+   "low": 14970,
+   "lowDate": "2026-09-23",
+   "days": 96,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 1465,
+   "image": "https://cdn.rebrickable.com/media/sets/21066-1.jpg",
+   "slug": "21066-new-york-city"
+  },
+  {
+   "code": "42171",
+   "name": "Mercedes-AMG F1 W14 E Performance",
+   "group": "Technic",
+   "url": "https://www.amazon.in/dp/B0CFVZ74KT",
+   "price": 20609,
+   "mrp": 22899,
+   "low": 12498,
+   "lowDate": "2024-10-04",
+   "days": 897,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 1642,
+   "image": "https://cdn.rebrickable.com/media/sets/42171-1.jpg",
+   "slug": "42171-mercedes-amg-f1-w14-e-performance"
+  },
+  {
+   "code": "75328",
+   "name": "The Mandalorian Helmet",
+   "group": "Star Wars",
+   "url": "https://www.amazon.in/dp/B09BNWZF68",
+   "mrp": 8999,
+   "low": 4919,
+   "lowDate": "2026-08-16",
+   "days": 1095,
+   "pieces": 584,
+   "image": "https://cdn.rebrickable.com/media/sets/75328-1.jpg",
+   "slug": "75328-the-mandalorian-helmet"
+  },
+  {
+   "code": "75429",
+   "name": "AT-AT Driver Helmet",
+   "group": "Star Wars",
+   "url": "https://www.amazon.in/dp/B0DNZSF2M6",
+   "price": 7201,
+   "mrp": 8999,
+   "low": 6296,
+   "lowDate": "2025-09-15",
+   "days": 498,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 730,
+   "image": "https://cdn.rebrickable.com/media/sets/75429-1.jpg",
+   "slug": "75429-at-at-driver-helmet"
+  },
+  {
+   "code": "43300",
+   "name": "Winnie the Pooh",
+   "group": "Disney",
+   "url": "https://www.amazon.in/dp/B0FPVXCY7B",
+   "price": 15975,
+   "mrp": 15999,
+   "low": 9760,
+   "lowDate": "2026-08-19",
+   "days": 144,
+   "pieces": 1399,
+   "image": "https://cdn.rebrickable.com/media/sets/43300-1.jpg",
+   "slug": "43300-winnie-the-pooh"
+  },
+  {
+   "code": "10333",
+   "name": "The Lord of the Rings: Barad-dûr",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0D5W8J5YV",
+   "price": 42011,
+   "mrp": 43999,
+   "low": 23538,
+   "lowDate": "2026-07-04",
+   "days": 720,
+   "lows": [
+    "July"
+   ],
+   "pieces": 5478,
+   "image": "https://cdn.rebrickable.com/media/sets/10333-1.jpg",
+   "slug": "10333-the-lord-of-the-rings-barad-dur"
+  },
+  {
+   "code": "10316",
+   "name": "The Lord of the Rings: Rivendell",
+   "group": "Icons",
+   "url": "https://www.amazon.in/dp/B0BVMZ5NT5",
+   "price": 45359,
+   "mrp": 50399,
+   "low": 25199,
+   "lowDate": "2025-12-07",
+   "days": 1128,
+   "pieces": 6181,
+   "image": "https://cdn.rebrickable.com/media/sets/10316-1.jpg",
+   "slug": "10316-the-lord-of-the-rings-rivendell"
+  },
+  {
+   "code": "76239",
+   "name": "Batmobile Tumbler: Scarecrow Showdown",
+   "group": "DC",
+   "url": "https://www.amazon.in/dp/B08WX6R3KY",
+   "price": 15210,
+   "low": 15210,
+   "lowDate": "2026-02-23",
+   "days": 746,
+   "seller": "other",
+   "pieces": 422,
+   "image": "https://cdn.rebrickable.com/media/sets/76239-1.jpg",
+   "slug": "76239-batmobile-tumbler-scarecrow-showdown"
+  },
+  {
+   "code": "42221",
+   "name": "NASA Artemis Space Launch System",
+   "group": "Technic",
+   "url": "https://www.amazon.in/dp/B0FPXDRV4H",
+   "price": 5849,
+   "mrp": 6499,
+   "low": 4549,
+   "lowDate": "2026-07-07",
+   "days": 256,
+   "lows": [
+    "July"
+   ],
+   "pieces": 632,
+   "image": "https://cdn.rebrickable.com/media/sets/42221-1.jpg",
+   "slug": "42221-nasa-artemis-space-launch-system"
+  },
+  {
+   "code": "76344",
+   "name": "Iron Man Mark 3",
+   "group": "Marvel",
+   "url": "https://www.amazon.in/dp/B0FPXDNJ1T",
+   "price": 12599,
+   "mrp": 13999,
+   "low": 12599,
+   "lowDate": "2026-10-02",
+   "days": 219,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 1297,
+   "image": "https://cdn.rebrickable.com/media/sets/76344-1.jpg",
+   "slug": "76344-iron-man-mark-3"
+  },
+  {
+   "code": "75419",
+   "name": "Death Star",
+   "group": "Star Wars",
+   "url": "https://www.amazon.in/dp/B0FPXFMGVT",
+   "price": 104999,
+   "low": 85080,
+   "lowDate": "2026-03-02",
+   "days": 349,
+   "pieces": 9031,
+   "image": "https://cdn.rebrickable.com/media/sets/75419-1.jpg",
+   "slug": "75419-death-star"
+  },
+  {
+   "code": "42172",
+   "name": "McLaren P1",
+   "group": "Technic",
+   "url": "https://www.amazon.in/dp/B0CWH3TBGB",
+   "price": 37079,
+   "mrp": 41199,
+   "low": 20099,
+   "lowDate": "2025-10-04",
+   "days": 751,
+   "lows": [
+    "Sep to Oct"
+   ],
+   "pieces": 3893,
+   "image": "https://cdn.rebrickable.com/media/sets/42172-1.jpg",
+   "slug": "42172-mclaren-p1"
+  },
+  {
+   "code": "76271",
+   "name": "Batman: The Animated Series Gotham City",
+   "group": "DC",
+   "url": "https://www.amazon.in/dp/B0CPYQB38F",
+   "price": 203272,
+   "low": 167666,
+   "lowDate": "2026-07-17",
+   "days": 80,
+   "seller": "other",
+   "lows": [
+    "July"
+   ],
+   "flags": [
+    "Retired"
+   ],
+   "pieces": 4210,
+   "image": "https://cdn.rebrickable.com/media/sets/76271-1.jpg",
+   "slug": "76271-batman-the-animated-series-gotham-city"
+  },
+  {
+   "code": "75417",
+   "name": "AT-ST Walker",
+   "group": "Star Wars",
+   "url": "https://www.amazon.in/dp/B0DWDTK29J",
+   "price": 13047,
+   "mrp": 21899,
+   "low": 11842,
+   "lowDate": "2026-05-25",
+   "days": 395,
+   "lows": [
+    "May"
+   ],
+   "pieces": 1513,
+   "image": "https://cdn.rebrickable.com/media/sets/75417-1.jpg",
+   "slug": "75417-at-st-walker"
+  },
+  {
+   "code": "10696",
+   "name": "Medium Creative Brick Box",
+   "group": "Classic",
+   "url": "https://www.amazon.in/dp/B00NVDP3ZU",
+   "price": 2889,
+   "mrp": 3199,
+   "low": 1830,
+   "lowDate": "2017-10-17",
+   "days": 4038,
+   "pieces": 484,
+   "image": "https://cdn.rebrickable.com/media/sets/10696-1.jpg",
+   "slug": "10696-medium-creative-brick-box"
+  },
+  {
+   "code": "21034",
+   "name": "London",
+   "group": "Architecture",
+   "url": "https://www.amazon.in/dp/B01KJENN0U",
+   "price": 6404,
+   "low": 5115,
+   "lowDate": "2021-12-05",
+   "days": 2500,
+   "seller": "other",
+   "pieces": 468,
+   "image": "https://cdn.rebrickable.com/media/sets/21034-1.jpg",
+   "slug": "21034-london"
+  },
+  {
+   "code": "21064",
+   "name": "Paris: City of Love",
+   "group": "Architecture",
+   "url": "https://www.amazon.in/dp/B0FPXJ7MGT",
+   "price": 7649,
+   "mrp": 8499,
+   "low": 5910,
+   "lowDate": "2026-07-04",
+   "days": 211,
+   "lows": [
+    "July"
+   ],
+   "pieces": 958,
+   "image": "https://cdn.rebrickable.com/media/sets/21064-1.jpg",
+   "slug": "21064-paris-city-of-love"
+  },
+  {
+   "code": "75398",
+   "name": "C-3PO",
+   "group": "Star Wars",
+   "url": "https://www.amazon.in/dp/B0CWH3FMKS",
+   "price": 9801,
+   "mrp": 16599,
+   "days": 750,
+   "pieces": 1140,
+   "image": "https://cdn.rebrickable.com/media/sets/75398-1.jpg",
+   "slug": "75398-c-3po"
+  }
+ ]
+}

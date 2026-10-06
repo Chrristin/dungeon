@@ -1,0 +1,10 @@
+{{!-- One thing you use: a post with the internal tag #thing, drawn as a tile. The Uses page and the overlay read
+      everything from here: the internal tags (category, retired, labels), the excerpt and the post's body. --}}
+<article class="thing{{#has tag="#retired"}} is-retired{{/has}}" data-key="{{slug}}" data-tags="{{#foreach tags visibility="all"}}{{slug}} {{/foreach}}">
+    <a class="thing-link" href="{{url}}">
+        <span class="thing-tile">{{#if feature_image}}<img src="{{img_url feature_image size="s"}}" alt="" loading="lazy">{{else}}<span class="thing-ph" aria-hidden="true"></span>{{/if}}</span>
+        <span class="thing-name">{{title}}</span>
+    </a>
+    {{#if custom_excerpt}}<p class="thing-line">{{custom_excerpt}}</p>{{/if}}
+    <div class="thing-body" hidden>{{content}}</div>
+</article>

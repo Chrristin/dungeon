@@ -1,0 +1,55 @@
+{{!-- Watchlist: prices you track, and what you'd do about them. Used by the "Watchlist" page template (any address)
+      and by the page with the address /store/. Each shelf is one JSON file: its items carry a name, a code, today's
+      price, MRP, the lowest price on record and its date. The theme works out each item's verdict from the shelf's own
+      rules, so a shelf of anything can be added. The theme ships one shelf, assets/data/store-lego.json. To keep
+      shelves elsewhere, link to their .json files in the page's text: each such link becomes a shelf (the link's
+      words are its name) and the bundled one is no longer used. See docs/watchlist.md. Context: the page. --}}
+{{#post}}
+<section class="statement statement--small store-head">
+    <h1 class="statement-text">{{title}}</h1>
+    {{#if custom_excerpt}}<p class="statement-desc">{{custom_excerpt}}</p>{{/if}}
+    <div class="store-intro gh-content">{{content}}</div>
+</section>
+{{/post}}
+<div class="store" data-src="{{asset "data/store-lego.json"}}" aria-live="polite">
+    <p class="store-wait">{{t "Loading prices"}}…</p>
+</div>
+{{!-- Sale alerts: sign up by email (Ghost's own members form; each sign-up carries a label named after this page, so
+      the alerts can be mailed to just those members), and a link to the Telegram channel when the site names one with
+      <meta name="watchlist-telegram" content="https://t.me/…"> in code injection. --}}
+<section class="store-alerts">
+    <h2 class="store-h">{{t "Sale alerts"}}</h2>
+    <p class="store-request-note">{{t "Hear when something becomes a Must Buy, hits its lowest price, or drops sharply."}}</p>
+    {{#if @site.members_enabled}}
+    {{#if @member}}
+    <p class="store-alerts-on">{{t "You're on the list."}}</p>
+    {{else}}
+    <form class="store-request-row store-alerts-form" data-members-form="subscribe">
+        <input data-members-label type="hidden" value="{{#post}}{{title}}{{/post}} alerts">
+        <input class="store-request-input" data-members-email type="email" required autocomplete="email" aria-label="{{t "Your email address"}}" placeholder="you@example.com">
+        <button class="store-request-send" type="submit">{{t "Email me"}}</button>
+        <p class="store-request-msg store-alerts-ok" role="status">{{t "Check your inbox and confirm, and you're on the list."}}</p>
+        <p class="store-request-msg is-bad store-alerts-err" role="status">{{t "That didn't go through. Try again in a moment."}}</p>
+    </form>
+    {{/if}}
+    {{/if}}
+    <a class="store-alerts-tg" href="#" target="_blank" rel="noopener" hidden>{{t "Or join the Telegram channel"}} &rarr;</a>
+</section>
+{{!-- Request a set: visitors paste an Amazon link, an ASIN or a set number. It goes to the Worker (the Stamps endpoint
+      in Design settings), which keeps it for your approval. Shown only when the shelf itself comes from that Worker. --}}
+{{#if @custom.stamps_endpoint}}
+<section class="store-request" hidden data-endpoint="{{@custom.stamps_endpoint}}" data-sitekey="{{@custom.stickies_site_key}}">
+    <h2 class="store-h">{{t "Request one"}}</h2>
+    <p class="store-request-note">{{t "Paste an Amazon India link, an ASIN or a set number. I add the ones I'd track."}}</p>
+    <div class="store-request-row">
+        <input class="store-request-input" type="text" inputmode="url" autocomplete="off" maxlength="300" aria-label="{{t "Amazon link, ASIN or set number"}}" placeholder="{{t "Amazon link or ASIN"}}">
+        <button class="store-request-send" type="button">{{t "Request"}}</button>
+    </div>
+    <div class="store-request-check"></div>
+    <p class="store-request-msg" role="status"></p>
+    <div class="store-request-queue" hidden><span class="store-stat-k">{{t "Asked for"}}</span><span class="store-chips"></span></div>
+</section>
+{{/if}}
+<noscript><p class="store-wait">{{t "This page needs JavaScript to show prices."}}</p></noscript>
+<dialog class="store-sheet" aria-label="{{t "Item"}}"></dialog>
+<script src="{{asset "js/store.js"}}&r=2.13.5" defer></script>

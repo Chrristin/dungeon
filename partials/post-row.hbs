@@ -1,0 +1,24 @@
+{{#has tag="#now, #note, #garden"}}{{else}}
+<article class="card" data-key="{{slug}}">
+    {{#if feature_image}}
+    <div class="card-media">
+        <img srcset="{{img_url feature_image size="s"}} 600w, {{img_url feature_image size="m"}} 1200w"
+             sizes="(max-width: 760px) 92vw, 380px"
+             src="{{img_url feature_image size="s"}}" alt="" loading="lazy">
+    </div>
+    {{/if}}
+    <header class="card-head">
+        <time class="code" datetime="{{date format="YYYY-MM-DD"}}" title="{{date format="D MMM YYYY"}}" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</time>
+        <span class="card-line" aria-hidden="true"></span>
+        {{#primary_tag}}<span class="card-tag">{{name}}</span>{{/primary_tag}}
+        {{> "stage"}}
+    </header>
+    <h2 class="card-title"><a href="{{url}}">{{title}}</a></h2>
+    {{#if custom_excerpt}}<p class="card-excerpt">{{custom_excerpt}}</p>{{else}}<p class="card-excerpt">{{excerpt words="26"}}</p>{{/if}}
+    <footer class="card-foot">
+        <span class="card-line" aria-hidden="true"></span>
+        <span>{{reading_time minute="1 min" minutes="% min"}}</span>
+        {{> "rating-stamp" size="small"}}
+    </footer>
+</article>
+{{/has}}

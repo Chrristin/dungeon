@@ -1,0 +1,40 @@
+routes:
+  # The Library (the page with the address /library/, drawn by the Library template) lives under The Collection
+  /collection/library/:
+    template: custom-library
+    data: page.library
+
+collections:
+  /:
+    permalink: /{slug}/
+    template: index
+    # Now entries (#now), short notes (#note), garden notes (#garden) and things (#thing) only appear on their own pages.
+    # Garden notes have to be left out here, not just hidden by the theme: otherwise they still take up
+    # places on each page of the homepage, and a page of 25 can show only a handful of cards.
+    # Watchlist items (#watch-item) have pages of their own under their watchlist's address, below.
+    filter: tag:-[hash-now,hash-note,hash-garden,hash-thing,hash-watch-item]
+  /notes/:
+    permalink: /{slug}/
+    template: index
+    # Garden notes keep their own addresses this way (a post in no collection has none)
+    filter: tag:hash-garden
+  /things/:
+    permalink: /things/{slug}/
+    template: index
+    # Things you use (#thing) live at /things/<name>/ and appear on the Uses page, not on the homepage
+    filter: tag:hash-thing
+  /lego/:
+    permalink: /lego/{slug}/
+    template: index
+    # Lego watchlist items (#lego-set) live at /lego/<set number>-<name>/. Another watchlist gets a block like this
+    # one, with its own address and its own internal tag.
+    filter: tag:hash-lego-set
+  /diecast/:
+    permalink: /diecast/{slug}/
+    template: index
+    # Diecast watchlist items (#diecast-item) live at /diecast/<n>/
+    filter: tag:hash-diecast-item
+
+taxonomies:
+  tag: /tag/{slug}/
+  author: /author/{slug}/

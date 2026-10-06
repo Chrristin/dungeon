@@ -1,0 +1,26 @@
+{{!-- A watchlist item's own page: a post with the internal tag #watch-item, at an address such as /lego/42207-ferrari-sf-24/.
+      Ghost supplies the title, the picture (the post's feature image) and your notes (the post's body). The verdict,
+      prices and everything else are drawn by the theme's script from the watchlist's data, matched by the post's
+      address, so the post itself never holds a price. It is a story panel, so it carries the stamp, the share button
+      and the stickies like any story. See docs/watchlist.md. Context: the post. --}}
+<div class="post-stage">
+    <article class="post-panel watch-item" data-key="{{slug}}">
+        <p class="watch-top"><a class="watch-back" href="{{@site.url}}/" hidden>&larr; <span></span></a><span class="store-code watch-code"></span></p>
+        <div class="watch-hero">
+            <div class="watch-pic store-tile store-tile--big">{{#if feature_image}}<img src="{{img_url feature_image size="m"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">{{/if}}</div>
+            <div class="watch-text">
+                <h1 class="watch-title">{{title}}</h1>
+                {{#if custom_excerpt}}<p class="watch-lede">{{custom_excerpt}}</p>{{/if}}
+                <div class="watch-verdict"></div>
+            </div>
+        </div>
+        {{#if html}}<section class="watch-notes panel-content gh-content">{{content}}</section>{{/if}}
+        <div class="watch-data" data-slug="{{slug}}" data-src="{{asset "data/store-lego.json"}}"><p class="store-wait">{{t "Loading prices"}}…</p></div>
+        <noscript><p class="store-wait">{{t "This page needs JavaScript to show prices."}}</p></noscript>
+        {{> "post-actions"}}
+    </article>
+    {{#if @custom.stickies_site_key}}{{#if @custom.stamps_endpoint}}
+    {{> "stickies"}}
+    {{/if}}{{/if}}
+</div>
+<script src="{{asset "js/store.js"}}&r=2.13.5" defer></script>

@@ -1,0 +1,7 @@
+# Optional. /notes/ only exists to give garden notes their addresses; this sends anyone who visits it to the
+# Garden page instead. Upload in Ghost Admin > Settings > Labs > Redirects. If you already have redirects,
+# add this line to your own file rather than replacing it.
+301:
+  ^/notes/?$: /garden/
+  ^/things/?$: /uses/
+  ^/lego/?$: /lego-watchlist/
