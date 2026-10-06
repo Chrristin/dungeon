@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.16.1
+
+Library only.
+
+- **A bookcase pointed at straight after coming back is still drawn ahead.** Backing out of a bookcase or the list and resting the pointer on a picture could skip the early draw, so the opening took its full time. It now draws as soon as it is allowed.
+
 ## 2.16.0
 
 Library, and the Library box on the homepage.

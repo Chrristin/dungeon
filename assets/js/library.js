@@ -38,7 +38,9 @@
   /* Draw a bookcase out of sight, ready to be shown. Drawing holds the page for a moment, so it is only done for the one
      being pointed at, never for all three. */
   function warm(i) {
-    if (Date.now() < quiet) return;
+    /* Just after coming back to the pictures, focus returns to one and must not start a draw; if the pointer is still on a
+       picture when that window ends, draw then */
+    if (Date.now() < quiet) { dwell = setTimeout(function () { warm(i); }, quiet - Date.now() + 30); return; }
     load().then(function (d) { if (!api) api = boot(d, false); if (!busy && !LV.on) api.prepare(i); }).catch(function () {});
   }
   function go(i, now) {
