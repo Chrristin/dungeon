@@ -2201,6 +2201,10 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
 .plot-page.is-watchlist .plot-page-feature { grid-area: feat; align-items: flex-end; }
 /* The Library box has room for a longer title, so on a narrow screen it wraps rather than being cut */
 .plot-page.is-library .plot-page-title { white-space: normal; overflow: visible; text-overflow: clip; }
+/* The Library's own picture stands alone: larger, with no frame, keeping its tilt and shadow */
+.plot-page.is-library .plot-page-shot:not(.plot-page-shelf) { display: block; width: auto; height: auto; background: none; box-shadow: none; overflow: visible; border-radius: 0; margin-top: -2.8rem; }
+.plot-page.is-library .plot-page-shot:not(.plot-page-shelf) img { display: block; width: 8.5rem; max-width: none; max-height: none; height: auto; border-radius: 10px; box-shadow: 0 12px 22px -10px rgba(12, 13, 16, 0.65); }
+@media (max-width: 600px) { .plot-page.is-library .plot-page-shot:not(.plot-page-shelf) img { width: 6.5rem; } }
 .plot-page.is-watchlist .plot-page-must { background: color-mix(in srgb, var(--on-card) 18%, transparent); }
 .plot-page.is-watchlist .plot-page-go { display: none; }
 .plot-page-shelf { display: flex; flex-direction: column; justify-content: flex-end; place-items: normal; padding: 0.55rem 0.5rem 0.6rem; }

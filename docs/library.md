@@ -67,6 +67,12 @@ Later lines are drawn in front of earlier ones. A visitor can drag a curio anywh
 
 Changing the number of books makes earlier arrangement links stop working, because a link records a position for every book. The page tells the visitor and shows the real shelves instead.
 
+## The list of books
+
+`/collection/library/#books` lists every book, and `#books-1`, `#books-2` and so on list one bookcase's books (the number is the bookcase's place in the `cases` list). Nothing is set up in Ghost: the list is part of the Library page, and it reads the same data file. A line under the bookcase pictures links to it, and every open bookcase has a "Books on this shelf" button.
+
+Each row shows the book's colour, title, author, genre and topics, and "Shelf 2, row 3". Search matches any of those words. The genre and topic chips are the genres and topics in the data file, most common first.
+
 ## The shelf pictures
 
 The landing is a picture of each bookcase, in light and dark wood, already in the page. `extras/shelves/build.mjs` makes them: it opens `extras/shelves/harness.html`, which runs the real `library.js` and `library.css` on the data file, and photographs each bookcase with a transparent background at twice its shown size. It also writes `partials/library-shelves.hbs`, which places them. Choosing a bookcase fetches the data and draws that bookcase live.

@@ -8,34 +8,54 @@
   root.dataset.ready = '1';
   /* The page opens on pictures of the bookcases, made ahead of time by extras/shelves (npm run shelves) and already in the
      page, so nothing is fetched or drawn to show them. Pointing at one (or touching it) fetches the data and draws that
-     bookcase out of sight, so by the time it is chosen it is ready: the picture gives a little shake and the live bookcase
-     takes its place. The same code can draw the landing live (data-render="landing"): extras/shelves does that to make the
-     pictures. */
-  var TPL = root.innerHTML, shelves = document.getElementById('lib-shelves'), DATA = null, api = null;
+     bookcase out of sight, so by the time it is chosen it is ready: sparkles burst from the picture and the live bookcase
+     blooms in its place. A plain list of every book (or of one bookcase's books) lives at #books and #books-2. The same
+     code can draw the landing live (data-render="landing"): extras/shelves does that to make the pictures. */
+  var TPL = root.innerHTML, landing = document.getElementById('lib-landing'), shelves = document.getElementById('lib-shelves'), DATA = null, api = null;
+  var REDUCE = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   function load() {
     if (!DATA) DATA = fetch(root.dataset.src).then(function (r) { if (!r.ok) throw new Error('data'); return r.json(); }).catch(function (e) { DATA = null; throw e; });
     return DATA;
   }
   if (root.dataset.render === 'landing') { load().then(function (d) { boot(d, true); }); return; }
   var btns = shelves ? Array.prototype.slice.call(shelves.querySelectorAll('[data-shelf]')) : [], note = document.getElementById('lib-shelves-msg');
-  var SHAKE = 360, busy = false, dwell = 0, quiet = 0;
+  var SWAP = 260, busy = false, dwell = 0, quiet = 0;
+  /* A burst of gold sparkles and a soft glow from a point on the page, in the colours of the fairy lights. Where the lengths
+     and counts can be changed: SWAP above (how long before the live bookcase takes over), the 34 here, and the durations
+     in library.css (lib-spark, lib-glow-burst, lib-bloom). */
+  function burst(x, y) {
+    if (REDUCE) return;
+    var h = document.createElement('div'), g = document.createElement('i'), COL = ['#FFD98A', '#FFC56B', '#FFE9B8', '#FFF4D6'];
+    h.className = 'lib-sparks'; h.setAttribute('aria-hidden', 'true'); g.className = 'lib-glow'; g.style.left = x + 'px'; g.style.top = y + 'px'; h.appendChild(g);
+    for (var k = 0; k < 34; k++) {
+      var a = Math.random() * Math.PI * 2, r = 80 + Math.random() * 240, s = 8 + Math.random() * 18, e = document.createElement('i');
+      e.className = 'lib-spark';
+      e.style.cssText = 'left:' + x + 'px;top:' + y + 'px;--s:' + s.toFixed(1) + 'px;--c:' + COL[k % 4] + ';--dx:' + (Math.cos(a) * r).toFixed(0) + 'px;--dy:' + (Math.sin(a) * r - 50).toFixed(0) + 'px;--r:' + (Math.random() * 180 - 90).toFixed(0) + 'deg;--d:' + (850 + Math.random() * 550).toFixed(0) + 'ms;--w:' + (Math.random() * 200).toFixed(0) + 'ms';
+      h.appendChild(e);
+    }
+    document.body.appendChild(h); setTimeout(function () { if (h.parentNode) h.parentNode.removeChild(h); }, 1900);
+  }
   /* Draw a bookcase out of sight, ready to be shown. Drawing holds the page for a moment, so it is only done for the one
      being pointed at, never for all three. */
   function warm(i) {
     if (Date.now() < quiet) return;
-    load().then(function (d) { if (!api) api = boot(d, false); if (!busy) api.prepare(i); }).catch(function () {});
+    load().then(function (d) { if (!api) api = boot(d, false); if (!busy && !LV.on) api.prepare(i); }).catch(function () {});
   }
   function go(i, now) {
     var b = btns[i]; if (!b || busy) return;
     busy = true; if (note) note.hidden = true;
-    if (!now) b.classList.add('lib-opening');
+    if (!now) {
+      b.classList.add('lib-opening');
+      if (!REDUCE) { var rc = b.getBoundingClientRect(); b.classList.add('lib-burst'); burst(rc.left + rc.width / 2, rc.top + rc.height / 2); }
+    }
     var t0 = Date.now(), ran = false;
+    function done() { b.classList.remove('lib-opening', 'lib-burst'); busy = false; }
     function fail(e) {
       if (window.console) console.error(e);
-      busy = false; b.classList.remove('lib-opening');
+      done();
       if (note) { note.textContent = 'The shelves could not be loaded. Tap a bookcase to try again.'; note.hidden = false; }
     }
-    /* Let the browser start the shake before any drawing begins, since drawing holds the page for a moment */
+    /* Let the browser start the burst before any drawing begins, since drawing holds the page for a moment */
     function run() {
       if (ran) return; ran = true;
       load().then(function (d) {
@@ -46,8 +66,8 @@
             btns.forEach(function (x) { x.classList.remove('lib-opened'); }); b.classList.add('lib-opened');
             api.open(i);
           } catch (e) { return fail(e); }
-          b.classList.remove('lib-opening'); busy = false;
-        }, now ? 0 : Math.max(0, SHAKE - (Date.now() - t0)));
+          done();
+        }, now ? 0 : Math.max(0, SWAP - (Date.now() - t0)));
       }).catch(fail);
     }
     if (now) run(); else { requestAnimationFrame(function () { setTimeout(run, 0); }); setTimeout(run, 120); }
@@ -60,35 +80,161 @@
     ['focus', 'touchstart'].forEach(function (t) { b.addEventListener(t, function () { warm(i); }, { passive: true }); });
   });
   (window.requestIdleCallback || function (f) { setTimeout(f, 2000); })(function () { load().catch(function () {}); });
-  var hm = /^#CG(\d+)\./.exec(location.hash); if (hm) go(+hm[1] - 1, true);
+
+  /* The list of books: one plain row each, drawn a screenful at a time. #books lists every book, #books-2 only Shelf 2's.
+     Choosing a row opens that book's bookcase with the book selected. */
+  var LV = { on: false, scope: -1, from: -1, pend: -2, live: false, q: '', genre: '', topic: '', sort: 'shelf', moreT: false, rows: [], n: 0, bk: null, cases: null, y: 0 };
+  var listEl = document.getElementById('lib-books');
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function prep(d) {
+    if (LV.bk) return;
+    var bs = d.books || d, cs = d.cases && d.cases.length ? d.cases : [{ name: 'Shelf 1', n: 6 }, { name: 'Shelf 2', n: 6 }], CS = [], a = 0;
+    cs.forEach(function (c) { CS.push(a); a += c.n; });
+    LV.cases = cs;
+    LV.bk = bs.map(function (b, i) {
+      var ci = 0; while (ci < cs.length - 1 && b.s >= CS[ci + 1]) ci++;
+      var au = b.a || '', segs = au.split(/,| and | with /).map(function (x) { return x.trim(); }).filter(Boolean), first = segs[0] || '',
+        /* "David and Stella Gemmell" sorts under Gemmell: a first name with no surname borrows the last author's */
+        p = (first.indexOf(' ') < 0 && segs.length > 1 ? segs[segs.length - 1] : first).split(' '), title = b.t.indexOf('UNIDENTIFIED') === 0 ? 'Unidentified' : b.t, tags = b.tags || [];
+      return { i: i, ci: ci, t: title, a: au, g: b.g || 'Unsorted', tags: tags, c: b.c || '#888', where: cs[ci].name + ', row ' + (b.s - CS[ci] + 1),
+        key: title.replace(/^(The|A|An) /, '').toLowerCase(), sn: au ? (p[p.length - 1] + ' ' + p[0]).toLowerCase() : 'zzzz',
+        hay: (title + ' ' + au + ' ' + (b.g || '') + ' ' + tags.join(' ')).toLowerCase() };
+    });
+  }
+  function inScope(b) { return LV.scope < 0 || b.ci === LV.scope; }
+  /* Genre and topic chips, for the books in this list. Topics are the same ones the bookcase's Topic panel offers. */
+  function chips() {
+    var g = {}, t = {};
+    LV.bk.filter(inScope).forEach(function (b) { g[b.g] = (g[b.g] || 0) + 1; b.tags.forEach(function (x) { t[x] = (t[x] || 0) + 1; }); });
+    function row(id, obj, key) {
+      $(id).innerHTML = Object.keys(obj).sort(function (x, y) { return obj[y] - obj[x] || x.localeCompare(y); }).map(function (k) {
+        return '<button type="button" class="lib-chip" data-' + key + '="' + esc(k) + '" aria-pressed="' + (LV[key] === k) + '">' + esc(k) + '</button>';
+      }).join('');
+    }
+    row('lib-books-genres', g, 'genre'); row('lib-books-topics', t, 'topic');
+    var tp = $('lib-books-topics'), tg = $('lib-books-tmore'); tp.classList.toggle('is-open', LV.moreT); tg.textContent = LV.moreT ? 'Fewer topics' : 'More topics'; tg.setAttribute('aria-expanded', LV.moreT);
+  }
+  function more() {
+    var ul = $('lib-books-list'), end = Math.min(LV.n + 70, LV.rows.length), h = '';
+    for (var k = LV.n; k < end; k++) {
+      var b = LV.rows[k];
+      h += '<li><button type="button" class="lib-row" data-i="' + b.i + '"><i class="lib-sw" style="background:' + esc(b.c) + '"></i><span class="lib-r-t">' + esc(b.t) + '</span><span class="lib-r-a">' + esc(b.a) + '</span><span class="lib-r-m">'
+        + esc([b.g].concat(b.tags.filter(function (x) { return x !== b.g; })).join(' · ')) + '</span><span class="lib-r-w">' + esc(b.where) + '</span></button></li>';
+    }
+    ul.insertAdjacentHTML('beforeend', h); LV.n = end; $('lib-books-more').hidden = end >= LV.rows.length;
+  }
+  function refresh() {
+    var q = LV.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    var r = LV.bk.filter(function (b) {
+      if (!inScope(b) || (LV.genre && b.g !== LV.genre) || (LV.topic && b.tags.indexOf(LV.topic) < 0)) return false;
+      for (var k = 0; k < q.length; k++) if (b.hay.indexOf(q[k]) < 0) return false;
+      return true;
+    });
+    if (LV.sort === 'title') r.sort(function (x, y) { return x.key.localeCompare(y.key); });
+    else if (LV.sort === 'author') r.sort(function (x, y) { return x.sn.localeCompare(y.sn) || x.key.localeCompare(y.key); });
+    LV.rows = r; LV.n = 0; $('lib-books-list').innerHTML = ''; more();
+    var tot = LV.bk.filter(inScope).length;
+    $('lib-books-count').textContent = r.length === tot ? tot + ' books' : r.length + ' of ' + tot + ' books';
+    $('lib-books-empty').hidden = r.length > 0;
+  }
+  function showList(scope, from) {
+    load().then(function (d) {
+      prep(d); if (!api) api = boot(d, false);
+      if (scope >= LV.cases.length) scope = -1;
+      api.hide(); LV.live = false; if (landing) landing.hidden = true;
+      LV.scope = scope; LV.from = from; LV.q = LV.genre = LV.topic = ''; LV.sort = 'shelf'; LV.moreT = false;
+      $('lib-books-q').value = ''; $('lib-books-sort').value = 'shelf';
+      $('lib-books-title').textContent = scope >= 0 ? 'Books on ' + LV.cases[scope].name : 'All books';
+      $('lib-books-back').textContent = '‹ ' + (from >= 0 ? 'Back to ' + LV.cases[from].name : 'All shelves');
+      chips(); refresh(); listEl.hidden = false; LV.on = true;
+      var h = $('lib-books-title'); h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true });
+    }).catch(function (e) {
+      if (window.console) console.error(e);
+      if (landing) landing.hidden = false;
+      if (note) { note.textContent = 'The list of books could not be loaded. Try again.'; note.hidden = false; }
+    });
+  }
+  function hideList() { if (listEl) listEl.hidden = true; LV.on = false; }
+  /* Back out of the list: to the bookcase it was opened from, or to the pictures of the bookcases */
+  function leave() {
+    var from = LV.from; hideList();
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    if (from >= 0) { openAt(from, null, null, false); return; }
+    if (landing) landing.hidden = false;
+    var a = $('lib-allbooks'); if (a) { quiet = Date.now() + 600; a.focus({ preventScroll: true }); }
+  }
+  function reshow() { LV.live = false; api.hide(); if (landing) landing.hidden = true; listEl.hidden = false; LV.on = true; window.scrollTo(0, LV.y || 0); }
+  function openAt(ci, gi, ev, fromList) {
+    if (!api) return;
+    if (ev) burst(ev.clientX, ev.clientY);
+    hideList(); if (landing) landing.hidden = true; LV.live = !!fromList;
+    /* One tick later, so the click that chose the book is not taken by the bookcase as a click outside it */
+    setTimeout(function () {
+      api.prepare(ci, gi, fromList ? { back: reshow, label: 'Back to the list' } : null);
+      api.open(ci);
+    }, 0);
+  }
+  /* The "Books on this shelf" button on an open bookcase */
+  function listFromShelf(ci) {
+    LV.pend = ci;
+    if (location.hash === '#books-' + (ci + 1)) route(); else location.hash = '#books-' + (ci + 1);
+  }
+  function route() {
+    var m = /^#books(?:-(\d+))?$/.exec(location.hash);
+    if (m) { var from = LV.pend; LV.pend = -2; showList(m[1] ? +m[1] - 1 : -1, from === -2 ? -1 : from); return; }
+    if (LV.on) { hideList(); if (landing) landing.hidden = false; }
+    else if (LV.live) { LV.live = false; if (api) api.home(); }
+  }
+  if (listEl) {
+    $('lib-books-back').addEventListener('click', leave);
+    var qT = 0; $('lib-books-q').addEventListener('input', function () { clearTimeout(qT); qT = setTimeout(function () { LV.q = $('lib-books-q').value; refresh(); }, 60); });
+    $('lib-books-sort').addEventListener('change', function () { LV.sort = this.value; refresh(); });
+    $('lib-books-tmore').addEventListener('click', function () { LV.moreT = !LV.moreT; chips(); });
+    $('lib-books-more').addEventListener('click', more);
+    $('lib-books-clear').addEventListener('click', function () { LV.q = LV.genre = LV.topic = ''; $('lib-books-q').value = ''; chips(); refresh(); });
+    listEl.addEventListener('click', function (ev) {
+      var t = ev.target, row = t.closest && t.closest('.lib-row'), chip = t.closest && t.closest('.lib-chip');
+      if (row) { LV.y = window.scrollY; var b = LV.bk[+row.dataset.i]; openAt(b.ci, b.i, ev, true); return; }
+      if (chip) { var key = chip.hasAttribute('data-genre') ? 'genre' : 'topic', v = chip.getAttribute('data-' + key); LV[key] = LV[key] === v ? '' : v; chips(); refresh(); }
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (!LV.on || ev.key !== 'Escape' || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+      var q = $('lib-books-q'); if (ev.target === q && q.value) { q.value = ''; LV.q = ''; refresh(); return; }
+      leave();
+    });
+    if (window.IntersectionObserver) new IntersectionObserver(function (es) { if (es[0].isIntersecting && LV.on && LV.n < LV.rows.length) more(); }, { rootMargin: '700px' }).observe($('lib-books-more'));
+    addEventListener('hashchange', route);
+  }
+  var hm = /^#CG(\d+)\./.exec(location.hash); if (hm) go(+hm[1] - 1, true); else route();
   function boot(d, render){
     const books=d.books||d,cases=d.cases&&d.cases.length?d.cases:[{name:'Shelf 1',n:6},{name:'Shelf 2',n:6}],curios=d.curios||[],CS=[];
     {let a=0;cases.forEach(c=>{CS.push(a);a+=c.n})}
     let AC=null,STD=shelves&&+shelves.dataset.std||0;
     function fresh(over){if(AC)AC.abort();AC=new AbortController();document.documentElement.classList.remove('lib-zoomed');root.innerHTML=TPL;root.classList.toggle('lib-over',over);root.hidden=false}
     let warmed=-1;
-    function clear(){if(AC)AC.abort();AC=null;warmed=-1;root.innerHTML='';root.hidden=true;root.classList.remove('lib-warm','lib-fadein');root.style.width=root.style.left='';document.documentElement.classList.remove('lib-zoomed')}
+    function clear(){if(AC)AC.abort();AC=null;warmed=-1;root.innerHTML='';root.hidden=true;root.classList.remove('lib-warm','lib-fadein','lib-bloom');root.style.width=root.style.left='';document.documentElement.classList.remove('lib-zoomed')}
     function overview(){
       /* Back to the pictures: the live bookcase is thrown away, so this is instant */
-      if(!render){clear();if(shelves){shelves.hidden=false;const b=shelves.querySelector('.lib-opened');if(b){quiet=Date.now()+600;b.focus({preventScroll:true})}}return}
+      if(!render){clear();if(landing)landing.hidden=false;const b=shelves&&shelves.querySelector('.lib-opened');if(b){quiet=Date.now()+600;b.focus({preventScroll:true})}return}
       fresh(true);start(books,d.covers,curios,cases,{landing:true,signal:AC.signal,pick:()=>{},std:w=>{STD=w;window.__libStd=w},ready:()=>{window.__libReady=true}})}
-    function draw(ci){const c=cases[ci];
-      const bs=books.filter(b=>b.s>=CS[ci]&&b.s<CS[ci]+c.n).map(b=>Object.assign({},b,{s:b.s-CS[ci]})),
+    function draw(ci,sel,opt){const c=cases[ci];
+      const bs=books.map((b,gi)=>Object.assign({},b,{_g:gi})).filter(b=>b.s>=CS[ci]&&b.s<CS[ci]+c.n).map(b=>Object.assign(b,{s:b.s-CS[ci]})),
         cu=curios.filter(q=>q.s===-1-ci||(q.s>=CS[ci]&&q.s<CS[ci]+c.n)).map(q=>Object.assign({},q,{s:q.s<0?-1:q.s-CS[ci]}));
-      start(bs,d.covers,cu,[c],{ci,stdW:STD,signal:AC.signal,close:overview})}
+      start(bs,d.covers,cu,[c],{ci,stdW:STD,signal:AC.signal,close:opt&&opt.back||overview,backLabel:opt&&opt.label,sel,list:()=>listFromShelf(ci)})}
     /* Draw a bookcase out of sight, at the size it will have when shown: the page's column, not in the page's flow */
-    function prepare(ci){if(warmed===ci)return;if(warmed>=0||AC)clear();
+    function prepare(ci,sel,opt){if(warmed===ci&&sel==null&&!opt)return;if(warmed>=0||AC)clear();
       const p=root.parentNode,cs=getComputedStyle(p),r=p.getBoundingClientRect();
       root.classList.add('lib-warm');root.style.width=(p.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))+'px';root.style.left=(r.left+parseFloat(cs.paddingLeft)+p.clientLeft)+'px';
-      fresh(false);draw(ci);warmed=ci}
+      fresh(false);draw(ci,sel,opt);warmed=ci}
     function openShelf(ci){
       if(warmed!==ci)prepare(ci);
-      /* Bring the drawn bookcase into the page, in place of the pictures, fading in */
-      warmed=-1;root.classList.remove('lib-warm');root.style.width=root.style.left='';if(shelves)shelves.hidden=true;
-      root.classList.add('lib-fadein');setTimeout(()=>root.classList.remove('lib-fadein'),320);
+      /* Bring the drawn bookcase into the page, in place of the pictures: it blooms outward from its middle */
+      warmed=-1;root.classList.remove('lib-warm');root.style.width=root.style.left='';if(landing)landing.hidden=true;
+      const k=REDUCE?'lib-fadein':'lib-bloom';root.classList.add(k);setTimeout(()=>root.classList.remove(k),620);
       if(root.scrollIntoView&&root.getBoundingClientRect().top<0)root.scrollIntoView({block:'start'})}
     if(render)overview();
-    return{open:openShelf,prepare,home:overview}}
+    return{open:openShelf,prepare,home:overview,hide:clear}}
   function start(DATA, COVERS, CURIOS, CASES0, CTX) {
     CTX=CTX||{};const KS=CTX.ci!=null?'-'+CTX.ci:'',PFX='CG'+((CTX.ci||0)+1),SIG=CTX.signal?{signal:CTX.signal}:undefined,
       onDoc=(t,fn)=>document.addEventListener(t,fn,SIG),onWin=(t,fn)=>addEventListener(t,fn,SIG);
@@ -533,7 +679,8 @@
     function toRing(){if(view!=='open')return;view='ring';zoom=1;select(null);arrange()}
     const navEl=document.getElementById('lib-nav');
     if(navEl){const B=(txt,lab,fn,attr,val)=>{const b=document.createElement('button');b.type='button';b.className='lib-ctl lib-navb';b.textContent=txt;if(lab)b.setAttribute('aria-label',lab);if(attr)b.setAttribute(attr,val);b.onclick=fn;navEl.appendChild(b);return b};
-      if(CTX.close){const bar=root.querySelector('.lib-bar'),bk=document.createElement('button');bk.type='button';bk.className='lib-ctl';bk.id='lib-back';bk.textContent='\u2039 All shelves';bk.onclick=()=>CTX.close();if(bar)bar.insertBefore(bk,bar.firstChild)}
+      if(CTX.close){const bar=root.querySelector('.lib-bar'),bk=document.createElement('button');bk.type='button';bk.className='lib-ctl';bk.id='lib-back';bk.textContent='\u2039 '+(CTX.backLabel||'All shelves');bk.onclick=()=>CTX.close();if(bar)bar.insertBefore(bk,bar.firstChild);
+        if(CTX.list&&bar){const lb=document.createElement('button');lb.type='button';lb.className='lib-ctl';lb.id='lib-shelfbooks';lb.textContent='Books on this shelf';lb.onclick=()=>CTX.list();bar.insertBefore(lb,bk.nextSibling)}}
       if(!CTX.landing&&CASES.some(c=>c.layers))B('How it really is',null,()=>{tucked=!tucked;render(MODES[current].real?current:'shelved')},'data-tuck','1')}
     if(CTX.landing)boxes.forEach((b,i)=>{b.tabIndex=0;b.setAttribute('role','button');b.setAttribute('aria-label','Open '+CASES[i].name);b.addEventListener('click',()=>CTX.pick(i));
       b.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();CTX.pick(i)}})});
@@ -645,6 +792,7 @@
     {const touch=typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
       if(touch)MODES.manual.note=' On a touch screen, tap and hold a book to pick it up.'}
     render('shelved');
+    if(CTX.sel!=null){const e=books.find(b=>b._g===CTX.sel);if(e)select(e)}
     if(location.hash.indexOf('#'+PFX+'.')===0){const sh=dec(location.hash.slice(1));if(sh){manual=normalise(sh);render('manual')}else msg.textContent='That link does not match the books on the shelves now, so the shelves are shown as they really are.'}
     const done=()=>{if(CTX.ready)setTimeout(CTX.ready,50)};
     if(document.fonts&&document.fonts.load)document.fonts.load("12px 'IM Fell English SC'").then(()=>{books.forEach(b=>b.f=null);render(current)}).catch(()=>{}).then(done);else done();

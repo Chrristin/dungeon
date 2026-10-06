@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{meta_title}}</title>
     <link rel="preload" href="{{asset "fonts/geist-sans-latin-400-normal.woff2"}}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.15.0">
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.16.0">
     {{#is "post"}}{{#post}}{{#has tag="#thing"}}{{^if html}}<meta name="robots" content="noindex">{{/if}}{{/has}}{{/post}}{{/is}}
     {{!-- A watchlist item marked #watch-noindex (still collecting data, or a listing to skip) is kept out of search engines --}}
     {{#is "post"}}{{#post}}{{#has tag="#watch-noindex"}}<meta name="robots" content="noindex">{{/has}}{{/post}}{{/is}}
@@ -127,7 +127,7 @@
 </footer>
 
 
-<script src="{{asset "js/site.js"}}&r=2.15.0" defer></script>
+<script src="{{asset "js/site.js"}}&r=2.16.0" defer></script>
 {{ghost_foot}}
 <div class="gk" hidden data-labels='{"search":"{{t "Search the garden"}}","keys":"{{t "Keyboard shortcuts"}}","close":"{{t "Close"}}","s":"{{t "search the garden"}}","r":"{{t "a random note"}}","g":"{{t "go to the garden"}}","h":"{{t "show these shortcuts"}}","none":"{{t "No notes match."}}"}' data-garden="{{@site.url}}/garden/"></div>
 </body>

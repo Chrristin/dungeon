@@ -4,7 +4,7 @@
       The curios standing on the shelves are listed there too, and can be dragged about or hidden.
       Visitors can re-sort the shelves, try patterns, or arrange them by hand and send you the result: the first
       email link in this page's text is where "Send" goes. See docs/library.md. Context: the page. --}}
-<link rel="stylesheet" href="{{asset "css/library.css"}}&r=2.15.0">
+<link rel="stylesheet" href="{{asset "css/library.css"}}&r=2.16.0">
 {{> "library-shelves"}}
 <div class="lib" data-src="{{asset "data/library.json"}}" hidden>
     <div class="lib-nav" id="lib-nav"></div>
@@ -27,6 +27,23 @@
     <div id="lib-palette" aria-label="{{t "How many spines there are of each colour"}}"></div>
     <div id="lib-info" aria-live="polite"></div>
 </div>
+<section class="lib-books" id="lib-books" aria-labelledby="lib-books-title" hidden>
+    <div class="lib-books-head">
+        <button class="lib-ctl" id="lib-books-back" type="button">‹ All shelves</button>
+        <h2 id="lib-books-title">All books</h2>
+        <span class="lib-books-count" id="lib-books-count" aria-live="polite"></span>
+    </div>
+    <div class="lib-books-tools">
+        <input class="lib-books-q" id="lib-books-q" type="search" placeholder="Search title, author, genre or topic" aria-label="Search books" autocomplete="off">
+        <select id="lib-books-sort" aria-label="Sort"><option value="shelf">Shelf order</option><option value="title">Title</option><option value="author">Author</option></select>
+    </div>
+    <div class="lib-books-chips" id="lib-books-genres" role="group" aria-label="Genre"></div>
+    <div class="lib-books-chips lib-books-topics" id="lib-books-topics" role="group" aria-label="Topic"></div>
+    <button class="lib-books-link" id="lib-books-tmore" type="button" aria-expanded="false">More topics</button>
+    <p class="lib-books-empty" id="lib-books-empty" hidden>No books match. <button class="lib-books-link" id="lib-books-clear" type="button">Clear the search and filters</button></p>
+    <ol class="lib-books-list" id="lib-books-list"></ol>
+    <button class="lib-ctl lib-books-more" id="lib-books-more" type="button" hidden>Show more</button>
+</section>
 {{#post}}
 <section class="statement statement--small library-head">
     <h1 class="statement-text">{{title}}</h1>
@@ -35,4 +52,4 @@
 </section>
 {{/post}}
 <noscript><p class="lib-msg">{{t "This page needs JavaScript to draw the shelves."}}</p></noscript>
-<script src="{{asset "js/library.js"}}&r=2.15.0" defer></script>
+<script src="{{asset "js/library.js"}}&r=2.16.0" defer></script>

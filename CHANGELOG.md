@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.16.0
+
+Library, and the Library box on the homepage.
+
+- **All books.** A plain list of every book at `/collection/library/#books`: a colour swatch, title, author, genre and topics, and where it stands ("Shelf 2, row 3"). One search box matches title, author, genre and topic as you type; genre and topic chips narrow it; it sorts by shelf order, title or author. Choosing a book opens its bookcase with the book selected. It is drawn a screenful at a time, so 535 rows stay quick. Under the three bookcases a line says "Or see all 535 books as a list".
+- **Books on this shelf.** Every open bookcase has a button that opens the same list for just that bookcase (`#books-2`). Back returns to the bookcase, or to the list when you came from it.
+- **Opening a bookcase is a small piece of magic.** Gold sparkles burst from the picture, it fades, and the live bookcase blooms outward from its middle. The "Opening" words are gone: a small ring turns on the picture only if the bookcase is slow to come. With reduced motion on there are no sparkles, only a fade.
+- **The Library box picture stands alone.** Larger, with no frame.
+- **Fixed.** Sorting by author put "David and Stella Gemmell" under D.
+
 ## 2.15.0
 
 - **A bookcase is ready before you choose it.** Pointing at a picture on the Library page (or touching it) draws that one bookcase out of sight. When you choose it the picture gives a small shake and the live bookcase fades in, in about a third of a second, however slow the drawing is. The plain "Opening" label only appears if it takes longer than a second and a half.

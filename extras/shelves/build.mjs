@@ -72,6 +72,7 @@ async function generate() {
     const { chromium } = await import('playwright-core');
     const sharp = (await import('sharp')).default;
     const hash = inputHash();
+    const dataset = JSON.parse(fs.readFileSync(path.join(ROOT, 'assets/data/library.json'), 'utf8')), bookCount = (dataset.books || dataset).length;
     const srv = await serve(), base = 'http://127.0.0.1:' + srv.address().port;
     const browser = await launch(chromium);
     fs.mkdirSync(path.join(ROOT, IMG_DIR), { recursive: true });
@@ -124,15 +125,17 @@ async function generate() {
         html += '    <button class="lib-shelf" type="button" data-shelf="' + i + '" aria-label="Open ' + b.name + '" style="width:' + pct(imgW / T) + '%;margin-left:' + pct(gap / T) + '%;--cap:' + (24 / imgW * 100).toFixed(2) + 'cqw">\n'
             + '        ' + img('light') + '\n        ' + img('dark') + '\n'
             + '        <span class="lib-shelf-cap" style="left:' + pct(capL) + '%;top:' + pct(capT) + '%;width:' + pct(capW) + '%;height:' + pct(capH) + '%" aria-hidden="true">' + b.name + '</span>\n'
-            + '        <span class="lib-shelf-wait" aria-hidden="true">Opening…</span>\n'
+            + '        <span class="lib-shelf-wait" aria-hidden="true"><i class="lib-spin"></i></span>\n'
             + '    </button>\n';
     });
     const partial = '{{!-- The Library landing: a picture of each bookcase, already in the page, each one button. Made by "npm run shelves"\n'
         + '      (extras/shelves/build.mjs) from the real drawing code and assets/data/library.json. Do not edit by hand; make it again\n'
         + '      whenever the data file, library.js or library.css change. data-std is the width of a standard bookcase, in drawing units. --}}\n'
         + stamp(hash) + '\n'
+        + '<div class="lib-landing" id="lib-landing">\n'
         + '<div class="lib-shelves" id="lib-shelves" data-std="' + Math.round(layout.std) + '">\n' + html + '</div>\n'
-        + '<p class="lib-shelves-msg" id="lib-shelves-msg" role="status" hidden></p>\n';
+        + '<p class="lib-allbooks"><a id="lib-allbooks" href="#books">Or see all ' + bookCount + ' books as a list <span aria-hidden="true">→</span></a></p>\n'
+        + '<p class="lib-shelves-msg" id="lib-shelves-msg" role="status" hidden></p>\n</div>\n';
     /* Nothing is written until every picture has been made, so a failed run leaves the last good set alone */
     for (const [file, data] of files) fs.writeFileSync(file, data);
     fs.writeFileSync(path.join(ROOT, PARTIAL), partial);
