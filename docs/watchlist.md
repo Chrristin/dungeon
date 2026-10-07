@@ -63,7 +63,7 @@ Per item, only `code`, `name` and `price` are needed for a card. The rest:
 - `image`: a full address of a photo. Without one, the shelf's `imagePattern` is used (an address with `{code}` in it, such as `https://images.brickset.com/sets/images/{code}-1.jpg`); if that brings nothing, the tile shows the code. `"image": false` turns the picture off for one item.
 - `verdict`: `must`, `fair`, `wait`, `new` or `skip`, to overrule the theme.
 
-The list itself can describe the sale: `"shopSale": { "name": "LEGO.in", "label": "LEGO.in sale, 5 to 11 October", "perks": "Free gift and 2x points on orders over ₹10,000", "url": "https://…", "until": "2026-10-11" }`. Its headline and `perks` appear under the "Cheaper at …" row and in each item's sheet, and the link is offered as "Open the sale".
+The list itself can describe the sale: `"shopSale": { "name": "LEGO.in", "label": "LEGO.in sale, 5 to 11 October", "perks": "Free gift and 2x points on orders over ₹10,000", "url": "https://…", "until": "2026-10-11" }`. Its headline and `perks` are shown in a banner above the list's sale strip and in each item's sheet, and `url` is offered there as "Open at …". `page` is optional: the address of a page on this site about the sale, with a closing slash (for example `"/lego-in-sale/"`). The banner links to it as "Full comparison", and on that page the list opens filtered to the sets that cost less at the other shop. The banner shows only while the sale lasts (`until`) and while at least one set costs less there.
 
 ## How a verdict is worked out
 

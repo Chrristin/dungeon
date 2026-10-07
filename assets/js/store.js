@@ -20,7 +20,7 @@
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var PAGE = 60;
   var taglines = {}; // a handwritten line beside a row's heading, set in the watchlist page's own text
-  var shelves = [], shelf = null, filter = 'all', sortBy = 'verdict', shown = PAGE, view = [], at = 0;
+  var shelves = [], shelf = null, filter = 'all', sortBy = 'verdict', shown = PAGE, view = [], at = 0, pageStarted = false;
   var VALUE_ROW = 6, VALUE_MIN = 8; // the per-piece row shows this many items, once at least this many have a piece count
 
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
@@ -359,6 +359,9 @@
     value.forEach(function (o) { o.value = true; });
     /* Items cheaper at another shop right now, the biggest saving first (a row of its own, and a filter) */
     var onSale = all.filter(function (o) { return o.shopSave > 0; }).sort(function (a, b) { return b.shopSave - a.shopSave; });
+    /* On the list's own page about the sale (shopSale.page) the list opens filtered to the sets that are cheaper there */
+    var saleInfo = shelf.shopSale || {}, onSalePage = !!(saleInfo.page && location.pathname.replace(/\/?$/, '/') === saleInfo.page);
+    if (onSalePage && !pageStarted) { pageStarted = true; if (onSale.length) filter = 'shop'; }
     if (filter === 'shop' && !onSale.length) filter = 'all';
     var shopName = onSale.length ? onSale[0].shop.name : '';
     view = filter === 'all' ? all.slice() : filter === 'shop' ? onSale.slice() : all.filter(function (o) { return o.verdict === filter; });
@@ -371,6 +374,22 @@
       if (shelf.hand) tabs.appendChild(el('span', 'store-hand', shelf.hand));
       root.appendChild(tabs);
     }
+    /* A sale at another shop is on: a banner above the strip, only while it lasts and only when some set costs less there */
+    if (onSale.length) {
+      var ban = el('aside', 'store-sale'), ends = /^(\d{4})-(\d{2})-(\d{2})$/.exec(saleInfo.until || ''), count = onSale.length;
+      ban.setAttribute('aria-label', shopName + ' sale');
+      ban.appendChild(el('span', 'store-sale-pill', 'Sale'));
+      var main = el('span', 'store-sale-main');
+      main.appendChild(el('strong', '', saleInfo.label || (shopName + ' sale' + (ends ? ' until ' + (+ends[3]) + ' ' + MONTHS[+ends[2] - 1] : ''))));
+      main.appendChild(document.createTextNode(' · ' + count + (count === 1 ? ' set costs' : ' sets cost') + ' less there than on Amazon'));
+      if (saleInfo.perks) main.appendChild(el('span', 'store-sale-perks', saleInfo.perks));
+      ban.appendChild(main);
+      var acts = el('span', 'store-sale-acts'), pg = /^\/[A-Za-z0-9\/_-]+\/$/.test(saleInfo.page || '') && !onSalePage ? saleInfo.page : '', out = safeUrl(saleInfo.url);
+      if (filter !== 'shop') { var see = el('button', 'store-sale-link', 'See the sets'); see.type = 'button'; see.setAttribute('data-filter', 'shop'); acts.appendChild(see); }
+      if (pg) { var full = el('a', 'store-sale-link', 'Full comparison'); full.href = pg; acts.appendChild(full); }
+      if (out) { var open = el('a', 'store-sale-link', 'Open at ' + shopName + ' ↗'); open.href = out; open.target = '_blank'; open.rel = 'noopener'; acts.appendChild(open); }
+      ban.appendChild(acts); root.appendChild(ban);
+    } else if (onSalePage) root.appendChild(el('p', 'store-sale-ended', 'This sale has ended. Here is everything on the list.'));
     var strip = el('section', 'store-strip');
     if (shelf.sale && shelf.sale.label) { var s1 = el('strong', 'store-strip-lead'); s1.appendChild(el('span', 'store-led')); s1.appendChild(document.createTextNode(shelf.sale.label)); strip.appendChild(s1); }
     if (shelf.sale && shelf.sale.windows && shelf.sale.windows.length) strip.appendChild(el('span', '', 'sales: ' + shelf.sale.windows.join(' \u00b7 ')));
@@ -428,8 +447,7 @@
     }
     if (filter === 'all') {
       /* While another shop has a sale on: the sets it sells for less than Amazon, with what comes with the sale */
-      var sale = shelf.shopSale || {}, saleNote = [sale.label || (shopName + ' sale'), sale.perks].filter(Boolean).join('. ');
-      feature('Cheaper at ' + shopName, onSale, false, false, { limit: 6, more: 'See all', filter: 'shop', note: { text: saleNote ? saleNote + '.' : '', url: sale.url } });
+      feature('Cheaper at ' + shopName, onSale, false, false, { limit: 6, more: 'See all', filter: 'shop' });
       /* Must Buy leads the page: every Must Buy, deepest discount first */
       var musts = all.filter(function (o) { return o.verdict === 'must'; }).sort(function (x, y) { return y.off - x.off; });
       feature('Must Buy', musts, false, true);

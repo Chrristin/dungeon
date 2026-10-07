@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.20.6
+
+- **A sale banner above the strip.** While a sale at another shop is on and some set costs less there than here, a dark banner sits above the Lego page's sale strip: a "Sale" label, the sale's headline, how many sets cost less there, what comes with it (a free gift, points), and links: "See the sets" (the list filtered to them), "Full comparison" (your own page about the sale, when you set one) and a link out to the shop's sale. It goes by itself after the end date, and does not appear at all on a list with no such sale. It follows the page's light and dark colours.
+- **A page of its own for the sale.** A list's `shopSale` can carry `page`, the address of a page on this site (for example `/lego-in-sale/`). On that page the list opens already filtered to the sets that cost less at the other shop; once the sale has ended it says so and shows everything.
+- The row of sets under the banner no longer repeats the sale's headline: the banner carries it.
+
 ## 2.20.5
 
 - **Another shop's prices, beside the first shop's.** An item can now carry another shop's price (`shop`: its name, price, optionally the regular price and a link, and the date the sale ends), and the list can carry the sale itself (`shopSale`: a headline, what comes with it, a link and the end date). While the sale lasts, a watchlist shows a row at the top, "Cheaper at LEGO.in", with the sets that cost less there than here, the biggest saving first, the first six and a "See all" button. The same sets get a "Cheaper at LEGO.in" label, a small line on their card ("LEGO.in ₹10,499 · ₹4,483 less") and a filter button beside the verdicts.

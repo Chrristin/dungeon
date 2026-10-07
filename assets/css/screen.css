@@ -2720,6 +2720,16 @@ html[data-scheme="dark"] .store-hand { color: #f0707e; }
 .store-shopline { display: flex; flex-wrap: wrap; gap: 0.1rem 0.5rem; align-items: baseline; font-size: 0.9rem; line-height: 1.5; color: inherit; }
 .store-shopline a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 0.2em; }
 .store-shopline .store-shopnote { flex-basis: 100%; font-size: 0.8rem; opacity: 0.7; }
+/* The sale banner: above the strip, only while a sale at another shop lasts and some set costs less there */
+.store-sale { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; padding: 0.7rem 1rem; border-radius: 12px; background: #17191e; color: #fcfcfa; font-size: 0.92rem; line-height: 1.45; }
+.store-sale-pill { flex: none; padding: 0.28rem 0.55rem; border-radius: 999px; background: #ffcc2e; color: #17191e; font: 600 0.68rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.store-sale-main { flex: 1 1 18rem; min-width: 0; }
+.store-sale-perks { display: block; margin-top: 0.15rem; font-size: 0.82rem; opacity: 0.8; }
+.store-sale-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1rem; }
+.store-sale-link { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
+.store-sale-ended { margin: 0; font-size: 0.92rem; color: var(--graphite); }
+html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 0 0 1px #3a3f49; }
+@media (prefers-color-scheme: dark) { html[data-scheme="auto"] .store-sale { background: #2a2e37; box-shadow: inset 0 0 0 1px #3a3f49; } }
 .store-foot { max-width: 45rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); font-size: 0.88rem; line-height: 1.6; color: var(--graphite); }
 .store-foot p { margin: 0; }
 .store-foot p + p { margin-top: 0.4rem; }
