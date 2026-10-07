@@ -3230,6 +3230,7 @@
       'plot-the-workshop': { full: true, make: lines },
       'plot-travel': { w: 236, h: 124, make: road },
       'plot-music-2': { w: 0, h: 0, full: true, make: notes },
+      'plot-the-music': { w: 0, h: 0, full: true, make: notes },
       'plot-the-library': { w: 160, h: 112, sc: 0.6, top: 34, right: 46, make: candle },
       'plot-the-collection': { w: 200, h: 120, sc: 0.56, top: 22, right: 18, make: pile }
     };

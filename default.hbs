@@ -8,8 +8,8 @@
     <link rel="preload" href="{{asset "fonts/geist-sans-latin-400-normal.woff2"}}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.20.1">
     {{#is "post"}}{{#post}}{{#has tag="#thing"}}{{^if html}}<meta name="robots" content="noindex">{{/if}}{{/has}}{{/post}}{{/is}}
-    {{!-- A watchlist item marked #watch-noindex (still collecting data, or a listing to skip) is kept out of search engines --}}
-    {{#is "post"}}{{#post}}{{#has tag="#watch-noindex"}}<meta name="robots" content="noindex">{{/has}}{{/post}}{{/is}}
+    {{!-- Watchlist items (#watch-item, which includes anything marked #watch-noindex) and short notes (#scatter, #note) are kept out of search engines: they are thin pages that would otherwise dilute the essays. Garden notes (#garden) stay indexable. Ghost still lists them in its sitemap; that cannot be changed from a theme --}}
+    {{#is "post"}}{{#post}}{{#has tag="#watch-item, #watch-noindex, #scatter, #note"}}<meta name="robots" content="noindex">{{/has}}{{/post}}{{/is}}
     {{ghost_head}}
 </head>
 <body class="{{body_class}}{{#if @custom.floating_nav}}{{#if @site.navigation}} has-dock{{/if}}{{/if}}" data-tilt="{{#match @custom.card_tilt "None"}}0{{else match @custom.card_tilt "Playful"}}5{{else match @custom.card_tilt "Wild"}}10{{else}}2.5{{/match}}">
@@ -90,13 +90,16 @@
     {{/if}}
     <div class="colophon-row">
         <p class="colophon-name"><a href="{{@site.url}}">{{#if @custom.footer_name}}{{@custom.footer_name}}{{else}}{{@site.title}}{{/if}}</a>{{#if @custom.footer_note}}. {{@custom.footer_note}}{{/if}}</p>
-        {{#if @site.members_enabled}}
-            {{#unless @member}}
-                <a class="colophon-subscribe" href="#/portal/signup" data-portal="signup">{{t "Subscribe by email"}}</a>
-            {{else}}
-                <a class="colophon-subscribe" href="#/portal/account" data-portal="account">{{t "Your account"}}</a>
-            {{/unless}}
-        {{/if}}
+        <div class="colophon-subs">
+            {{#if @site.members_enabled}}
+                {{#unless @member}}
+                    <a class="colophon-subscribe" href="#/portal/signup" data-portal="signup">{{t "Subscribe by email"}}</a>
+                {{else}}
+                    <a class="colophon-subscribe" href="#/portal/account" data-portal="account">{{t "Your account"}}</a>
+                {{/unless}}
+            {{/if}}
+            <a class="colophon-rss" href="{{@site.url}}/rss/">{{t "RSS feed"}}</a>
+        </div>
         <div class="colophon-secondary">{{navigation type="secondary"}}</div>
         <div class="colophon-inspire">
             {{#if @custom.show_credit}}<p class="colophon-credit">{{t "Design inspired by"}} <a href="https://www.jake.design/">Jake Przespo</a>{{#if @custom.floating_nav}}; {{t "floating navigation inspired by"}} <a href="https://hiran.in">Hiran</a>{{/if}}.</p>{{/if}}
