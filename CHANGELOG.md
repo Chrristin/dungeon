@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.20.1
+
+Fixes to 2.20.0.
+
+- **The plot animations draw now.** In 2.20.0 a slip left every drawing surface with no size, so nothing was drawn. The Workshop's falling lines, the Music's notes, the Road's car and birds, the Library's candle and book and the Collection's brick pile all run. Each card re-checks its size whenever the page lays out or the window changes, and the small corner pictures show from 500 pixels wide (they were being left out at 553).
+- **Pit Wall:** the chequered pattern is gone; only the sector colours along the top remain.
+- **Library and Collection:** the dot paper and tractor holes are much fainter, so they sit in the background.
+- **The garden map shows each post's picture in its node,** ringed in the colour of how far the note has grown (a dot where there is no picture). Pointing at a node grows leaves and flowers round it and opens a small card with its title and a line of the post. The card goes as soon as you move off the node; clicking the node opens the post (on a phone, the first tap shows the card and the next opens it). The card is fixed paper and ink, so it reads the same in dark mode and inside the reader overlay.
+- **A small 200-pixel image size** (`xs`) is declared for the node pictures, so they are not fetched at 600.
+
 ## 2.20.0
 
 Homepage plots and the garden map.

@@ -3033,59 +3033,60 @@
       .then(function (h) { var d = readJson(new DOMParser().parseFromString(h, 'text/html').getElementById('garden-data')); return (d && d.notes) || []; }).catch(function () { return []; });
     return gardenDataCache;
   }
-  // A post's neighbours as a small garden: the post in the middle, each link a dot on a stem, coloured by how far the
-  // note has grown. Pointing at a dot (or, on a phone, tapping it once) opens a card with its title, a line of it and a
-  // small picture when it has one, with leaves and flowers growing over the picture; the card (or a second tap) opens it.
-  // The card docks in the half of the map away from the dot, so it never covers it. No instructions: it is a map.
-  function smallImg(u) { return u && /\/content\/images\//.test(u) && !/\/size\//.test(u) ? u.replace('/content/images/', '/content/images/size/w600/') : (u || ''); }
-  // leaves and flowers that grow over a picture 70 units square (a margin of 15 round it is drawn too)
-  function bloomOver(seedKey) {
-    var vines = [[[-4, 74], [12, 6]], [[76, 76], [58, 22]], [[74, -3], [44, 12]]], out = '', k = hashOf(seedKey), flowers = [];
-    vines.forEach(function (v, i) {
-      var w = wildVine(v[0][0], v[0][1], v[1][0], v[1][1], seedKey + i, 1.1, 3 + (i === 0 ? 1 : 0)), d = (i * 0.12).toFixed(2) + 's';
-      out += '<path class="pm-vn" pathLength="1" style="animation-delay:' + d + '" d="' + w.d + '"/><g class="pm-lv" style="animation-delay:' + (0.45 + i * 0.12).toFixed(2) + 's">' + w.leaves + w.curl + '</g>';
-      flowers.push([v[1][0], v[1][1], 7 + (k >> i & 1) * 1.5]);
-    });
-    flowers.push([30, 72, 6.5]);
-    flowers.forEach(function (f, i) { out += '<g class="pm-fl" style="animation-delay:' + (0.75 + i * 0.1).toFixed(2) + 's">' + gflower(f[0], f[1], f[2], FLOWERS[(k + i * 2) % FLOWERS.length]) + '</g>'; });
-    return '<svg class="pm-bloom" viewBox="-15 -15 100 100" aria-hidden="true">' + out + '</svg>';
+  // A post's neighbours as a small garden: the post in the middle, each link a node on a stem. A link with a picture shows
+  // it in its node, ringed in the colour of how far the note has grown; pointing at a node grows leaves and flowers round it
+  // and opens a small card with its title and a line of it. The card goes when you move off the node; the node opens it.
+  // (On a phone: the first tap shows the card, the next tap opens the link.) No instructions: it is a map.
+  function smallImg(u) { return u && /\/content\/images\//.test(u) && !/\/size\//.test(u) ? u.replace('/content/images/', '/content/images/size/w200/') : (u || ''); }
+  // short vines, leaves and flowers round a node of radius r at (x, y)
+  function bloomAround(x, y, r, seedKey) {
+    var out = '', k = hashOf(seedKey);
+    for (var i = 0; i < 3; i++) {
+      var a0 = (k % 628) / 100 + i * 2.09, a1 = a0 + 1.5, p0 = [x + Math.cos(a0) * (r + 1), y + Math.sin(a0) * (r + 1)], p1 = [x + Math.cos(a1) * (r + 9), y + Math.sin(a1) * (r + 9)];
+      var w = wildVine(p0[0], p0[1], p1[0], p1[1], seedKey + i, 0.9, 2), d = (i * 0.1).toFixed(2) + 's';
+      out += '<path class="pm-vn" pathLength="1" style="animation-delay:' + d + '" d="' + w.d + '"/><g class="pm-lv" style="animation-delay:' + (0.3 + i * 0.1).toFixed(2) + 's">' + w.leaves + w.curl + '</g>' +
+        '<g class="pm-fl" style="animation-delay:' + (0.5 + i * 0.1).toFixed(2) + 's">' + gflower(p1[0], p1[1], 4.6 + (k >> i & 1), FLOWERS[(k + i * 2) % FLOWERS.length]) + '</g>';
+    }
+    return '<g class="pm-bloom">' + out + '</g>';
   }
   function postMap(slot, self, groups, L) {
     var nb = [], seen = {};
     groups.forEach(function (g) { g.items.forEach(function (x) { if (x.u && !seen[x.u] && nb.length < 12) { seen[x.u] = 1; nb.push({ t: x.t, u: x.u, g: x.g || 'seedling', i: x.i, x: x.x, kind: g.kind, label: g.label }); } }); });
     if (!nb.length) return;
     var stageOf = function (g) { return (L.stages && L.stages[g]) || g; };
-    var W = Math.max(300, Math.min(640, slot.clientWidth || 560)), H = nb.length <= 2 ? 190 : nb.length <= 5 ? 220 : 270, cx = W / 2, cy = H / 2, rx = W / 2 - 34, ry = H / 2 - 28, s = '', dots = '';
+    var W = Math.max(300, Math.min(640, slot.clientWidth || 560)), H = nb.length <= 2 ? 190 : nb.length <= 5 ? 220 : 270, cx = W / 2, cy = H / 2, rx = W / 2 - 40, ry = H / 2 - 34, s = '', dots = '', defs = '';
     nb.forEach(function (n, i) {
-      var a = -Math.PI / 2 + i * 2 * Math.PI / nb.length, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry, v = wildVine(cx, cy, x, y, 'pm' + self.s + '>' + n.u, 1, n.kind === 'rel' ? 0 : 2);
+      var a = -Math.PI / 2 + i * 2 * Math.PI / nb.length, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry, v = wildVine(cx, cy, x, y, 'pm' + self.s + '>' + n.u, 1, n.kind === 'rel' ? 0 : 2), pic = !!n.i, R = pic ? 17 : (n.g === 'post' ? 8 : 9), sq = n.g === 'post';
       s += n.kind === 'rel' ? '<path class="lm-rel" d="' + v.d + '"/>' : '<g class="lm-vine"><path d="' + v.d + '"/>' + v.leaves + v.curl + '</g>';
-      dots += '<a class="pm-dot" href="' + esc(n.u) + '" data-i="' + i + '" aria-label="' + esc(n.t + ' (' + n.label + ', ' + stageOf(n.g) + ')') + '"><circle class="pm-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="22"/>' +
-        (n.g === 'post' ? '<rect class="pm-v" data-g="post" x="' + (x - 8).toFixed(1) + '" y="' + (y - 8).toFixed(1) + '" width="16" height="16" rx="3"/>' : '<circle class="pm-v" data-g="' + esc(n.g) + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9"/>') + '</a>';
+      var shape = function (cls, extra) { return sq ? '<rect class="' + cls + '" ' + extra + ' x="' + (x - R).toFixed(1) + '" y="' + (y - R).toFixed(1) + '" width="' + R * 2 + '" height="' + R * 2 + '" rx="' + (pic ? 7 : 3) + '"/>' : '<circle class="' + cls + '" ' + extra + ' cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + R + '"/>'; };
+      if (pic) defs += '<clipPath id="pmc' + i + '">' + (sq ? '<rect x="' + (x - R).toFixed(1) + '" y="' + (y - R).toFixed(1) + '" width="' + R * 2 + '" height="' + R * 2 + '" rx="7"/>' : '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + R + '"/>') + '</clipPath>';
+      dots += '<a class="pm-dot" href="' + esc(n.u) + '" data-i="' + i + '" aria-label="' + esc(n.t + ' (' + n.label + ', ' + stageOf(n.g) + ')') + '"><circle class="pm-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (R + 9) + '"/>' +
+        shape('pm-v', 'data-g="' + esc(n.g) + '"') + (pic ? '<image href="' + esc(smallImg(n.i)) + '" x="' + (x - R).toFixed(1) + '" y="' + (y - R).toFixed(1) + '" width="' + R * 2 + '" height="' + R * 2 + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#pmc' + i + ')"/>' + shape('pm-edge', 'data-g="' + esc(n.g) + '"') : '') +
+        bloomAround(x, y, R, n.u) + '</a>';
     });
     dots += '<circle class="pm-ring" cx="' + cx + '" cy="' + cy + '" r="20"/><circle class="pm-v pm-self" data-g="' + esc(self.g || 'post') + '" cx="' + cx + '" cy="' + cy + '" r="14"><title>' + esc(L.thisPost || 'This post') + '</title></circle>';
     var present = {}; nb.forEach(function (n) { present[n.g] = 1; }); present[self.g || 'post'] = 1;
     var key = ['seedling', 'growing', 'evergreen', 'post'].filter(function (g) { return present[g]; }).map(function (g) { return '<span class="pm-key-i"><i class="pm-key-dot" data-g="' + g + '"></i>' + esc(stageOf(g)) + '</span>'; }).join('');
-    slot.innerHTML = '<div class="pm"><svg viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="' + esc(L.map || '') + '">' + s + dots + '</svg>' +
-      '<a class="pm-card" hidden><span class="pm-card-pic"><img class="pm-card-img" alt="" hidden><span class="pm-bloom-slot"></span></span><span class="pm-card-text"><span class="pm-card-k"></span><span class="pm-card-t"></span><span class="pm-card-x"></span></span></a></div>' +
-      '<p class="pm-key">' + key + '</p>';
-    var wrap = slot.querySelector('.pm'), svg = wrap.querySelector('svg'), card = wrap.querySelector('.pm-card'), im = card.querySelector('img'), bl = card.querySelector('.pm-bloom-slot'), els = [].slice.call(wrap.querySelectorAll('.pm-dot')), cur = -1, touch = false;
+    slot.innerHTML = '<div class="pm"><svg viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="' + esc(L.map || '') + '"><defs>' + defs + '</defs>' + s + dots + '</svg>' +
+      '<div class="pm-card" aria-hidden="true" hidden><span class="pm-card-k"></span><span class="pm-card-t"></span><span class="pm-card-x"></span></div></div><p class="pm-key">' + key + '</p>';
+    var wrap = slot.querySelector('.pm'), svg = wrap.querySelector('svg'), card = wrap.querySelector('.pm-card'), els = [].slice.call(wrap.querySelectorAll('.pm-dot')), cur = -1, touch = false;
     var k = card.querySelector('.pm-card-k'), t = card.querySelector('.pm-card-t'), x = card.querySelector('.pm-card-x');
-    im.addEventListener('error', function () { im.hidden = true; bl.innerHTML = ''; });
-    var close = function () { cur = -1; card.hidden = true; bl.innerHTML = ''; els.forEach(function (e) { e.classList.remove('is-on'); }); };
+    var close = function () { cur = -1; card.hidden = true; els.forEach(function (e) { e.classList.remove('is-on'); }); };
     var open = function (i) {
       if (cur === i) return;
-      var n = nb[i]; cur = i; card.href = n.u; k.textContent = n.label + ' · ' + stageOf(n.g); t.textContent = n.t;
+      els.forEach(function (e, j) { e.classList.toggle('is-on', j === i); });
+      var n = nb[i]; cur = i; k.textContent = n.label + ' · ' + stageOf(n.g); t.textContent = n.t;
       var ex = String(n.x || '').trim(); x.textContent = ex.length > 120 ? ex.slice(0, 119).replace(/\s+\S*$/, '') + '…' : ex;
-      if (n.i) { im.src = smallImg(n.i); im.hidden = false; bl.innerHTML = bloomOver(n.u); } else { im.removeAttribute('src'); im.hidden = true; bl.innerHTML = ''; }
       card.hidden = false;
       var B = wrap.getBoundingClientRect(), D = els[i].querySelector('.pm-v').getBoundingClientRect(), up = D.top + D.height / 2 - B.top > B.height / 2, left = D.left + D.width / 2 - B.left > B.width / 2;
-      card.classList.toggle('is-top', up); card.classList.toggle('is-left', left); // the half of the map the dot is not in
-      els.forEach(function (e, j) { e.classList.toggle('is-on', j === i); });
+      card.classList.toggle('is-top', up); card.classList.toggle('is-left', left); // the half of the map the node is not in
     };
     els.forEach(function (a, i) {
       a.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') open(i); });
+      a.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse' && cur === i) close(); }); // gone as soon as you are off the node
       a.addEventListener('focus', function () { if (!touch) open(i); });
-      a.addEventListener('click', function (e) { if (touch && cur !== i) { e.preventDefault(); open(i); } }); // a phone: the first tap opens the card, the next one goes there
+      a.addEventListener('blur', function () { if (!touch && cur === i) close(); });
+      a.addEventListener('click', function (e) { if (touch && cur !== i) { e.preventDefault(); open(i); } }); // a phone: the first tap shows the card, the next one goes there
     });
     svg.addEventListener('pointerdown', function (e) { if (!e.target.closest('.pm-dot')) close(); }); // the empty map: put the card away
     wrap.addEventListener('pointerdown', function (e) { touch = e.pointerType !== 'mouse'; }, true);
@@ -3236,10 +3237,12 @@
       var d = defs[key], cv = document.createElement('canvas'), s = { card: card, cv: cv, cx: cv.getContext('2d'), d: d, vis: false, draw: null, w: 0, h: 0, ink: '23,25,30' };
       cv.className = 'plot-scene'; cv.setAttribute('aria-hidden', 'true'); card.insertBefore(cv, card.firstChild); fit(s); scenes.push(s);
       if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { s.vis = e[0].isIntersecting; if (s.vis) kick(); }).observe(card); else { s.vis = true; kick(); }
+      if ('ResizeObserver' in window) { var rt = 0; new ResizeObserver(function () { clearTimeout(rt); rt = setTimeout(function () { fit(s); }, 150); }).observe(card); } // the cards are laid out after this runs, and again when the window changes
     }
     function fit(s) {
       var r = s.card.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1), full = s.d.full;
-      var sc = s.d.sc || 1; s.off = s.d.top !== undefined && r.width < 560; s.cv.style.display = s.off ? 'none' : ''; // the small corner pictures need room beside the title; a phone has none s.w = full ? Math.round(r.width) : s.d.w; s.h = full ? Math.round(r.height) : s.d.h; s.ink = rgb(s.card);
+      var sc = s.d.sc || 1; s.off = s.d.top !== undefined && r.width < 500; s.cv.style.display = s.off ? 'none' : ''; // the small corner pictures need room beside the title; a phone has none
+      s.w = full ? Math.round(r.width) : s.d.w; s.h = full ? Math.round(r.height) : s.d.h; s.ink = rgb(s.card);
       s.cv.width = Math.round(s.w * sc * dpr); s.cv.height = Math.round(s.h * sc * dpr); s.cx.setTransform(dpr * sc, 0, 0, dpr * sc, 0, 0);
       s.cv.style.cssText = (s.off ? 'display:none;' : '') + 'position:absolute;pointer-events:none;z-index:-1;' + (full ? 'left:0;top:0;width:100%;height:100%;border-radius:inherit;' : (s.d.top === undefined ? 'bottom:10px;right:12px;' : 'top:' + s.d.top + 'px;right:' + s.d.right + 'px;') + 'width:' + Math.round(s.w * sc) + 'px;height:' + Math.round(s.h * sc) + 'px;');
       s.draw = s.d.make(s.w, s.h); if (reduce) paint(s, 3);
@@ -3254,7 +3257,7 @@
     function kick() { if (!timer && !reduce) timer = setTimeout(tick, 90); }
     Object.keys(defs).forEach(function (key) { var card = document.querySelector('.plot[data-key="' + key + '"]'); if (card) build(key, card); });
     document.addEventListener('visibilitychange', kick);
-    var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { scenes.forEach(fit); }, 200); });
+    if (!('ResizeObserver' in window)) { var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { scenes.forEach(fit); }, 200); }); }
     setInterval(function () { scenes.forEach(function (s) { if (s.vis) s.ink = rgb(s.card); }); }, 2000);
   })();
 

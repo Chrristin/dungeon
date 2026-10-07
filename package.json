@@ -1,7 +1,7 @@
 {
   "name": "dungeon",
   "description": "A playful Ghost theme of tilted pastel index cards, an optional homepage of plots, a floating menu, a Now page, a Scatter wall and a lightsaber colour switch.",
-  "version": "2.20.0",
+  "version": "2.20.1",
   "license": "MIT",
   "author": {
     "name": "Christin Emmanuel George",
@@ -24,6 +24,9 @@
   "config": {
     "posts_per_page": 25,
     "image_sizes": {
+      "xs": {
+        "width": 200
+      },
       "s": {
         "width": 600
       },
