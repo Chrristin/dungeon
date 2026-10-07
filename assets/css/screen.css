@@ -2912,7 +2912,7 @@ html[data-scheme="dark"] .store-hand { color: #f0707e; }
 
 
 /* The foot of an essay (partials/essay-end.hbs) and the closing line under Product essays */
-.essay-open { max-width: var(--measure, 47rem); margin: 2rem auto 0; font-size: 0.98rem; }
+.essay-open { margin: 2rem 0 0; font-size: 0.98rem; }
 .essay-open a, .essay-end a { color: var(--on-card); text-decoration: underline; text-decoration-color: var(--led); text-decoration-thickness: 2px; text-underline-offset: 0.25em; }
 .essay-open a:hover, .essay-end a:hover { text-decoration-thickness: 3px; }
 .essay-end { margin-top: 1.6rem; padding-top: 1.1rem; border-top: 1px solid var(--on-card-rule, var(--rule)); font-size: 0.92rem; color: var(--on-card); }
