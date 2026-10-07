@@ -50,6 +50,8 @@
   function judge(it, rules) {
     var o = { it: it };
     o.priced = num(it.price);
+    o.shop = shopOf(it); // another shop's price, while its sale lasts
+    o.shopSave = o.shop && o.priced && o.shop.price < it.price ? it.price - o.shop.price : 0;
     o.mrp = num(it.mrp) ? it.mrp : null;
     o.usual = usualOf(it, rules);
     /* Some record but too little to say what is usual, on an item that really is new: Collecting Data. An older item whose
@@ -85,6 +87,11 @@
     if (base == null) return null;
     var deep = base * (1 - (usual != null ? rules.usualMustOff : rules.mustOff)), near = num(it.low) ? Math.min(it.low * (1 + rules.nearLow), base * (1 - rules.nearLowOff)) : 0;
     return Math.floor(Math.max(deep, near));
+  }
+  /* Another shop's price for an item (`shop`: name, price, optionally was, url, until). Counted only until its end date. */
+  function shopOf(it) {
+    var s = it && it.shop; if (!s || !num(s.price) || !(s.price > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(s.until || '')) return null;
+    return new Date().toISOString().slice(0, 10) <= s.until ? s : null;
   }
   /* The usual price an item carries, if its record is long enough to trust; null otherwise */
   function usualOf(it, rules) { return num(it.orp) && it.orp > 0 && num(it.orpDays) && it.orpDays >= rules.usualDays ? it.orp : null; }
@@ -137,6 +144,7 @@
     var c = el('span', 'store-chips');
     var v = el('span', 'store-chip store-chip--' + o.verdict + (solid ? ' is-solid' : ''), label(o.verdict)); c.appendChild(v);
     if (o.value) c.appendChild(el('span', 'store-chip', 'Best per Piece'));
+    if (o.shopSave) c.appendChild(el('span', 'store-chip', 'Cheaper at ' + o.shop.name));
     o.flags.forEach(function (f) { c.appendChild(el('span', 'store-chip', f)); });
     /* The price per piece is a figure, not a label: plain small text after the pills (the sheet shows it in its own line) */
     if (o.ppp != null && !bare) c.appendChild(el('span', 'store-ppp', perPiece(o.ppp) + ' / piece'));
@@ -179,7 +187,9 @@
       if (o.verdict === 'skip') p.appendChild(el('span', '', o.over ? 'above MRP ' + money(o.mrp) : 'reseller price'));
       else { var tag = offTag(o); if (tag) p.appendChild(tag); if (o.base) p.appendChild(el('span', '', (o.usual != null ? 'usually ' : 'MRP ') + money(o.base))); }
     } else p.appendChild(el('span', '', 'no offer'));
-    h.appendChild(p); return h;
+    h.appendChild(p);
+    if (o.shopSave) h.appendChild(el('span', 'store-shop', o.shop.name + ' ' + money(o.shop.price) + ' · ' + money(o.shopSave) + ' less'));
+    return h;
   }
   function card(o, i, feature) {
     var a = el('button', 'store-card store-card--' + o.verdict + (feature ? ' is-feature' : '')); a.type = 'button';
@@ -223,6 +233,16 @@
         var buy = el('div', 'store-buy'), go = el('a', 'store-go', o.priced ? (shelf.linkLabel || 'Buy') : 'View on Amazon'); go.href = buyUrl; go.target = '_blank'; go.rel = 'noopener';
         buy.appendChild(go); if (isAffiliate(buyUrl)) { go.rel = 'sponsored nofollow noopener'; buy.appendChild(el('span', 'store-aff', AFF)); }
         panel.appendChild(buy);
+      }
+      /* Another shop's price for the same item, said plainly whichever way it falls, with a plain link (no referral) and what comes with it */
+      if (o.shop) {
+        var sl = el('div', 'store-shopline'), diff = o.priced ? o.shop.price - it.price : null, su = safeUrl(o.shop.url), ends = /^(\d{4})-(\d{2})-(\d{2})$/.exec(o.shop.until);
+        sl.appendChild(el('strong', '', o.shop.name + ': ' + money(o.shop.price)));
+        sl.appendChild(el('span', '', (num(o.shop.was) ? ' (regular ' + money(o.shop.was) + ')' : '') + (diff == null ? '' : diff < 0 ? ', ' + money(-diff) + ' less than Amazon' : diff > 0 ? ', ' + money(diff) + ' more than Amazon' : ', the same as Amazon')));
+        if (su) { var gs = el('a', 'store-shopgo', 'See it at ' + o.shop.name); gs.href = su; gs.target = '_blank'; gs.rel = 'noopener'; sl.appendChild(gs); }
+        var sale = shelf.shopSale || {}, note = 'Sale until ' + (ends ? (+ends[3]) + ' ' + MONTHS[+ends[2] - 1] : o.shop.until) + (sale.perks ? '. ' + sale.perks : '') + '.';
+        sl.appendChild(el('span', 'store-shopnote', note));
+        panel.appendChild(sl);
       }
       out.push(panel);
       var line = graphBox(it); if (line) out.push(line);
@@ -337,7 +357,11 @@
     var priced = all.filter(function (o) { return o.ppp != null; }).sort(function (a, b) { return a.ppp - b.ppp; });
     var value = priced.length >= VALUE_MIN ? priced.slice(0, VALUE_ROW) : [];
     value.forEach(function (o) { o.value = true; });
-    view = filter === 'all' ? all.slice() : all.filter(function (o) { return o.verdict === filter; });
+    /* Items cheaper at another shop right now, the biggest saving first (a row of its own, and a filter) */
+    var onSale = all.filter(function (o) { return o.shopSave > 0; }).sort(function (a, b) { return b.shopSave - a.shopSave; });
+    if (filter === 'shop' && !onSale.length) filter = 'all';
+    var shopName = onSale.length ? onSale[0].shop.name : '';
+    view = filter === 'all' ? all.slice() : filter === 'shop' ? onSale.slice() : all.filter(function (o) { return o.verdict === filter; });
     if (sortBy === 'ppp') view.sort(function (a, b) { return (a.ppp == null) - (b.ppp == null) || a.ppp - b.ppp; });
     root.textContent = '';
 
@@ -375,13 +399,20 @@
       document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && why.classList.contains('is-open')) { whyPinned = false; whyOpen(false); sum.focus(); } });
     }
 
-    function feature(title, list, missed, bold) {
+    /* opt: note (a line under the heading: text, and a link), limit (show only the first few, with a button for the rest) */
+    function feature(title, list, missed, bold, opt) {
       if (!list.length) return;
       var sec = el('section', 'store-feature'), h = el('h2', 'store-h', title); h.appendChild(el('span', 'store-n', String(list.length)));
       var line = taglines[title.toLowerCase()] || (shelf.taglines && shelf.taglines[title]); if (line) h.appendChild(el('span', 'store-hand store-tagline', line));
       sec.appendChild(h);
+      if (opt && opt.note) {
+        var np = el('p', 'store-feature-note', opt.note.text), nl = safeUrl(opt.note.url);
+        if (nl) { np.appendChild(document.createTextNode(' ')); var na = el('a', '', 'Open the sale'); na.href = nl; na.target = '_blank'; na.rel = 'noopener'; np.appendChild(na); }
+        sec.appendChild(np);
+      }
+      var shownList = opt && opt.limit ? list.slice(0, opt.limit) : list;
       var row = el('div', 'store-row'), used = [];
-      list.forEach(function (o) {
+      shownList.forEach(function (o) {
         var c = card(o, view.indexOf(o), !missed);
         if (missed) {
           /* A deal that has ended: a quiet card saying what the price was, and when */
@@ -391,9 +422,14 @@
         } else { var tint = o.tint || tintFor(o.it.code, used, bold ? BOLD : TINTS); if (!o.tint) o.tint = tint; paint(c, tint); }
         row.appendChild(c);
       });
-      sec.appendChild(row); root.appendChild(sec);
+      sec.appendChild(row);
+      if (opt && opt.more && list.length > shownList.length) { var mb = el('button', 'store-pill store-more', opt.more + ' (' + list.length + ')'); mb.type = 'button'; mb.setAttribute('data-filter', opt.filter); sec.appendChild(mb); }
+      root.appendChild(sec);
     }
     if (filter === 'all') {
+      /* While another shop has a sale on: the sets it sells for less than Amazon, with what comes with the sale */
+      var sale = shelf.shopSale || {}, saleNote = [sale.label || (shopName + ' sale'), sale.perks].filter(Boolean).join('. ');
+      feature('Cheaper at ' + shopName, onSale, false, false, { limit: 6, more: 'See all', filter: 'shop', note: { text: saleNote ? saleNote + '.' : '', url: sale.url } });
       /* Must Buy leads the page: every Must Buy, deepest discount first */
       var musts = all.filter(function (o) { return o.verdict === 'must'; }).sort(function (x, y) { return y.off - x.off; });
       feature('Must Buy', musts, false, true);
@@ -407,6 +443,7 @@
 
     var bar2 = el('nav', 'store-bar'); bar2.setAttribute('aria-label', 'Filter by verdict');
     var allB = el('button', 'store-pill', 'All'); allB.type = 'button'; allB.setAttribute('data-filter', 'all'); allB.appendChild(el('span', 'store-n', String(all.length))); if (filter === 'all') allB.setAttribute('aria-current', 'true'); bar2.appendChild(allB);
+    if (onSale.length) { var sp = el('button', 'store-pill'); sp.type = 'button'; sp.setAttribute('data-filter', 'shop'); sp.appendChild(document.createTextNode('Cheaper at ' + shopName)); sp.appendChild(el('span', 'store-n', String(onSale.length))); if (filter === 'shop') sp.setAttribute('aria-current', 'true'); bar2.appendChild(sp); }
     VERDICTS.forEach(function (v) {
       if (!counts[v.key]) return;
       var b = el('button', 'store-pill'); b.type = 'button'; b.setAttribute('data-filter', v.key); b.appendChild(el('span', 'store-dot store-chip--' + v.key)); b.appendChild(document.createTextNode(v.label)); b.appendChild(el('span', 'store-n', String(counts[v.key])));

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.20.5
+
+- **Another shop's prices, beside the first shop's.** An item can now carry another shop's price (`shop`: its name, price, optionally the regular price and a link, and the date the sale ends), and the list can carry the sale itself (`shopSale`: a headline, what comes with it, a link and the end date). While the sale lasts, a watchlist shows a row at the top, "Cheaper at LEGO.in", with the sets that cost less there than here, the biggest saving first, the first six and a "See all" button. The same sets get a "Cheaper at LEGO.in" label, a small line on their card ("LEGO.in ₹10,499 · ₹4,483 less") and a filter button beside the verdicts.
+- **In an item's sheet,** one plain line says the other shop's price and how it compares, whichever way it falls ("₹4,483 less than Amazon", "₹200 more than Amazon", "the same as Amazon"), with a link (a plain one, with no referral), the end date and what comes with the sale. A price is shown only until its end date and goes by itself the day after.
+- A list without these fields looks exactly as it did. See `docs/watchlist.md`.
+
 ## 2.20.4
 
 - **Wider introduction on a watchlist.** On a wide screen the text under the list's title now runs to 70% of the page (at most 62rem), where it was held to 38rem and left most of the line empty. Phones and narrow windows are as before.

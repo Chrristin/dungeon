@@ -2713,6 +2713,13 @@ html[data-scheme="dark"] .store-hand { color: #f0707e; }
 .store-card.is-ink, .store-sheet.is-ink { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3), var(--card-shadow); }
 .watch-item.is-ink { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16); }
 .store-more { align-self: center; }
+/* Another shop's price: a small line on a card, a note under a row's heading, and a few plain lines in the sheet */
+.store-shop { margin-top: 0.15rem; font: 600 0.78rem/1.3 var(--mono); }
+.store-feature-note { margin: -0.3rem 0 0.9rem; max-width: 45rem; font-size: 0.9rem; line-height: 1.5; color: var(--graphite); }
+.store-feature-note a { color: inherit; text-decoration: underline; text-underline-offset: 0.2em; }
+.store-shopline { display: flex; flex-wrap: wrap; gap: 0.1rem 0.5rem; align-items: baseline; font-size: 0.9rem; line-height: 1.5; color: inherit; }
+.store-shopline a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 0.2em; }
+.store-shopline .store-shopnote { flex-basis: 100%; font-size: 0.8rem; opacity: 0.7; }
 .store-foot { max-width: 45rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); font-size: 0.88rem; line-height: 1.6; color: var(--graphite); }
 .store-foot p { margin: 0; }
 .store-foot p + p { margin-top: 0.4rem; }

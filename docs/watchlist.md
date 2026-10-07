@@ -51,6 +51,7 @@ Per item, only `code`, `name` and `price` are needed for a card. The rest:
 
 - `mrp`, `low`, `lowDate`, `days` (days of price history): used for the verdict and the line under a card's price.
 - `orp`, `orpDays`, `orpWeak`: the item's usual price: the price it has most often sold at over the past year (a whole number), how many days of record that rests on, and `true` when the price wandered too much to have one clear figure. A listed MRP can be anything, so once `orpDays` reaches `usualDays` (30) the theme measures discounts from the usual price instead of MRP, shows "usually ₹X" and "N% off usual", and draws it on the price line in place of MRP. All three are optional; without them an item is judged from its MRP.
+- `shop`: another shop's price for the item while its sale lasts: `{ "name": "LEGO.in", "price": 10499, "was": 14999, "url": "https://…", "until": "2026-10-11" }`. `was` and `url` are optional; `until` is the last day it counts (it is ignored after that). Where it is below the item's own price, the item gets a "Cheaper at …" label, a line on its card, a place in the row at the top of the page and a filter button; its sheet shows the comparison and a plain link.
 - `pieces`: how many pieces (or units) the item has. With it, the price per piece is shown, the six lowest get a row of their own ("Most Pieces for the Money") once eight or more items have a count, and the listing can be sorted by it.
 - `seller: "other"`: not sold by the main seller. The verdict is Skip. An item priced above its MRP is Skip too.
 - `checked`: the date this item's price was read, when it differs from the shelf's `updated` date.
@@ -61,6 +62,8 @@ Per item, only `code`, `name` and `price` are needed for a card. The rest:
 - `pick: true`: puts the item in "My Picks".
 - `image`: a full address of a photo. Without one, the shelf's `imagePattern` is used (an address with `{code}` in it, such as `https://images.brickset.com/sets/images/{code}-1.jpg`); if that brings nothing, the tile shows the code. `"image": false` turns the picture off for one item.
 - `verdict`: `must`, `fair`, `wait`, `new` or `skip`, to overrule the theme.
+
+The list itself can describe the sale: `"shopSale": { "name": "LEGO.in", "label": "LEGO.in sale, 5 to 11 October", "perks": "Free gift and 2x points on orders over ₹10,000", "url": "https://…", "until": "2026-10-11" }`. Its headline and `perks` appear under the "Cheaper at …" row and in each item's sheet, and the link is offered as "Open the sale".
 
 ## How a verdict is worked out
 
