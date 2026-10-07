@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.18.0
+
+Homepage only.
+
+- **The Collection puts the Library last.** Diecast Cars and Lego now share the top row and the Library box sits full width below them, whatever order the pages were published in.
+- **The Library box on a phone has a bigger picture, placed lower.** It no longer floats high above the box with empty space under it; it sits level with the shelf and book count (a little smaller on the narrowest phones).
+- **The headline is two lines on wide screens:** "Digital Christin," then "In Progress." Phones and tablets wrap as before.
+- **The doodles behind the plot cards stay out of the writing.** They now show in the lower-right corner and fade out before the text, so they no longer run through the letters. The per-plot "nerdy" look is still to do.
+
 ## 2.17.0
 
 Library only.
