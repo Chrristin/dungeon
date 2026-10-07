@@ -50,6 +50,7 @@ shown as text. With two or more, tabs appear. Once any link is present, the bund
 Per item, only `code`, `name` and `price` are needed for a card. The rest:
 
 - `mrp`, `low`, `lowDate`, `days` (days of price history): used for the verdict and the line under a card's price.
+- `orp`, `orpDays`, `orpWeak`: the item's usual price: the price it has most often sold at over the past year (a whole number), how many days of record that rests on, and `true` when the price wandered too much to have one clear figure. A listed MRP can be anything, so once `orpDays` reaches `usualDays` (30) the theme measures discounts from the usual price instead of MRP, shows "usually ₹X" and "N% off usual", and draws it on the price line in place of MRP. All three are optional; without them an item is judged from its MRP.
 - `pieces`: how many pieces (or units) the item has. With it, the price per piece is shown, the six lowest get a row of their own ("Most Pieces for the Money") once eight or more items have a count, and the listing can be sorted by it.
 - `seller: "other"`: not sold by the main seller. The verdict is Skip. An item priced above its MRP is Skip too.
 - `checked`: the date this item's price was read, when it differs from the shelf's `updated` date.
@@ -63,13 +64,16 @@ Per item, only `code`, `name` and `price` are needed for a card. The rest:
 
 ## How a verdict is worked out
 
-In this order, with `off` meaning today's discount from MRP:
+In this order, with `off` meaning today's discount from the item's usual price when it has one with at least `usualDays` of record behind it, and from MRP otherwise:
 
 1. No price, or `seller` is `other`: Skip.
-2. `off` is at least `mustOff`, or today's price is within `nearLow` of the lowest and `off` is at least `nearLowOff`: Must Buy.
-3. Fewer than `newDays` of history and `off` below `newOff`: Too New.
-4. `off` is at least `fairOff`: Fair Price.
-5. Otherwise: Wait for Sale.
+2. The item has an `orp` but under `usualDays` of record, and under `usualDays` of history overall: Collecting Data, never a Must Buy. (An older item whose usual price is not worked out yet is judged from MRP.)
+3. `off` is at least `mustOff` (`usualMustOff`, 0.25, when measured from the usual price), or today's price is within `nearLow` of the lowest and `off` is at least `nearLowOff`: Must Buy.
+4. Fewer than `newDays` of history and `off` below `newOff`: Too New.
+5. `off` is at least `fairOff`: Fair Price.
+6. Otherwise: Wait for Sale.
+
+"Just Missed" and the Must Buy price shown on an item use the same starting point.
 
 ## A page for every item
 

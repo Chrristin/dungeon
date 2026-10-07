@@ -13,6 +13,14 @@ Under every essay, and a few quieter changes.
 
 This could not be tested in a running Ghost before release: the related-essay queries and the reply link use Ghost helpers (`get`, `match`, `encode`) that were checked only by gscan. Look at one essay of each kind after it installs.
 
+## 2.20.2
+
+- **A watchlist judges by the usual price, not the label's MRP.** An item can now carry `orp`, `orpDays` and `orpWeak` in its list file: the price it has most often sold at over the past year, and how many days of record that rests on. Once there are 30 days of record, the discount is measured from that price, not from MRP: a Must Buy is 25% under it (`usualMustOff`; the 40% under MRP still applies to an item without one). Before, an inflated MRP made every ordinary price look like a 60% bargain.
+- **What you see.** Cards say "usually ₹1,000" and "20% off usual" in place of the MRP; the item sheet's third figure is "Usual", with a quiet line when the listed MRP is far above it; the sentence under the verdict says "20% under its usual price of ₹1,000"; the price line draws the usual price in place of MRP.
+- **Too soon to say.** A new item with a short record is Collecting Data and never a Must Buy. An older item whose usual price is not worked out yet is judged from MRP, as before.
+- **Just Missed and the Must Buy price use the same starting point,** so a price that merely returned to normal no longer shows up there.
+- A list file without these fields behaves exactly as it did. See `docs/watchlist.md`.
+
 ## 2.20.1
 
 Fixes to 2.20.0.
