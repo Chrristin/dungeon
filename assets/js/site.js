@@ -3035,14 +3035,27 @@
   }
   // A post's neighbours as a small garden: the post in the middle, each link a dot on a stem, coloured by how far the
   // note has grown. Pointing at a dot (or, on a phone, tapping it once) opens a card with its title, a line of it and a
-  // small picture when it has one; the card (or a second tap) opens it.
-  function smallImg(u) { return u && /\/content\/images\//.test(u) && !/\/size\//.test(u) ? u.replace('/content/images/', '/content/images/size/w300/') : (u || ''); }
+  // small picture when it has one, with leaves and flowers growing over the picture; the card (or a second tap) opens it.
+  // The card docks in the half of the map away from the dot, so it never covers it. No instructions: it is a map.
+  function smallImg(u) { return u && /\/content\/images\//.test(u) && !/\/size\//.test(u) ? u.replace('/content/images/', '/content/images/size/w600/') : (u || ''); }
+  // leaves and flowers that grow over a picture 70 units square (a margin of 15 round it is drawn too)
+  function bloomOver(seedKey) {
+    var vines = [[[-4, 74], [12, 6]], [[76, 76], [58, 22]], [[74, -3], [44, 12]]], out = '', k = hashOf(seedKey), flowers = [];
+    vines.forEach(function (v, i) {
+      var w = wildVine(v[0][0], v[0][1], v[1][0], v[1][1], seedKey + i, 1.1, 3 + (i === 0 ? 1 : 0)), d = (i * 0.12).toFixed(2) + 's';
+      out += '<path class="pm-vn" pathLength="1" style="animation-delay:' + d + '" d="' + w.d + '"/><g class="pm-lv" style="animation-delay:' + (0.45 + i * 0.12).toFixed(2) + 's">' + w.leaves + w.curl + '</g>';
+      flowers.push([v[1][0], v[1][1], 7 + (k >> i & 1) * 1.5]);
+    });
+    flowers.push([30, 72, 6.5]);
+    flowers.forEach(function (f, i) { out += '<g class="pm-fl" style="animation-delay:' + (0.75 + i * 0.1).toFixed(2) + 's">' + gflower(f[0], f[1], f[2], FLOWERS[(k + i * 2) % FLOWERS.length]) + '</g>'; });
+    return '<svg class="pm-bloom" viewBox="-15 -15 100 100" aria-hidden="true">' + out + '</svg>';
+  }
   function postMap(slot, self, groups, L) {
     var nb = [], seen = {};
     groups.forEach(function (g) { g.items.forEach(function (x) { if (x.u && !seen[x.u] && nb.length < 12) { seen[x.u] = 1; nb.push({ t: x.t, u: x.u, g: x.g || 'seedling', i: x.i, x: x.x, kind: g.kind, label: g.label }); } }); });
     if (!nb.length) return;
     var stageOf = function (g) { return (L.stages && L.stages[g]) || g; };
-    var W = Math.max(300, Math.min(640, slot.clientWidth || 560)), H = nb.length <= 2 ? 150 : nb.length <= 5 ? 210 : 270, cx = W / 2, cy = H / 2, rx = W / 2 - 34, ry = H / 2 - 28, s = '', dots = '';
+    var W = Math.max(300, Math.min(640, slot.clientWidth || 560)), H = nb.length <= 2 ? 190 : nb.length <= 5 ? 220 : 270, cx = W / 2, cy = H / 2, rx = W / 2 - 34, ry = H / 2 - 28, s = '', dots = '';
     nb.forEach(function (n, i) {
       var a = -Math.PI / 2 + i * 2 * Math.PI / nb.length, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry, v = wildVine(cx, cy, x, y, 'pm' + self.s + '>' + n.u, 1, n.kind === 'rel' ? 0 : 2);
       s += n.kind === 'rel' ? '<path class="lm-rel" d="' + v.d + '"/>' : '<g class="lm-vine"><path d="' + v.d + '"/>' + v.leaves + v.curl + '</g>';
@@ -3053,27 +3066,31 @@
     var present = {}; nb.forEach(function (n) { present[n.g] = 1; }); present[self.g || 'post'] = 1;
     var key = ['seedling', 'growing', 'evergreen', 'post'].filter(function (g) { return present[g]; }).map(function (g) { return '<span class="pm-key-i"><i class="pm-key-dot" data-g="' + g + '"></i>' + esc(stageOf(g)) + '</span>'; }).join('');
     slot.innerHTML = '<div class="pm"><svg viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="' + esc(L.map || '') + '">' + s + dots + '</svg>' +
-      '<a class="pm-card is-idle"><img class="pm-card-img" alt="" hidden><span class="pm-card-text"><span class="pm-card-k"></span><span class="pm-card-t"></span><span class="pm-card-x"></span></span></a></div>' +
-      '<p class="pm-key">' + key + '<span class="pm-key-note">' + esc(L.mapKey || '') + '</span></p>';
-    var wrap = slot.querySelector('.pm'), card = wrap.querySelector('.pm-card'), im = card.querySelector('img'), els = [].slice.call(wrap.querySelectorAll('.pm-dot')), cur = -1, touch = false;
+      '<a class="pm-card" hidden><span class="pm-card-pic"><img class="pm-card-img" alt="" hidden><span class="pm-bloom-slot"></span></span><span class="pm-card-text"><span class="pm-card-k"></span><span class="pm-card-t"></span><span class="pm-card-x"></span></span></a></div>' +
+      '<p class="pm-key">' + key + '</p>';
+    var wrap = slot.querySelector('.pm'), svg = wrap.querySelector('svg'), card = wrap.querySelector('.pm-card'), im = card.querySelector('img'), bl = card.querySelector('.pm-bloom-slot'), els = [].slice.call(wrap.querySelectorAll('.pm-dot')), cur = -1, touch = false;
     var k = card.querySelector('.pm-card-k'), t = card.querySelector('.pm-card-t'), x = card.querySelector('.pm-card-x');
-    var idle = function () { cur = -1; card.classList.add('is-idle'); card.removeAttribute('href'); im.hidden = true; k.textContent = ''; x.textContent = ''; t.textContent = L.hint || 'Point at a dot, or tap one, to see what it is.'; els.forEach(function (e) { e.classList.remove('is-on'); }); };
-    im.addEventListener('error', function () { im.hidden = true; });
-    var open = function (i) { // the card sits in its own place under the map, so it never covers a dot
-      var n = nb[i]; cur = i; card.classList.remove('is-idle'); card.href = n.u; k.textContent = n.label + ' · ' + stageOf(n.g); t.textContent = n.t;
-      var ex = String(n.x || '').trim(); x.textContent = ex.length > 120 ? ex.slice(0, 119).replace(/s+S*$/, '') + '…' : ex;
-      if (n.i) { im.src = smallImg(n.i); im.hidden = false; } else { im.removeAttribute('src'); im.hidden = true; }
+    im.addEventListener('error', function () { im.hidden = true; bl.innerHTML = ''; });
+    var close = function () { cur = -1; card.hidden = true; bl.innerHTML = ''; els.forEach(function (e) { e.classList.remove('is-on'); }); };
+    var open = function (i) {
+      if (cur === i) return;
+      var n = nb[i]; cur = i; card.href = n.u; k.textContent = n.label + ' · ' + stageOf(n.g); t.textContent = n.t;
+      var ex = String(n.x || '').trim(); x.textContent = ex.length > 120 ? ex.slice(0, 119).replace(/\s+\S*$/, '') + '…' : ex;
+      if (n.i) { im.src = smallImg(n.i); im.hidden = false; bl.innerHTML = bloomOver(n.u); } else { im.removeAttribute('src'); im.hidden = true; bl.innerHTML = ''; }
+      card.hidden = false;
+      var B = wrap.getBoundingClientRect(), D = els[i].querySelector('.pm-v').getBoundingClientRect(), up = D.top + D.height / 2 - B.top > B.height / 2, left = D.left + D.width / 2 - B.left > B.width / 2;
+      card.classList.toggle('is-top', up); card.classList.toggle('is-left', left); // the half of the map the dot is not in
       els.forEach(function (e, j) { e.classList.toggle('is-on', j === i); });
     };
-    idle();
     els.forEach(function (a, i) {
       a.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') open(i); });
       a.addEventListener('focus', function () { if (!touch) open(i); });
       a.addEventListener('click', function (e) { if (touch && cur !== i) { e.preventDefault(); open(i); } }); // a phone: the first tap opens the card, the next one goes there
     });
+    svg.addEventListener('pointerdown', function (e) { if (!e.target.closest('.pm-dot')) close(); }); // the empty map: put the card away
     wrap.addEventListener('pointerdown', function (e) { touch = e.pointerType !== 'mouse'; }, true);
-    wrap.addEventListener('keydown', function (e) { if (e.key === 'Escape') idle(); });
-    document.addEventListener('pointerdown', function (e) { if (!wrap.contains(e.target)) idle(); });
+    wrap.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    document.addEventListener('pointerdown', function (e) { if (!wrap.contains(e.target)) close(); });
   }
   function initPostGarden(root) {
     var box = root.querySelector('.post-garden'), panel = root.querySelector('.post-panel');
@@ -3099,6 +3116,147 @@
   initUses();
   initGardenNote(document, readJson(document.getElementById('garden-note')));
   initPostGarden(document);
+
+  /* Plot scenes: a small line drawing behind each plot card's writing, redrawn about 11 times a second, only while the card is on screen. */
+  (function () {
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, TAU = Math.PI * 2, scenes = [], timer = 0;
+    function rgb(card) { var m = (getComputedStyle(card).color || '').match(/\d+(\.\d+)?/g) || [23, 25, 30]; return m.slice(0, 3).join(','); }
+    function seed(n) { return function () { n = (n * 16807) % 2147483647; return n / 2147483647; }; }
+
+    // ---- The Workshop: thin lines moving down, the way code scrolls
+    function lines(w, h) {
+      var r = seed(11), cols = [], n = Math.max(6, Math.round(w / 34));
+      for (var i = 0; i < n; i++) cols.push({ x: 12 + (i + r() * 0.8) * (w - 24) / n, y: r() * h * 1.4, len: 22 + r() * 56, v: 18 + r() * 42, a: 0.14 + r() * 0.14, g: r() < 0.18 });
+      return function (cx, t, ink) {
+        cx.lineWidth = 1; cx.lineCap = 'round';
+        cols.forEach(function (c) {
+          var y = (c.y + t * c.v) % (h + c.len * 2) - c.len, gr = cx.createLinearGradient(0, y - c.len, 0, y);
+          var col = c.g ? '30,139,76' : ink; gr.addColorStop(0, 'rgba(' + col + ',0)'); gr.addColorStop(1, 'rgba(' + col + ',' + c.a + ')');
+          cx.strokeStyle = gr; cx.beginPath(); cx.moveTo(c.x, y - c.len); cx.lineTo(c.x, y); cx.stroke();
+          cx.fillStyle = 'rgba(' + col + ',' + Math.min(0.5, c.a * 2) + ')'; cx.fillRect(c.x - 1, y - 1, 2, 2);
+        });
+      };
+    }
+
+    // ---- The Road: a mountain, a road up it, a little car climbing, a few birds
+    function road() {
+      var pts = [[92, 120], [142, 108], [100, 93], [152, 77], [112, 61], [138, 49], [122, 35]], seg = [], total = 0, i;
+      for (i = 0; i < pts.length - 1; i++) { var d = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); seg.push(d); total += d; }
+      function at(p) { var d = p * total, k = 0; while (k < seg.length - 1 && d > seg[k]) { d -= seg[k]; k++; } var f = d / seg[k]; return [pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f, Math.atan2(pts[k + 1][1] - pts[k][1], pts[k + 1][0] - pts[k][0])]; }
+      var birds = [{ x: 30, y: 26, v: 9, p: 0 }, { x: 120, y: 12, v: 12, p: 2 }, { x: 205, y: 40, v: 7, p: 4 }];
+      return function (cx, t, ink) {
+        cx.lineWidth = 1.3; cx.lineCap = 'round'; cx.lineJoin = 'round';
+        cx.strokeStyle = 'rgba(' + ink + ',0.16)'; cx.beginPath(); cx.moveTo(150, 120); cx.lineTo(178, 84); cx.lineTo(196, 100); cx.lineTo(236, 120); cx.stroke();
+        cx.strokeStyle = 'rgba(' + ink + ',0.3)'; cx.beginPath(); cx.moveTo(0, 120); cx.lineTo(44, 82); cx.lineTo(70, 96); cx.lineTo(122, 26); cx.lineTo(160, 74); cx.lineTo(182, 58); cx.lineTo(236, 120); cx.stroke();
+        cx.strokeStyle = 'rgba(' + ink + ',0.12)'; cx.beginPath(); cx.moveTo(116, 24); cx.lineTo(122, 34); cx.lineTo(128, 26); cx.stroke(); // snow line
+        cx.setLineDash([3, 4]); cx.strokeStyle = 'rgba(' + ink + ',0.26)'; cx.beginPath(); pts.forEach(function (p, k) { k ? cx.lineTo(p[0], p[1]) : cx.moveTo(p[0], p[1]); }); cx.stroke(); cx.setLineDash([]);
+        var p = (t / 16) % 1, c = at(p), ang = Math.max(-0.5, Math.min(0.5, c[2] * 0.35 + (Math.cos(c[2]) < 0 ? Math.PI * 0.35 : 0)));
+        cx.save(); cx.translate(c[0], c[1] - 2); cx.rotate(Math.cos(c[2]) < 0 ? -ang : ang); cx.scale(Math.cos(c[2]) < 0 ? -1 : 1, 1); // the car faces the way it is going
+        cx.strokeStyle = 'rgba(' + ink + ',0.6)'; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(-6, 0); cx.lineTo(-6, -3); cx.lineTo(-3, -3); cx.lineTo(-1.5, -6); cx.lineTo(3, -6); cx.lineTo(4.5, -3); cx.lineTo(6.5, -3); cx.lineTo(6.5, 0); cx.closePath(); cx.stroke();
+        [-3.5, 3.5].forEach(function (x) { cx.beginPath(); cx.arc(x, 0.6, 1.7, 0, TAU); cx.stroke(); }); cx.restore();
+        cx.lineWidth = 1.2; cx.strokeStyle = 'rgba(' + ink + ',0.42)';
+        birds.forEach(function (b) {
+          var x = ((b.x - t * b.v) % 270 + 270) % 270 - 20, y = b.y + Math.sin(t * 0.9 + b.p) * 4, w = Math.sin(t * 7 + b.p) * 3;
+          cx.beginPath(); cx.moveTo(x - 5, y - w); cx.quadraticCurveTo(x - 2, y - 2 - w * 0.4, x, y); cx.quadraticCurveTo(x + 2, y - 2 - w * 0.4, x + 5, y - w); cx.stroke();
+        });
+      };
+    }
+
+    // ---- Music: notes appear, drift down and fade
+    function notes(w, h) {
+      var r = seed(5), G = ['♪', '♫', '♩', '♬'], list = [];
+      for (var i = 0; i < 7; i++) list.push({ x: w * (0.5 + r() * 0.46), y: h * (0.12 + r() * 0.35), ph: r(), life: 6 + r() * 3, g: G[i % 4], s: 18 + r() * 12, sw: 5 + r() * 7 });
+      return function (cx, t, ink) {
+        cx.textBaseline = 'middle';
+        list.forEach(function (n) {
+          var p = ((t / n.life) + n.ph) % 1, a = Math.sin(Math.PI * p);
+          cx.font = n.s + 'px serif'; cx.fillStyle = 'rgba(' + ink + ',' + (0.3 * a * a).toFixed(3) + ')';
+          cx.fillText(n.g, n.x + Math.sin(p * TAU * 1.5 + n.ph * 9) * n.sw, n.y + p * 70);
+        });
+      };
+    }
+
+    // ---- The Library: a candle burning beside an open book, a page turning now and then
+    function candle() {
+      return function (cx, t, ink) {
+        cx.lineWidth = 1.2; cx.lineCap = 'round'; cx.lineJoin = 'round';
+        var fx = 26, base = 100, top = 66, fl = Math.sin(t * 9) * 1.2 + Math.sin(t * 5.3 + 1) * 1.4, hgt = 15 + Math.sin(t * 7.1) * 1.8;
+        var gl = cx.createRadialGradient(fx, top - 10, 2, fx, top - 10, 44); gl.addColorStop(0, 'rgba(255,170,50,' + (0.2 + Math.sin(t * 6) * 0.03).toFixed(3) + ')'); gl.addColorStop(1, 'rgba(255,170,50,0)');
+        cx.fillStyle = gl; cx.fillRect(fx - 46, top - 56, 92, 92);
+        cx.strokeStyle = 'rgba(' + ink + ',0.4)'; cx.strokeRect(fx - 6, top, 12, base - top); cx.beginPath(); cx.moveTo(fx - 6, top + 5); cx.quadraticCurveTo(fx - 1, top + 11, fx - 6, top + 17); cx.stroke(); // wax
+        cx.beginPath(); cx.moveTo(fx - 11, base); cx.lineTo(fx + 11, base); cx.stroke();
+        cx.beginPath(); cx.moveTo(fx, top); cx.lineTo(fx + fl * 0.15, top - 4); cx.stroke();
+        cx.strokeStyle = 'rgba(214,120,20,0.8)'; cx.beginPath(); cx.moveTo(fx + fl * 0.15, top - 4); cx.bezierCurveTo(fx - 6, top - 8, fx - 3 + fl, top - 6 - hgt * 0.7, fx + fl, top - 4 - hgt); cx.bezierCurveTo(fx + 3 + fl, top - 6 - hgt * 0.7, fx + 6, top - 8, fx + fl * 0.15, top - 4); cx.stroke();
+        cx.strokeStyle = 'rgba(240,170,40,0.9)'; cx.beginPath(); cx.moveTo(fx + fl * 0.15, top - 4.5); cx.quadraticCurveTo(fx - 2 + fl * 0.4, top - 8, fx + fl * 0.6, top - 4.5 - hgt * 0.5); cx.quadraticCurveTo(fx + 2 + fl * 0.4, top - 8, fx + fl * 0.15, top - 4.5); cx.stroke();
+        // the book
+        var bx = 98, by = 100, pw = 42, ph = 50, turn = (t % 7) / 1.3, k = turn < 1 ? turn : -1;
+        cx.strokeStyle = 'rgba(' + ink + ',0.4)';
+        [-1, 1].forEach(function (s) { cx.beginPath(); cx.moveTo(bx, by - ph + 3); cx.quadraticCurveTo(bx + s * pw * 0.5, by - ph - 2, bx + s * pw, by - ph + 2); cx.lineTo(bx + s * pw, by - 2); cx.quadraticCurveTo(bx + s * pw * 0.5, by - 6, bx, by); cx.closePath(); cx.stroke(); });
+        cx.strokeStyle = 'rgba(' + ink + ',0.17)';
+        [-1, 1].forEach(function (s) { for (var l = 0; l < 5; l++) { cx.beginPath(); cx.moveTo(bx + s * 6, by - ph + 12 + l * 7); cx.lineTo(bx + s * (pw - 7), by - ph + 12 + l * 7 + (s > 0 ? 1 : -0.5)); cx.stroke(); } });
+        if (k >= 0) { // the page being turned: its free edge swings over from the right to the left
+          var ex = bx + pw * Math.cos(Math.PI * k), lift = Math.sin(Math.PI * k) * 9;
+          cx.strokeStyle = 'rgba(' + ink + ',0.45)'; cx.fillStyle = 'rgba(255,255,255,0.12)'; cx.beginPath(); cx.moveTo(bx, by - ph + 3); cx.quadraticCurveTo((bx + ex) / 2, by - ph - 2 - lift, ex, by - ph + 2 - lift * 0.6); cx.lineTo(ex, by - 2 - lift * 0.4); cx.quadraticCurveTo((bx + ex) / 2, by - 6 + lift * 0.3, bx, by); cx.closePath(); cx.fill(); cx.stroke();
+        }
+      };
+    }
+
+    // ---- The Collection: bottle caps and Lego bricks in a pile, a brick dropping onto it every few seconds
+    function pile() {
+      function brick(cx, x, y, n, ang, a, ink) {
+        cx.save(); cx.translate(x, y); cx.rotate(ang * Math.PI / 180); var w = n * 11, h = 12; cx.strokeStyle = 'rgba(' + ink + ',' + a + ')';
+        cx.strokeRect(-w / 2, -h / 2, w, h);
+        for (var i = 0; i < n; i++) { cx.beginPath(); cx.ellipse(-w / 2 + 5.5 + i * 11, -h / 2 - 1.6, 3.4, 1.7, 0, 0, TAU); cx.stroke(); cx.beginPath(); cx.moveTo(-w / 2 + 2.1 + i * 11, -h / 2 - 1.6); cx.lineTo(-w / 2 + 2.1 + i * 11, -h / 2); cx.moveTo(-w / 2 + 8.9 + i * 11, -h / 2 - 1.6); cx.lineTo(-w / 2 + 8.9 + i * 11, -h / 2); cx.stroke(); }
+        cx.restore();
+      }
+      function cap(cx, x, y, r, a, ink) {
+        cx.strokeStyle = 'rgba(' + ink + ',' + a + ')'; cx.beginPath();
+        for (var i = 0; i < 24; i++) { var an = i / 24 * TAU, rr = i % 2 ? r * 0.86 : r; cx.lineTo(x + Math.cos(an) * rr, y + Math.sin(an) * rr * 0.62); }
+        cx.closePath(); cx.stroke(); cx.beginPath(); cx.ellipse(x, y, r * 0.6, r * 0.37, 0, 0, TAU); cx.stroke();
+      }
+      return function (cx, t, ink) {
+        cx.lineWidth = 1.2; cx.lineJoin = 'round';
+        cap(cx, 26, 106, 10, 0.3, ink); cap(cx, 50, 108, 9, 0.28, ink); cap(cx, 160, 107, 10, 0.3, ink); cap(cx, 82, 103, 8, 0.24, ink);
+        brick(cx, 60, 98, 2, 5, 0.3, ink); brick(cx, 112, 102, 3, -4, 0.32, ink); brick(cx, 148, 99, 2, 9, 0.28, ink); brick(cx, 124, 88, 2, -11, 0.3, ink);
+        [[0, 78, 84, 12], [3.2, 138, 74, -8]].forEach(function (d) { // a brick drops, rests a moment on the pile, and fades
+          var p = ((t + d[0]) % 6.4) / 6.4, fall = Math.min(1, p / 0.18), y = -30 + (d[2] + 30) * fall * fall, a = p < 0.62 ? 0.34 : 0.34 * Math.max(0, 1 - (p - 0.62) / 0.2);
+          if (a > 0.01) brick(cx, d[1], y, 2, d[3] * fall, a, ink);
+        });
+      };
+    }
+
+    var defs = {
+      'plot-the-workshop': { full: true, make: lines },
+      'plot-travel': { w: 236, h: 124, make: road },
+      'plot-music-2': { w: 0, h: 0, full: true, make: notes },
+      'plot-the-library': { w: 160, h: 112, sc: 0.6, top: 34, right: 46, make: candle },
+      'plot-the-collection': { w: 200, h: 120, sc: 0.56, top: 22, right: 18, make: pile }
+    };
+    function build(key, card) {
+      var d = defs[key], cv = document.createElement('canvas'), s = { card: card, cv: cv, cx: cv.getContext('2d'), d: d, vis: false, draw: null, w: 0, h: 0, ink: '23,25,30' };
+      cv.className = 'plot-scene'; cv.setAttribute('aria-hidden', 'true'); card.insertBefore(cv, card.firstChild); fit(s); scenes.push(s);
+      if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { s.vis = e[0].isIntersecting; if (s.vis) kick(); }).observe(card); else { s.vis = true; kick(); }
+    }
+    function fit(s) {
+      var r = s.card.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1), full = s.d.full;
+      var sc = s.d.sc || 1; s.off = s.d.top !== undefined && r.width < 560; s.cv.style.display = s.off ? 'none' : ''; // the small corner pictures need room beside the title; a phone has none s.w = full ? Math.round(r.width) : s.d.w; s.h = full ? Math.round(r.height) : s.d.h; s.ink = rgb(s.card);
+      s.cv.width = Math.round(s.w * sc * dpr); s.cv.height = Math.round(s.h * sc * dpr); s.cx.setTransform(dpr * sc, 0, 0, dpr * sc, 0, 0);
+      s.cv.style.cssText = (s.off ? 'display:none;' : '') + 'position:absolute;pointer-events:none;z-index:-1;' + (full ? 'left:0;top:0;width:100%;height:100%;border-radius:inherit;' : (s.d.top === undefined ? 'bottom:10px;right:12px;' : 'top:' + s.d.top + 'px;right:' + s.d.right + 'px;') + 'width:' + Math.round(s.w * sc) + 'px;height:' + Math.round(s.h * sc) + 'px;');
+      s.draw = s.d.make(s.w, s.h); if (reduce) paint(s, 3);
+    }
+    function paint(s, t) { s.cx.clearRect(0, 0, s.w, s.h); s.draw(s.cx, t, s.ink); }
+    function tick() {
+      timer = 0; var any = false, t = performance.now() / 1000;
+      if (document.hidden) return;
+      scenes.forEach(function (s) { if (s.vis && !s.off) { any = true; paint(s, t); } });
+      if (any) kick();
+    }
+    function kick() { if (!timer && !reduce) timer = setTimeout(tick, 90); }
+    Object.keys(defs).forEach(function (key) { var card = document.querySelector('.plot[data-key="' + key + '"]'); if (card) build(key, card); });
+    document.addEventListener('visibilitychange', kick);
+    var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { scenes.forEach(fit); }, 200); });
+    setInterval(function () { scenes.forEach(function (s) { if (s.vis) s.ink = rgb(s.card); }); }, 2000);
+  })();
 
   // Posts preload: a post's text downloads as its card comes within a screen of view (and when a finger or
   // pointer lands on a card), so opening it doesn't wait. Skipped with Data Saver on or on very slow connections.

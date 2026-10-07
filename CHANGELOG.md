@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.20.0
+
+Homepage plots and the garden map.
+
+- **Each plot has its own quiet look.** Thin lines drift down The Workshop like scrolling code, with a blinking cursor after its title. The Road has a line-drawn mountain with a car climbing its road and a few birds. The Music has notes that appear, drift down and fade. The Library is dot-matrix paper (dot grid, tractor holes down the edges) with a small candle beside an open book that turns a page now and then. The Collection is a dotted parts sheet with a small pile of bottle caps and Lego bricks and a brick dropping onto it every few seconds. The Pit Wall has sector colours along its top and a chequered corner. Each has a small mono mark after its title. The moving drawings are on one small canvas per card, redrawn about eleven times a second and only while the card is on screen, so they cost little; with reduced motion they hold still. On a phone the Library and Collection corner pictures are left out for lack of room.
+- **No lines between the posts in a plot.**
+- **The garden map has no instructions.** The big "point at a dot" box and the sentence under the map are gone; the card appears only when you point at (or tap) a dot, in the half of the map away from that dot so it never covers it. Tapping the empty map puts it away. When a link has a picture, leaves and flowers grow over the picture as the card opens.
+- **The card's picture is the 600-pixel version, not the original.** It asked for a size the theme does not define (300), so Ghost sent the full-size file each time.
+
 ## 2.19.0
 
 Garden links, and two small fixes.
