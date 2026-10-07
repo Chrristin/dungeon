@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.21.0
+
+Under every essay, and a few quieter changes.
+
+- **The foot of an essay.** Under each essay (not notes, Now months, things or garden notes) there is now your bio from your Ghost author profile with a link to About, a line to subscribe by email, and a "Reply by email" link. The reply link uses the support email address in Settings, Membership, and stays hidden while that is still `noreply`, so set it to the address you want replies at.
+- **A closing line under Product essays only:** "I'm open to product leadership roles and consulting", linked to About. The wording is in `locales/en.json` under that sentence, so it can be changed there. It shows only when the essay's first tag has the address `product`.
+- **Two related essays replace Older and Newer.** Under an essay you now get two others that share its first tag (Product, Build or Life); if there are fewer than two, essays from the same room (The Workshop, The Library, The Pit Wall, The Music, The Road, The Collection) fill the rest. Notes, Now months, things, garden notes and watchlist items are never offered. Things (`#thing`) keep Older and Newer.
+- **An RSS link beside "Subscribe by email"** in the footer.
+- **Search engines are told to skip watchlist items and short notes** (`#watch-item`, `#watch-noindex`, `#scatter`, `#note`). Garden notes (`#garden`) are still indexed. Ghost still lists these pages in its sitemap; a theme cannot change that.
+- **The Music plot works under either tag address.** Its animated notes and "SIDE A" label were tied to the address `music-2`; they now also answer to `the-music`, so that tag can be renamed.
+
+This could not be tested in a running Ghost before release: the related-essay queries and the reply link use Ghost helpers (`get`, `match`, `encode`) that were checked only by gscan. Look at one essay of each kind after it installs.
+
 ## 2.20.1
 
 Fixes to 2.20.0.
