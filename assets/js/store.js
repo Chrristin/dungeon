@@ -478,7 +478,7 @@
 
     var foot = el('footer', 'store-foot');
     if (shelf.method) foot.appendChild(el('p', '', shelf.method));
-    if ((shelf.items || []).some(function (it) { return isAffiliate(safeUrl(it.url)); })) { foot.appendChild(el('p', '', 'I may earn a commission if you buy through these links.')); if (meta('amazon-tag')) foot.appendChild(el('p', '', 'As an Amazon Associate I earn from qualifying purchases.')); }
+    if ((shelf.items || []).some(function (it) { return isAffiliate(safeUrl(it.url)); })) foot.appendChild(el('p', '', meta('amazon-tag') ? 'As an Amazon Associate I earn from qualifying purchases.' : 'I may earn a commission if you buy through these links.'));
     root.appendChild(foot);
   }
 
