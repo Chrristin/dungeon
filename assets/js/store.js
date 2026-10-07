@@ -103,7 +103,7 @@
     if (!o.priced || !o.base || o.off < 0.005) return null;
     /* Steps go by the figure as shown, so "40% off" is never drawn weaker than the 40% it says; a Must Buy is always the strongest */
     var rules = rulesOf(shelf), shown = Math.round(o.off * 100) / 100, step = (shown >= o.mustOff || o.verdict === 'must') ? 2 : shown >= rules.fairOff ? 1 : 0;
-    return el('span', 'store-off store-off--' + step, Math.round(o.off * 100) + '% off' + (o.usual != null ? ' usual' : ''));
+    return el('span', 'store-off store-off--' + step, Math.round(o.off * 100) + '% off');
   }
   function rulesOf(s) { var rules = {}, k; for (k in DEFAULTS) rules[k] = DEFAULTS[k]; for (k in (s.rules || {})) rules[k] = s.rules[k]; return rules; }
   function label(key) { for (var i = 0; i < VERDICTS.length; i++) if (VERDICTS[i].key === key) return VERDICTS[i].label; return key; }
@@ -111,11 +111,11 @@
     var it = o.it, when = monthYear(it.lowDate), hasLow = num(it.low), hit = hasLow ? money(it.low) + (when ? ' (' + when + ')' : '') : '';
     var lower = hasLow && o.priced && it.low < it.price * 0.97, days = num(it.days) && it.days > 0 ? it.days : 0;
     if (o.verdict === 'skip') return !o.priced ? 'No offer from the main seller.' : o.over ? 'Priced above MRP right now.' + (hasLow ? ' It has been as low as ' + hit + '.' : '') : 'Reseller listing. Not the going rate.';
-    var under = o.usual != null && o.off >= 0.005 ? Math.round(o.off * 100) + '% under its usual price of ' + money(o.usual) + '.' : '';
-    if (o.verdict === 'must') return o.atLow ? 'At or near its lowest ever.' + (under ? ' ' + under : '') : under ? under + ' Rarely lower.' : 'Deep discount. Rarely lower.';
+    var under = o.usual != null && o.off >= 0.005 ? Math.round(o.off * 100) + '% under its usual price.' : '';
+    if (o.verdict === 'must') return o.atLow ? 'At or near its lowest ever.' : under ? under + ' Rarely lower.' : 'Deep discount. Rarely lower.';
     if (o.verdict === 'new') return o.thin ? 'Only ' + (it.orpDays > 0 ? it.orpDays + ' days' : 'a day') + ' of prices. Too soon to say what is usual.' : days ? 'Only ' + days + ' days tracked. No real discount yet.' : 'Just added. No price history yet.';
     if (o.verdict === 'fair') return lower ? 'Decent, but it has hit ' + hit + '.' : hasLow ? 'Decent, and as low as it has been.' : 'Decent discount. No price history yet.';
-    if (o.usual != null) return (o.priced && it.price > o.usual * 1.05 ? 'Above its usual price of ' + money(o.usual) + '.' : 'Near its usual price of ' + money(o.usual) + '.') + (lower ? ' It has hit ' + hit + '.' : '');
+    if (o.usual != null) return (o.priced && it.price > o.usual * 1.05 ? 'Above its usual price.' : 'Near its usual price.') + (lower ? ' It has hit ' + hit + '.' : '');
     return lower ? 'Near MRP. It has hit ' + hit + '.' : days ? 'No discount yet in ' + days + ' days tracked.' : 'Near MRP. No price history yet.';
   }
 
@@ -352,6 +352,14 @@
     if (shelf.sale && shelf.sale.windows && shelf.sale.windows.length) strip.appendChild(el('span', '', 'sales: ' + shelf.sale.windows.join(' \u00b7 ')));
     if (shelf.updated) strip.appendChild(el('span', 'store-strip-end', 'updated ' + fullDate(shelf.updated)));
     if (strip.childNodes.length) root.appendChild(strip);
+    /* Why the percentages here differ from the shop's own: only on a list whose items carry usual prices */
+    if (all.some(function (o) { return o.usual != null; })) {
+      var why = el('details', 'store-why'), sum = el('summary', '', 'Why is our % off different from Amazon’s?'), body = el('p');
+      body.appendChild(document.createTextNode('Amazon compares today’s price with the MRP printed on the box, and that number is often set very high. We compare it with the price the item has actually sold for most of the last year, its usual price. So “20% off” here means 20% less than what people have usually paid, not 20% less than a number on the label. A '));
+      body.appendChild(el('strong', '', 'Must Buy')); body.appendChild(document.createTextNode(' is ' + Math.round(rules.usualMustOff * 100) + '% or more under the usual price. An item we have not tracked for a month yet is shown as '));
+      body.appendChild(el('em', '', 'Collecting Data')); body.appendChild(document.createTextNode(' and judged against the MRP until we have enough.'));
+      why.appendChild(sum); why.appendChild(body); root.appendChild(why);
+    }
 
     function feature(title, list, missed, bold) {
       if (!list.length) return;

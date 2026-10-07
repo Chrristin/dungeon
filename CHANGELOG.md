@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.20.3
+
+- **"Why is our % off different from Amazon's?"** A closed one-line row sits above the first card on a watchlist whose items carry usual prices. Opened, it says in plain words that Amazon measures from the MRP printed on the box, while this page measures from the price the item has sold for most of the last year; what a Must Buy is (the percentage comes from the list's own rule); and that an item with under a month of record is Collecting Data and judged against the MRP.
+- **Less repetition.** The pill says just "56% off"; the line under the price still says "usually ₹1,955", and the item sheet labels that figure "Usual". The sentence under an item's title no longer repeats the amount ("56% under its usual price.", "Near its usual price.").
+
 ## 2.20.2
 
 - **A watchlist judges by the usual price, not the label's MRP.** An item can now carry `orp`, `orpDays` and `orpWeak` in its list file: the price it has most often sold at over the past year, and how many days of record that rests on. Once there are 30 days of record, the discount is measured from that price, not from MRP: a Must Buy is 25% under it (`usualMustOff`; the 40% under MRP still applies to an item without one). Before, an inflated MRP made every ordinary price look like a 60% bargain.
