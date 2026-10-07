@@ -354,11 +354,25 @@
     if (strip.childNodes.length) root.appendChild(strip);
     /* Why the percentages here differ from the shop's own: only on a list whose items carry usual prices */
     if (all.some(function (o) { return o.usual != null; })) {
-      var why = el('details', 'store-why'), sum = el('summary', '', 'Why is our % off different from Amazon’s?'), body = el('p');
+      var why = el('div', 'store-why'), sum = el('button', 'store-why-q', 'Why is our % off different from Amazon’s?'), body = el('p', 'store-why-pop');
+      sum.type = 'button'; sum.setAttribute('aria-expanded', 'false'); body.id = 'store-why-pop'; body.setAttribute('role', 'note'); sum.setAttribute('aria-controls', body.id);
       body.appendChild(document.createTextNode('Amazon compares today’s price with the MRP printed on the box, and that number is often set very high. We compare it with the price the item has actually sold for most of the last year, its usual price. So “20% off” here means 20% less than what people have usually paid, not 20% less than a number on the label. A '));
       body.appendChild(el('strong', '', 'Must Buy')); body.appendChild(document.createTextNode(' is ' + Math.round(rules.usualMustOff * 100) + '% or more under the usual price. An item we have not tracked for a month yet is shown as '));
       body.appendChild(el('em', '', 'Collecting Data')); body.appendChild(document.createTextNode(' and judged against the MRP until we have enough.'));
       why.appendChild(sum); why.appendChild(body); root.appendChild(why);
+      /* An overlay, not a row that pushes the page down: opens on hover or click; closes on a click elsewhere, Escape, or the pointer leaving */
+      var whyTimer = 0;
+      function whyOpen(on) {
+        clearTimeout(whyTimer); why.classList.toggle('is-open', on); sum.setAttribute('aria-expanded', on ? 'true' : 'false');
+        if (on) { body.style.left = '0'; var r = body.getBoundingClientRect(), over = r.right - (document.documentElement.clientWidth - 12); if (over > 0) body.style.left = Math.max(12 - r.left, -over) + 'px'; }
+      }
+      /* A click keeps it open (hover alone closes when the pointer leaves); a second click closes it. Touch has no hover, so only taps count there */
+      var whyPinned = false;
+      sum.addEventListener('click', function () { whyPinned = !whyPinned; whyOpen(whyPinned); });
+      why.addEventListener('pointerenter', function (ev) { if (ev.pointerType === 'mouse' || ev.pointerType === 'pen') whyOpen(true); });
+      why.addEventListener('pointerleave', function (ev) { if (ev.pointerType === 'touch') return; whyPinned = false; clearTimeout(whyTimer); whyTimer = setTimeout(function () { whyOpen(false); }, 150); });
+      document.addEventListener('click', function (ev) { if (!why.contains(ev.target)) { whyPinned = false; whyOpen(false); } });
+      document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && why.classList.contains('is-open')) { whyPinned = false; whyOpen(false); sum.focus(); } });
     }
 
     function feature(title, list, missed, bold) {

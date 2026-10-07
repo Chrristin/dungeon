@@ -2593,14 +2593,15 @@ html.og-fan-open { overflow: hidden; }
    carry dark ink in both colour modes. */
 .store-head { border-bottom: 0; padding-top: clamp(1rem, 3vw, 2rem); padding-bottom: 0.5rem; }
 .store-intro { max-width: 38rem; margin-top: 1.25rem; color: var(--graphite); }
+@media (min-width: 900px) { .store-intro { max-width: min(70%, 62rem); } }
 .store-intro > * { margin: 0; }
 .store-intro > * + * { margin-top: 1em; }
 .store-intro:empty { display: none; }
-/* "Why is our % off different from Amazon's?": a quiet closed row above the first card */
-.store-why { max-width: 45rem; font-size: 0.9rem; line-height: 1.6; color: var(--graphite); }
-.store-why summary { display: inline-block; cursor: pointer; font-weight: 600; color: var(--ink); text-decoration: underline dotted; text-underline-offset: 0.25em; }
-.store-why[open] summary { margin-bottom: 0.5rem; }
-.store-why p { margin: 0; }
+/* "Why is our % off different from Amazon's?": a question that opens a floating note, so nothing moves */
+.store-why { position: relative; align-self: flex-start; font-size: 0.9rem; line-height: 1.6; color: var(--graphite); }
+.store-why-q { display: inline-block; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; text-align: left; cursor: pointer; color: var(--ink); text-decoration: underline dotted; text-underline-offset: 0.25em; }
+.store-why-pop { display: none; position: absolute; z-index: 30; top: calc(100% + 0.35rem); left: 0; width: min(28rem, calc(100vw - 2rem)); margin: 0; padding: 0.9rem 1rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--paper); color: var(--ink); box-shadow: var(--card-shadow); font-weight: 400; }
+.store-why.is-open .store-why-pop { display: block; }
 .store { padding: 0.5rem 0 4rem; display: flex; flex-direction: column; gap: 1.8rem; }
 .store-wait { padding: 2rem 0 4rem; color: var(--graphite); }
 .store .store-wait { padding: 2rem 0; margin: 0; }

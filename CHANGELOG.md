@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.20.4
+
+- **Wider introduction on a watchlist.** On a wide screen the text under the list's title now runs to 70% of the page (at most 62rem), where it was held to 38rem and left most of the line empty. Phones and narrow windows are as before.
+- **"Why is our % off different from Amazon's?" is now a floating note.** It opens over the page when you hover the question or click it, so nothing below it moves. It closes when you click anywhere else, press Escape, or move the pointer away (a click keeps it open until the next click). On a phone a tap opens it and a tap elsewhere closes it. It stays inside the screen's edges.
+
 ## 2.20.3
 
 - **"Why is our % off different from Amazon's?"** A closed one-line row sits above the first card on a watchlist whose items carry usual prices. Opened, it says in plain words that Amazon measures from the MRP printed on the box, while this page measures from the price the item has sold for most of the last year; what a Must Buy is (the percentage comes from the list's own rule); and that an item with under a month of record is Collecting Data and judged against the MRP.
