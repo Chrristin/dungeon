@@ -12,8 +12,11 @@
     { key: 'skip', label: 'Skip' }
   ];
   /* mustGrace: a price within this much of the Must Buy price still counts (a few rupees should not decide it).
-     newDays: how long an item is "Collecting Data" before it is judged like any other. */
-  var DEFAULTS = { mustOff: 0.4, mustGrace: 0.02, nearLow: 0.03, nearLowOff: 0.25, fairOff: 0.15, newDays: 30, newOff: 0.15, lowRowOff: 0.1 };
+     newDays: how long an item is "Collecting Data" before it is judged like any other.
+     usualDays: an item may carry a usual price (`orp`, with `orpDays`, how many days of record it rests on). Once the
+     record is this long the discount is measured from the usual price and not from MRP, and a Must Buy is
+     usualMustOff under it. With a shorter record the item is Collecting Data. */
+  var DEFAULTS = { mustOff: 0.4, mustGrace: 0.02, nearLow: 0.03, nearLowOff: 0.25, fairOff: 0.15, newDays: 30, newOff: 0.15, lowRowOff: 0.1, usualDays: 30, usualMustOff: 0.25 };
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var PAGE = 60;
   var taglines = {}; // a handwritten line beside a row's heading, set in the watchlist page's own text
@@ -47,16 +50,23 @@
   function judge(it, rules) {
     var o = { it: it };
     o.priced = num(it.price);
-    o.base = num(it.mrp) ? it.mrp : null;
+    o.mrp = num(it.mrp) ? it.mrp : null;
+    o.usual = usualOf(it, rules);
+    /* Some record but too little to say what is usual, on an item that really is new: Collecting Data. An older item whose
+       usual price is not worked out yet (its tracking began before the record did) keeps being judged from MRP. */
+    o.thin = o.usual == null && num(it.orp) && !(num(it.days) && it.days >= rules.usualDays);
+    o.base = o.usual != null ? o.usual : o.mrp; // what the discount is measured from
+    o.mustOff = o.usual != null ? rules.usualMustOff : rules.mustOff;
     o.off = o.priced && o.base ? Math.max(0, 1 - it.price / o.base) : 0;
     o.atLow = o.priced && num(it.low) && it.price <= it.low * (1 + rules.nearLow);
     o.pos = o.priced && o.base && num(it.low) && o.base > it.low ? Math.min(1, Math.max(0, (it.price - it.low) / (o.base - it.low))) : null;
     var v = it.verdict;
     if (!v) {
-      o.over = o.priced && o.base != null && it.price > o.base * 1.02; // priced above MRP: not the going rate
+      o.over = o.priced && o.mrp != null && it.price > o.mrp * 1.02; // priced above MRP: not the going rate
       if (it.pending && !o.priced) v = 'new';
       else if (!o.priced || it.seller === 'other' || o.over) v = 'skip';
-      else if (o.off >= rules.mustOff || (o.atLow && o.off >= rules.nearLowOff) || withinMust(it, rules)) v = 'must';
+      else if (o.thin) v = 'new'; // never a Must Buy before the usual price is known
+      else if (o.off >= o.mustOff ||(o.atLow && o.off >= rules.nearLowOff) || withinMust(it, rules)) v = 'must';
       else if (num(it.days) && it.days < rules.newDays && o.off < rules.newOff) v = 'new';
       else if (o.off >= rules.fairOff) v = 'fair';
       else v = 'wait';
@@ -71,10 +81,13 @@
   function withinMust(it, rules) { var mp = mustPrice(it, rules); return mp != null && num(it.price) && it.price <= mp * (1 + (Number(rules.mustGrace) || 0)); }
   /* The highest price at which an item counts as a Must Buy under the shelf's rules (null if it can't be worked out) */
   function mustPrice(it, rules) {
-    if (!num(it.mrp)) return null;
-    var deep = it.mrp * (1 - rules.mustOff), near = num(it.low) ? Math.min(it.low * (1 + rules.nearLow), it.mrp * (1 - rules.nearLowOff)) : 0;
+    var usual = usualOf(it, rules), base = usual != null ? usual : (num(it.mrp) ? it.mrp : null);
+    if (base == null) return null;
+    var deep = base * (1 - (usual != null ? rules.usualMustOff : rules.mustOff)), near = num(it.low) ? Math.min(it.low * (1 + rules.nearLow), base * (1 - rules.nearLowOff)) : 0;
     return Math.floor(Math.max(deep, near));
   }
+  /* The usual price an item carries, if its record is long enough to trust; null otherwise */
+  function usualOf(it, rules) { return num(it.orp) && it.orp > 0 && num(it.orpDays) && it.orpDays >= rules.usualDays ? it.orp : null; }
   /* "TODAY (4 Oct 2026)": the year sits in a span of its own, so a phone can drop it when it is this year */
   function dated(word, d) {
     var k = el('span', 'store-fig-k', word), m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
@@ -89,8 +102,8 @@
   function offTag(o) {
     if (!o.priced || !o.base || o.off < 0.005) return null;
     /* Steps go by the figure as shown, so "40% off" is never drawn weaker than the 40% it says; a Must Buy is always the strongest */
-    var rules = rulesOf(shelf), shown = Math.round(o.off * 100) / 100, step = (shown >= rules.mustOff || o.verdict === 'must') ? 2 : shown >= rules.fairOff ? 1 : 0;
-    return el('span', 'store-off store-off--' + step, Math.round(o.off * 100) + '% off');
+    var rules = rulesOf(shelf), shown = Math.round(o.off * 100) / 100, step = (shown >= o.mustOff || o.verdict === 'must') ? 2 : shown >= rules.fairOff ? 1 : 0;
+    return el('span', 'store-off store-off--' + step, Math.round(o.off * 100) + '% off' + (o.usual != null ? ' usual' : ''));
   }
   function rulesOf(s) { var rules = {}, k; for (k in DEFAULTS) rules[k] = DEFAULTS[k]; for (k in (s.rules || {})) rules[k] = s.rules[k]; return rules; }
   function label(key) { for (var i = 0; i < VERDICTS.length; i++) if (VERDICTS[i].key === key) return VERDICTS[i].label; return key; }
@@ -98,9 +111,11 @@
     var it = o.it, when = monthYear(it.lowDate), hasLow = num(it.low), hit = hasLow ? money(it.low) + (when ? ' (' + when + ')' : '') : '';
     var lower = hasLow && o.priced && it.low < it.price * 0.97, days = num(it.days) && it.days > 0 ? it.days : 0;
     if (o.verdict === 'skip') return !o.priced ? 'No offer from the main seller.' : o.over ? 'Priced above MRP right now.' + (hasLow ? ' It has been as low as ' + hit + '.' : '') : 'Reseller listing. Not the going rate.';
-    if (o.verdict === 'must') return o.atLow ? 'At or near its lowest ever.' : 'Deep discount. Rarely lower.';
-    if (o.verdict === 'new') return days ? 'Only ' + days + ' days tracked. No real discount yet.' : 'Just added. No price history yet.';
+    var under = o.usual != null && o.off >= 0.005 ? Math.round(o.off * 100) + '% under its usual price of ' + money(o.usual) + '.' : '';
+    if (o.verdict === 'must') return o.atLow ? 'At or near its lowest ever.' + (under ? ' ' + under : '') : under ? under + ' Rarely lower.' : 'Deep discount. Rarely lower.';
+    if (o.verdict === 'new') return o.thin ? 'Only ' + (it.orpDays > 0 ? it.orpDays + ' days' : 'a day') + ' of prices. Too soon to say what is usual.' : days ? 'Only ' + days + ' days tracked. No real discount yet.' : 'Just added. No price history yet.';
     if (o.verdict === 'fair') return lower ? 'Decent, but it has hit ' + hit + '.' : hasLow ? 'Decent, and as low as it has been.' : 'Decent discount. No price history yet.';
+    if (o.usual != null) return (o.priced && it.price > o.usual * 1.05 ? 'Above its usual price of ' + money(o.usual) + '.' : 'Near its usual price of ' + money(o.usual) + '.') + (lower ? ' It has hit ' + hit + '.' : '');
     return lower ? 'Near MRP. It has hit ' + hit + '.' : days ? 'No discount yet in ' + days + ' days tracked.' : 'Near MRP. No price history yet.';
   }
 
@@ -161,8 +176,8 @@
     var p = el('span', 'store-price');
     if (o.priced) {
       var now = el('strong', o.verdict === 'skip' ? 'is-struck' : '', money(o.it.price)); p.appendChild(now);
-      if (o.verdict === 'skip') p.appendChild(el('span', '', o.over ? 'above MRP ' + money(o.base) : 'reseller price'));
-      else { var tag = offTag(o); if (tag) p.appendChild(tag); if (o.base) p.appendChild(el('span', '', 'MRP ' + money(o.base))); }
+      if (o.verdict === 'skip') p.appendChild(el('span', '', o.over ? 'above MRP ' + money(o.mrp) : 'reseller price'));
+      else { var tag = offTag(o); if (tag) p.appendChild(tag); if (o.base) p.appendChild(el('span', '', (o.usual != null ? 'usually ' : 'MRP ') + money(o.base))); }
     } else p.appendChild(el('span', '', 'no offer'));
     h.appendChild(p); return h;
   }
@@ -185,9 +200,9 @@
       var panel = el('div', 'store-panel'), figs = el('div', 'store-figs'), rules = rulesOf(shelf);
       var vs = el('div', 'store-figs-row is-prices'), ks = el('div', 'store-figs-row');
       var now = el('span', 'store-fig-today'); now.appendChild(el('strong', 'store-fig-v is-today', o.priced ? money(it.price) : '\u2014'));
-      var tag = offTag(o); if (tag) now.appendChild(tag); else if (o.priced && o.base) now.appendChild(el('span', 'store-off store-off--0', o.over ? 'above MRP' : 'at MRP'));
+      var tag = offTag(o); if (tag) now.appendChild(tag); else if (o.priced && o.base) now.appendChild(el('span', 'store-off store-off--0', o.usual != null ? (it.price > o.usual * 1.05 ? 'above usual' : 'at usual') : o.over ? 'above MRP' : 'at MRP'));
       vs.appendChild(now); var seen = !num(it.low) && num(it.seenLow); vs.appendChild(el('strong', 'store-fig-v', num(it.low) ? money(it.low) : seen ? money(it.seenLow) : '\u2014')); vs.appendChild(el('strong', 'store-fig-v', o.base ? money(o.base) : '\u2014'));
-      ks.appendChild(dated('Today', it.checked || shelf.updated)); ks.appendChild(seen ? since('Lowest since', it.seenSince) : dated('Lowest', it.lowDate)); ks.appendChild(el('span', 'store-fig-k', 'MRP'));
+      ks.appendChild(dated('Today', it.checked || shelf.updated)); ks.appendChild(seen ? since('Lowest since', it.seenSince) : dated('Lowest', it.lowDate)); ks.appendChild(el('span', 'store-fig-k', o.usual != null ? 'Usual' : 'MRP'));
       figs.appendChild(vs); figs.appendChild(ks); panel.appendChild(figs);
       /* One short line: the Must Buy price, "Buy Now" when today is within it, or "Collecting Data" when there
          isn't enough history. The price per piece sits at its right when the shelf has a piece count. */
@@ -200,6 +215,8 @@
       say.appendChild(dot);
       say.appendChild(words);
       if (o.ppp != null) say.appendChild(el('span', 'store-rule-ppp', perPiece(o.ppp) + ' per piece \u00b7 ' + it.pieces.toLocaleString(shelf.locale || 'en-IN') + ' pieces'));
+      /* The label's MRP is not what the verdict goes by; when it is far above the usual price, say so */
+      if (o.usual != null && o.mrp != null && o.mrp > o.usual * 1.15) say.appendChild(el('span', 'store-rule-ppp', 'Listed MRP ' + money(o.mrp) + ' is well above the usual price'));
       panel.appendChild(say);
       var buyUrl = safeUrl(it.url);
       if (buyUrl) {
@@ -237,14 +254,14 @@
   function drawGraph(box, pts, it, rules) {
     var NS = 'http://www.w3.org/2000/svg', W = 640, H = 190, L = 8, R = 8, T = 16, B = 26;
     function s(tag, attrs, text) { var n = document.createElementNS(NS, tag), k; for (k in attrs) n.setAttribute(k, attrs[k]); if (text != null) n.textContent = text; return n; }
-    var now = Date.now(), t0 = pts[0][0], t1 = Math.max(now, pts[pts.length - 1][0]), must = mustPrice(it, rules), mrp = num(it.mrp) ? it.mrp : null;
+    var now = Date.now(), t0 = pts[0][0], t1 = Math.max(now, pts[pts.length - 1][0]), must = mustPrice(it, rules), usual = usualOf(it, rules), mrp = usual != null ? usual : (num(it.mrp) ? it.mrp : null);
     var vals = pts.map(function (p) { return p[1]; }), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals.concat(mrp ? [mrp] : []));
     var pad = Math.max(1, (hi - lo) * 0.12), y0 = lo - pad, y1 = hi + pad;
     function X(t) { return L + (W - L - R) * (t1 === t0 ? 1 : (t - t0) / (t1 - t0)); }
     function Y(v) { return T + (H - T - B) * (1 - (v - y0) / (y1 - y0)); }
     var svg = s('svg', { viewBox: '0 0 ' + W + ' ' + H, 'class': 'store-graph-svg', role: 'img', 'aria-label': 'Price over time. Lowest ' + money(lo) + '.' });
     function rule(v, cls, word) { svg.appendChild(s('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), 'class': 'store-graph-rule ' + cls })); svg.appendChild(s('text', { x: W - R, y: Y(v) - 4, 'text-anchor': 'end', 'class': 'store-graph-word ' + cls }, word + ' ' + money(v))); }
-    if (mrp) rule(mrp, 'is-mrp', 'MRP');
+    if (mrp) rule(mrp, 'is-mrp', usual != null ? 'Usual' : 'MRP');
     if (must && must > y0 && must < y1 && (!mrp || Math.abs(Y(must) - Y(mrp)) > 14)) rule(must, 'is-must', 'Must Buy');
     /* A stepped line: a price holds until the next reading changes it */
     var d = 'M' + X(pts[0][0]).toFixed(1) + ' ' + Y(pts[0][1]).toFixed(1), i;
@@ -361,9 +378,9 @@
       feature('My Picks', all.filter(function (o) { return o.it.pick; }), false, true);
       feature('Lowest Right Now', all.filter(function (o) { return o.verdict !== 'skip' && o.verdict !== 'must' && !o.it.pick && o.atLow && o.off >= rules.lowRowOff; }));
       feature('Most Pieces for the Money', value);
-      /* Just Missed: a real discount (15% or more under MRP) that was the lowest on record within the last week and is gone */
+      /* Just Missed: a real discount (15% or more under the usual price, or MRP where there is none) that was the lowest on record within the last week and is gone */
       var asOf = Date.parse(shelf.updated || '');
-      feature('Just Missed', all.filter(function (o) { var it = o.it, age = asOf - Date.parse(it.lowDate || ''); return num(it.low) && num(it.mrp) && it.low <= it.mrp * 0.85 && age >= 0 && age <= 7 * 864e5 && (!o.priced || it.seller === 'other' || it.price > it.low * 1.1); }), true);
+      feature('Just Missed', all.filter(function (o) { var it = o.it, age = asOf - Date.parse(it.lowDate || ''); return !o.thin && num(it.low) && o.base && it.low <= o.base * 0.85 && age >= 0 && age <= 7 * 864e5 && (!o.priced || it.seller === 'other' || it.price > it.low * 1.1); }), true);
     }
 
     var bar2 = el('nav', 'store-bar'); bar2.setAttribute('aria-label', 'Filter by verdict');
