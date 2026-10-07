@@ -132,12 +132,14 @@ function ratingFromTags(tags) {
   for (const t of tags || []) { const m = String(t.name || '').match(/^#rated-(\d)(?:-(5))?$/); if (m) return ratingOf(m[1] + (m[2] ? '.5' : '')); }
   return null;
 }
+// the first picture in some HTML, for the small card a link opens on a post's garden map
+function firstImage(html) { const m = String(html || '').match(/<img[^>]+src=["']([^"']+)["']/i); return m && !/^data:/.test(m[1]) ? m[1] : null; }
 let siteHost = null; // the site's public address, asked of Ghost once, so links written as https://yoursite/... count
 async function readPosts() {
   if (!siteHost) { try { const st = await api('GET', '/site/'); siteHost = new URL(st.site.url).host; } catch { siteHost = ''; } }
   const out = []; let page = 1;
   for (;;) {
-    const res = await api('GET', `/posts/?filter=status:published&formats=html,plaintext&include=tags&fields=id,slug,title,html,plaintext,custom_excerpt,published_at,updated_at,url&limit=50&page=${page}`);
+    const res = await api('GET', `/posts/?filter=status:published&formats=html,plaintext&include=tags&fields=id,slug,title,html,plaintext,custom_excerpt,feature_image,published_at,updated_at,url&limit=50&page=${page}`);
     for (const p of res.posts) {
       const tagSlugs = (p.tags || []).map((t) => t.slug), optedIn = tagSlugs.includes('hash-garden') && tagSlugs.some((x) => OPT_IN.has(x));
       if (!optedIn && tagSlugs.some((x) => SKIP_TAGS.has(x))) continue;
@@ -145,7 +147,7 @@ async function readPosts() {
       const text = String(p.plaintext || '').replace(/\s+/g, ' ').trim();
       out.push({ slug: p.slug, path, title: p.title, html: p.html || '', text, words: text ? text.split(' ').length : 0,
         topics: (p.tags || []).filter((t) => t.visibility === 'public').map((t) => t.name), date: String(p.updated_at || p.published_at || '').slice(0, 10),
-        excerpt: String(p.custom_excerpt || text).slice(0, 160), custom: p.custom_excerpt || null, rating: ratingFromTags(p.tags) });
+        excerpt: String(p.custom_excerpt || text).slice(0, 160), image: p.feature_image || firstImage(p.html), custom: p.custom_excerpt || null, rating: ratingFromTags(p.tags) });
     }
     if (!res.meta.pagination.next) break;
     page = res.meta.pagination.next;
@@ -267,7 +269,7 @@ async function render(note, vault, state) {
     .replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   const words = text ? text.split(' ').length : 0;
   let lead = text.slice(0, 220); if (text.length > 220) lead = lead.replace(/\s+\S*$/, '') + '...';
-  return { html, links: [...links], excerpt: text.slice(0, 160), privateMentions, words, lead, said, fn };
+  return { html, links: [...links], excerpt: text.slice(0, 160), image: firstImage(html), privateMentions, words, lead, said, fn };
 }
 
 const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c'); // safe inside a <script>
@@ -389,8 +391,8 @@ async function pass() {
   }
   // the Garden page carries the whole garden's map, so the theme can draw it without asking for every note
   const nodes = vault.published.map((n) => ({ s: n.slug, t: n.title, g: n.stage, k: n.type, kind: n.kind, p: n.topics, d: n.tended, sc: n.scatter || undefined,
-    l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said, r: related[n.slug] || [], c: n.confidence || undefined, rt: n.rating || undefined }));
-  for (const p of posts) nodes.push({ s: p.slug, u: p.path !== `/${p.slug}/` ? p.path : undefined, t: p.title, g: 'post', k: 'post', p: p.topics, d: p.date, l: p.links, x: p.excerpt, w: p.words, r: related[p.slug] || [], tl: p.tldr || undefined, rt: p.rating || undefined });
+    l: rendered.get(n).links, x: rendered.get(n).excerpt, w: rendered.get(n).words, q: rendered.get(n).said, im: rendered.get(n).image || undefined, r: related[n.slug] || [], c: n.confidence || undefined, rt: n.rating || undefined }));
+  for (const p of posts) nodes.push({ s: p.slug, u: p.path !== `/${p.slug}/` ? p.path : undefined, t: p.title, g: 'post', k: 'post', p: p.topics, d: p.date, l: p.links, x: p.excerpt, im: p.image || undefined, w: p.words, r: related[p.slug] || [], tl: p.tldr || undefined, rt: p.rating || undefined });
   const garden = { v: 2, updated: new Date().toISOString().slice(0, 10), notes: nodes.sort((a, b) => a.t.localeCompare(b.t)) };
   const ph = hashOf(garden.notes);
   if (state.page !== ph && !cfg.dry) {

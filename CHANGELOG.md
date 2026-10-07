@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.19.0
+
+Garden links, and two small fixes.
+
+- **A post's garden links are now a small map.** Under "In the garden" the post sits in the middle and each link grows out of it on a stem as a dot, coloured by how far that note has grown (seedling, growing, evergreen; posts are squares). Solid stems with leaves are links; dotted ones are related by wording. Point at a dot, or tap it once on a phone, and a card appears in its own place under the map with the title, a line of the note and, when it has one, a small picture. The card (or a second tap) opens it. The old list is still there under "As a list", and every dot has a text label for screen readers.
+- **Pictures on those cards need the garden-sync update.** `extras/garden-sync/sync.js` now records each post's feature image (or first picture) and each note's first picture. Replace `app/sync.js` on the NAS and restart the container; until its next pass the cards show no picture.
+- **"Price, last 1 month"** instead of "1 months" on an item's price graph.
+- **No underline on "Open page"** on an item's sheet; it shows one only when pointed at.
+
 ## 2.18.0
 
 Homepage only.

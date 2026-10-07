@@ -3033,6 +3033,48 @@
       .then(function (h) { var d = readJson(new DOMParser().parseFromString(h, 'text/html').getElementById('garden-data')); return (d && d.notes) || []; }).catch(function () { return []; });
     return gardenDataCache;
   }
+  // A post's neighbours as a small garden: the post in the middle, each link a dot on a stem, coloured by how far the
+  // note has grown. Pointing at a dot (or, on a phone, tapping it once) opens a card with its title, a line of it and a
+  // small picture when it has one; the card (or a second tap) opens it.
+  function smallImg(u) { return u && /\/content\/images\//.test(u) && !/\/size\//.test(u) ? u.replace('/content/images/', '/content/images/size/w300/') : (u || ''); }
+  function postMap(slot, self, groups, L) {
+    var nb = [], seen = {};
+    groups.forEach(function (g) { g.items.forEach(function (x) { if (x.u && !seen[x.u] && nb.length < 12) { seen[x.u] = 1; nb.push({ t: x.t, u: x.u, g: x.g || 'seedling', i: x.i, x: x.x, kind: g.kind, label: g.label }); } }); });
+    if (!nb.length) return;
+    var stageOf = function (g) { return (L.stages && L.stages[g]) || g; };
+    var W = Math.max(300, Math.min(640, slot.clientWidth || 560)), H = nb.length <= 2 ? 150 : nb.length <= 5 ? 210 : 270, cx = W / 2, cy = H / 2, rx = W / 2 - 34, ry = H / 2 - 28, s = '', dots = '';
+    nb.forEach(function (n, i) {
+      var a = -Math.PI / 2 + i * 2 * Math.PI / nb.length, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry, v = wildVine(cx, cy, x, y, 'pm' + self.s + '>' + n.u, 1, n.kind === 'rel' ? 0 : 2);
+      s += n.kind === 'rel' ? '<path class="lm-rel" d="' + v.d + '"/>' : '<g class="lm-vine"><path d="' + v.d + '"/>' + v.leaves + v.curl + '</g>';
+      dots += '<a class="pm-dot" href="' + esc(n.u) + '" data-i="' + i + '" aria-label="' + esc(n.t + ' (' + n.label + ', ' + stageOf(n.g) + ')') + '"><circle class="pm-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="22"/>' +
+        (n.g === 'post' ? '<rect class="pm-v" data-g="post" x="' + (x - 8).toFixed(1) + '" y="' + (y - 8).toFixed(1) + '" width="16" height="16" rx="3"/>' : '<circle class="pm-v" data-g="' + esc(n.g) + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9"/>') + '</a>';
+    });
+    dots += '<circle class="pm-ring" cx="' + cx + '" cy="' + cy + '" r="20"/><circle class="pm-v pm-self" data-g="' + esc(self.g || 'post') + '" cx="' + cx + '" cy="' + cy + '" r="14"><title>' + esc(L.thisPost || 'This post') + '</title></circle>';
+    var present = {}; nb.forEach(function (n) { present[n.g] = 1; }); present[self.g || 'post'] = 1;
+    var key = ['seedling', 'growing', 'evergreen', 'post'].filter(function (g) { return present[g]; }).map(function (g) { return '<span class="pm-key-i"><i class="pm-key-dot" data-g="' + g + '"></i>' + esc(stageOf(g)) + '</span>'; }).join('');
+    slot.innerHTML = '<div class="pm"><svg viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="' + esc(L.map || '') + '">' + s + dots + '</svg>' +
+      '<a class="pm-card is-idle"><img class="pm-card-img" alt="" hidden><span class="pm-card-text"><span class="pm-card-k"></span><span class="pm-card-t"></span><span class="pm-card-x"></span></span></a></div>' +
+      '<p class="pm-key">' + key + '<span class="pm-key-note">' + esc(L.mapKey || '') + '</span></p>';
+    var wrap = slot.querySelector('.pm'), card = wrap.querySelector('.pm-card'), im = card.querySelector('img'), els = [].slice.call(wrap.querySelectorAll('.pm-dot')), cur = -1, touch = false;
+    var k = card.querySelector('.pm-card-k'), t = card.querySelector('.pm-card-t'), x = card.querySelector('.pm-card-x');
+    var idle = function () { cur = -1; card.classList.add('is-idle'); card.removeAttribute('href'); im.hidden = true; k.textContent = ''; x.textContent = ''; t.textContent = L.hint || 'Point at a dot, or tap one, to see what it is.'; els.forEach(function (e) { e.classList.remove('is-on'); }); };
+    im.addEventListener('error', function () { im.hidden = true; });
+    var open = function (i) { // the card sits in its own place under the map, so it never covers a dot
+      var n = nb[i]; cur = i; card.classList.remove('is-idle'); card.href = n.u; k.textContent = n.label + ' · ' + stageOf(n.g); t.textContent = n.t;
+      var ex = String(n.x || '').trim(); x.textContent = ex.length > 120 ? ex.slice(0, 119).replace(/s+S*$/, '') + '…' : ex;
+      if (n.i) { im.src = smallImg(n.i); im.hidden = false; } else { im.removeAttribute('src'); im.hidden = true; }
+      els.forEach(function (e, j) { e.classList.toggle('is-on', j === i); });
+    };
+    idle();
+    els.forEach(function (a, i) {
+      a.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') open(i); });
+      a.addEventListener('focus', function () { if (!touch) open(i); });
+      a.addEventListener('click', function (e) { if (touch && cur !== i) { e.preventDefault(); open(i); } }); // a phone: the first tap opens the card, the next one goes there
+    });
+    wrap.addEventListener('pointerdown', function (e) { touch = e.pointerType !== 'mouse'; }, true);
+    wrap.addEventListener('keydown', function (e) { if (e.key === 'Escape') idle(); });
+    document.addEventListener('pointerdown', function (e) { if (!wrap.contains(e.target)) idle(); });
+  }
   function initPostGarden(root) {
     var box = root.querySelector('.post-garden'), panel = root.querySelector('.post-panel');
     if (!box || !panel || box.getAttribute('data-ready') || panel.classList.contains('is-garden')) return;
@@ -3041,14 +3083,15 @@
     gardenData(box.getAttribute('data-garden')).then(function (list) {
       var by = {}; list.forEach(function (n) { by[n.s] = n; });
       var me = by[slug]; if (!me) return;
-      var chip = function (n) { return { t: n.t, u: gardenPath(n), g: n.g }; };
+      var chip = function (n) { return { t: n.t, u: gardenPath(n), g: n.g, i: n.im, x: n.x }; };
       var inb = list.filter(function (n) { return (n.l || []).indexOf(slug) >= 0; }).map(chip);
       var outs = (me.l || []).map(function (s) { return by[s]; }).filter(Boolean).map(chip);
       var rel = (me.r || []).map(function (s) { return by[s]; }).filter(Boolean).map(chip);
       if (!inb.length && !outs.length && !rel.length) return;
       var sec = function (h, items, cls) { return items.length ? '<section><h3 class="garden-h">' + esc(h) + '</h3>' + chipList(items, cls) + '</section>' : ''; };
-      box.innerHTML = '<h2 class="post-garden-h">' + sprout('growing') + esc(L.title || 'In the garden') + '</h2>' + sec(L.mentioned || 'Mentioned in', inb) + sec(L.links || 'Links to', outs) + sec(L.related || 'Related', rel, 'is-rel');
-      box.hidden = false;
+      box.innerHTML = '<h2 class="post-garden-h">' + sprout('growing') + esc(L.title || 'In the garden') + '</h2><div class="pm-slot"></div><details class="pm-list"><summary>' + esc(L.asList || 'As a list') + '</summary>' + sec(L.mentioned || 'Mentioned in', inb) + sec(L.links || 'Links to', outs) + sec(L.related || 'Related', rel, 'is-rel') + '</details>';
+      box.hidden = false; // shown before the map is drawn, so it can be sized to the page
+      postMap(box.querySelector('.pm-slot'), me, [{ kind: 'out', label: L.links || 'Links to', items: outs }, { kind: 'in', label: L.mentioned || 'Mentioned in', items: inb }, { kind: 'rel', label: L.related || 'Related', items: rel }], L);
     });
   }
   initGarden();

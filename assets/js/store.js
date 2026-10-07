@@ -265,7 +265,7 @@
     svg.appendChild(s('text', { x: L, y: H - 8, 'class': 'store-graph-word' }, my(a)));
     if (t1 - t0 > 90 * 864e5) svg.appendChild(s('text', { x: W / 2, y: H - 8, 'text-anchor': 'middle', 'class': 'store-graph-word' }, my(mid)));
     svg.appendChild(s('text', { x: W - R, y: H - 8, 'text-anchor': 'end', 'class': 'store-graph-word' }, 'Today'));
-    box.appendChild(el('span', 'store-stat-k', 'Price, last ' + Math.max(1, Math.round((t1 - t0) / (30.4 * 864e5))) + ' months')); box.appendChild(svg);
+    var mo = Math.max(1, Math.round((t1 - t0) / (30.4 * 864e5))); box.appendChild(el('span', 'store-stat-k', 'Price, last ' + mo + (mo === 1 ? ' month' : ' months'))); box.appendChild(svg);
   }
   /* Does any of an item's low periods fall in a sale window? Both are month names or ranges ("May", "July", "Sep to Oct",
      "Mar to Apr"), compared by month so "Jul" matches "July" and "May to Jun" matches "May". */
