@@ -453,8 +453,8 @@
         var c = card(o, view.indexOf(o), !missed);
         if (missed) {
           /* A deal that has ended: a quiet card saying what the price was, and when */
-          c.className += ' is-missed'; var was = el('span', 'store-missed'); was.appendChild(document.createTextNode('Was ')); was.appendChild(el('strong', '', money(o.it.low)));
-          var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(o.it.lowDate || ''); if (m) was.appendChild(document.createTextNode(' on ' + (+m[3]) + ' ' + MONTHS[+m[2] - 1]));
+          c.className += ' is-missed'; var was = el('span', 'store-missed'), bestP = num(o.it.rb) ? o.it.rb : o.it.low, bestD = num(o.it.rb) ? o.it.rbDate : o.it.lowDate; was.appendChild(document.createTextNode('Was ')); was.appendChild(el('strong', '', money(bestP)));
+          var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(bestD || ''); if (m) was.appendChild(document.createTextNode(' on ' + (+m[3]) + ' ' + MONTHS[+m[2] - 1]));
           var old = c.querySelector('.store-low'); if (old) old.remove(); c.insertBefore(was, c.querySelector('.store-chips'));
         } else { var tint = o.tint || tintFor(o.it.code, used, bold ? BOLD : TINTS); if (!o.tint) o.tint = tint; paint(c, tint); }
         row.appendChild(c);
@@ -472,9 +472,14 @@
       feature('My Picks', all.filter(function (o) { return o.it.pick; }), false, true);
       feature('Lowest Right Now', all.filter(function (o) { return o.verdict !== 'skip' && o.verdict !== 'must' && !o.it.pick && o.atLow && o.off >= rules.lowRowOff; }));
       feature('Most Pieces for the Money', value);
-      /* Just Missed: a real discount (15% or more under the usual price, or MRP where there is none) that was the lowest on record within the last week and is gone */
+      /* Just Missed: a Must Buy that has gone: a price within the last week that was at the Must Buy level (as far under the usual price, or under MRP where there is none, as a Must Buy needs), and the set is now back up or gone. The list carries the best price of the last 7 days (rb, rbDate) while it is lower than the price now; a list that does not has only the lowest on record, which counts when it was that recent. */
       var asOf = Date.parse(shelf.updated || '');
-      feature('Just Missed', all.filter(function (o) { var it = o.it, age = asOf - Date.parse(it.lowDate || ''); return !o.thin && num(it.low) && o.base && it.low <= o.base * 0.85 && age >= 0 && age <= 7 * 864e5 && (!o.priced || it.seller === 'other' || it.price > it.low * 1.1); }), true);
+      function missedAt(it) { return num(it.rb) ? { p: it.rb, d: it.rbDate } : { p: it.low, d: it.lowDate }; }
+      var missed = all.filter(function (o) { var it = o.it, m = missedAt(it), age = asOf - Date.parse(m.d || ''); return !o.thin && num(m.p) && o.base && m.p <= o.base * (1 - o.mustOff) && age >= 0 && age <= 7 * 864e5 && (!o.priced || it.seller === 'other' || it.price > m.p * 1.1); });
+      missed.sort(function (a, b) { return missedAt(a.it).p / a.base - missedAt(b.it).p / b.base; });
+      feature('Just Missed', missed, true);
+      /* The sign-up (the page's Sale alerts section) sits here, where someone who has just missed a deal is looking */
+      if (alertsEl) { alertsEl.classList.add('is-hook'); root.appendChild(alertsEl); }
     }
 
     var bar2 = el('nav', 'store-bar'); bar2.setAttribute('aria-label', 'Filter by verdict');
@@ -498,6 +503,7 @@
     if (shelf.method) foot.appendChild(el('p', '', shelf.method));
     if ((shelf.items || []).some(function (it) { return isAffiliate(safeUrl(it.url)); })) foot.appendChild(el('p', '', meta('amazon-tag') ? 'As an Amazon Associate I earn from qualifying purchases.' : 'I may earn a commission if you buy through these links.'));
     root.appendChild(foot);
+    if (alertsEl && alertsHome && alertsEl.parentNode !== root) { alertsEl.classList.remove('is-hook'); alertsHome.p.insertBefore(alertsEl, alertsHome.n && alertsHome.n.parentNode === alertsHome.p ? alertsHome.n : null); }
   }
 
   /* A watchlist page shown inside a plot on the homepage: fill its box with a live line from its shelf.
@@ -662,6 +668,7 @@
   var sources = links.map(function (a) { var s = { name: a.textContent.trim() || 'Shelf', url: shelfUrl(a) }; var p = a.parentNode; a.remove(); if (p && !p.textContent.trim() && !p.children.length) p.remove(); return s; });
   var intro = document.querySelector('.store-intro'); if (intro && !intro.textContent.trim() && !intro.querySelector('img, figure, iframe')) intro.hidden = true;
   if (!sources.length) sources = siteSources(root.getAttribute('data-src'));
+  var alertsEl = document.querySelector('.store-alerts'), alertsHome = alertsEl ? { p: alertsEl.parentNode, n: alertsEl.nextSibling } : null;
   /* Sale alerts: the Telegram link comes from <meta name="watchlist-telegram" content="https://t.me/..."> in code injection */
   (function () {
     var link = document.querySelector('.store-alerts-tg'), meta = document.querySelector('meta[name="watchlist-telegram"]'), url = meta && meta.getAttribute('content');

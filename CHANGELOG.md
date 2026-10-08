@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.21.2
+
+- **Just Missed now shows every Must Buy that went away this week.** It looked at the lowest price on record and showed a set only if that low was less than a week old, so a set whose all-time low was set earlier (the Ferrari SF-24, whose low of 11,449 first came in September 2025) never appeared even when it was on sale that morning. It now reads the best price of the last 7 days (`rb` and `rbDate`, which the Worker publishes from build 31) and shows a set when that price was at the Must Buy level (25% under its usual price, or 40% under MRP where it has no usual price yet) and the set is now back up or gone. It does not matter whether the set was on sale before. On the live list this shows six sets, deepest first, instead of one. A list without those fields behaves as before.
+- **The sign-up sits under Just Missed, and is the loudest thing on the page.** The "Sale alerts" block (email form and Telegram link) moves up from the bottom of the list to just under Just Missed, on a dark panel with a large heading, "Never miss a deal", a big email box and a Telegram button. With a filter chosen, or no Just Missed row, it goes back to its place at the bottom. The email form needs Mailgun to send anything to the people who sign up; until it is connected, sign-ups are collected but nothing is mailed.
+
 ## 2.21.1
 
 - **Picking up a book or a curio in the Library.** The lift (a slightly bigger, brighter item while you hold it) was a CSS scale that also multiplied the item's position inside the bookcase, so the further an item was from the bookcase's top-left corner, the further it jumped away from the pointer, and it then moved about 12% faster than the pointer. The lift is now part of the item's own movement and grows around the item. Measured in Chrome on Shelf 1: a 150 by 90 px drag of a curio moved it 163 by 90, 157 by 105 and 139 by 97 px before, and 147 by 93, 144 by 98 and 142 by 95 after (the rest is the item growing about its corner). Not checked on a real phone, Safari or Firefox; a touch hold starts after 320 ms as before.

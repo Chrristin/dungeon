@@ -2910,6 +2910,15 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .store-alerts-on { margin: 0; font: 0.82rem/1.4 var(--mono); color: var(--graphite); }
 .store-alerts-tg { align-self: flex-start; color: var(--ink); font: 500 0.88rem/1.3 var(--sans); text-decoration: underline; text-underline-offset: 3px; }
 .store-alerts-tg[hidden] { display: none; }
+/* On a list page the sign-up sits under Just Missed (store.js moves it there) and is the loudest thing on the page. Fixed colours, so it reads the same in light and dark. */
+.store-alerts.is-hook { margin-top: 0; padding: clamp(1.4rem, 4vw, 2.2rem); border: 0; border-radius: 18px; background: #17191e; color: #fcfcfa; gap: 0.9rem; }
+.store-alerts.is-hook .store-h { font-size: clamp(1.7rem, 5vw, 2.6rem); line-height: 1.1; color: inherit; }
+.store-alerts.is-hook .store-request-note { color: inherit; opacity: 0.82; font-size: 1rem; }
+.store-alerts.is-hook .store-request-input { background: #fcfcfa; color: #17191e; border: 0; min-height: 3.1rem; }
+.store-alerts.is-hook .store-request-send { background: #ffcc2e; color: #17191e; min-height: 3.1rem; font-weight: 600; }
+.store-alerts.is-hook .store-alerts-on { color: inherit; opacity: 0.85; }
+.store-alerts.is-hook .store-alerts-tg { display: inline-flex; align-items: center; padding: 0.7rem 1.3rem; border: 2px solid currentColor; border-radius: 999px; color: inherit; font-weight: 600; text-decoration: none; }
+.store-alerts.is-hook .store-alerts-tg:hover { background: rgba(255, 255, 255, 0.12); }
 .store-alerts:not(:has(.store-alerts-form, .store-alerts-on, .store-alerts-tg:not([hidden]))) { display: none; }
 /* Your one-liner (or the start of your note) on a card: two lines at most */
 .store-card .store-line { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
