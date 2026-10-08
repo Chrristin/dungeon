@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.21.14
+
+- **The single issues are drawn as a set.** The two piles of Gotham single issues behind the Super Specials now read like a multi-volume collection: one band for each title, lettered with its name and the issues in it ("Superman 14–43", "Teen Titans 1…15"), the Gotham Comics imprint down the right, and paper showing at the end of each. Before, they were plain colour stripes.
+- **A title with no cover has a Gotham plate.** In an opened pile, a title the photograph has no cover for shows a black plate ruled in yellow, its name between two lines and the imprint at the foot, as a Gotham special looks.
+
 ## 2.21.13
 
 - **Every shelf is full, end to end.** On the shelves as they really are, each row's standing books are widened a little (by a third at the most) until the row reaches both ends: Shelves 1 to 5 no longer have strips of empty board. The thicknesses in the data are estimates, so this evens them out.

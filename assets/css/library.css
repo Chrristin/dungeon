@@ -345,7 +345,10 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
 .lb-ct b { display: block; margin-top: 0.3rem; font-size: 0.72rem; line-height: 1.2; }
 .lb-ct small { color: var(--graphite); font-size: 0.68rem; }
 .lb-cv { aspect-ratio: 150 / 215; border-radius: 3px; background-repeat: no-repeat; background-color: #222; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
-.lb-cv.plate { display: flex; align-items: center; justify-content: center; padding: 0.25rem; text-align: center; font-size: 0.58rem; font-weight: 800; line-height: 1.15; overflow: hidden; }
+/* a title with no cover: a plate in its pile's colours, ruled like the cover of a Gotham special, with the imprint at the foot */
+.lb-cv.plate { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.4rem 0.3rem 0.9rem; text-align: center; font-size: 0.6rem; font-weight: 800; line-height: 1.15; text-transform: uppercase; letter-spacing: 0.02em; overflow: hidden; box-shadow: inset 0 0 0 3px #0c0c0e, inset 0 0 0 4.5px currentColor, 0 2px 6px rgba(0, 0, 0, 0.4); background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, 0.3)); }
+.lb-cv.plate span { display: block; padding: 0.15rem 0; border-top: 1px solid currentColor; border-bottom: 1px solid currentColor; }
+.lb-cv.plate small { position: absolute; left: 0; right: 0; bottom: 0.4rem; font-size: 0.42rem; font-weight: 800; letter-spacing: 0.06em; opacity: 0.85; }
 .lb-ct[aria-pressed="true"] .lb-cv { outline: 3px solid var(--ink); outline-offset: 1px; }
 .lb-cd { margin: 0.6rem 0 0; }
 .lb-cdr { display: flex; gap: 0.7rem; padding: 0.7rem; border: 1px solid var(--rule); border-radius: 10px; }

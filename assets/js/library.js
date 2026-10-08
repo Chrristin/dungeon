@@ -595,7 +595,24 @@
     const SPR=root.dataset.src.replace('data/library.json','images/comics/covers.webp'),COLS=12,ROWS=5,CWD=150,CHT=215,CC=CTX.cc||{};
     const short=t=>t.toUpperCase().replace(/&/g,'AND').replace(/\s*\(?SUPER SPECIAL (\d+)\)?/,' SS $1').replace(/\(SPECIAL (\d+)\)/,'SP $1').replace(/\s+No\.\s*/,' ').replace(/'/g,'\u2019').replace(/[<>"]/g,'');
     const cvAt=i=>[i%COLS,Math.floor(i/COLS)];
-    function pileArt(P,ms,Wo){const n=ms.length,W=Math.round(Wo||P.w||170),th=Math.min(P.th||6,(P.cap||240)/n),H=Math.ceil(n*th)+3,id='pg'+P.id.replace(/\W/g,''),lab=th>=4.2,f=v=>v.toFixed(2),fs=th*.66,GC=['#d8302a','#2f6fd0','#e7a62a','#3aa85a','#9a4ad0','#e8532a','#2ab0c8'];
+    /* A pile of single issues is a set: one band for each title, lettered with its name and the issues in it, as a boxed set is */
+    function setArt(P,ms,Wo){const W=Math.round(Wo||P.w||170),f=v=>v.toFixed(2),th=P.th||2,id='pg'+P.id.replace(/\W/g,''),PAL=['#1B1B22','#23304F','#4A1A22','#1F3F36','#33263F','#3A2E1C','#14304A','#2E2E36'];
+      const rn=i=>{const x=Math.sin(i*12.9898+W)*43758.5453;return x-Math.floor(x)},G=[],ix={};
+      ms.forEach(b=>{const n=b.t.replace(/\s+No\.\s*\d+$/,'');if(!(n in ix)){ix[n]=G.length;G.push({n,it:[]})}G[ix[n]].it.push(b)});
+      const hs=G.map(g=>Math.max(g.it.length*th,8.5)),tot=hs.reduce((a,b)=>a+b,0),k=Math.min(1,(P.cap||240)/tot),H=Math.ceil(tot*k)+3;
+      let g='<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient></defs><g stroke="none">',y=1;
+      G.forEach((gr,gi)=>{const bh=hs[gi]*k,n=gr.it.length,sh=bh/n,col=PAL[(gr.n.length*7+gr.n.charCodeAt(0)+gi)%PAL.length],nums=gr.it.map(b=>+((/No\.\s*(\d+)$/.exec(b.t)||[])[1]||0)).filter(Boolean);
+        for(let i=0;i<n;i++){const yy=y+i*sh,r=rn(gi*40+i),dx=(r-.5)*W*.018,pb=W*.03+rn(gi*40+i+9)*W*.05,body=W-pb;
+          g+='<rect x="'+f(dx+body-1)+'" y="'+f(yy)+'" width="'+f(pb+1.5)+'" height="'+f(Math.max(.6,sh*.86))+'" fill="'+(rn(i+gi)>.5?'#e4d8b6':'#eee3c4')+'"/>';
+          g+='<rect x="'+f(dx)+'" y="'+f(yy)+'" width="'+f(body)+'" height="'+f(Math.max(.6,sh*.86))+'" fill="'+col+'"/>';
+          if(i%2===0)g+='<rect x="'+f(dx)+'" y="'+f(yy)+'" width="'+f(W*.014)+'" height="'+f(Math.max(.6,sh*.86))+'" fill="#e7a62a" opacity=".7"/>'}
+        g+='<rect x="0" y="'+f(y+bh-.5)+'" width="'+W+'" height=".7" fill="#000" opacity=".55"/>';
+        const fs=Math.min(bh*.52,6.6),lab=short(gr.n.replace(/^The /i,''))+(nums.length?'  '+(nums.length>1&&nums[nums.length-1]-nums[0]===nums.length-1?nums[0]+'\u2013'+nums[nums.length-1]:nums.length>1?nums[0]+'\u2026'+nums[nums.length-1]:nums[0]):'');
+        if(bh>=7.5){g+='<text x="'+f(W*.07)+'" y="'+f(y+bh*.5+fs*.36)+'" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="'+f(fs)+'" fill="#E7C63A" textLength="'+f(Math.min(W*.6,lab.length*fs*.62))+'" lengthAdjust="spacingAndGlyphs">'+lab+'</text>';
+          if(P.imprint)g+='<text x="'+f(W*.74)+'" y="'+f(y+bh*.5+fs*.36)+'" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="'+f(fs*.85)+'" fill="#E7C63A" textLength="'+f(W*.2)+'" lengthAdjust="spacingAndGlyphs">'+P.imprint+'</text>'}
+        y+=bh});
+      g+='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="url(#'+id+')"/></g>';return[Math.ceil(W+8),H,g]}
+    function pileArt(P,ms,Wo){if(P.sets)return setArt(P,ms,Wo);const n=ms.length,W=Math.round(Wo||P.w||170),th=Math.min(P.th||6,(P.cap||240)/n),H=Math.ceil(n*th)+3,id='pg'+P.id.replace(/\W/g,''),lab=th>=4.2,f=v=>v.toFixed(2),fs=th*.66,GC=['#d8302a','#2f6fd0','#e7a62a','#3aa85a','#9a4ad0','#e8532a','#2ab0c8'];
       const rn=i=>{const x=Math.sin(i*12.9898+W)*43758.5453;return x-Math.floor(x)};
       let g='<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient></defs><g stroke="none">';
       ms.forEach((b,i)=>{const y=1+i*th,r=rn(i+3),dx=(r-.5)*(r>.86?W*.05:W*.02),h=th*(th>=4?.9:.84),pb=Math.min(W*.12,th>=4?W*.03+rn(i+9)*W*.05:W*.03),body=W-pb;
@@ -833,8 +850,8 @@
         .then(r=>r.json()).then(d=>{const id=d.docs&&d.docs[0]&&d.docs[0].cover_i,u=id?'https://covers.openlibrary.org/b/id/'+id+'-M.jpg':'';
           cache[e.t]=u;try{localStorage.setItem('dungeon-library-covers',JSON.stringify(cache))}catch(err){}show(u)}).catch(()=>{})}
     /* The card of a pile: one cover for each title, as in the photograph; a title opens to show every issue there is of it */
-    function cover(el,name,idx,b){el.className='lb-cv';if(idx!=null){const[cx,cy]=cvAt(idx);el.style.backgroundImage='url('+SPR+')';el.style.backgroundSize=COLS*100+'% '+ROWS*100+'%';el.style.backgroundPosition=(cx/(COLS-1)*100)+'% '+(cy/(ROWS-1)*100)+'%'}
-      else{el.classList.add('plate');el.style.background=b.c;el.style.color=b.c2;el.textContent=name.replace(/ No\. \d+$/,'')}return el}
+    function cover(el,name,idx,b,imp){el.className='lb-cv';if(idx!=null){const[cx,cy]=cvAt(idx);el.style.backgroundImage='url('+SPR+')';el.style.backgroundSize=COLS*100+'% '+ROWS*100+'%';el.style.backgroundPosition=(cx/(COLS-1)*100)+'% '+(cy/(ROWS-1)*100)+'%'}
+      else{el.classList.add('plate');el.style.background=b.c;el.style.color=b.c2;const t=document.createElement('span');t.textContent=name.replace(/ No\. \d+$/,'').replace(/ \(.*\)$/,'');el.appendChild(t);if(imp){const m=document.createElement('small');m.textContent=imp;el.appendChild(m)}}return el}
     function pileCard(c,m){const P=PILE[c.pile],ms=P.members,f=add(info,'div',null,'f');f.classList.add('lb-f-pile');
       const S=[],ix={};ms.forEach(b=>{const n=b.t.replace(/\s+No\.\s*\d+$/,'');if(!(n in ix)){ix[n]=S.length;S.push({n,items:[],cv:CC[n],hay:''})}const s=S[ix[n]];s.items.push(b);s.hay+=' '+b.t.toLowerCase()});
       S.forEach(s=>{s.hay=(s.n+s.hay).toLowerCase()});
@@ -845,10 +862,10 @@
       function draw(){const key=q.value.trim().toLowerCase().split(/\s+/).filter(Boolean),rows=S.filter(s=>key.every(k=>s.hay.indexOf(k)>=0)),pages=Math.max(1,Math.ceil(rows.length/12));
         if(page>=pages)page=pages-1;grid.textContent='';nav.textContent='';det.textContent='';
         rows.slice(page*12,page*12+12).forEach(s=>{const bt=add(grid,'button',null,'ct');bt.type='button';bt.setAttribute('aria-pressed',s.n===pick?'true':'false');bt.setAttribute('aria-label',s.n+', '+s.items.length+(s.items.length>1?' issues':' issue'));
-          bt.appendChild(cover(document.createElement('div'),s.n,s.cv,s.items[0]));add(bt,'b',s.n.replace(/ \(.*\)$/,''));add(bt,'small',s.items.length>1?s.items.length+' issues':'1 comic');
+          bt.appendChild(cover(document.createElement('div'),s.n,s.cv,s.items[0],P.imprint));add(bt,'b',s.n.replace(/ \(.*\)$/,''));add(bt,'small',s.items.length>1?s.items.length+' issues':'1 comic');
           bt.onclick=()=>{pick=pick===s.n?null:s.n;draw()}});
         if(pages>1)for(let i=0;i<pages;i++){const bt=add(nav,'button',(i*12+1)+'\u2013'+Math.min(rows.length,(i+1)*12),'pg');bt.type='button';bt.setAttribute('aria-pressed',i===page?'true':'false');bt.onclick=()=>{page=i;draw()}}
-        const s=pick&&S[ix[pick]];if(s){const row=add(det,'div',null,'cdr');row.appendChild(cover(document.createElement('div'),s.n,s.cv,s.items[0]));const tx=add(row,'div');add(tx,'h3',s.n);
+        const s=pick&&S[ix[pick]];if(s){const row=add(det,'div',null,'cdr');row.appendChild(cover(document.createElement('div'),s.n,s.cv,s.items[0],P.imprint));const tx=add(row,'div');add(tx,'h3',s.n);
           add(tx,'p',s.items.length>1?s.items.length+' issues, from the top of the stack down.':'One comic.');const ch=add(tx,'div',null,'chips');
           s.items.forEach((b,k)=>{const nn=/No\.\s*(\d+)$/.exec(b.t);if(nn||s.items.length>1)add(ch,'span',nn?'No. '+nn[1]:b.t,k===0?'top':null)});
           const tg=(s.items[0].tags||[]).filter(t=>t!=='Comics');if(tg.length)add(tx,'p',tg.join(', '))}
