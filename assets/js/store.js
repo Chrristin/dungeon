@@ -365,9 +365,70 @@
   }
   function close() { if (sheet.open) sheet.close(); try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
 
+
+  /* The toolbar: search, theme (group) and sort, above the rows. It lives outside the list's own box, so typing in it never redraws itself.
+     The choices go into the address as ?q=, ?group= and ?sort= (the item sheet uses the #), so a filtered view can be shared. */
+  var SORTS = { verdict: 'Best deals first', off: 'Biggest discount', pa: 'Price: low to high', pd: 'Price: high to low', ppp: 'Price per piece', name: 'Name A to Z' };
+  var q = '', grp = '', bar0 = null, urlRead = false, qTimer = 0;
+  function readUrl() {
+    if (urlRead) return; urlRead = true;
+    try { var sp = new URLSearchParams(location.search); q = (sp.get('q') || '').slice(0, 80); grp = (sp.get('group') || '').slice(0, 60); if (SORTS[sp.get('sort')]) sortBy = sp.get('sort'); } catch (e) {}
+  }
+  function syncUrl() {
+    try {
+      var sp = new URLSearchParams(location.search); sp.delete('q'); sp.delete('group'); sp.delete('sort');
+      if (q) sp.set('q', q); if (grp) sp.set('group', grp); if (sortBy !== 'verdict') sp.set('sort', sortBy);
+      var qs = sp.toString(); history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+    } catch (e) {}
+  }
+  function matches(it) {
+    if (grp && String(it.group || '') !== grp) return false;
+    if (!q) return true;
+    var hay = (String(it.name || '') + ' ' + String(it.code || '') + ' ' + String(it.group || '')).toLowerCase();
+    return q.toLowerCase().split(/\s+/).every(function (w) { return !w || hay.indexOf(w) > -1; });
+  }
+  function cmpBy(k) {
+    if (k === 'off') return function (a, b) { return (b.off || 0) - (a.off || 0); };
+    if (k === 'pa') return function (a, b) { return (a.priced ? a.it.price : 1e12) - (b.priced ? b.it.price : 1e12); };
+    if (k === 'pd') return function (a, b) { return (b.priced ? b.it.price : -1) - (a.priced ? a.it.price : -1); };
+    if (k === 'name') return function (a, b) { return String(a.it.name).localeCompare(String(b.it.name)); };
+    return null;
+  }
+  function toolbar() {
+    if (!root || !shelf) return;
+    readUrl();
+    var items = shelf.items || [], groups = [];
+    items.forEach(function (it) { if (it.group && groups.indexOf(it.group) < 0) groups.push(it.group); });
+    groups.sort();
+    if (!bar0) {
+      bar0 = el('form', 'store-toolbar'); bar0.setAttribute('role', 'search'); bar0.addEventListener('submit', function (e) { e.preventDefault(); });
+      var inp = el('input', 'store-toolbar-q'); inp.type = 'search'; inp.setAttribute('aria-label', 'Search this list'); inp.autocomplete = 'off';
+      var g = el('select', 'store-toolbar-g'); g.setAttribute('aria-label', 'Filter by group');
+      var s = el('select', 'store-toolbar-s'); s.setAttribute('aria-label', 'Sort');
+      var n = el('span', 'store-toolbar-n'); n.setAttribute('role', 'status');
+      bar0.appendChild(inp); bar0.appendChild(g); bar0.appendChild(s); bar0.appendChild(n);
+      inp.addEventListener('input', function () { clearTimeout(qTimer); qTimer = setTimeout(function () { q = inp.value.trim(); shown = PAGE; syncUrl(); draw(); }, 160); });
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Escape' && inp.value) { inp.value = ''; q = ''; shown = PAGE; syncUrl(); draw(); } });
+      g.addEventListener('change', function () { grp = g.value; shown = PAGE; syncUrl(); draw(); });
+      s.addEventListener('change', function () { sortBy = s.value; shown = PAGE; syncUrl(); draw(); });
+      root.parentNode.insertBefore(bar0, root);
+    }
+    var inp2 = bar0.querySelector('.store-toolbar-q'), g2 = bar0.querySelector('.store-toolbar-g'), s2 = bar0.querySelector('.store-toolbar-s');
+    inp2.placeholder = 'Search by name, number or ' + (shelf.unit === 'sets' ? 'theme' : 'brand');
+    if (document.activeElement !== inp2) inp2.value = q;
+    g2.textContent = ''; g2.hidden = groups.length < 2;
+    var o0 = el('option', '', shelf.unit === 'sets' ? 'All themes' : 'All brands'); o0.value = ''; g2.appendChild(o0);
+    groups.forEach(function (name) { var o = el('option', '', name); o.value = name; g2.appendChild(o); });
+    if (grp && groups.indexOf(grp) < 0) grp = ''; g2.value = grp;
+    s2.textContent = '';
+    Object.keys(SORTS).forEach(function (k) { if (k === 'ppp' && !items.some(function (it) { return it.pieces; })) return; var o = el('option', '', SORTS[k]); o.value = k; s2.appendChild(o); });
+    s2.value = SORTS[sortBy] && [].some.call(s2.options, function (o) { return o.value === sortBy; }) ? sortBy : 'verdict';
+  }
+
   function draw() {
+    toolbar();
     var rules = rulesOf(shelf);
-    var all = (shelf.items || []).map(function (it) { return judge(it, rules); });
+    var all = (shelf.items || []).filter(matches).map(function (it) { return judge(it, rules); });
     var rank = { must: 0, fair: 1, wait: 2, 'new': 3, skip: 4 };
     all.sort(function (a, b) { return (rank[a.verdict] - rank[b.verdict]) || (b.off - a.off); });
     var counts = {}; all.forEach(function (o) { counts[o.verdict] = (counts[o.verdict] || 0) + 1; });
@@ -384,6 +445,8 @@
     var shopName = onSale.length ? onSale[0].shop.name : '';
     view = filter === 'all' ? all.slice() : filter === 'shop' ? onSale.slice() : all.filter(function (o) { return o.verdict === filter; });
     if (sortBy === 'ppp') view.sort(function (a, b) { return (a.ppp == null) - (b.ppp == null) || a.ppp - b.ppp; });
+    else if (cmpBy(sortBy)) view.sort(cmpBy(sortBy));
+    if (bar0) bar0.querySelector('.store-toolbar-n').textContent = (q || grp) ? all.length + ' of ' + (shelf.items || []).length : '';
     root.textContent = '';
 
     if (shelves.length > 1 || shelf.hand) {
@@ -439,6 +502,7 @@
     /* opt: note (a line under the heading: text, and a link), limit (show only the first few, with a button for the rest) */
     function feature(title, list, missed, bold, opt) {
       if (!list.length) return;
+      if (cmpBy(sortBy)) list = list.slice().sort(cmpBy(sortBy));
       var sec = el('section', 'store-feature'), h = el('h2', 'store-h', title); h.appendChild(el('span', 'store-n', String(list.length)));
       var line = taglines[title.toLowerCase()] || (shelf.taglines && shelf.taglines[title]); if (line) h.appendChild(el('span', 'store-hand store-tagline', line));
       sec.appendChild(h);
@@ -497,7 +561,10 @@
     view.slice(0, shown).forEach(function (o, i) { grid.appendChild(card(o, i, false)); });
     root.appendChild(grid);
     if (view.length > shown) { var more = el('button', 'store-pill store-more', 'Show ' + (view.length - shown) + ' more'); more.type = 'button'; root.appendChild(more); }
-    if (!view.length) root.appendChild(el('p', 'store-wait', 'Nothing on this shelf yet.'));
+    if (!view.length) {
+      if (q || grp) { var none = el('p', 'store-wait', 'Nothing matches that. '); var clr = el('button', 'store-pill', 'Clear the search'); clr.type = 'button'; clr.setAttribute('data-clear', '1'); none.appendChild(clr); root.appendChild(none); }
+      else root.appendChild(el('p', 'store-wait', 'Nothing on this shelf yet.'));
+    }
 
     var foot = el('footer', 'store-foot');
     if (shelf.method) foot.appendChild(el('p', '', shelf.method));
@@ -578,10 +645,11 @@
   if (root) root.addEventListener('click', function (e) {
     var c = e.target.closest('.store-card'), f = e.target.closest('[data-filter]'), s = e.target.closest('[data-shelf]');
     if (c) return open(+c.getAttribute('data-i'));
-    var so = e.target.closest('[data-sort]');
-    if (so) { sortBy = so.getAttribute('data-sort'); shown = PAGE; return draw(); }
+    var so = e.target.closest('[data-sort]'), cl = e.target.closest('[data-clear]');
+    if (cl) { q = ''; grp = ''; shown = PAGE; syncUrl(); return draw(); }
+    if (so) { sortBy = so.getAttribute('data-sort'); shown = PAGE; syncUrl(); return draw(); }
     if (f) { filter = f.getAttribute('data-filter'); shown = PAGE; return draw(); }
-    if (s) { shelf = shelves[+s.getAttribute('data-shelf')].data; filter = 'all'; sortBy = 'verdict'; shown = PAGE; return draw(); }
+    if (s) { shelf = shelves[+s.getAttribute('data-shelf')].data; filter = 'all'; sortBy = 'verdict'; q = ''; grp = ''; shown = PAGE; syncUrl(); return draw(); }
     if (e.target.closest('.store-more')) { shown += PAGE; draw(); }
   });
   if (sheet) {
