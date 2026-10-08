@@ -13,7 +13,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const INPUTS = ['assets/data/library.json', 'assets/js/library.js', 'assets/css/library.css', 'extras/shelves/harness.html', 'extras/shelves/build.mjs'];
+const INPUTS = ['assets/data/library.json', 'assets/js/library.js', 'assets/css/library.css', 'extras/shelves/harness.html', 'extras/shelves/build.mjs', 'assets/images/comics/covers.webp'];
 const IMG_DIR = 'assets/images/shelves';
 const PARTIAL = 'partials/library-shelves.hbs';
 const SCHEMES = ['light', 'dark'];
@@ -86,6 +86,9 @@ async function generate() {
             page.on('pageerror', e => { throw e; });
             await page.goto(base + '/extras/shelves/harness.html?scheme=' + scheme);
             await page.waitForFunction(() => window.__libReady === true, null, { timeout: 90000 });
+            await page.waitForLoadState('networkidle');
+            await page.evaluate(() => Promise.all([...document.images].map(i => i.decode ? i.decode().catch(() => {}) : 0)));
+            await page.waitForTimeout(400); /* the covers sprite, used by the leaning comics, is an SVG image: give it a moment */
             const info = await page.evaluate(() => {
                 const boxes = [...document.querySelectorAll('.lb-box')];
                 return {

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.21.13
+
+- **Every shelf is full, end to end.** On the shelves as they really are, each row's standing books are widened a little (by a third at the most) until the row reaches both ends: Shelves 1 to 5 no longer have strips of empty board. The thicknesses in the data are estimates, so this evens them out.
+- **The comics look like comics.** The piles on Shelf 3 show their paper (a ragged cream edge, a slice of cover colour at each spine, uneven stacking), and each fills its share of the shelf. Four comics lean on the front piles: thin bent booklets, turned a little towards you, with a folded corner, a dim page edge and a shadow. Clicking one opens its pile on that title.
+- **A pile opens to a grid of covers**, one for each title, as in the photograph of the piles: the title's name and how many issues there are. Choosing a title shows every issue of it. The covers are one 290 KB picture of 60 covers, loaded when Shelf 3 opens. Titles with no photographed cover show a plain plate. The search box finds a title or an issue number.
+- **For editing:** `cc` (title to cover), `lean`, `fw`, `bw`, `on` and `lead: "rest"` in the data file (docs/library.md, "Piles of comics").
+
 ## 2.21.12
 
 - **The comics on Shelf 3's bottom row.** 386 comics, now in five piles that stand as in the photograph: the Gotham Super Specials in two piles (33 and 8), the Archie digests (29) standing on top of the second, and, behind them, two piles of Gotham single issues (121 DC and others, 195 Marvel). Click a pile and its card lists the comics, twenty to a page, with a search box. The 13 books that stand upright on the right (the Tintin and Jo, Zette and Jocko albums, Asterix the Bold, Fighting the Fakers, X-Force, Superman 8 and three Marvel Adventures) are ordinary books again.

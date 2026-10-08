@@ -262,6 +262,9 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
 .lb-curio.lb-settle { transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), scale 0.15s; }
 .lb-curio svg { display: block; overflow: visible; filter: drop-shadow(2px 1px 2px rgba(0, 0, 0, 0.4)); }
 .lb-curio:focus-visible { outline: 2px solid #E3B23C; outline-offset: 3px; }
+/* a leaning comic is only its painted cover: the clear corners of its box let a click through to the pile behind */
+.lb-curio.lb-lean { pointer-events: none; }
+.lb-curio.lb-lean svg g[clip-path] { pointer-events: auto; cursor: pointer; }
 .lb-nocurios .lb-curio:not(.lb-pile) { display: none; }
 .lb-orn { position: absolute; left: 0; top: 0; pointer-events: none; }
 .lb-orn svg { display: block; }
@@ -334,13 +337,24 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
     .lib-r-a, .lib-r-m { grid-column: 2 / 4; }
 }
 
-/* The card of a pile of comics: a search box, pages of twenty, and the list */
+/* The card of a pile of comics: a search box, a grid of covers (one per title), the chosen title's issues */
 #lib-info .lb-f-pile { display: flex; flex-direction: column; }
 .lb-pq { width: 100%; box-sizing: border-box; margin: 0.45rem 0; padding: 0.45rem 0.8rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 0.875rem; }
-.lb-pn { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0 0 0.4rem; }
+.lb-cg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.55rem; }
+.lb-ct { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.lb-ct b { display: block; margin-top: 0.3rem; font-size: 0.72rem; line-height: 1.2; }
+.lb-ct small { color: var(--graphite); font-size: 0.68rem; }
+.lb-cv { aspect-ratio: 150 / 215; border-radius: 3px; background-repeat: no-repeat; background-color: #222; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
+.lb-cv.plate { display: flex; align-items: center; justify-content: center; padding: 0.25rem; text-align: center; font-size: 0.58rem; font-weight: 800; line-height: 1.15; overflow: hidden; }
+.lb-ct[aria-pressed="true"] .lb-cv { outline: 3px solid var(--ink); outline-offset: 1px; }
+.lb-cd { margin: 0.6rem 0 0; }
+.lb-cdr { display: flex; gap: 0.7rem; padding: 0.7rem; border: 1px solid var(--rule); border-radius: 10px; }
+.lb-cdr .lb-cv { flex: none; width: 88px; }
+.lb-cdr h3 { margin: 0 0 0.15rem; font-size: 0.95rem; }
+.lb-cdr p { margin: 0 0 0.4rem; font-size: 0.8rem; }
+.lb-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.4rem; }
+.lb-chips span { padding: 0.1rem 0.5rem; border: 1px solid var(--rule); border-radius: 999px; font-size: 0.74rem; }
+.lb-chips span.lb-top { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.lb-pn { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.6rem 0 0; }
 .lb-pg { padding: 0.2rem 0.6rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 0.78rem; cursor: pointer; }
 .lb-pg[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.lb-pl { list-style: none; margin: 0; padding: 0; }
-.lb-pl li { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; border-top: 1px solid var(--rule); font-size: 0.85rem; }
-.lb-pl i { flex: none; width: 8px; height: 18px; border-radius: 2px; }
-.lb-pl small { margin-left: auto; padding-left: 0.5rem; text-align: right; color: var(--graphite); }
