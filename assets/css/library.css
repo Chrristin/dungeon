@@ -234,8 +234,8 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
 /* By hand on a touch screen: a swipe still scrolls the page; press and hold a book to pick it up */
 .lb-manual .lb-book { cursor: grab; touch-action: pan-x pan-y; }
 /* Picked up: a little larger and brighter, so it is clear what is in hand. Faded: outside the chosen topic */
-.lb-lift { scale: 1.08; filter: brightness(1.12); cursor: grabbing; }
-.lb-curio.lb-lift { scale: 1.12; filter: none; }
+.lb-lift { filter: brightness(1.12); cursor: grabbing; } /* the grow is in the item's transform (library.js, lift()), so it cannot move the item */
+.lb-curio.lb-lift { filter: none; }
 .lb-dim { opacity: 0.16; filter: grayscale(0.7); }
 @media (prefers-reduced-motion: reduce) {
     .lb-book, .lb-curio { transition: none; }

@@ -3,6 +3,6 @@
     {{#match primary_tag.slug "product"}}<p class="essay-end-bio">{{t "Christin George. Product leader, open to leadership roles and consulting."}} <a href="{{@site.url}}/about/">{{t "About me"}}</a></p>{{else}}<p class="essay-end-bio">{{t "Christin George. Product leader by day, collector the rest of the time."}} <a href="{{@site.url}}/about/">{{t "About me"}}</a></p>{{/match}}
     <p class="essay-end-links">
         {{#if @site.members_enabled}}{{#unless @member}}<span>{{t "New essays by email, when there is one."}} <a href="#/portal/signup" data-portal="signup">{{t "Subscribe"}}</a></span>{{/unless}}{{/if}}
-        {{#match @site.members_support_address "!=" "noreply"}}<span>{{t "Disagree, or know better?"}} <a href="mailto:{{@site.members_support_address}}?subject=Re%3A%20{{encode title}}">{{t "Reply by email"}}</a></span>{{/match}}
+        {{#match @site.members_support_address "!=" "noreply"}}<span>{{t "Disagree, or know better?"}} <!--email_off--><a href="mailto:{{@site.members_support_address}}?subject=Re%3A%20{{encode title}}">{{t "Reply by email"}}</a><!--/email_off--></span>{{/match}}
     </p>
 </aside>

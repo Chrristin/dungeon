@@ -590,6 +590,7 @@
         dx=Math.min(16,c.h*(.05+R()*.04))*(flat?.4:1),op=flat?.3:m==='s'?.4:.5+R()*.1,rot=(R()-.5)*5;
       return`<g transform="rotate(${f(rot)} ${f(c.w/2)} ${c.h})"><ellipse cx="${f(c.w/2+dx)}" cy="${f(c.h-2)}" rx="${f(rx+dx*.7)}" ry="${f(ry)}" fill="url(#lbSh)" opacity="${f(op*.8)}" stroke="none"/><ellipse cx="${f(c.w/2+dx*.25)}" cy="${f(c.h-1.5)}" rx="${f(rx*.72)}" ry="${f(ry*.55)}" fill="url(#lbSh)" opacity="${f(op)}" stroke="none"/></g>`}
     const curios=(CURIOS||[]).filter(c=>c&&CURIO[c.k]);let G={},cpos={};if(!CTX.landing)try{cpos=JSON.parse(localStorage.getItem('dungeon-library-curios'+KS)||'{}')}catch(err){cpos={}}
+    const lift=el=>el.classList.contains('lb-lift')?(el.classList.contains('lb-curio')?' scale(1.12)':' scale(1.08)'):'',unlift=el=>{el.style.transform=el.style.transform.replace(/ scale\([^)]*\)$/,'')},pickT=el=>{if(el.style.transform&&!/ scale\(/.test(el.style.transform))el.style.transform+=lift(el)};
     function putCurio(c){const g=G[c.s]||G[0];if(!g)return;if(c.el.parentNode!==boxes[g.c]._cur)boxes[g.c]._cur.appendChild(c.el);const lx=c._ax!=null?c._ax:Math.max(0,Math.min(g.colW-c.w,c.x*g.colW-c.w/2)),co=Math.cos(g.th),si=Math.sin(g.th);
       c.wx=g.ox+lx*co-g.front*si;c.wy=g.by+lx*si+g.front*co;c.el.style.transform=`translate(${c.wx.toFixed(1)}px,${(c.wy-c.h).toFixed(1)}px) rotate(${g.th.toFixed(4)}rad)`}
     function dropCurio(c){const cx=c.wx+c.w/2,gc=(G[c.s]||G[0]).c;let best=null,bd=1e9;
@@ -605,16 +606,16 @@
       el.addEventListener('pointermove',ev=>{if(!on)return;const dx=(ev.clientX-sx)/zs,dy=(ev.clientY-sy)/zs;
         if(!armed){if(Math.abs(dx)+Math.abs(dy)>8/zs){clearTimeout(timer);on=false}return}
         if(!c.moved){if(Math.abs(dx)+Math.abs(dy)<4)return;c.moved=true;el.classList.add('lb-drag');el.classList.add('lb-lift');info.classList.remove('lb-on')}
-        c.wx=x0+dx;c.wy=y0+dy;el.style.transform=`translate(${c.wx.toFixed(1)}px,${(c.wy-c.h).toFixed(1)}px)`});
-      const end=()=>{clearTimeout(timer);el.classList.remove('lb-lift');if(!on)return;on=false;el.classList.remove('lb-drag');if(c.moved)dropCurio(c)};
+        c.wx=x0+dx;c.wy=y0+dy;el.style.transform=`translate(${c.wx.toFixed(1)}px,${(c.wy-c.h).toFixed(1)}px)${lift(el)}`});
+      const end=()=>{clearTimeout(timer);el.classList.remove('lb-lift');unlift(el);if(!on)return;on=false;el.classList.remove('lb-drag');if(c.moved)dropCurio(c)};
       el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
       el.addEventListener('click',()=>{if(c.moved){c.moved=false;return}select(c)})});
     function put(e){const g=e.geo,c=Math.cos(g.th),s=Math.sin(g.th);e.wx=g.ox+e.lx*c-e.ly_*s;e.wy=g.by+e.lx*s+e.ly_*c;
-      e.el.style.transform=`translate(${e.wx.toFixed(1)}px,${(e.wy-e.dh).toFixed(1)}px) rotate(${(g.th+e.ang).toFixed(4)}rad)`}
+      e.el.style.transform=`translate(${e.wx.toFixed(1)}px,${(e.wy-e.dh).toFixed(1)}px) rotate(${(g.th+e.ang).toFixed(4)}rad)${lift(e.el)}`}
     let topic='';
     function applyTopic(say){let n=0;books.forEach(b=>{const on=!topic||(b.tags||[]).indexOf(topic)>=0;if(on)n++;b.el.classList.toggle('lb-dim',!on)});
       if(say)msg.textContent=topic?n+' books on '+topic+'. The rest are faded.':'Showing every book.'}
-    function pick(el){el.classList.add('lb-lift');try{if(navigator.vibrate)navigator.vibrate(15)}catch(err){}}
+    function pick(el){el.classList.add('lb-lift');pickT(el);try{if(navigator.vibrate)navigator.vibrate(15)}catch(err){}}
     function drop(e){const cx=e.wx+e.dw/2,cy=e.wy-e.dh/2;let best=-1,bd=1e9;
       geos.forEach((g,si)=>{if(g.c!==e.geo.c||cx<g.ox-20||cx>g.ox+g.colW+20)return;const d=Math.abs(cy-(g.by-SH/2));if(d<bd&&d<ROW*.6){bd=d;best=si}});
       const from=manual.findIndex(s=>s.includes(e.i));if(best<0){render('manual');return}
@@ -630,8 +631,8 @@
         if(!armed){if(Math.abs(dx)+Math.abs(dy)>8/zs){clearTimeout(timer);on=null}return}
         if(!e.moved){if(Math.abs(dx)+Math.abs(dy)<4)return;e.moved=true;el.classList.add('lb-drag');el.classList.add('lb-lift');info.classList.remove('lb-on');if(on==='free')el.style.zIndex=999}
         if(on==='slide'){e.lx=Math.max(e.lim[0],Math.min(e.lim[1],start+dx));dxs[e.i]=e.lx-base;put(e)}
-        else{e.wx=wx0+dx;e.wy=wy0+dy;el.style.transform=`translate(${e.wx.toFixed(1)}px,${(e.wy-e.dh).toFixed(1)}px) rotate(-0.06rad)`}});
-      const end=()=>{clearTimeout(timer);el.classList.remove('lb-lift');if(!on)return;const was=on;on=null;el.classList.remove('lb-drag');if(!e.moved)return;
+        else{e.wx=wx0+dx;e.wy=wy0+dy;el.style.transform=`translate(${e.wx.toFixed(1)}px,${(e.wy-e.dh).toFixed(1)}px) rotate(-0.06rad)${lift(el)}`}});
+      const end=()=>{clearTimeout(timer);el.classList.remove('lb-lift');unlift(el);if(!on)return;const was=on;on=null;el.classList.remove('lb-drag');if(!e.moved)return;
         if(was==='slide'){try{localStorage.setItem('dungeon-library-dx'+KS,JSON.stringify(dxs))}catch(err){}}else drop(e)};
       el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end)});
     const LAMP='<svg width="90" height="520" viewBox="0 0 90 520" aria-hidden="true"><rect x="42" y="90" width="6" height="412" fill="#3A2412"/><ellipse cx="45" cy="506" rx="34" ry="10" fill="#3A2412"/><path d="M18 96L30 8H60L72 96Z" fill="#F2C879" stroke="#7A4A26" stroke-width="2"/><path d="M21 84H69" stroke="#C9A227" stroke-width="3"/></svg>',
