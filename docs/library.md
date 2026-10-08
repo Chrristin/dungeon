@@ -49,11 +49,12 @@ After the books, the file lists the curios: the things standing in front of the 
 
 | Field | Meaning |
 |---|---|
-| `k` | Which drawing to use. The drawings are in `assets/js/library.js`; a line whose `k` has no drawing is skipped. |
+| `k` | Which drawing to use. The drawings are in `assets/js/library.js`, and the hand-drawn, hand-shaded ones for Shelves 4 and 5 in `assets/js/library-art.js` (parts of a figure that move are groups with class `mv`; `library.css` plays them while the curio is hovered, focused or held, never for visitors who ask for less motion); a line whose `k` has no drawing is skipped. |
 | `name` | Shown on the curio's card. |
 | `note` | The details shown under the name. Empty for now: fill these in as you like. |
 | `s` | The shelf it stands on, numbered like the books' shelves. `-1` is the top of the left case, `-2` the top of the right case. |
 | `x` | Where along the shelf, from 0 (left end) to 1 (right end). |
+| `dy` | Optional. How far above the shelf it rests, in drawing units: the moon behind the turtles, the helmet box on the pile of books. Picked up and dropped, it settles on the shelf. |
 
 Later lines are drawn in front of earlier ones. A visitor can drag a curio anywhere, which is remembered only in their own browser. To change where a curio stands for everyone, drag it on the live page, click it, read the shelf and position from its card, and put those numbers in its line here.
 
@@ -93,8 +94,10 @@ The `cases` list at the top of the data file sets the bookcases, left to right a
 | --- | --- |
 | `name` | Shown above the shelves and on each book's card. |
 | `n` | How many shelves it has. |
-| `wood` | `dark` for a dark brown case. Leave out for the warm wood. |
+| `wood` | `dark` for a dark brown case, `oak` for the tall oak case, `pale` for pale oak rails with white shelves. Leave out for the warm wood. |
 | `layers` | `true` if some of its books stand behind others (see `ly`). The page then shows every layer side by side, with a "How it really is" button to tuck them back. |
 | `straight` | `true` for level boards and upright posts. Leave out for a crooked case. |
+| `own` | `true` for a case sized to its own contents, not to the fullest shelf of the others. `w` is the least width it takes, in drawing units (300 for the tall oak case). |
+| `taper` | A ladder: each shelf is narrower than the one below it by this fraction of the width, and the rails lean in and rise above the top shelf. Such a case has no back, no fairy lights and no shadow behind the shelves, so the page shows through. A curio on top of a ladder stands on its top shelf. |
 
-Shelves are numbered straight through: with cases of 6, 6 and 5 shelves, the third case's shelves are 12 to 16. A curio on top of a case uses a negative shelf: -1 for the first case, -2 for the second, -3 for the third.
+Shelves are numbered straight through: with cases of 6, 6 and 5 shelves, the third case's shelves are 12 to 16. A curio on top of a case uses a negative shelf: -1 for the first case, -2 for the second, -3 for the third, -4 for the fourth, -5 for the fifth.

@@ -18,7 +18,8 @@ const IMG_DIR = 'assets/images/shelves';
 const PARTIAL = 'partials/library-shelves.hbs';
 const SCHEMES = ['light', 'dark'];
 const PAD = 18;        /* room kept around each bookcase for its shadow, in page pixels */
-const DPR = 2;         /* the pictures are made twice as large as they are shown */
+const PER_ROW = 3;     /* bookcases in the first row of the landing; any more go in a second row, centred under it */
+const DPR = 2;        /* the pictures are made twice as large as they are shown */
 
 /* Line endings are ignored, so a checkout on Windows and one on Linux agree */
 function inputHash() {
@@ -80,7 +81,7 @@ async function generate() {
     const sizes = {}, files = [];
     try {
         for (const scheme of SCHEMES) {
-            const ctx = await browser.newContext({ viewport: { width: 1400, height: 2800 }, deviceScaleFactor: DPR });
+            const ctx = await browser.newContext({ viewport: { width: 1800, height: 2800 }, deviceScaleFactor: DPR });
             const page = await ctx.newPage();
             page.on('pageerror', e => { throw e; });
             await page.goto(base + '/extras/shelves/harness.html?scheme=' + scheme);
@@ -113,18 +114,20 @@ async function generate() {
 
     /* Place the pictures in natural units (the case's own drawing units), so the layout does not depend on the size they were made at */
     const bx = layout.boxes, s = bx[0].w / bx[0].nat, u = v => v / s, padU = PAD / s;
-    const left0 = bx[0].x, T = u(bx[bx.length - 1].x + bx[bx.length - 1].w - left0) + 2 * padU;
+    /* The first PER_ROW bookcases make the first row; the rest make a second row, centred under it at the same scale */
+    const left0 = bx[0].x, r1 = bx.slice(0, PER_ROW), T = u(r1[r1.length - 1].x + r1[r1.length - 1].w - left0) + 2 * padU;
+    const maxW = Math.max(...bx.map(b => u(b.w) + 2 * padU));
     const pct = v => +(v * 100).toFixed(3);
-    let html = '';
+    const rows = ['', ''];
     bx.forEach((b, i) => {
         const imgW = u(b.w) + 2 * padU, imgH = u(b.h) + 2 * padU;
-        const gap = i ? u(b.x - left0) - u(bx[i - 1].x + bx[i - 1].w - left0) - 2 * padU : 0;
+        const gap = i && i !== PER_ROW ? u(b.x - left0) - u(bx[i - 1].x + bx[i - 1].w - left0) - 2 * padU : 0;
         const capL = (b.cap.x - (b.x - PAD)) / s / imgW, capT = (b.cap.y - (b.y - PAD)) / s / imgH, capW = b.cap.w / s / imgW, capH = b.cap.h / s / imgH;
         const dim = sizes['shelf-' + (i + 1) + '-light'];
         const img = scheme => '<img class="lib-shelf-img lib-shelf-' + scheme + '" src="{{asset "images/shelves/shelf-' + (i + 1) + '-' + scheme + '.webp"}}" width="' + dim.w + '" height="' + dim.h + '" alt="" loading="lazy" decoding="async">';
         /* data-px and data-py: the transparent margin round the artwork, as a fraction of the picture's width and height, so
            the page can grow the live bookcase from exactly where the artwork is */
-        html += '    <button class="lib-shelf" type="button" data-shelf="' + i + '" data-px="' + (padU / imgW).toFixed(5) + '" data-py="' + (padU / imgH).toFixed(5) + '" aria-label="Open ' + b.name + '" style="width:' + pct(imgW / T) + '%;margin-left:' + pct(gap / T) + '%;--cap:' + (24 / imgW * 100).toFixed(2) + 'cqw">\n'
+        rows[i < PER_ROW ? 0 : 1] += '    <button class="lib-shelf" type="button" data-shelf="' + i + '" data-px="' + (padU / imgW).toFixed(5) + '" data-py="' + (padU / imgH).toFixed(5) + '" aria-label="Open ' + b.name + '" style="width:' + pct(imgW / T) + '%;margin-left:' + pct(gap / T) + '%;--rel:' + (imgW / maxW).toFixed(4) + ';--cap:' + (24 / imgW * 100).toFixed(2) + 'cqw">\n'
             + '        ' + img('light') + '\n        ' + img('dark') + '\n'
             + '        <span class="lib-shelf-cap" style="left:' + pct(capL) + '%;top:' + pct(capT) + '%;width:' + pct(capW) + '%;height:' + pct(capH) + '%" aria-hidden="true">' + b.name + '</span>\n'
             + '    </button>\n';
@@ -134,7 +137,8 @@ async function generate() {
         + '      whenever the data file, library.js or library.css change. data-std is the width of a standard bookcase, in drawing units. --}}\n'
         + stamp(hash) + '\n'
         + '<div class="lib-landing" id="lib-landing">\n'
-        + '<div class="lib-shelves" id="lib-shelves" data-std="' + Math.round(layout.std) + '" data-fixw="' + Math.round(layout.fixw) + '">\n' + html + '</div>\n'
+        + '<div class="lib-shelves" id="lib-shelves" data-std="' + Math.round(layout.std) + '" data-fixw="' + Math.round(layout.fixw) + '">\n' + rows[0] + '</div>\n'
+        + (rows[1] ? '<div class="lib-shelves lib-shelves-2">\n' + rows[1] + '</div>\n' : '')
         + '<p class="lib-allbooks"><a id="lib-allbooks" href="#books">Or see all ' + bookCount + ' books as a list <span aria-hidden="true">→</span></a></p>\n'
         + '<p class="lib-shelves-msg" id="lib-shelves-msg" role="status" hidden></p>\n</div>\n';
     /* Nothing is written until every picture has been made, so a failed run leaves the last good set alone */

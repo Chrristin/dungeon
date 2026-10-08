@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.21.11
+
+- **Two new bookcases in the Library: Shelf 4 and Shelf 5.** Shelf 4 is the tall oak case: the LEGO Perseverance rover on top, the Grogu shelf (the LEGO Grogu in his pod, the crocheted Grogu, three Grogu figures, a tiny LEGO Grogu and two potion bottles), the Batman shelf (Batman, Sung Jin-Woo on purple flames, a bear with a barrel, a hand stamp, a moon painting, an Archipelago gin box and postcards) and three rows of 25 books. Shelf 5 is the ladder that leans on the wall, with no back to it: the four turtles and the moon on the top shelf, then a shelf of posters and keepsakes, the Nightmare Before Christmas set, the LEGO Ferrari SF-24, and a pile of big books with the unopened LEGO Hamilton Helmet box resting on it. 33 books were added to the list (568 in all). The unopened LEGO Hamilton Helmet box is a curio, not a book; the Kobo e-reader box is still listed, because it stands among the books.
+- **The landing shows five bookcases in two rows**: Shelves 1 to 3, then Shelves 4 and 5 centred under them. On a phone they stand in one column, each at its true width (the narrow case is narrow).
+- **A few figures move when you hover, focus or hold them**: the turtles' arms, weapons and mask tails, Batman's arms and cape, Jin-Woo's dagger arm and the flames, the bear's nod, the Grogu figures, the Theyyam figure. They are still when nothing touches them, and for visitors who ask for less motion.
+- **Curios can rest on top of something** (`dy` in the data file, in pixels): the moon sits behind the turtles and the helmet box on the pile. Picked up and dropped, a curio settles on the shelf like any other.
+- **Cases can have their own width and shape** (`own`, `w`, `taper`, `wood` in the data file; see docs/library.md). The new drawings are in their own file, `assets/js/library-art.js`.
+
 ## 2.21.10
 
 - **The homepage's first picture loads first.** The first card's picture is the largest thing painted on the homepage, and it was marked "load later", so a phone found it late: its largest paint took 3.6 to 4.6 s on a slow connection. It is now marked high priority (the others stay "load later"): 1.65 s in the same test. On PageSpeed's mobile run this was the biggest remaining item (largest paint 8.7 s).

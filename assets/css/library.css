@@ -44,9 +44,13 @@ html[data-scheme="dark"] .lib-shelf-dark { display: block; }
 @keyframes lib-fade { from { opacity: 0; } to { opacity: 1; } }
 .lib-shelves-msg { margin: 0 0 1rem; text-align: center; color: var(--graphite); font-size: 0.95rem; }
 .lib-shelves-msg[hidden] { display: none; }
+/* A second row of bookcases (Shelves 4 and 5) sits centred under the first, close to it */
+.lib-shelves:has(+ .lib-shelves-2) { margin-bottom: 1rem; }
+.lib-shelves-2 { justify-content: center; margin-top: 0; }
 @media (max-width: 899px) {
-    .lib-shelves { flex-direction: column; align-items: center; width: 100%; margin-left: 0; margin-bottom: 2rem; }
-    .lib-shelf { width: min(100%, 560px) !important; margin: 0 0 1.5rem !important; }
+    .lib-shelves, .lib-shelves:has(+ .lib-shelves-2) { flex-direction: column; align-items: center; width: 100%; margin-left: 0; margin-bottom: 0; }
+    .lib-shelves-2 { margin-bottom: 2rem; }
+    .lib-shelf { width: calc(min(100%, 560px) * var(--rel, 1)) !important; margin: 0 0 1.5rem !important; }
 }
 @media (prefers-reduced-motion: reduce) {
     .lib-shelf { transition: none; }
@@ -151,6 +155,38 @@ html.lib-zoomed, html.lib-zoomed body { overflow-x: auto; }
 .lb-cap { z-index: 3; font-family: var(--mono); font-size: 24px; line-height: 34px; text-align: center; color: var(--graphite); }
 /* A darker, straighter bookcase */
 .lb-dark { --lb-wood: #4A382F; --lb-wood-l: #5C473B; --lb-wood-d: #241A16; --lb-edge: #120C09; }
+/* Shelf 4: a tall oak case. Shelf 5: the ladder, with oak rails and white shelves */
+.lb-oak { --lb-wood: #A8703A; --lb-wood-l: #BC8348; --lb-wood-d: #4C2F18; --lb-edge: #22130A; }
+.lb-pale { --lb-wood: #D9B27A; --lb-wood-l: #F2F1ED; --lb-wood-d: #E8E4DB; --lb-edge: #8A7A5C; }
+html[data-scheme="dark"] .lb-oak { --lb-wood: #8A5A2E; --lb-wood-l: #9C6A38; --lb-wood-d: #3A2412; }
+html[data-scheme="dark"] .lb-pale { --lb-wood: #B8935F; --lb-wood-l: #D6D4CE; --lb-wood-d: #C2BEB4; }
+@media (prefers-color-scheme: dark) {
+    html[data-scheme="auto"] .lb-oak { --lb-wood: #8A5A2E; --lb-wood-l: #9C6A38; --lb-wood-d: #3A2412; }
+    html[data-scheme="auto"] .lb-pale { --lb-wood: #B8935F; --lb-wood-l: #D6D4CE; --lb-wood-d: #C2BEB4; }
+}
+.lb-ladder .lb-plank { background-image: linear-gradient(180deg, rgba(255,255,255,.95) 0 3px, rgba(255,255,255,0) 3px, rgba(0,0,0,.1)); box-shadow: 0 6px 8px rgba(0, 0, 0, 0.32), inset 0 -2px 0 rgba(0, 0, 0, 0.07); }
+/* The ladder leans on the wall: nothing behind the shelves, so the page shows through */
+.lb-ladder .lb-back, .lb-ladder .lb-tshade, .lb-ladder .lb-shade, .lb-ladder .lb-fairy { display: none; }
+.lb-ladder .lb-topb { background-color: var(--lb-wood-l); background-image: linear-gradient(180deg, rgba(255,255,255,.95) 0 3px, rgba(255,255,255,0) 3px, rgba(0,0,0,.1)); box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.07); }
+/* A figure's moving parts (library-art.js) play while its curio is hovered, focused or held; never for visitors who ask for less motion */
+.lb-curio .mv { animation-duration: var(--d, 1.6s); animation-iteration-count: infinite; animation-timing-function: ease-in-out; animation-direction: alternate; animation-play-state: paused; }
+.lb-curio:hover .mv, .lb-curio:focus-visible .mv, .lb-curio.lb-lift .mv, .lb-curio.lb-drag .mv { animation-play-state: running; }
+html.lib-zoomed .lb-curio .mv { animation: none; }
+@media (prefers-reduced-motion: reduce) { .lb-curio .mv { animation: none !important; } }
+@keyframes lbm-swayA { from { transform: rotate(-14deg); } to { transform: rotate(16deg); } }
+@keyframes lbm-swayB { from { transform: rotate(12deg); } to { transform: rotate(-18deg); } }
+@keyframes lbm-swayC { from { transform: rotate(-30deg); } to { transform: rotate(26deg); } }
+@keyframes lbm-bob { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+@keyframes lbm-tail { from { transform: skewY(-6deg) rotate(-4deg); } to { transform: skewY(7deg) rotate(5deg); } }
+@keyframes lbm-spin { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+@keyframes lbm-nod { from { transform: rotate(-3deg); } to { transform: rotate(6deg); } }
+@keyframes lbm-cape { from { transform: skewX(-3deg); } to { transform: skewX(4deg); } }
+@keyframes lbm-wob { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+@keyframes lbm-dag { from { transform: rotate(-7deg); } to { transform: rotate(9deg); } }
+@keyframes lbm-hair { from { transform: skewX(-2deg); } to { transform: skewX(3deg); } }
+@keyframes lbm-hem { from { transform: skewX(-1.5deg); } to { transform: skewX(2deg); } }
+@keyframes lbm-flick { from { transform: scaleY(.94) skewX(-2deg); } to { transform: scaleY(1.06) skewX(2deg); } }
+@keyframes lbm-breath { from { transform: translateY(0); } to { transform: translateY(-1.6px); } }
 .lib-nav { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; justify-content: center; margin: 0 0 1rem; }
 .lib-nav:empty { display: none; }
 .lib .lib-navb { min-height: 40px; padding: 0 0.9rem; border-radius: 999px; color: var(--ink); background: var(--paper); }

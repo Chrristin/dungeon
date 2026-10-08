@@ -20,7 +20,7 @@
     return DATA;
   }
   if (root.dataset.render === 'landing') { load().then(function (d) { boot(d, true); }); return; }
-  var btns = shelves ? Array.prototype.slice.call(shelves.querySelectorAll('[data-shelf]')) : [], note = document.getElementById('lib-shelves-msg');
+  var btns = landing ? Array.prototype.slice.call(landing.querySelectorAll('[data-shelf]')) : [], note = document.getElementById('lib-shelves-msg');
   /* Where the lengths and counts can be changed: MIN (the least time, in ms, before the bookcase takes over, so the sparkles
      are seen), MORPH_MS (how long the grow-and-fade takes), the counts in sparkle(), and the durations in library.css
      (lib-spark, lib-glow-burst, lib-bloom). */
@@ -295,7 +295,7 @@
 
     const caseEl=document.getElementById('lib-case'),sizer=document.getElementById('lib-sizer'),vp=document.getElementById('lib-vp'),
           msg=document.getElementById('lib-msg'),info=document.getElementById('lib-info');
-    const boxes=CASES.map((c,i)=>{const b=document.createElement('div');b.className='lb-box'+(c.wood==='dark'?' lb-dark':'');
+    const boxes=CASES.map((c,i)=>{const b=document.createElement('div');b.className='lb-box'+(c.wood?' lb-'+c.wood:'')+(c.taper?' lb-ladder':'');
       ['deep','books2','books1','books','cur'].forEach(k=>{const q=document.createElement('div');q.className='lb-plane lb-p-'+k;b.appendChild(q);b['_'+k]=q});caseEl.appendChild(b);return b});
     let BOX=null,view='ring',focus=0,tucked=false,zs=1;
     const books=DATA;books.forEach(b=>{b.a=b.a||'';b.p=b.p||'';b.n=b.n||'';b.an=b.an||'';b.pl=b.pl||'up';b.c2=b.c2||'#F4F2EC';b.cn=b.cn||'unsorted';b.g=b.g||'Unsorted'});
@@ -568,8 +568,10 @@
       g:['bottleAmber','bottleBlue','jar','cup','shotGlass','bowl','plateLA','plateGoa','mazeBall','vase','astroUp','astroGold','astroMoon','moonReader','camera','catL','catO','catV','catE','owlCello','owlViolin','owlFlute','bell','trophy','toyCar'],
       f:['fan','frameDog','frameCat','framePal','print','bridge','card','watercolour','rafting','dvdBox','dvds','gameBoxes']},
       TALL=['bottleAmber','bottleBlue','jar','shotGlass','basket','duck'];
-    const matOf=k=>MAT.s.indexOf(k)>=0?'s':MAT.g.indexOf(k)>=0?'g':MAT.f.indexOf(k)>=0?'f':'m';
-    function shade(mk,k){const m=matOf(k),tall=TALL.indexOf(k)>=0,keep=[];
+    /* Drawings that arrive already lit and shaded by hand (library-art.js, Shelves 4 and 5) are left exactly as drawn */
+    Object.assign(CURIO,window.__libArt||{});MAT.x=Object.keys(window.__libArt||{});
+    const matOf=k=>MAT.x.indexOf(k)>=0?'x':MAT.s.indexOf(k)>=0?'s':MAT.g.indexOf(k)>=0?'g':MAT.f.indexOf(k)>=0?'f':'m';
+    function shade(mk,k){const m=matOf(k);if(m==='x')return mk;const tall=TALL.indexOf(k)>=0,keep=[];
       mk=mk.replace(/<defs>[\s\S]*?<\/defs>|<clipPath[\s\S]*?<\/clipPath>/g,x=>{keep.push(x);return'\u0001'+(keep.length-1)+'\u0002'});
       mk=mk.replace(/<(ellipse|circle|rect|path)\b([^>]*?)\/>/g,(all,tag,at)=>{const fm=/\sfill="(#[0-9A-Fa-f]{3,6})"/.exec(at);if(!fm||/stroke="none"|class="/.test(at))return all;
         const num=n=>{const r=new RegExp('\\s'+n+'="([\\d.]+)"').exec(at);return r?+r[1]:0};let g;
@@ -592,12 +594,12 @@
     const curios=(CURIOS||[]).filter(c=>c&&CURIO[c.k]);let G={},cpos={};if(!CTX.landing)try{cpos=JSON.parse(localStorage.getItem('dungeon-library-curios'+KS)||'{}')}catch(err){cpos={}}
     const lift=el=>el.classList.contains('lb-lift')?(el.classList.contains('lb-curio')?' scale(1.12)':' scale(1.08)'):'',unlift=el=>{el.style.transform=el.style.transform.replace(/ scale\([^)]*\)$/,'')},pickT=el=>{if(el.style.transform&&!/ scale\(/.test(el.style.transform))el.style.transform+=lift(el)};
     function putCurio(c){const g=G[c.s]||G[0];if(!g)return;if(c.el.parentNode!==boxes[g.c]._cur)boxes[g.c]._cur.appendChild(c.el);const lx=c._ax!=null?c._ax:Math.max(0,Math.min(g.colW-c.w,c.x*g.colW-c.w/2)),co=Math.cos(g.th),si=Math.sin(g.th);
-      c.wx=g.ox+lx*co-g.front*si;c.wy=g.by+lx*si+g.front*co;c.el.style.transform=`translate(${c.wx.toFixed(1)}px,${(c.wy-c.h).toFixed(1)}px) rotate(${g.th.toFixed(4)}rad)`}
+      c.wx=g.ox+lx*co-g.front*si;c.wy=g.by+lx*si+g.front*co-(c.dy||0);c.el.style.transform=`translate(${c.wx.toFixed(1)}px,${(c.wy-c.h).toFixed(1)}px) rotate(${g.th.toFixed(4)}rad)`}
     function dropCurio(c){const cx=c.wx+c.w/2,gc=(G[c.s]||G[0]).c;let best=null,bd=1e9;
       Object.keys(G).forEach(k=>{const g=G[k];if(g.c!==gc||cx<g.ox-40||cx>g.ox+g.colW+40)return;const d=Math.abs(c.wy-(g.by+(cx-g.ox)*Math.sin(g.th)));if(d<bd){bd=d;best=+k}});
       if(best!==null){const g=G[best];c.s=best;c.x=Math.max(0,Math.min(1,(cx-g.ox)/g.colW));cpos[c.id]={s:c.s,x:+c.x.toFixed(3)};try{localStorage.setItem('dungeon-library-curios'+KS,JSON.stringify(cpos))}catch(err){}}
       c.el.classList.add('lb-settle');putCurio(c);setTimeout(()=>c.el.classList.remove('lb-settle'),500)}
-    curios.forEach((c,i)=>{const sp=CURIO[c.k];c.id=c.id||c.k+'-'+i;c.curio=true;c.w=sp[0];c.h=sp[1];c.s0=c.s;c.x0=c.x;if(cpos[c.id]){c.s=cpos[c.id].s;c.x=cpos[c.id].x}
+    curios.forEach((c,i)=>{const sp=CURIO[c.k];c.id=c.id||c.k+'-'+i;c.curio=true;c.w=sp[0];c.h=sp[1];c.s0=c.s;c.x0=c.x;c.dy0=c.dy=+c.dy||0;if(cpos[c.id]){c.s=cpos[c.id].s;c.x=cpos[c.id].x}
       const el=document.createElement('button');el.type='button';el.className='lb-curio';el.style.zIndex=500+i;el.setAttribute('aria-label',c.name||'Curio');
       el.innerHTML=`<svg width="${c.w}" height="${c.h}" viewBox="0 0 ${c.w} ${c.h}" aria-hidden="true">${shadowOf(c,i)}<g ${SK}>${shade(sp[2],c.k)}</g></svg>`;c.el=el;caseEl.appendChild(el);
       let sx=0,sy=0,x0=0,y0=0,on=false,armed=true,timer=0;
@@ -605,7 +607,7 @@
       el.addEventListener('pointerdown',ev=>{zs=scale*(boxes[(G[c.s]||G[0]).c]._z||1);on=true;c.moved=false;sx=ev.clientX;sy=ev.clientY;x0=c.wx;y0=c.wy;armed=ev.pointerType!=='touch';if(!armed)timer=setTimeout(()=>{armed=true;pick(el)},320);try{el.setPointerCapture(ev.pointerId)}catch(err){}});
       el.addEventListener('pointermove',ev=>{if(!on)return;const dx=(ev.clientX-sx)/zs,dy=(ev.clientY-sy)/zs;
         if(!armed){if(Math.abs(dx)+Math.abs(dy)>8/zs){clearTimeout(timer);on=false}return}
-        if(!c.moved){if(Math.abs(dx)+Math.abs(dy)<4)return;c.moved=true;el.classList.add('lb-drag');el.classList.add('lb-lift');info.classList.remove('lb-on')}
+        if(!c.moved){if(Math.abs(dx)+Math.abs(dy)<4)return;c.moved=true;c.dy=0;el.classList.add('lb-drag');el.classList.add('lb-lift');info.classList.remove('lb-on')}
         c.wx=x0+dx;c.wy=y0+dy;el.style.transform=`translate(${c.wx.toFixed(1)}px,${(c.wy-c.h).toFixed(1)}px)${lift(el)}`});
       const end=()=>{clearTimeout(timer);el.classList.remove('lb-lift');unlift(el);if(!on)return;on=false;el.classList.remove('lb-drag');if(c.moved)dropCurio(c)};
       el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
@@ -661,31 +663,32 @@
       if(mode!=='manual')prevSh=r.sh;
       caseEl.classList.toggle('lb-manual',mode==='manual');document.getElementById('lib-tools').hidden=mode!=='manual';if(mode==='manual')shareLinks();
       caseEl.querySelectorAll('.lb-fr').forEach(p=>p.remove());
-      const tk=!!m.real&&tucked,hasL=c=>!!CASES[c].layers;
-      const L=r.sh.map(s=>layoutShelf(s,!!m.real,tk));if(m.real){FIXW=Math.max(420,CTX.fixW||0,...L.filter((l,q)=>!hasL(caseOf(q))).map(l=>l.width));if(CTX.fixw)CTX.fixw(FIXW)}
+      const tk=!!m.real&&tucked,hasL=c=>!!CASES[c].layers,ownW=c=>!!CASES[c].own;
+      const L=r.sh.map(s=>layoutShelf(s,!!m.real,tk));if(m.real){FIXW=Math.max(420,CTX.fixW||0,...L.filter((l,q)=>!hasL(caseOf(q))&&!ownW(caseOf(q))).map(l=>l.width));if(CTX.fixw)CTX.fixw(FIXW)}
       geos=[];G={};sortSel.value=m.pat||m.own?'':mode;patSel.value=m.pat?mode:'';menus.forEach(x=>x.update());
       for(let c=0;c<CASES.length;c++){const n=CASES[c].n,st=!!CASES[c].straight,bx=boxes[c],LM=24,cx=LM,ty=STUFF,bot=ty+TB+n*ROW-30,D=DEPTH,
-          colW=Math.max(m.real&&hasL(c)?420:FIXW,...L.slice(CS[c],CS[c]+n).map(l=>l.width)),CW=colW+2*SIDE,BW=LM+CW+40;
+          colW=Math.max(ownW(c)?(CASES[c].w||420):(m.real&&hasL(c))?420:FIXW,...L.slice(CS[c],CS[c]+n).map(l=>l.width)),CW=colW+2*SIDE,BW=LM+CW+40;
         BOX=bx;bx._w=BW;bx._h=STUFF+TB+n*ROW+FOOT+34+44;bx.style.width=BW+'px';bx.style.height=bx._h+'px';
         /* Real depth: two side panels and a board at every level run back from the front edge to the back panel */
+        const tp=+CASES[c].taper||0,rowW=rw=>tp?colW*(1-tp*(n-1-rw)/Math.max(1,n-1)):colW,lean2=tp?Math.atan((colW*tp/2)/(bot-ty-8))/RAD:0;
         const side=x=>{const d=mk('side',x,ty+4,D,bot+20-ty);d.style.transformOrigin='0 50%';d.style.transform='rotateY(90deg)'},
           deck=(x,y,w)=>{const d=mk('deck',x,y-D,w,D);d.style.transformOrigin='50% 100%';d.style.transform='rotateX(90deg)'};
         
-        mk('back',cx+SIDE-8,ty+TB-6,colW+16,n*ROW-20);mk('tshade',cx+SIDE-6,ty+TB,colW+12,120);
-        for(let rw=0;rw<n;rw++){const si=CS[c]+rw,th=TILT[si]*RAD,ox=cx+SIDE,by=ty+TB+rw*ROW+SH+JIT[si]-(colW/2)*Math.sin(th),geo={ox,by,th,colW,c},
-            off=m.centre?(colW-L[si].width)/2:0;geos[si]=geo;G[si]={ox,by,th,colW,front:0,c};
+        {const bk=mk('back',cx+SIDE-8,ty+TB-6,colW+16,n*ROW-20);if(tp){const ins=(colW*tp/2)+8,H=n*ROW-20;bk.style.clipPath='polygon('+ins+'px 0,'+(colW+16-ins)+'px 0,100% 100%,0 100%)'}}{const ts=mk('tshade',cx+SIDE-6,ty+TB,colW+12,120);if(tp){const ins=(colW*tp/2)+6;ts.style.clipPath='polygon('+ins+'px 0,'+(colW+12-ins)+'px 0,100% 100%,0 100%)'}}
+        for(let rw=0;rw<n;rw++){const si=CS[c]+rw,th=TILT[si]*RAD,wr=rowW(rw),ox=cx+SIDE+(colW-wr)/2,by=ty+TB+rw*ROW+SH+JIT[si]-(wr/2)*Math.sin(th),geo={ox,by,th,colW:wr,c},
+            off=m.centre?(colW-L[si].width)/2:0;geos[si]=geo;G[si]={ox,by,th,colW:wr,front:0,c};
           L[si].place.forEach(([e,x,y,ang,drag],i)=>{e.geo=geo;e.drag=!!drag;e.lx=x+off;e.ly2=0;e.ly_=y+e.dh-FD;e.ang=ang||0;
             const pln=tk&&e.ly?bx['_books'+e.ly]:bx._books;if(e.el.parentNode!==pln){pln.appendChild(e.el)}
-            if(drag){e.lim=[PAD,colW-e.dw-PAD];e.lx=Math.max(e.lim[0],Math.min(e.lim[1],e.lx+(dxs[e.i]||0)))}
+            if(drag){e.lim=[PAD,wr-e.dw-PAD];e.lx=Math.max(e.lim[0],Math.min(e.lim[1],e.lx+(dxs[e.i]||0)))}
             e.el.style.zIndex=drag?400:10+i;put(e)});
-          fairy(si,ox,by,colW,off+PAD,off+L[si].width-PAD);
-          const pl=mk('plank',ox-6,by,colW+12,PL,TILT[si],'6px 0');if(rw<n-1)kid(pl,'shade');
+          fairy(si,ox,by,wr,off+PAD,off+L[si].width-PAD);
+          const pl=mk('plank',ox-6,by,wr+12,PL,TILT[si],'6px 0');if(rw<n-1)kid(pl,'shade');
           if(m.labels){let last=null;r.sh[si].forEach(e=>{if(e.g!==last){const sp=document.createElement('span');sp.textContent=e.g;sp.style.left=Math.round(off+e._x+6)+'px';pl.appendChild(sp);last=e.g}})}}
-        kid(mk('post',cx,ty+12,SIDE,bot-ty-8,st?0:(c%2?-.12:.15),'50% 100%'),'inner');kid(mk('post',cx+CW-SIDE,ty+12,SIDE,bot-ty-8,st?0:(c%2?.15:-.1),'50% 100%'),'rshade');
+        kid(mk('post',cx,tp?30:ty+12,SIDE,tp?bot-26:bot-ty-8,tp?lean2:st?0:(c%2?-.12:.15),'50% 100%'),'inner');kid(mk('post',cx+CW-SIDE,tp?30:ty+12,SIDE,tp?bot-26:bot-ty-8,tp?-lean2:st?0:(c%2?.15:-.1),'50% 100%'),'rshade');
         mk('ground',cx-40,bot+34,CW+80,34);mk('skirt',cx-6,bot,CW+12,24);mk('foot',cx+8,bot+24,30,18);
         if(st)mk('foot',cx+CW-38,bot+24,30,18);else{mk('foot',cx+CW-40,bot+24,30,9);mk('wedge',cx+CW-46,bot+33,42,9)}
         mk('cap',cx,bot+62,CW,34).textContent=CASES[c].name;
-        const lean=st?0:(LEAN[c]!=null?LEAN[c]:(c%2?-.25:.2));mk('topb',cx-18,ty,CW+36,TB,lean,'50% 50%');
+        const lean=st?0:(LEAN[c]!=null?LEAN[c]:(c%2?-.25:.2));(tp?mk('topb',cx-18+(colW*tp)/2,ty,CW+36-colW*tp,TB,0,'50% 50%'):mk('topb',cx-18,ty,CW+36,TB,lean,'50% 50%'));
         const ln=lean*RAD,mx=cx+CW/2,my=ty+TB/2;
         G[-1-c]={ox:mx-(CW/2)*Math.cos(ln)+(TB/2)*Math.sin(ln),by:my-(CW/2)*Math.sin(ln)-(TB/2)*Math.cos(ln),th:ln,colW:CW,front:2,c}}
       BOX=null;
@@ -824,7 +827,7 @@
     {const cb=document.getElementById('lib-curioBtn'),rb=document.getElementById('lib-curioReset');let hid=false;try{hid=localStorage.getItem('dungeon-library-nocurios')==='1'}catch(err){}
       const setHid=()=>{caseEl.classList.toggle('lb-nocurios',hid);if(cb){const t=hid?'Show curios':'Hide curios';cb.innerHTML=ICON(EYE+(hid?'<path d="M4 4l16 16"/>':''));cb.setAttribute('aria-label',t);cb.title=t;cb.setAttribute('aria-pressed',hid?'true':'false')}};
       if(cb){cb.hidden=!curios.length;cb.onclick=()=>{hid=!hid;try{localStorage.setItem('dungeon-library-nocurios',hid?'1':'0')}catch(err){}setHid();msg.textContent=hid?'Curios hidden.':'Curios back on the shelves.'}}
-      if(rb){rb.hidden=!curios.length;rb.innerHTML=ICON('<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>');rb.onclick=()=>{cpos={};try{localStorage.removeItem('dungeon-library-curios'+KS)}catch(err){}curios.forEach(c=>{c.s=c.s0;c.x=c.x0;putCurio(c)});msg.textContent='Curios put back where they started.'}}
+      if(rb){rb.hidden=!curios.length;rb.innerHTML=ICON('<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>');rb.onclick=()=>{cpos={};try{localStorage.removeItem('dungeon-library-curios'+KS)}catch(err){}curios.forEach(c=>{c.s=c.s0;c.x=c.x0;c.dy=c.dy0;putCurio(c)});msg.textContent='Curios put back where they started.'}}
       setHid()}
     document.getElementById('lib-link').onclick=()=>{const u=shareUrl(),ok=()=>{msg.textContent='Link copied. Anyone who opens it sees this exact arrangement.'};
       try{navigator.clipboard.writeText(u).then(ok,()=>window.prompt('Copy this link',u))}catch(err){window.prompt('Copy this link',u)}};

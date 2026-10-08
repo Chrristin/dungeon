@@ -7,7 +7,7 @@
     <title>{{meta_title}}</title>
     <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
     <link rel="preload" href="{{asset "fonts/jetbrains-mono-latin-500-normal.woff2"}}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.21.10">
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.21.11">
     {{#is "post"}}{{#post}}{{#has tag="#thing"}}{{^if html}}<meta name="robots" content="noindex">{{/if}}{{/has}}{{/post}}{{/is}}
     {{!-- Short notes (#scatter, #note), and anything marked #watch-noindex, are kept out of search engines: they are thin pages that would otherwise dilute the essays. Watchlist items are NOT: their pages are what people find by searching for a set or a car. Garden notes (#garden) stay indexable. Ghost still lists them in its sitemap; that cannot be changed from a theme --}}
     {{#is "post"}}{{#post}}{{#has tag="#watch-noindex, #scatter, #note"}}<meta name="robots" content="noindex">{{/has}}{{/post}}{{/is}}
@@ -132,7 +132,7 @@
 </footer>
 
 
-<script src="{{asset "js/site.js"}}&r=2.21.10" defer></script>
+<script src="{{asset "js/site.js"}}&r=2.21.11" defer></script>
 {{ghost_foot}}
 <div class="gk" hidden data-labels='{"search":"{{t "Search the garden"}}","keys":"{{t "Keyboard shortcuts"}}","close":"{{t "Close"}}","s":"{{t "search the garden"}}","r":"{{t "a random note"}}","g":"{{t "go to the garden"}}","h":"{{t "show these shortcuts"}}","none":"{{t "No notes match."}}"}' data-garden="{{@site.url}}/garden/"></div>
 </body>
