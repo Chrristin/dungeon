@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.21.10
+
+- **The homepage's first picture loads first.** The first card's picture is the largest thing painted on the homepage, and it was marked "load later", so a phone found it late: its largest paint took 3.6 to 4.6 s on a slow connection. It is now marked high priority (the others stay "load later"): 1.65 s in the same test. On PageSpeed's mobile run this was the biggest remaining item (largest paint 8.7 s).
+- **One font preload, not two.** 2.21.8 preloaded the heading font and the body font. The body font preload took the page's busy moment earlier and added about 120 ms of blocking time on a computer (PageSpeed desktop went from 86 to 83), without helping the layout shift, which is fixed by the matching fallback fonts. Only the heading font is preloaded now. Measured over five runs each: blocking time 298 ms with both, 177 ms with one; layout shift 0.002 on a phone either way.
+
 ## 2.21.9
 
 - **The big picture at the top of an essay or page is asked for as WebP too.** 2.21.8 did the cards, rows and the set page; the essay and page templates (and the Scatter, Now and Ratings pages) were still asking for the original PNG, up to 2.3 MB. Pictures placed inside the text of a post or page are Ghost's own and are not changed by the theme: the heaviest are listed in the hand-over notes, and re-saving them as WebP or JPEG would help.
