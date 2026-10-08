@@ -1,0 +1,8 @@
+{{!-- The foot of an essay: one line about the author (wording in locales/en.json; the Product version says Christin is open to roles), then the way to get the next essay by email and the way to answer. post.hbs leaves this out of notes, Now months, things and garden notes. The reply link uses the support email address in Ghost's Settings, Membership, and stays hidden while that is still "noreply". Context: the post. --}}
+<aside class="essay-end" aria-label="{{t "About the author"}}">
+    {{#match primary_tag.slug "product"}}<p class="essay-end-bio">{{t "Christin George. Product leader, open to leadership roles and consulting."}} <a href="{{@site.url}}/about/">{{t "About me"}}</a></p>{{else}}<p class="essay-end-bio">{{t "Christin George. Product leader by day, collector the rest of the time."}} <a href="{{@site.url}}/about/">{{t "About me"}}</a></p>{{/match}}
+    <p class="essay-end-links">
+        {{#if @site.members_enabled}}{{#unless @member}}<span>{{t "New essays by email, when there is one."}} <a href="#/portal/signup" data-portal="signup">{{t "Subscribe"}}</a></span>{{/unless}}{{/if}}
+        {{#match @site.members_support_address "!=" "noreply"}}<span>{{t "Disagree, or know better?"}} <a href="mailto:{{@site.members_support_address}}?subject=Re%3A%20{{encode title}}">{{t "Reply by email"}}</a></span>{{/match}}
+    </p>
+</aside>

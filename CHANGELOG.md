@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.21.0
+
+Under every essay, and a few quieter changes.
+
+- **The foot of an essay.** Under each essay (not notes, Now months, things or garden notes) there is now one quiet line about you with a link to About, then a line to subscribe by email and a "Reply by email" link. The wording of the line about you is in `locales/en.json`. On essays whose first tag is Product it says you are open to leadership roles and consulting; on the others, "Product leader by day, collector the rest of the time". The reply link uses the support email address in Settings, Membership, and stays hidden while that is still `noreply`, so set it to the address you want replies at.
+- **Two related essays replace Older and Newer.** Under an essay you now get two others that share its first tag (Product, Build or Life); if there are fewer than two, essays from the same room (The Workshop, The Library, The Pit Wall, The Music, The Road, The Collection) fill the rest. Notes, Now months, things, garden notes and watchlist items are never offered. Things (`#thing`) keep Older and Newer.
+- **An RSS link beside "Subscribe by email"** in the footer.
+- **Search engines are told to skip short notes** (`#scatter`, `#note`, and anything marked `#watch-noindex`). Watchlist items are not skipped: their pages are what people find by searching for a set or a car. Garden notes (`#garden`) are still indexed. Ghost still lists the skipped pages in its sitemap; a theme cannot change that.
+- **The Music plot works under either tag address.** Its animated notes and "SIDE A" label were tied to the address `music-2`; they now also answer to `the-music`, so that tag can be renamed.
+
+This could not be tested in a running Ghost before release: the related-essay queries and the reply link use Ghost helpers (`get`, `match`, `encode`) that were checked only by gscan. Look at one essay of each kind after it installs.
+
 ## 2.20.8
 
 - **The words on a price chart no longer sit on top of the line.** "Usual" and "Must Buy" are placed at whichever end and side of their dashed line the price line does not cross; where a very busy line leaves no clear place, the words get a small plate in the colour behind them. On a sheet whose tile is dark, "Must Buy" was drawn white on the sheet's light panel and could not be read; it is now green there as on the others. Checked on a phone-width window in Chrome for four Lego sets (yellow, dark and green tiles), the sheet and the item page; not on a real phone, Safari or Firefox.

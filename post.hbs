@@ -38,6 +38,7 @@
             {{content}}
         </div>
 
+
         {{#if tags}}
         <ul class="chips panel-tags">
             {{#foreach tags}}<li><a href="{{url}}">{{name}}</a></li>{{/foreach}}
@@ -59,6 +60,8 @@
             <div class="rate-turnstile"></div>
         </section>
         {{/if}}{{/if}}{{/has}}
+
+        {{^has tag="#garden, #scatter, #note, #now, #thing"}}{{> "essay-end"}}{{/has}}
     </article>
 
     {{!-- Stickies replace Ghost's comments when the stamps Worker and a Turnstile site key are set --}}
@@ -79,11 +82,25 @@
     {{else}}
     {{!-- A post in the garden: what links to it, what it links to, and related notes and posts (from the Garden page's data) --}}
     <section class="post-garden" hidden data-labels='{"title":"{{t "In the garden"}}","mentioned":"{{t "Mentioned in"}}","links":"{{t "Links to"}}","related":"{{t "Related"}}","asList":"{{t "As a list"}}","thisPost":"{{t "This post"}}","map":"{{t "The middle is this post. A dotted line means related by wording."}}","stages":{"seedling":"{{t "Seedling"}}","growing":"{{t "Growing"}}","evergreen":"{{t "Evergreen"}}","post":"{{t "Post"}}"}}' data-garden="{{@site.url}}/garden/"></section>
+    {{#has tag="#thing"}}
     <nav class="post-next" aria-label="{{t "More posts"}}">
         {{!-- Neighbouring posts, skipping Now months (#now) and Scatter notes (#note), which have no page of their own. Shown as horizontal cards: image (or a patterned block) on the left, title and excerpt on the right. --}}
         {{#get "posts" filter="published_at:<'{{published_at}}'+tag:-hash-now+tag:-hash-note+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item+id:-{{id}}" order="published_at desc" limit="1" include="tags"}}{{#foreach posts}}<div class="post-next-item"><span class="post-next-label">{{t "Older"}}</span><article class="card card--row" data-key="{{slug}}"><div class="card-row-media" aria-hidden="true">{{#if feature_image}}<img src="{{img_url feature_image size="s"}}" alt="" loading="lazy">{{else}}<div class="card-fill" data-key="{{slug}}"></div>{{/if}}</div><div class="card-row-body"><header class="card-head"><time class="code" datetime="{{date format="YYYY-MM-DD"}}" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</time><span class="card-line" aria-hidden="true"></span>{{#primary_tag}}<span class="card-tag">{{name}}</span>{{/primary_tag}}</header><h2 class="card-title"><a href="{{url}}">{{title}}</a></h2><p class="card-excerpt">{{#if custom_excerpt}}{{custom_excerpt}}{{else}}{{excerpt words="22"}}{{/if}}</p></div></article></div>{{/foreach}}{{/get}}
         {{#get "posts" filter="published_at:>'{{published_at}}'+tag:-hash-now+tag:-hash-note+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item+id:-{{id}}" order="published_at asc" limit="1" include="tags"}}{{#foreach posts}}<div class="post-next-item post-next-item--newer"><span class="post-next-label">{{t "Newer"}}</span><article class="card card--row" data-key="{{slug}}"><div class="card-row-media" aria-hidden="true">{{#if feature_image}}<img src="{{img_url feature_image size="s"}}" alt="" loading="lazy">{{else}}<div class="card-fill" data-key="{{slug}}"></div>{{/if}}</div><div class="card-row-body"><header class="card-head"><time class="code" datetime="{{date format="YYYY-MM-DD"}}" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</time><span class="card-line" aria-hidden="true"></span>{{#primary_tag}}<span class="card-tag">{{name}}</span>{{/primary_tag}}</header><h2 class="card-title"><a href="{{url}}">{{title}}</a></h2><p class="card-excerpt">{{#if custom_excerpt}}{{custom_excerpt}}{{else}}{{excerpt words="22"}}{{/if}}</p></div></article></div>{{/foreach}}{{/get}}
     </nav>
+    {{else}}
+    <nav class="post-next post-next--related" aria-label="{{t "Related essays"}}">
+        {{!-- Two essays that share this one's first tag (Product, Build or Life). Fewer than two, and essays from the same room fill the rest: each room below prints nothing unless this post is in it, and the stylesheet shows only the first two cards. The room query leaves out this post's own first tag, so no essay can appear twice. Notes, Now months, things, garden notes and watchlist items are never offered. --}}
+        {{#if primary_tag}}{{#get "posts" filter="primary_tag:{{primary_tag.slug}}+id:-{{id}}+tag:-hash-now+tag:-hash-note+tag:-hash-scatter+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item" order="published_at desc" limit="2" include="tags"}}{{#foreach posts}}{{> "related-card"}}{{/foreach}}{{/get}}{{/if}}
+        {{#has tag="The Workshop"}}{{#get "posts" filter="tag:the-workshop+primary_tag:-{{primary_tag.slug}}+id:-{{id}}+tag:-hash-now+tag:-hash-note+tag:-hash-scatter+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item" order="published_at desc" limit="2" include="tags"}}{{#foreach posts}}{{> "related-card"}}{{/foreach}}{{/get}}{{/has}}
+        {{#has tag="The Library"}}{{#get "posts" filter="tag:the-library+primary_tag:-{{primary_tag.slug}}+id:-{{id}}+tag:-hash-now+tag:-hash-note+tag:-hash-scatter+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item" order="published_at desc" limit="2" include="tags"}}{{#foreach posts}}{{> "related-card"}}{{/foreach}}{{/get}}{{/has}}
+        {{#has tag="The Pit Wall"}}{{#get "posts" filter="tag:the-pit-wall+primary_tag:-{{primary_tag.slug}}+id:-{{id}}+tag:-hash-now+tag:-hash-note+tag:-hash-scatter+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item" order="published_at desc" limit="2" include="tags"}}{{#foreach posts}}{{> "related-card"}}{{/foreach}}{{/get}}{{/has}}
+        {{#has tag="The Music"}}{{#get "posts" filter="tag:music-2+primary_tag:-{{primary_tag.slug}}+id:-{{id}}+tag:-hash-now+tag:-hash-note+tag:-hash-scatter+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item" order="published_at desc" limit="2" include="tags"}}{{#foreach posts}}{{> "related-card"}}{{/foreach}}{{/get}}{{/has}}
+        {{#has tag="The Music"}}{{#get "posts" filter="tag:the-music+primary_tag:-{{primary_tag.slug}}+id:-{{id}}+tag:-hash-now+tag:-hash-note+tag:-hash-scatter+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item" order="published_at desc" limit="2" include="tags"}}{{#foreach posts}}{{> "related-card"}}{{/foreach}}{{/get}}{{/has}}
+        {{#has tag="The Road"}}{{#get "posts" filter="tag:travel+primary_tag:-{{primary_tag.slug}}+id:-{{id}}+tag:-hash-now+tag:-hash-note+tag:-hash-scatter+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item" order="published_at desc" limit="2" include="tags"}}{{#foreach posts}}{{> "related-card"}}{{/foreach}}{{/get}}{{/has}}
+        {{#has tag="The Collection"}}{{#get "posts" filter="tag:the-collection+primary_tag:-{{primary_tag.slug}}+id:-{{id}}+tag:-hash-now+tag:-hash-note+tag:-hash-scatter+tag:-hash-garden+tag:-hash-thing+tag:-hash-watch-item" order="published_at desc" limit="2" include="tags"}}{{#foreach posts}}{{> "related-card"}}{{/foreach}}{{/get}}{{/has}}
+    </nav>
+    {{/has}}
     {{/has}}
 </div>
 {{/has}}
