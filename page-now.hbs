@@ -19,7 +19,7 @@
     <article class="now-month">
         <div class="card now-card" data-key="{{slug}}" data-color="{{#has tag="#pistachio"}}0{{else has tag="#mint"}}1{{else has tag="#sky"}}2{{else has tag="#periwinkle"}}3{{else has tag="#lilac"}}4{{else has tag="#blush"}}5{{else has tag="#peach"}}6{{else has tag="#butter"}}7{{else has tag="#sage"}}8{{else has tag="#seafoam"}}9{{else has tag="#red"}}red{{else has tag="#tangerine"}}tangerine{{else has tag="#sunflower"}}sunflower{{else has tag="#cobalt"}}cobalt{{else has tag="#emerald"}}emerald{{else has tag="#ink"}}ink{{/has}}" data-filler="{{#has tag="#filler-floral"}}floral{{/has}}{{#has tag="#filler-circuit"}}circuit{{/has}}{{#has tag="#filler-city"}}city{{/has}}{{#has tag="#filler-topo"}}topo{{/has}}{{#has tag="#filler-none"}}none{{/has}}" data-month="{{date format="MMMM YYYY"}}" role="button" tabindex="0" aria-label="Read {{date format="MMMM YYYY"}}">
             <div class="now-body gh-content">
-                {{#if feature_image}}<figure class="kg-card kg-image-card now-media"><img src="{{img_url feature_image size="m"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}" loading="lazy"></figure>{{/if}}
+                {{#if feature_image}}<figure class="kg-card kg-image-card now-media"><img src="{{img_url feature_image size="m" format="webp"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}" loading="lazy"></figure>{{/if}}
                 {{content}}
             </div>
             {{#if @custom.stamps_endpoint}}

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.21.9
+
+- **The big picture at the top of an essay or page is asked for as WebP too.** 2.21.8 did the cards, rows and the set page; the essay and page templates (and the Scatter, Now and Ratings pages) were still asking for the original PNG, up to 2.3 MB. Pictures placed inside the text of a post or page are Ghost's own and are not changed by the theme: the heaviest are listed in the hand-over notes, and re-saving them as WebP or JPEG would help.
+
 ## 2.21.8
 
 Faster on a phone, and nothing jumping while the page loads. Measured on the live site with a throttled phone (Slow 4G, 4x slower processor), against PageSpeed's mobile run (performance 57, layout shift 0.156).
