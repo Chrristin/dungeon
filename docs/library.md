@@ -62,7 +62,7 @@ The `piles` list near the top of the data file sets the piles:
 | `a`, `p`, `h`, `c`, `c2`, `cn` | What each comic takes unless it says otherwise: author or publisher, height, spine colour, title colour and colour name. |
 | `sets` | `true` for a pile of single issues: drawn as a boxed set, one band for each title, lettered with the title's name and the issues in it. |
 | `imprint` | Optional. A second line of lettering on each spine ("GOTHAM COMICS"). |
-| `lean` | Optional. Comics leaning on the pile, as a list of `{cv, ser, at, ang, w, h, fold, yaw, bow}`: `cv` is the cover (see below), `ser` the title in the pile it opens, `at` where along the pile (0 to 1), `ang` the lean in degrees (negative leans left), `fold` `"l"` or `"r"` for a folded top corner, `yaw` how far it is turned towards you and `bow` how much the page sags. |
+| `lean` | Optional. Comics leaning on the pile, as a list of `{cv, b2, ser, at, ang, w, h, bow}`: `cv` is the cover (see below), `b2` the cover of a second comic leaning behind it, `ser` the title in the pile it opens, `at` where along the pile (0 to 1), `ang` the lean in degrees (negative leans left), and `bow` how much the page sags (a little). Each is drawn as a stapled booklet: a spine, its pages showing along the edges, a shadow. |
 
 A comic in a pile is a line in `books` with only `t` (title), `pile` (the pile's `id`) and `tags`. It may add `c`, `w` or `n` of its own. The order of the lines is the order in the pile, top to bottom. A title with several issues is "Title No. 14", "Title No. 15" and so on: the card groups them by the words before "No.".
 

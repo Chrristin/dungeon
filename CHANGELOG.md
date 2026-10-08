@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.21.15
+
+- **The leaning comics look like comics.** They were bent and had a folded corner, which made them look like posters. They are now stapled booklets: a spine with two staples, the pages showing along the edges, hardly any bend, a shadow, and a second comic leaning behind each. The folded corners are gone.
+
 ## 2.21.14
 
 - **The single issues are drawn as a set.** The two piles of Gotham single issues behind the Super Specials now read like a multi-volume collection: one band for each title, lettered with its name and the issues in it ("Superman 14–43", "Teen Titans 1…15"), the Gotham Comics imprint down the right, and paper showing at the end of each. Before, they were plain colour stripes.

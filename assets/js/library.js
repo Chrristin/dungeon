@@ -626,15 +626,20 @@
       g+='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="url(#'+id+')"/></g>';return[Math.ceil(W+8),H,g]}
     /* A comic leaning on a pile: a thin booklet whose cover is bent (the page sags), turned a little towards you, with a folded corner,
        a dim page edge and a shadow. Its cover is a cell of the sprite. */
-    function leanArt(L,i){const w=L.w||108,h=L.h||160,yaw=L.yaw==null?.1:L.yaw,bow=L.bow==null?6:L.bow,ang=L.ang||0,sd=ang<0?-1:1,pad=24,Wc=Math.ceil(w+pad*2+h*Math.abs(Math.sin(ang*Math.PI/180))),Hc=Math.ceil(h+14),id='lc'+i,f=v=>v.toFixed(1);
-      const hl=sd>0?h:h*(1-yaw),hr=sd>0?h*(1-yaw):h,d=L.fold?Math.min(22,w*.2):0,cy=-(hl+hr)/2+2*bow,[cx0,cy0]=cvAt(L.cv);
-      let p;if(L.fold==='r')p='M0 0L'+w+' 0L'+w+' '+f(-hr+d)+'L'+f(w-d)+' '+f(-hr)+'Q'+f(w/2)+' '+f(cy)+' 0 '+f(-hl)+'Z';else if(L.fold==='l')p='M0 0L'+w+' 0L'+w+' '+f(-hr)+'Q'+f(w/2)+' '+f(cy)+' '+f(d)+' '+f(-hl)+'L0 '+f(-hl+d)+'Z';else p='M0 0L'+w+' 0L'+w+' '+f(-hr)+'Q'+f(w/2)+' '+f(cy)+' 0 '+f(-hl)+'Z';
-      let g='<defs><clipPath id="'+id+'c"><path d="'+p+'"/></clipPath><linearGradient id="'+id+'s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="'+(sd>0?.04:.2)+'"/><stop offset=".3" stop-color="#fff" stop-opacity=".14"/><stop offset=".6" stop-color="#000" stop-opacity=".02"/><stop offset="1" stop-color="#000" stop-opacity="'+(sd>0?.34:.12)+'"/></linearGradient></defs>';
-      g+='<g transform="translate('+pad+' '+(Hc-4)+') rotate('+ang+' '+(sd<0?0:w)+' 0)">';
-      g+='<path d="'+p+'" transform="translate('+(sd*7)+' 0)" fill="#000" opacity=".28"/>';
-      g+='<g clip-path="url(#'+id+'c)"><svg x="0" y="'+(-h)+'" width="'+w+'" height="'+h+'" viewBox="'+cx0*CWD+' '+cy0*CHT+' '+CWD+' '+CHT+'" preserveAspectRatio="xMidYMid slice"><image href="'+SPR+'" width="'+COLS*CWD+'" height="'+ROWS*CHT+'" preserveAspectRatio="none"/></svg><path d="'+p+'" fill="url(#'+id+'s)"/></g>';
-      g+='<path d="'+p+'" fill="none" stroke="#120d09" stroke-width="1.1" stroke-linejoin="round"/><path d="M0 -.5L'+w+' -.5" stroke="#7d725a" stroke-width="1.1" opacity=".7"/>';
-      if(L.fold)g+=(L.fold==='r'?'<path d="M'+f(w-d)+' '+f(-hr)+'L'+w+' '+f(-hr+d)+'L'+f(w-d)+' '+f(-hr+d)+'Z':'<path d="M'+f(d)+' '+f(-hl)+'L0 '+f(-hl+d)+'L'+f(d)+' '+f(-hl+d)+'Z')+'" fill="#e6dcc0" stroke="#7a6e52" stroke-width=".6"/>';
+    function leanArt(L,i){const w=L.w||102,h=L.h||152,ang=L.ang||0,sd=ang<0?-1:1,pad=26,bow=L.bow==null?1.4:L.bow,off=L.b2!=null?16:0,Wc=Math.ceil(w+pad*2+off+h*Math.abs(Math.sin(ang*Math.PI/180))),Hc=Math.ceil(h+12),f=v=>v.toFixed(1);
+      /* one comic: the cover (a cell of the sprite), a spine with two staples on its left, the pages showing along the free edges, a hint of gloss */
+      function one(cv,id,dark){const[cx0,cy0]=cvAt(cv),top=h-bow;
+        const p='M0 0L'+w+' 0L'+w+' '+f(-h)+'Q'+f(w/2)+' '+f(-top-bow)+' 0 '+f(-h)+'Z';
+        return '<defs><clipPath id="'+id+'c"><path d="'+p+'"/></clipPath><linearGradient id="'+id+'s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".42"/><stop offset=".05" stop-color="#fff" stop-opacity=".1"/><stop offset=".08" stop-color="#000" stop-opacity=".14"/><stop offset=".3" stop-color="#fff" stop-opacity=".1"/><stop offset=".7" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient></defs>'
+          +'<path d="'+p+'" transform="translate('+(sd*6)+' 0)" fill="#000" opacity="'+(dark?.18:.3)+'"/>'
+          +'<g clip-path="url(#'+id+'c)"><svg x="0" y="'+(-h)+'" width="'+w+'" height="'+h+'" viewBox="'+cx0*CWD+' '+cy0*CHT+' '+CWD+' '+CHT+'" preserveAspectRatio="xMidYMid slice"><image href="'+SPR+'" width="'+COLS*CWD+'" height="'+ROWS*CHT+'" preserveAspectRatio="none"/></svg>'
+          +'<path d="'+p+'" fill="url(#'+id+'s)"/>'+(dark?'<path d="'+p+'" fill="#000" opacity=".28"/>':'')+'</g>'
+          +'<rect x="3.6" y="'+f(-h*.78)+'" width="3.2" height="1.5" fill="#bfc3c8" opacity=".85"/><rect x="3.6" y="'+f(-h*.24)+'" width="3.2" height="1.5" fill="#bfc3c8" opacity=".85"/>'
+          +'<path d="M'+f(w-2)+' -2L'+f(w-2)+' '+f(-h+3)+'" stroke="#d9cfae" stroke-width="2.2" opacity=".8"/><path d="M'+f(w-3.6)+' -2L'+f(w-3.6)+' '+f(-h+4)+'" stroke="#a89d7e" stroke-width=".5" opacity=".7"/><path d="M3 -1.2L'+f(w-2)+' -1.2" stroke="#d9cfae" stroke-width="2" opacity=".7"/>'
+          +'<path d="'+p+'" fill="none" stroke="#120d09" stroke-width="1" stroke-linejoin="round"/>'}
+      let g='<g transform="translate('+pad+' '+(Hc-4)+') rotate('+ang+' '+(sd<0?0:w)+' 0)">';
+      if(L.b2!=null)g+='<g transform="translate('+(-sd*off)+' 0) rotate('+(-sd*4)+' '+(sd<0?0:w)+' 0)">'+one(L.b2,'lb'+i,true)+'</g>';
+      g+=one(L.cv,'lc'+i,false);
       return[Wc,Hc,g+'</g>']}
     (CTX.piles||[]).forEach(P=>{const ms=ALL.filter(b=>b.pile===P.id);if(!ms.length)return;ms.forEach(b=>{b.hay=(b.t+' '+(b.tags||[]).join(' ')).toLowerCase()});PILE[P.id]=Object.assign({},P,{members:ms});CURIO['pile:'+P.id]=pileArt(P,ms);MAT.x.push('pile:'+P.id);(P.lean||[]).forEach((L,j)=>{const k='lean:'+P.id+j;CURIO[k]=leanArt(L,P.id+j);MAT.x.push(k)})});
     const matOf=k=>MAT.x.indexOf(k)>=0?'x':MAT.s.indexOf(k)>=0?'s':MAT.g.indexOf(k)>=0?'g':MAT.f.indexOf(k)>=0?'f':'m';
