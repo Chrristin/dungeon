@@ -28,7 +28,7 @@
     <div class="plots-grid">
     {{#foreach tags visibility="public"}}
         <article class="card plot" data-key="plot-{{slug}}"{{#if accent_color}} style="--card: {{accent_color}}; --card-hi: {{accent_color}};"{{/if}} aria-labelledby="plot-{{slug}}">
-            {{#if feature_image}}<img class="plot-etch" srcset="{{img_url feature_image size="s"}} 600w, {{img_url feature_image size="m"}} 1200w" sizes="(max-width: 900px) 200px, 600px" src="{{img_url feature_image size="s"}}" alt="" aria-hidden="true" loading="lazy" decoding="async">{{/if}}
+            {{#if feature_image}}<img class="plot-etch" srcset="{{img_url feature_image size="s" format="webp"}} 600w, {{img_url feature_image size="m" format="webp"}} 1200w" sizes="(max-width: 900px) 200px, 600px" src="{{img_url feature_image size="s" format="webp"}}" alt="" aria-hidden="true" loading="lazy" decoding="async">{{/if}}
             {{#get "posts" filter="tag:{{slug}}+tag:-hash-now" limit="5" include="tags" order="published_at desc" as |plotPosts plotPages|}}
             <header class="card-head plot-head">
                 <span class="tag-code" data-tag="{{../slug}}"></span>
@@ -67,7 +67,7 @@
             {{#get "pages" filter="tag:{{slug}}+slug:-plots" limit="3" include="tags"}}{{#if pages}}
             <ul class="plot-pages">
                 {{#foreach pages}}
-                <li><a class="plot-page" href="{{url}}" data-template="{{custom_template}}" data-slug="{{slug}}"{{#has tag="#watchlist"}} data-watchlist="1"{{/has}} data-src="{{asset "data/store-lego.json"}}" data-library="{{asset "data/library.json"}}" data-image="{{#if feature_image}}{{img_url feature_image size="s"}}{{/if}}"><span class="plot-page-text"><span class="plot-page-kind">{{t "page"}}</span><span class="plot-page-title">{{title}}</span><span class="plot-page-line"></span></span><span class="plot-page-go" aria-hidden="true">→</span></a><template class="plot-page-body">{{content}}</template></li>
+                <li><a class="plot-page" href="{{url}}" data-template="{{custom_template}}" data-slug="{{slug}}"{{#has tag="#watchlist"}} data-watchlist="1"{{/has}} data-src="{{asset "data/store-lego.json"}}" data-library="{{asset "data/library.json"}}" data-image="{{#if feature_image}}{{img_url feature_image size="s" format="webp"}}{{/if}}"><span class="plot-page-text"><span class="plot-page-kind">{{t "page"}}</span><span class="plot-page-title">{{title}}</span><span class="plot-page-line"></span></span><span class="plot-page-go" aria-hidden="true">→</span></a><template class="plot-page-body">{{content}}</template></li>
                 {{/foreach}}
             </ul>
             {{/if}}{{/get}}
@@ -103,4 +103,4 @@
         {{/get}}
     </div>
 </section>
-<script src="{{asset "js/store.js"}}&r=2.21.7" defer></script>
+<script src="{{asset "js/store.js"}}&r=2.21.8" defer></script>

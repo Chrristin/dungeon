@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.21.8
+
+Faster on a phone, and nothing jumping while the page loads. Measured on the live site with a throttled phone (Slow 4G, 4x slower processor), against PageSpeed's mobile run (performance 57, layout shift 0.156).
+
+- **The homepage no longer jumps.** The headline's font was not loaded until about 3.4 s, and until then the browser used its default (a narrow serif), so the headline was two lines and then grew to three, pushing the whole page down 35 px. The heading and body fonts now fall back to a monospace of nearly the same width, and the two fonts the first screen needs are asked for at once (the heading font from the theme, the body font from the CDN Ghost points to, with a connection opened early). A font the first screen does not use (Geist) is no longer preloaded. Layout shift on the homepage went from 0.156 to 0.002.
+- **A set's page keeps its height while the verdict loads.** The verdict area was empty, then filled, and pushed the notes below it down by 60 px: shift 0.291 on a phone. It now keeps its height; shift 0.015.
+- **The Stories row keeps its place** while it sorts, instead of appearing and pushing the list down.
+- **Small pictures for small tiles.** A set's tile used the Rebrickable photo, 2 to 7 MB each, to draw a 66 px square: the Lego list pulled 50 MB on a phone scrolling to the end. It now uses Brickset's 238 px picture (20 KB) for a tile and its 690 px picture (117 KB) for a large one, and falls back to the Rebrickable photo if Brickset has none. An Amazon picture is asked for at 250 px. The Lego list went from 50 MB to 2.5 MB. The same applies to the box on the homepage, which was loading a 3.7 MB photo for a 62 px picture.
+- **A set's own page uses the 117 KB picture, not the 2 to 5 MB photo.** The post's image is the Rebrickable photo; a small script in the page swaps in Brickset's picture by the set number in the address, and falls back to the original.
+- **Pictures as WebP.** The cards on the homepage, the post rows, things, related essays, stories and the set page's picture are asked for as WebP (Ghost makes it), which is much smaller than the PNGs the screenshots were. The logo is asked for at its real size, 216 by 72, instead of the 2000 px file.
+
+Checked in Chrome with local files against the live site: homepage layout shift 0.156 to 0.002, a set page 0.291 to 0.015, the Lego list 50 MB to 2.5 MB, and the hero script on a numeric address, an address without the trailing slash and a non-numeric one. The template parts (preloads, WebP, the logo size) could not be run before release; they are checked on the live site afterwards. Not checked on a real phone, Safari or Firefox.
+
 ## 2.21.7
 
 - **A slim scrollbar in the watchlist drop-downs.** The theme list showed the browser's thick grey scrollbar. It is now a thin bar in the page's own colours (a soft tint of the text colour, no track), in light and dark.

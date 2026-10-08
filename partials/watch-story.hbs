@@ -2,7 +2,7 @@
       (the one tagged #story-lead, else the newest) and gives it the big card. Context: the page or post. --}}
 <article class="story{{#has tag="Sale"}} is-sale{{/has}}" data-date="{{date published_at format="YYYY-MM-DD HH:mm"}}"{{#has tag="#story-lead"}} data-lead="1"{{/has}}>
     <a class="story-link" href="{{url}}">
-        {{#if feature_image}}<img class="story-img" src="{{img_url feature_image size="m"}}" alt="" loading="lazy" decoding="async">{{/if}}
+        {{#if feature_image}}<img class="story-img" src="{{img_url feature_image size="m" format="webp"}}" alt="" loading="lazy" decoding="async">{{/if}}
         <span class="story-body">
             <span class="story-kind">{{#has tag="Sale"}}{{t "Sale note"}}{{else}}{{#has tag="Review"}}{{t "Review"}}{{else}}{{#has tag="Deal"}}{{t "Deal"}}{{else}}{{t "Story"}}{{/has}}{{/has}}{{/has}}</span>
             <span class="story-title">{{title}}</span>

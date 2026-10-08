@@ -1,4 +1,4 @@
-{{!-- A watchlist item's own page: a post with the internal tag #watch-item, at an address such as /lego/42207-ferrari-sf-24/.
+{{!-- A watchlist item's own page (its picture: the Worker stores the set's Rebrickable photo, which is 2 to 5 MB, as the post's image; a small script uses Brickset's 117 KB picture instead, by the set number in the address, and falls back to the original): a post with the internal tag #watch-item, at an address such as /lego/42207-ferrari-sf-24/.
       Ghost supplies the title, the picture (the post's feature image) and your notes (the post's body). The verdict,
       prices and everything else are drawn by the theme's script from the watchlist's data, matched by the post's
       address, so the post itself never holds a price. It is a story panel, so it carries the stamp, the share button
@@ -7,7 +7,7 @@
     <article class="post-panel watch-item" data-key="{{slug}}">
         <p class="watch-top"><a class="watch-back" href="{{@site.url}}/" hidden>&larr; <span></span></a><span class="store-code watch-code"></span></p>
         <div class="watch-hero">
-            <div class="watch-pic store-tile store-tile--big">{{#if feature_image}}<img src="{{img_url feature_image size="m"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">{{/if}}</div>
+            <div class="watch-pic store-tile store-tile--big">{{#if feature_image}}{{#match feature_image "~" "cdn.rebrickable.com"}}<img data-orig="{{feature_image}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}" referrerpolicy="no-referrer"><script>(function(){var s=document.currentScript,i=s.previousElementSibling,m=/^([0-9]{4,7})-/.exec(location.pathname.split("/").filter(Boolean).pop()||"");i.onerror=function(){i.onerror=null;i.src=i.getAttribute("data-orig")};i.src=m?"https://images.brickset.com/sets/images/"+m[1]+"-1.jpg":i.getAttribute("data-orig")})();</script><noscript><img src="{{feature_image}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}"></noscript>{{else}}<img src="{{img_url feature_image size="m" format="webp"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">{{/match}}{{/if}}</div>
             <div class="watch-text">
                 <h1 class="watch-title">{{title}}</h1>
                 {{#if custom_excerpt}}<p class="watch-lede">{{custom_excerpt}}</p>{{/if}}
@@ -23,4 +23,4 @@
     {{> "stickies"}}
     {{/if}}{{/if}}
 </div>
-<script src="{{asset "js/store.js"}}&r=2.21.7" defer></script>
+<script src="{{asset "js/store.js"}}&r=2.21.8" defer></script>

@@ -138,16 +138,22 @@
     return lower ? 'Near MRP. It has hit ' + hit + '.' : days ? 'No discount yet in ' + dayWord(days) + ' tracked.' : 'Near MRP. No price history yet.';
   }
 
-  function srcFor(it, s) { return safeUrl(it.image) || (s.imagePattern && it.image !== false ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : ''); }
+  /* Which picture: for a set with a LEGO number, the shelf's pattern first (Brickset: 20 KB small, 117 KB medium, where the item's own picture can be 3.7 MB); small is for a tile, and an Amazon picture is asked for at 250 px. orig: the item's own picture, the fallback when that one does not load. */
+  function srcFor(it, s, small, orig) {
+    var own = safeUrl(it.image), pat = s.imagePattern && it.image !== false && /^\d{4,7}$/.test(String(it.code)) ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : '';
+    if (!orig && pat) return small ? pat.replace('/sets/images/', '/sets/small/') : pat;
+    if (own) return small && /^https:\/\/m\.media-amazon\.com\//.test(own) ? own.replace(/\._(?:AC_)?[A-Z]{2}\d{2,4}_\./, '._SL250_.') : own;
+    return pat || (s.imagePattern && it.image !== false ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : '');
+  }
   function tile(o, cls) {
     var t = el('span', cls || 'store-tile'); t.style.setProperty('--tilt', tilt(o.it.code).toFixed(2) + 'deg');
     /* The item's own image wins; otherwise the shelf's pattern (an address with {code} in it) is tried, and the
        code is shown if no picture comes back */
-    var src = srcFor(o.it, shelf);
+    var small = !/big/.test(cls || ''), src = srcFor(o.it, shelf, small);
     var ph = el('span', 'store-ph', o.it.code);
     if (src) {
-      var img = el('img'); img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
-      img.onerror = function () { if (img.parentNode) img.parentNode.replaceChild(ph, img); };
+      var img = el('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.referrerPolicy = 'no-referrer';
+      img.onerror = function () { var alt = !img.getAttribute('data-alt') && srcFor(o.it, shelf, small, true); if (alt && alt !== img.src) { img.setAttribute('data-alt', '1'); img.src = alt; return; } if (img.parentNode) img.parentNode.replaceChild(ph, img); };
       img.src = src; t.appendChild(img);
     } else t.appendChild(ph);
     return t;
@@ -655,10 +661,10 @@
          label stays. With no Must Buy, nothing is featured. */
       [].forEach.call(a.querySelectorAll('.plot-page-feature'), function (n) { n.remove(); });
       if (musts.length) {
-        var top = musts[0].it, feature = el('span', 'plot-page-feature'), u = srcFor(top, d);
+        var top = musts[0].it, feature = el('span', 'plot-page-feature'), u = srcFor(top, d, true);
         if (u) {
-          var box = el('span', 'plot-page-shot'), img = el('img'); img.alt = top.name || ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
-          img.onerror = function () { if (box.parentNode) box.parentNode.removeChild(box); };
+          var box = el('span', 'plot-page-shot'), img = el('img'); img.alt = top.name || ''; img.loading = 'lazy'; img.decoding = 'async'; img.referrerPolicy = 'no-referrer';
+          img.onerror = function () { var alt = !img.getAttribute('data-alt') && srcFor(top, d, true, true); if (alt && alt !== img.src) { img.setAttribute('data-alt', '1'); img.src = alt; return; } if (box.parentNode) box.parentNode.removeChild(box); };
           img.src = u; box.appendChild(img); feature.appendChild(box);
         }
         var m = el('span', 'plot-page-must'); m.appendChild(el('span', 'plot-page-dot')); m.appendChild(document.createTextNode(label('must'))); feature.appendChild(m);
