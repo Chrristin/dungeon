@@ -2940,15 +2940,39 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .watch-notify-icon svg { transform-origin: 50% 60%; animation: watch-wiggle 5s ease-in-out infinite; }
 @keyframes watch-wiggle { 0%, 82%, 100% { transform: rotate(0); } 85% { transform: rotate(-14deg); } 88% { transform: rotate(12deg); } 91% { transform: rotate(-8deg); } 94% { transform: rotate(5deg); } 97% { transform: rotate(0); } }
 @media (prefers-reduced-motion: reduce) { .watch-notify-icon svg { animation: none; } }
-/* The watchlist toolbar: search, group and sort */
-.store-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: 0 0 1.3rem; }
-.store-toolbar-q { flex: 1 1 15rem; min-width: 0; min-height: 2.6rem; padding: 0 1rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--ink); font: inherit; font-size: 0.92rem; }
-.store-toolbar select { flex: 0 1 auto; min-height: 2.6rem; max-width: 100%; padding: 0 0.9rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--ink); font: inherit; font-size: 0.88rem; }
-.store-toolbar select[hidden] { display: none; }
-.store-toolbar-q:focus-visible, .store-toolbar select:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+/* The watchlist toolbar: search, group and sort. The drop-downs are the page's own (class dd), so they follow the theme in light and dark. */
+.store-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: 0; }
+.store-toolbar-search { position: relative; display: block; flex: 1 1 15rem; min-width: 0; color: var(--graphite); }
+.store-toolbar-search svg { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.store-toolbar-q { width: 100%; min-height: 2.75rem; padding: 0 1rem 0 2.6rem; border: 1px solid var(--rule); border-radius: 999px; background: color-mix(in srgb, var(--ink) 4%, transparent); color: var(--ink); font: inherit; font-size: 0.92rem; }
+.store-toolbar-q::placeholder { color: var(--graphite); opacity: 0.85; }
+.store-toolbar-q:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; background: transparent; }
 .store-toolbar-n { font: 0.78rem/1.2 var(--mono); color: var(--graphite); }
 .store-toolbar-n:empty { display: none; }
-@media (max-width: 640px) { .store-toolbar-q { flex: 1 1 100%; } .store-toolbar select { flex: 1 1 0; min-width: 0; text-overflow: ellipsis; } }
+.dd { position: relative; flex: 0 1 auto; }
+.dd[hidden] { display: none; }
+.dd-btn { display: inline-flex; align-items: center; justify-content: space-between; gap: 0.8rem; min-height: 2.75rem; min-width: 10rem; max-width: 100%; padding: 0 1rem 0 1.15rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--ink); font: 500 0.88rem/1 var(--mono); cursor: pointer; }
+.dd-btn:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.dd-btn:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+.dd.is-open .dd-btn { border-color: var(--ink); }
+.dd-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-chev { flex: none; opacity: 0.7; transition: transform 0.15s; }
+.dd.is-open .dd-chev { transform: rotate(180deg); }
+.dd-list { position: absolute; z-index: 40; top: calc(100% + 0.4rem); left: 0; min-width: 100%; width: max-content; max-width: min(22rem, calc(100vw - 2rem)); max-height: min(20rem, 60vh); overflow-y: auto; margin: 0; padding: 0.35rem; list-style: none; background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 16px; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2); }
+.dd-list[hidden] { display: none; }
+.dd-right .dd-list { left: auto; right: 0; }
+.dd-list li { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 0.55rem 0.8rem; border-radius: 10px; font: 0.86rem/1.2 var(--mono); cursor: pointer; }
+.dd-list li:hover, .dd-list li:focus-visible { background: color-mix(in srgb, var(--ink) 9%, transparent); outline: none; }
+.dd-list li[aria-selected="true"] { font-weight: 700; }
+.dd-list li[aria-selected="true"] span::before { content: "✓ "; color: var(--led); }
+.dd-list i { font-style: normal; font-size: 0.74rem; color: var(--graphite); }
+/* On the heading line of the Must Buy row: heading on the left, the toolbar on the right (it drops under the heading when there is no room) */
+.store-feature-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.7rem 1.5rem; margin: 0 0 0.9rem; }
+.store-feature-head .store-h { margin: 0; }
+.store-feature-head .store-toolbar { margin-left: auto; flex-wrap: nowrap; }
+.store-feature-head .store-toolbar-search { flex: 0 1 16rem; }
+@media (max-width: 900px) { .store-feature-head .store-toolbar { flex-wrap: wrap; margin-left: 0; width: 100%; } }
+@media (max-width: 640px) { .store-toolbar-search, .store-feature-head .store-toolbar-search { flex: 1 1 100%; } .dd { flex: 1 1 0; min-width: 0; } .dd-btn { width: 100%; min-width: 0; } }
 .store-graph-plate { fill: #fcfcfa; opacity: 0.93; }
 .watch-item .store-graph-plate { fill: var(--tint, #fcfcfa); }
 .store-graph-dot { fill: currentColor; }

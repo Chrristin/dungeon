@@ -394,37 +394,75 @@
     if (k === 'name') return function (a, b) { return String(a.it.name).localeCompare(String(b.it.name)); };
     return null;
   }
+  /* A drop-down in the page's own style (the browser's own list could not be themed: light text on a white list in dark mode). options: [[value, text, count]] */
+  var gdd = null, sdd = null, dds = [];
+  function closeAll() { dds.forEach(function (d) { d.close(); }); }
+  function dd(cls, label, pick) {
+    var wrap = el('div', 'dd ' + cls), btn = el('button', 'dd-btn'), val = el('span', 'dd-val'), list = el('ul', 'dd-list');
+    btn.type = 'button'; btn.setAttribute('aria-haspopup', 'listbox'); btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-label', label);
+    btn.appendChild(val); btn.insertAdjacentHTML('beforeend', '<svg class="dd-chev" viewBox="0 0 12 8" width="10" height="7" aria-hidden="true"><path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    list.setAttribute('role', 'listbox'); list.setAttribute('aria-label', label); list.hidden = true;
+    function open(on) {
+      list.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); wrap.classList.toggle('is-open', on);
+      if (on) { var sel = list.querySelector('[aria-selected="true"]') || list.firstChild; if (sel) { sel.focus(); sel.scrollIntoView({ block: 'nearest' }); } }
+    }
+    function choose(v) { open(false); btn.focus(); pick(v); }
+    btn.addEventListener('click', function () { var will = list.hidden; closeAll(); open(will); });
+    btn.addEventListener('keydown', function (e) { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); closeAll(); open(true); } });
+    list.addEventListener('click', function (e) { var li = e.target.closest('[data-v]'); if (li) choose(li.getAttribute('data-v')); });
+    list.addEventListener('keydown', function (e) {
+      var items = [].slice.call(list.querySelectorAll('[data-v]')), i = items.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') { e.preventDefault(); (items[i + 1] || items[0]).focus(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); (items[i - 1] || items[items.length - 1]).focus(); }
+      else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+      else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (i > -1) choose(items[i].getAttribute('data-v')); }
+      else if (e.key === 'Escape') { e.preventDefault(); open(false); btn.focus(); }
+      else if (e.key === 'Tab') open(false);
+    });
+    wrap.appendChild(btn); wrap.appendChild(list);
+    return {
+      wrap: wrap, close: function () { if (!list.hidden) open(false); },
+      set: function (options, value) {
+        list.textContent = ''; var shown = '';
+        options.forEach(function (o) {
+          var li = el('li'); li.setAttribute('role', 'option'); li.tabIndex = -1; li.setAttribute('data-v', o[0]); li.appendChild(el('span', '', o[1]));
+          if (o[2] != null) li.appendChild(el('i', '', String(o[2])));
+          var on = o[0] === value; li.setAttribute('aria-selected', on ? 'true' : 'false'); if (on) shown = o[1]; list.appendChild(li);
+        });
+        val.textContent = shown || (options[0] ? options[0][1] : '');
+      }
+    };
+  }
   function toolbar() {
     if (!root || !shelf) return;
     readUrl();
-    var items = shelf.items || [], groups = [];
-    items.forEach(function (it) { if (it.group && groups.indexOf(it.group) < 0) groups.push(it.group); });
+    var items = shelf.items || [], groups = [], counts = {};
+    items.forEach(function (it) { if (it.group) { if (counts[it.group] == null) { counts[it.group] = 0; groups.push(it.group); } counts[it.group] += 1; } });
     groups.sort();
     if (!bar0) {
       bar0 = el('form', 'store-toolbar'); bar0.setAttribute('role', 'search'); bar0.addEventListener('submit', function (e) { e.preventDefault(); });
-      var inp = el('input', 'store-toolbar-q'); inp.type = 'search'; inp.setAttribute('aria-label', 'Search this list'); inp.autocomplete = 'off';
-      var g = el('select', 'store-toolbar-g'); g.setAttribute('aria-label', 'Filter by group');
-      var s = el('select', 'store-toolbar-s'); s.setAttribute('aria-label', 'Sort');
+      var box = el('label', 'store-toolbar-search'); box.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>');
+      var inp = el('input', 'store-toolbar-q'); inp.type = 'search'; inp.setAttribute('aria-label', 'Search this list'); inp.autocomplete = 'off'; box.appendChild(inp);
+      gdd = dd('dd-g', 'Filter by group', function (v) { grp = v; shown = PAGE; syncUrl(); draw(); });
+      sdd = dd('dd-s dd-right', 'Sort', function (v) { sortBy = v; shown = PAGE; syncUrl(); draw(); });
+      dds = [gdd, sdd];
       var n = el('span', 'store-toolbar-n'); n.setAttribute('role', 'status');
-      bar0.appendChild(inp); bar0.appendChild(g); bar0.appendChild(s); bar0.appendChild(n);
+      bar0.appendChild(box); bar0.appendChild(gdd.wrap); bar0.appendChild(sdd.wrap); bar0.appendChild(n);
       inp.addEventListener('input', function () { clearTimeout(qTimer); qTimer = setTimeout(function () { q = inp.value.trim(); shown = PAGE; syncUrl(); draw(); }, 160); });
       inp.addEventListener('keydown', function (e) { if (e.key === 'Escape' && inp.value) { inp.value = ''; q = ''; shown = PAGE; syncUrl(); draw(); } });
-      g.addEventListener('change', function () { grp = g.value; shown = PAGE; syncUrl(); draw(); });
-      s.addEventListener('change', function () { sortBy = s.value; shown = PAGE; syncUrl(); draw(); });
-      root.parentNode.insertBefore(bar0, root);
+      document.addEventListener('click', function (e) { if (bar0 && !bar0.contains(e.target)) closeAll(); });
     }
-    var inp2 = bar0.querySelector('.store-toolbar-q'), g2 = bar0.querySelector('.store-toolbar-g'), s2 = bar0.querySelector('.store-toolbar-s');
-    inp2.placeholder = 'Search by name, number or ' + (shelf.unit === 'sets' ? 'theme' : 'brand');
+    var inp2 = bar0.querySelector('.store-toolbar-q');
+    inp2.placeholder = 'Search ' + (shelf.unit || 'items');
     if (document.activeElement !== inp2) inp2.value = q;
-    g2.textContent = ''; g2.hidden = groups.length < 2;
-    var o0 = el('option', '', shelf.unit === 'sets' ? 'All themes' : 'All brands'); o0.value = ''; g2.appendChild(o0);
-    groups.forEach(function (name) { var o = el('option', '', name); o.value = name; g2.appendChild(o); });
-    if (grp && groups.indexOf(grp) < 0) grp = ''; g2.value = grp;
-    s2.textContent = '';
-    Object.keys(SORTS).forEach(function (k) { if (k === 'ppp' && !items.some(function (it) { return it.pieces; })) return; var o = el('option', '', SORTS[k]); o.value = k; s2.appendChild(o); });
-    s2.value = SORTS[sortBy] && [].some.call(s2.options, function (o) { return o.value === sortBy; }) ? sortBy : 'verdict';
+    if (grp && groups.indexOf(grp) < 0) grp = '';
+    gdd.wrap.hidden = groups.length < 2;
+    gdd.set([['', shelf.unit === 'sets' ? 'All themes' : 'All brands', items.length]].concat(groups.map(function (g) { return [g, g, counts[g]]; })), grp);
+    var sorts = Object.keys(SORTS).filter(function (k) { return k !== 'ppp' || items.some(function (it) { return it.pieces; }); });
+    if (sorts.indexOf(sortBy) < 0) sortBy = 'verdict';
+    sdd.set(sorts.map(function (k) { return [k, SORTS[k]]; }), sortBy);
   }
-
   function draw() {
     toolbar();
     var rules = rulesOf(shelf);
@@ -447,6 +485,8 @@
     if (sortBy === 'ppp') view.sort(function (a, b) { return (a.ppp == null) - (b.ppp == null) || a.ppp - b.ppp; });
     else if (cmpBy(sortBy)) view.sort(cmpBy(sortBy));
     if (bar0) bar0.querySelector('.store-toolbar-n').textContent = (q || grp) ? all.length + ' of ' + (shelf.items || []).length : '';
+    /* The toolbar is put back in each time the list is drawn; what had focus in it keeps it */
+    var act = bar0 && bar0.contains(document.activeElement) ? document.activeElement : null, actPos = act && act.selectionStart != null ? act.selectionStart : null;
     root.textContent = '';
 
     if (shelves.length > 1 || shelf.hand) {
@@ -546,6 +586,12 @@
       if (alertsEl) { alertsEl.classList.add('is-hook'); root.appendChild(alertsEl); }
     }
 
+    /* The search, theme and sort sit on the heading line of the Must Buy row, on the right (of the first row, if there is no Must Buy); with no row at all, above the pills */
+    if (bar0) {
+      var secs = [].slice.call(root.querySelectorAll(':scope > .store-feature')), host = secs.filter(function (sec) { var hd = sec.querySelector('.store-h'); return hd && /^Must Buy/.test(hd.textContent); })[0] || secs[0];
+      if (host) { var hh = host.querySelector('.store-h'), head = el('div', 'store-feature-head'); host.insertBefore(head, hh); head.appendChild(hh); head.appendChild(bar0); } else root.appendChild(bar0);
+      if (act) { act.focus(); if (actPos != null) { try { act.setSelectionRange(actPos, actPos); } catch (e) {} } }
+    }
     var bar2 = el('nav', 'store-bar'); bar2.setAttribute('aria-label', 'Filter by verdict');
     var allB = el('button', 'store-pill', 'All'); allB.type = 'button'; allB.setAttribute('data-filter', 'all'); allB.appendChild(el('span', 'store-n', String(all.length))); if (filter === 'all') allB.setAttribute('aria-current', 'true'); bar2.appendChild(allB);
     if (onSale.length) { var sp = el('button', 'store-pill'); sp.type = 'button'; sp.setAttribute('data-filter', 'shop'); sp.appendChild(document.createTextNode('Cheaper at ' + shopName)); sp.appendChild(el('span', 'store-n', String(onSale.length))); if (filter === 'shop') sp.setAttribute('aria-current', 'true'); bar2.appendChild(sp); }
