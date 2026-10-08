@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.21.6
+
+- **Stories on the Lego and Diecast pages.** A short row under a list's introduction for the few pieces worth reading about that list: a sale note, your own review. It is hand-picked, never automatic: tag a page or post with the hidden tag #story-lego (Lego list) or #story-diecast (Diecast list), or both. The newest becomes a big card with its picture and summary, the next two plain rows; tag one #story-lead to make it the big card whatever its date. The big card is dark for a piece tagged Sale and paper-coloured otherwise, and a piece tagged Review or Deal says so (anything else says Story). Three at most; a list with none shows nothing. Looked at in Chrome (desktop, a 390 px phone width, dark mode) with test pieces; not on a real phone, Safari or Firefox. See docs/watchlist.md.
+- **A Must Buy must be close to the lowest price it has had.** With a usual price, 25% under it is no longer enough on its own: today's price must also be within 15% of the lowest on record (`mustNearLow`), so a set that is under its usual price but nearly double its best price is Fair, not Must Buy. A recorded low under 15% of the usual price (`lowFloor`) is treated as a slip and ignored. The Must Buy price on a chart follows the same limit. On today's Lego list that moves 6 sets from Must Buy to Fair (83 to 77); Diecast is unchanged.
+- **Wording.** "1 day", not "1 days", wherever days of record are counted. The note under "Why is our % off different from Amazon's?" no longer says an item with under a month of record is judged against the MRP: it is Collecting Data and never a Must Buy until its usual price is known; only an item whose usual price is not worked out yet is judged against the MRP. A set with a short record now says "no verdict yet".
+
 ## 2.21.4
 
 - **The watchlist's search sits on the Must Buy heading line, on the right.** It was a full-width row above the page; it is now a compact search box beside the "Must Buy" heading (on the first row, if there is no Must Buy), with the theme (or brand) chooser and the sort next to it. On a narrow screen it drops under the heading, full width. With no rows at all (a filter chosen, or nothing found) it sits above the pills. Typing in it keeps the cursor, since the box is put back in place each time the list is drawn.

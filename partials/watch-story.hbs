@@ -1,0 +1,13 @@
+{{!-- One story on a watchlist page: a page or post you tagged for that list. Drawn as a plain row; store.js picks the lead
+      (the one tagged #story-lead, else the newest) and gives it the big card. Context: the page or post. --}}
+<article class="story{{#has tag="Sale"}} is-sale{{/has}}" data-date="{{date published_at format="YYYY-MM-DD HH:mm"}}"{{#has tag="#story-lead"}} data-lead="1"{{/has}}>
+    <a class="story-link" href="{{url}}">
+        {{#if feature_image}}<img class="story-img" src="{{img_url feature_image size="m"}}" alt="" loading="lazy" decoding="async">{{/if}}
+        <span class="story-body">
+            <span class="story-kind">{{#has tag="Sale"}}{{t "Sale note"}}{{else}}{{#has tag="Review"}}{{t "Review"}}{{else}}{{#has tag="Deal"}}{{t "Deal"}}{{else}}{{t "Story"}}{{/has}}{{/has}}{{/has}}</span>
+            <span class="story-title">{{title}}</span>
+            <span class="story-sum">{{#if custom_excerpt}}{{custom_excerpt}}{{else}}{{excerpt words="28"}}{{/if}}</span>
+            <span class="story-date">{{date published_at format="D MMM YYYY"}}</span>
+        </span>
+    </a>
+</article>

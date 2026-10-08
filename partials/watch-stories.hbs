@@ -1,0 +1,16 @@
+{{!-- Stories on a watchlist page: the few pieces worth reading about this list (a sale note, your own review), picked by
+      hand. Tag a page or post #story-lego for the Lego list or #story-diecast for the Diecast list (both for both);
+      add #story-lead to make one the big card. Pages and posts are fetched separately, so store.js sorts them, keeps
+      three and picks the lead. A list with none shows nothing. Context: the watchlist page. --}}
+<section class="stories" data-stories aria-labelledby="stories-h">
+    <h2 class="store-h" id="stories-h">{{t "Stories"}}</h2>
+    <div class="stories-list">
+        {{#match slug "diecast-watchlist"}}
+        {{#get "pages" filter="tag:hash-story-diecast" limit="3" order="published_at desc" include="tags"}}{{#foreach pages}}{{> "watch-story"}}{{/foreach}}{{/get}}
+        {{#get "posts" filter="tag:hash-story-diecast" limit="3" order="published_at desc" include="tags"}}{{#foreach posts}}{{> "watch-story"}}{{/foreach}}{{/get}}
+        {{else}}
+        {{#get "pages" filter="tag:hash-story-lego" limit="3" order="published_at desc" include="tags"}}{{#foreach pages}}{{> "watch-story"}}{{/foreach}}{{/get}}
+        {{#get "posts" filter="tag:hash-story-lego" limit="3" order="published_at desc" include="tags"}}{{#foreach posts}}{{> "watch-story"}}{{/foreach}}{{/get}}
+        {{/match}}
+    </div>
+</section>

@@ -2994,3 +2994,33 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .essay-end p { margin: 0; }
 .essay-end-links { display: flex; flex-wrap: wrap; gap: 0.3rem 1.4rem; margin-top: 0.45rem !important; }
 .essay-end-links:empty { display: none; }
+
+/* Stories on a watchlist page: one big card (dark for a sale note) and two plain rows under it */
+.stories { margin: 0 0 2rem; }
+.stories[hidden], .stories:not(:has(.story)) { display: none; }
+.stories-list { display: grid; gap: 0.75rem; }
+.story[hidden] { display: none; }
+.story-link { display: flex; gap: 0.9rem; align-items: baseline; padding: 0.7rem 0; border-top: 1px solid var(--rule); color: var(--ink); text-decoration: none; }
+.story-img, .story-sum { display: none; }
+.story-body { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.9rem; min-width: 0; flex: 1; }
+.story-kind { font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--graphite); flex: none; min-width: 5.5rem; }
+.story-title { font-weight: 600; flex: 1 1 14rem; }
+.story-date { font: 0.75rem/1.3 var(--mono); color: var(--graphite); flex: none; }
+.story-link:hover .story-title { text-decoration: underline; }
+.story--lead { grid-row: 1; }
+.story--lead .story-link { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 1.4rem; align-items: center; padding: 1rem; border: 1px solid var(--ink); border-radius: 14px; background: var(--paper); }
+.story--lead .story-img { display: block; width: 100%; aspect-ratio: 1.91 / 1; object-fit: cover; border-radius: 10px; background: var(--wash); }
+.story--lead .story-link:not(:has(.story-img)) { grid-template-columns: 1fr; }
+.story--lead .story-body { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+.story--lead .story-kind { border: 1px solid currentColor; border-radius: 999px; padding: 0.15rem 0.6rem; min-width: 0; color: var(--ink); }
+.story--lead .story-title { font-size: clamp(1.25rem, 2.6vw, 1.7rem); line-height: 1.2; letter-spacing: -0.01em; flex: none; }
+.story--lead .story-sum { display: block; color: var(--graphite); max-width: 38rem; }
+.story--lead.is-sale .story-link { background: #17191e; border-color: #17191e; color: #fcfcfa; }
+.story--lead.is-sale .story-kind { color: #ffcc2e; }
+.story--lead.is-sale .story-sum, .story--lead.is-sale .story-date { color: #d8dbe0; }
+.story--lead.is-sale .story-link:hover .story-title { text-decoration-color: #ffcc2e; }
+.story--lead:not(:only-child) { margin-bottom: 0.25rem; }
+@media (max-width: 640px) {
+  .story--lead .story-link { grid-template-columns: 1fr; gap: 0.9rem; }
+  .story-kind { min-width: 0; }
+}

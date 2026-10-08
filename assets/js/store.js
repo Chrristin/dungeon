@@ -15,8 +15,11 @@
      newDays: how long an item is "Collecting Data" before it is judged like any other.
      usualDays: an item may carry a usual price (`orp`, with `orpDays`, how many days of record it rests on). Once the
      record is this long the discount is measured from the usual price and not from MRP, and a Must Buy is
-     usualMustOff under it. With a shorter record the item is Collecting Data. */
-  var DEFAULTS = { mustOff: 0.4, mustGrace: 0.02, nearLow: 0.03, nearLowOff: 0.25, fairOff: 0.15, newDays: 30, newOff: 0.15, lowRowOff: 0.1, usualDays: 30, usualMustOff: 0.25 };
+     usualMustOff under it. With a shorter record the item is Collecting Data.
+     mustNearLow: with a usual price, a Must Buy must also be within this much of the lowest price on record, so a set
+     that is 25% under its usual price but twice its best price is not one. lowFloor: a recorded low under this share of
+     the usual price is treated as a slip, not a price, and ignored. */
+  var DEFAULTS = { mustOff: 0.4, mustGrace: 0.02, nearLow: 0.03, nearLowOff: 0.25, fairOff: 0.15, newDays: 30, newOff: 0.15, lowRowOff: 0.1, usualDays: 30, usualMustOff: 0.25, mustNearLow: 0.15, lowFloor: 0.15 };
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var PAGE = 60;
   var taglines = {}; // a handwritten line beside a row's heading, set in the watchlist page's own text
@@ -68,7 +71,7 @@
       if (it.pending && !o.priced) v = 'new';
       else if (!o.priced || it.seller === 'other' || o.over) v = 'skip';
       else if (o.thin) v = 'new'; // never a Must Buy before the usual price is known
-      else if (o.off >= o.mustOff ||(o.atLow && o.off >= rules.nearLowOff) || withinMust(it, rules)) v = 'must';
+      else if ((o.off >= o.mustOff || (o.atLow && o.off >= rules.nearLowOff) || withinMust(it, rules)) && nearBest(it, rules)) v = 'must';
       else if (num(it.days) && it.days < rules.newDays && o.off < rules.newOff) v = 'new';
       else if (o.off >= rules.fairOff) v = 'fair';
       else v = 'wait';
@@ -80,13 +83,21 @@
     if (v !== 'skip' && o.atLow && o.off >= rules.lowRowOff) o.flags.unshift('Lowest Ever');
     return o;
   }
+  /* Whether today's price is close enough to the lowest on record for a Must Buy. Only asked of an item with a usual price and a believable low. */
+  function lowCap(it, rules) {
+    var usual = usualOf(it, rules);
+    if (usual == null || !num(it.low) || !(it.low > 0) || it.low < usual * rules.lowFloor) return null;
+    return Math.floor(it.low * (1 + rules.mustNearLow));
+  }
+  function nearBest(it, rules) { var cap = lowCap(it, rules); return cap == null || !num(it.price) || it.price <= cap; }
   function withinMust(it, rules) { var mp = mustPrice(it, rules); return mp != null && num(it.price) && it.price <= mp * (1 + (Number(rules.mustGrace) || 0)); }
   /* The highest price at which an item counts as a Must Buy under the shelf's rules (null if it can't be worked out) */
   function mustPrice(it, rules) {
     var usual = usualOf(it, rules), base = usual != null ? usual : (num(it.mrp) ? it.mrp : null);
     if (base == null) return null;
     var deep = base * (1 - (usual != null ? rules.usualMustOff : rules.mustOff)), near = num(it.low) ? Math.min(it.low * (1 + rules.nearLow), base * (1 - rules.nearLowOff)) : 0;
-    return Math.floor(Math.max(deep, near));
+    var cap = lowCap(it, rules), mp = Math.floor(Math.max(deep, near));
+    return cap != null ? Math.min(mp, cap) : mp;
   }
   /* Another shop's price for an item (`shop`: name, price, optionally was, url, until). Counted only until its end date. */
   function shopOf(it) {
@@ -103,6 +114,7 @@
   }
   /* "LOWEST SINCE 4 OCT": for an item with no lowest on record yet, the lowest seen and from when */
   function since(word, d) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return el('span', 'store-fig-k', m ? word + ' ' + (+m[3]) + ' ' + MONTHS[+m[2] - 1] : 'Lowest so far'); }
+  function dayWord(n) { return n + (n === 1 ? ' day' : ' days'); }
   function perPiece(v) { return shelf.currency + (v < 100 ? (Math.round(v * 10) / 10).toFixed(1) : String(Math.round(v))); }
   /* The discount, written small beside a price. It steps up in strength with the shelf's own rules:
      plain below a fair discount, green from there, a solid green pill at a Must Buy discount. */
@@ -120,10 +132,10 @@
     if (o.verdict === 'skip') return !o.priced ? 'No offer from the main seller.' : o.over ? 'Priced above MRP right now.' + (hasLow ? ' It has been as low as ' + hit + '.' : '') : 'Reseller listing. Not the going rate.';
     var under = o.usual != null && o.off >= 0.005 ? Math.round(o.off * 100) + '% under its usual price.' : '';
     if (o.verdict === 'must') return o.atLow ? 'At or near its lowest ever.' : under ? under + ' Rarely lower.' : 'Deep discount. Rarely lower.';
-    if (o.verdict === 'new') return o.thin ? 'Only ' + (it.orpDays > 0 ? it.orpDays + ' days' : 'a day') + ' of prices. Too soon to say what is usual.' : days ? 'Only ' + days + ' days tracked. No real discount yet.' : 'Just added. No price history yet.';
+    if (o.verdict === 'new') return o.thin ? 'Only ' + (it.orpDays > 0 ? dayWord(it.orpDays) : 'a day') + ' of prices. Too soon to say what is usual, so no verdict yet.' : days ? 'Only ' + dayWord(days) + ' tracked. No real discount yet.' : 'Just added. No price history yet.';
     if (o.verdict === 'fair') return lower ? 'Decent, but it has hit ' + hit + '.' : hasLow ? 'Decent, and as low as it has been.' : 'Decent discount. No price history yet.';
     if (o.usual != null) return (o.priced && it.price > o.usual * 1.05 ? 'Above its usual price.' : 'Near its usual price.') + (lower ? ' It has hit ' + hit + '.' : '');
-    return lower ? 'Near MRP. It has hit ' + hit + '.' : days ? 'No discount yet in ' + days + ' days tracked.' : 'Near MRP. No price history yet.';
+    return lower ? 'Near MRP. It has hit ' + hit + '.' : days ? 'No discount yet in ' + dayWord(days) + ' tracked.' : 'Near MRP. No price history yet.';
   }
 
   function srcFor(it, s) { return safeUrl(it.image) || (s.imagePattern && it.image !== false ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : ''); }
@@ -154,7 +166,7 @@
      (from the lowest price to the Must Buy price). An item still collecting data says how long it has been tracked. */
   function lowLine(o) {
     if (o.verdict === 'skip') return null;
-    if (o.verdict === 'new' || !num(o.it.low)) return el('span', 'store-low', num(o.it.days) ? o.it.days + ' days tracked' : 'Not tracked yet');
+    if (o.verdict === 'new' || !num(o.it.low)) return el('span', 'store-low', num(o.it.days) ? dayWord(o.it.days) + ' tracked' : 'Not tracked yet');
     var line = el('span', 'store-low', 'low ' + money(o.it.low) + ' \u00b7 ' + monthYear(o.it.lowDate)), limit = mustPrice(o.it, rulesOf(shelf));
     if (limit != null && limit >= o.it.low) { line.setAttribute('data-tip', 'Buy window: ' + money(o.it.low) + ' \u2013 ' + money(limit) + (o.priced && o.it.price <= limit ? ' \u00b7 you\u2019re in it' : '')); line.className += ' has-tip'; }
     return line;
@@ -521,8 +533,8 @@
       var why = el('div', 'store-why'), sum = el('button', 'store-why-q', 'Why is our % off different from Amazon’s?'), body = el('p', 'store-why-pop');
       sum.type = 'button'; sum.setAttribute('aria-expanded', 'false'); body.id = 'store-why-pop'; body.setAttribute('role', 'note'); sum.setAttribute('aria-controls', body.id);
       body.appendChild(document.createTextNode('Amazon compares today’s price with the MRP printed on the box, and that number is often set very high. We compare it with the price the item has actually sold for most of the last year, its usual price. So “20% off” here means 20% less than what people have usually paid, not 20% less than a number on the label. A '));
-      body.appendChild(el('strong', '', 'Must Buy')); body.appendChild(document.createTextNode(' is ' + Math.round(rules.usualMustOff * 100) + '% or more under the usual price. An item we have not tracked for a month yet is shown as '));
-      body.appendChild(el('em', '', 'Collecting Data')); body.appendChild(document.createTextNode(' and judged against the MRP until we have enough.'));
+      body.appendChild(el('strong', '', 'Must Buy')); body.appendChild(document.createTextNode(' is ' + Math.round(rules.usualMustOff * 100) + '% or more under the usual price, and close to the lowest price it has had. An item we have not tracked for a month yet is shown as '));
+      body.appendChild(el('em', '', 'Collecting Data')); body.appendChild(document.createTextNode(' and is never a Must Buy until we know its usual price. An item whose usual price is not worked out yet is judged against the MRP.'));
       why.appendChild(sum); why.appendChild(body); root.appendChild(why);
       /* An overlay, not a row that pushes the page down: opens on hover or click; closes on a click elsewhere, Escape, or the pointer leaving */
       var whyTimer = 0;
@@ -843,4 +855,20 @@
     var want = decodeURIComponent((location.hash || '').slice(1));
     if (want) for (var i = 0; i < view.length; i++) if (String(view[i].it.code) === want) { open(i); break; }
   });
+})();
+
+/* Stories (partials/watch-stories.hbs): pages and posts are fetched separately, so sort them here. The one tagged
+   #story-lead goes first, else the newest; three are kept; the first becomes the big card and the rest rows. */
+(function () {
+  'use strict';
+  var box = document.querySelector('[data-stories]'); if (!box) return;
+  var list = box.querySelector('.stories-list'), items = [].slice.call(box.querySelectorAll('.story')), seen = {};
+  items = items.filter(function (n) { var h = n.querySelector('a').getAttribute('href'); if (seen[h]) { n.remove(); return false; } seen[h] = 1; return true; });
+  if (!items.length) { box.hidden = true; return; }
+  items.sort(function (a, b) {
+    var la = a.hasAttribute('data-lead') ? 1 : 0, lb = b.hasAttribute('data-lead') ? 1 : 0;
+    return lb - la || (a.getAttribute('data-date') < b.getAttribute('data-date') ? 1 : -1);
+  });
+  items.forEach(function (n, i) { list.appendChild(n); n.hidden = i > 2; n.classList.toggle('story--lead', i === 0); });
+  box.classList.add('is-ready');
 })();
