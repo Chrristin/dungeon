@@ -18,7 +18,7 @@ const IMG_DIR = 'assets/images/shelves';
 const PARTIAL = 'partials/library-shelves.hbs';
 const SCHEMES = ['light', 'dark'];
 const PAD = 18;        /* room kept around each bookcase for its shadow, in page pixels */
-const PER_ROW = 3;     /* bookcases in the first row of the landing; any more go in a second row, centred under it */
+const PER_ROW = 6;     /* bookcases in the first row of the landing; any more go in a second row, centred under it */
 const DPR = 2;        /* the pictures are made twice as large as they are shown */
 
 /* Line endings are ignored, so a checkout on Windows and one on Linux agree */

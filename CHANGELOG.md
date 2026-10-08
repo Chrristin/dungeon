@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.21.17
+
+- **All the bookcases stand in one row on the Library's first view, and smaller.** The pictures were drawn so large that the page itself was lost: three bookcases across, two under them. Now every bookcase is in one row (made for up to six), the row is 80% of the window wide, and each bookcase is about two thirds the size it was, so the page shows around them. On a phone they still stand one under another.
+
 ## 2.21.16
 
 - **An opened bookcase starts small enough to see all of it.** It had been drawn so large that on a big monitor only one or two rows showed. Now its whole height starts at 90% of the window, and it is never wider than the window; zooming (Ctrl and the wheel, or a pinch) makes it as big as you like and it grows past the sides. On a phone it is as before.

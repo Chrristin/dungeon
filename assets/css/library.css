@@ -19,8 +19,8 @@ html[data-scheme="dark"] .lib { --lb-under: 0.62; --lb-ground: 0.5; --lb-wood: #
 .lib[hidden] { display: none; }
 
 /* The landing: pictures of the bookcases, made ahead of time by extras/shelves (npm run shelves) and already in the page.
-   Each is one button. The row fits the text column, up to a tenth wider; on a phone they stand one under another. */
-.lib-shelves { display: flex; align-items: flex-end; width: min(110%, calc(100vw - 32px)); margin: 0.5rem 0 4rem calc((100% - min(110%, calc(100vw - 32px))) / 2); }
+   Each is one button. All the bookcases stand in one row across the window, so the page still shows around them; on a phone they stand one under another. */
+.lib-shelves { display: flex; align-items: flex-end; width: min(calc((100vw - 48px) * 0.8), 1900px); margin: 0.5rem 0 4rem calc((100% - min(calc((100vw - 48px) * 0.8), 1900px)) / 2); }
 .lib-landing[hidden], .lib-shelves[hidden] { display: none; }
 .lib-shelf { position: relative; flex: none; display: block; margin: 0; padding: 0; font: inherit; color: inherit; background: none; border: 0; cursor: pointer; container-type: inline-size; transition: translate 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .lib-shelf:hover, .lib-shelf:focus-visible { translate: 0 -14px; }
