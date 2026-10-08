@@ -280,7 +280,8 @@
     function X(t) { return L + (W - L - R) * (t1 === t0 ? 1 : (t - t0) / (t1 - t0)); }
     function Y(v) { return T + (H - T - B) * (1 - (v - y0) / (y1 - y0)); }
     var svg = s('svg', { viewBox: '0 0 ' + W + ' ' + H, 'class': 'store-graph-svg', role: 'img', 'aria-label': 'Price over time. Lowest ' + money(lo) + '.' });
-    function rule(v, cls, word) { svg.appendChild(s('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), 'class': 'store-graph-rule ' + cls })); svg.appendChild(s('text', { x: W - R, y: Y(v) - 4, 'text-anchor': 'end', 'class': 'store-graph-word ' + cls }, word + ' ' + money(v))); }
+    var words = [];
+    function rule(v, cls, word) { svg.appendChild(s('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), 'class': 'store-graph-rule ' + cls })); words.push({ y: Y(v), cls: cls, txt: word + ' ' + money(v) }); }
     if (mrp) rule(mrp, 'is-mrp', usual != null ? 'Usual' : 'MRP');
     if (must && must > y0 && must < y1 && (!mrp || Math.abs(Y(must) - Y(mrp)) > 14)) rule(must, 'is-must', 'Must Buy');
     /* A stepped line: a price holds until the next reading changes it */
@@ -289,6 +290,23 @@
     d += 'H' + X(t1).toFixed(1);
     svg.appendChild(s('path', { d: d + 'V' + (H - B) + 'H' + X(pts[0][0]).toFixed(1) + 'Z', 'class': 'store-graph-fill' }));
     svg.appendChild(s('path', { d: d, 'class': 'store-graph-line' }));
+    /* The words on the dashed rules go on top of the line, at whichever end and side of their rule the price line does not cross */
+    function crosses(x0, x1, ya, yb) {
+      var k, xa, xb, y, yp;
+      for (k = 0; k < pts.length; k++) {
+        xa = X(pts[k][0]); xb = k + 1 < pts.length ? X(pts[k + 1][0]) : X(t1); y = Y(pts[k][1]);
+        if (xb >= x0 && xa <= x1 && y >= ya && y <= yb) return true; /* a level inside the box */
+        if (k && xa >= x0 && xa <= x1) { yp = Y(pts[k - 1][1]); if (Math.max(y, yp) >= ya && Math.min(y, yp) <= yb) return true; } /* a step through it */
+      }
+      return false;
+    }
+    words.forEach(function (w) {
+      var wd = w.txt.length * 6.8, tries = [[W - R, 'end', -4], [L, 'start', -4], [W - R, 'end', 13], [L, 'start', 13]], pick = tries[0], clear = false, k, x0, ya;
+      for (k = 0; k < tries.length; k++) { x0 = tries[k][1] === 'end' ? W - R - wd : L; ya = w.y + (tries[k][2] < 0 ? -15 : 3); if (!crosses(x0 - 3, x0 + wd + 3, ya - 3, ya + 16)) { pick = tries[k]; clear = true; break; } }
+      /* A very busy line leaves no clear place: the words then sit on a small plate so they stay readable */
+      if (!clear) svg.appendChild(s('rect', { x: pick[1] === 'end' ? pick[0] - wd - 4 : pick[0] - 3, y: w.y + pick[2] - 11, width: wd + 7, height: 15, rx: 3, 'class': 'store-graph-plate' }));
+      svg.appendChild(s('text', { x: pick[0], y: w.y + pick[2], 'text-anchor': pick[1], 'class': 'store-graph-word ' + w.cls }, w.txt));
+    });
     /* The lowest point (its latest occurrence) and today */
     var lowAt = pts[0]; pts.forEach(function (p) { if (p[1] <= lowAt[1]) lowAt = p; });
     var last = pts[pts.length - 1], day = function (t) { var x = new Date(t); return x.getDate() + ' ' + MONTHS[x.getMonth()]; };

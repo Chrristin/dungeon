@@ -2918,10 +2918,12 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .store-graph-rule.is-must { stroke: #17713d; opacity: 0.8; }
 .store-graph-word { fill: currentColor; opacity: 0.62; font: 11px/1 var(--mono); }
 .store-graph-word.is-must, .store-graph-word.is-low { fill: #17713d; opacity: 1; font-weight: 600; }
+.store-graph-plate { fill: #fcfcfa; opacity: 0.93; }
+.watch-item .store-graph-plate { fill: var(--tint, #fcfcfa); }
 .store-graph-dot { fill: currentColor; }
 .store-graph-dot.is-low { fill: #17713d; stroke: var(--paper, #fff); stroke-width: 1.5; }
-:is(.watch-item.is-dark, .store-sheet.is-dark) :is(.store-graph-rule.is-must, .store-graph-dot.is-low) { stroke: #fff; }
-:is(.watch-item.is-dark, .store-sheet.is-dark) :is(.store-graph-word.is-must, .store-graph-word.is-low) { fill: #fff; }
+.watch-item.is-dark :is(.store-graph-rule.is-must, .store-graph-dot.is-low) { stroke: #fff; }
+.watch-item.is-dark :is(.store-graph-word.is-must, .store-graph-word.is-low) { fill: #fff; }
 :is(.watch-item.is-dark, .store-sheet.is-dark) .store-graph-dot.is-low { fill: #fff; }
 @media (max-height: 46rem) { .store-sheet .store-graph-svg { max-height: 22vh; } }
 

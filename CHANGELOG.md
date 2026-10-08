@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.20.8
+
+- **The words on a price chart no longer sit on top of the line.** "Usual" and "Must Buy" are placed at whichever end and side of their dashed line the price line does not cross; where a very busy line leaves no clear place, the words get a small plate in the colour behind them. On a sheet whose tile is dark, "Must Buy" was drawn white on the sheet's light panel and could not be read; it is now green there as on the others. Checked on a phone-width window in Chrome for four Lego sets (yellow, dark and green tiles), the sheet and the item page; not on a real phone, Safari or Firefox.
+
 ## 2.20.7
 
 - **An item's sheet fits a phone.** The three prices at the top of a sheet (today, lowest, usual) sized themselves to the screen's height only, so on a tall phone a price of five digits or more ran into its neighbour and the labels sat on top of each other. They now size to the screen's width as well, and the labels wrap. Checked on phones 360, 390 and 412 px wide in Chrome, not on a real phone, Safari or Firefox; a price of a lakh or more is wider still and was not tried.
