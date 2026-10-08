@@ -310,7 +310,7 @@
           msg=document.getElementById('lib-msg'),info=document.getElementById('lib-info');
     const boxes=CASES.map((c,i)=>{const b=document.createElement('div');b.className='lb-box'+(c.wood?' lb-'+c.wood:'')+(c.taper?' lb-ladder':'');
       ['deep','books2','books1','books','cur'].forEach(k=>{const q=document.createElement('div');q.className='lb-plane lb-p-'+k;b.appendChild(q);b['_'+k]=q});caseEl.appendChild(b);return b});
-    let BOX=null,view='ring',focus=0,tucked=false,zs=1;
+    let BOX=null,view='ring',focus=0,tucked=CASES.some(c=>c.layers),zs=1;
     const ALL=DATA;ALL.forEach(b=>{b.a=b.a||'';b.p=b.p||'';b.n=b.n||'';b.an=b.an||'';b.pl=b.pl||'up';b.c2=b.c2||'#F4F2EC';b.cn=b.cn||'unsorted';b.g=b.g||'Unsorted'});
     const books=ALL.filter(b=>!b.pile),PILE={};
     const seenEmb=new Set();
@@ -440,6 +440,7 @@
       if(sendTo)a.href='mailto:'+sendTo+'?subject='+encodeURIComponent('A shelf arrangement for your library')+'&body='+encodeURIComponent('Here is how I would arrange your shelves:\n\n'+shareUrl())}
     try{manual=dec(localStorage.getItem('dungeon-library-manual'+KS)||'')}catch(err){manual=null}
 
+    const OPEN=1;
     let scale=1,zoom=1,caseW=600,caseH=600,current='shelved';
     /* A book's thickness is an estimate, so on the real shelves every row is stretched a little (never more than a third) until it
        reaches both ends: a shelf in a house has no free centimetre. setW changes a book that is already drawn. */
@@ -671,7 +672,7 @@
       Object.keys(by).forEach(k=>{const g=G[k];if(!g)return;const l=L[k]||{},list=by[k],right=l.restX!=null?l.restX-6:g.colW-PAD,left=PAD+3,R=right-left,spot={};
         const fr=list.filter(c=>!c.lean&&!c.po.back&&!c.po.on),bk=list.filter(c=>!c.lean&&c.po.back),on=list.filter(c=>!c.lean&&c.po.on);
         const fw=c=>c.po.fw||1,bw=c=>c.po.bw||.8,cap=c=>(c.po.w||170)*(tk?1.7:2.1);let x=left;
-        if(tk){const S=fr.reduce((a,c)=>a+fw(c),0)||1;fr.forEach(c=>{const W=Math.min(cap(c),R*fw(c)/S-4);rePile(c,W);c._ax=x;spot[c.pile]={x,w:c.w};x+=R*fw(c)/S});
+        bk.forEach(c=>{c.dy=(c.dy0||0)+(tk?12:0)});if(tk){const S=fr.reduce((a,c)=>a+fw(c),0)||1;fr.forEach(c=>{const W=Math.min(cap(c),R*fw(c)/S-4);rePile(c,W);c._ax=x;spot[c.pile]={x,w:c.w};x+=R*fw(c)/S});
           bk.forEach((c,i)=>{const h=spot[fr[i%Math.max(1,fr.length)].pile]||{x:left,w:R/2};rePile(c,h.w-8);c._ax=h.x+4;spot[c.pile]={x:c._ax,w:c.w}})}
         else{const all=fr.concat(bk),S=all.reduce((a,c)=>a+(c.po.back?bw(c):fw(c)),0)||1;all.forEach(c=>{const wt=c.po.back?bw(c):fw(c),W=Math.min(cap(c),R*wt/S-4);rePile(c,W);c._ax=x;spot[c.pile]={x,w:c.w};x+=R*wt/S})}
         on.forEach(c=>{const h=spot[c.po.on];if(!h)return;rePile(c,h.w*(c.po.w||140)/(PILE[c.po.on].w||170));c._ax=h.x+(h.w-c.w+8)/2;spot[c.pile]={x:c._ax,w:c.w}});
@@ -753,7 +754,7 @@
       geos=[];G={};sortSel.value=m.pat||m.own?'':mode;patSel.value=m.pat?mode:'';menus.forEach(x=>x.update());
       for(let c=0;c<CASES.length;c++){const n=CASES[c].n,st=!!CASES[c].straight,bx=boxes[c],LM=24,cx=LM,ty=STUFF,bot=ty+TB+n*ROW-30,D=DEPTH,
           colW=Math.max(ownW(c)?(CASES[c].w||420):(m.real&&hasL(c))?420:FIXW,...L.slice(CS[c],CS[c]+n).map(l=>l.width)),CW=colW+2*SIDE,BW=LM+CW+40;
-        BOX=bx;bx._w=BW;bx._h=STUFF+TB+n*ROW+FOOT+34+44;bx.style.width=BW+'px';bx.style.height=bx._h+'px';
+        bx.classList.toggle('lb-tucked',!!tk);BOX=bx;bx._w=BW;bx._h=STUFF+TB+n*ROW+FOOT+34+44;bx.style.width=BW+'px';bx.style.height=bx._h+'px';
         /* Real depth: two side panels and a board at every level run back from the front edge to the back panel */
         const tp=+CASES[c].taper||0,rowW=rw=>tp?colW*(1-tp*(n-1-rw)/Math.max(1,n-1)):colW,lean2=tp?Math.atan((colW*tp/2)/(bot-ty-8))/RAD:0;
         const side=x=>{const d=mk('side',x,ty+4,D,bot+20-ty);d.style.transformOrigin='0 50%';d.style.transform='rotateY(90deg)'},
@@ -826,7 +827,9 @@
     zr.onclick=resetZoom;
     function fit(){const vw=vp.clientWidth,col=(root.getBoundingClientRect&&root.getBoundingClientRect().width)||vw;let base;
       /* The landing fits the row of bookcases to the text column, a little wider if it must. An open bookcase is half the column wide. */
-      if(cols!==2)base=(vw-16)/caseW;else if(CTX.landing)base=Math.min(col*1.1,vw-32)/caseW;else base=Math.min((col/2)/(CTX.stdW||caseW),(vw-32)/caseW);
+      if(cols!==2)base=(vw-16)/caseW;else if(CTX.landing)base=Math.min(col*1.1,vw-32)/caseW;else base=Math.min((col/2)/(CTX.stdW||caseW),(vw-32)/caseW)*OPEN;
+      /* An opened bookcase starts with its whole height at 90% of the window (and never wider than the window), so every row can be seen; zooming then makes it as big as you like, and it grows past the sides. */
+      if(cols===2&&!CTX.landing)base=Math.min((vw-32)/caseW,window.innerHeight*.9/caseH);
       const s=base*zoom;scale=s;caseEl.style.width=caseW+'px';caseEl.style.height=caseH+'px';
       if(CTX.landing){caseEl.style.zoom='';caseEl.style.transform='scale('+s+')'}else{caseEl.style.transform='';caseEl.style.zoom=s}
       sizer.style.width=Math.ceil(caseW*s)+'px';sizer.style.height=Math.ceil(caseH*s)+'px';

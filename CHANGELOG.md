@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.21.16
+
+- **An opened bookcase starts small enough to see all of it.** It had been drawn so large that on a big monitor only one or two rows showed. Now its whole height starts at 90% of the window, and it is never wider than the window; zooming (Ctrl and the wheel, or a pinch) makes it as big as you like and it grows past the sides. On a phone it is as before.
+- **Shelf 3 opens as it really is.** Its three layers of books are tucked together, which makes it about a third narrower, instead of lying side by side across the whole page. The layers behind stand a little higher, smaller and darker, so the case has depth. "Show every book" spreads them out as before.
+- **The pile card has a scrollbar you can see**, and no longer spills past the left edge of a phone.
+
 ## 2.21.15
 
 - **The leaning comics look like comics.** They were bent and had a folded corner, which made them look like posters. They are now stapled booklets: a spine with two staples, the pages showing along the edges, hardly any bend, a shadow, and a second comic leaning behind each. The folded corners are gone.
