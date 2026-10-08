@@ -3683,3 +3683,12 @@
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
+
+/* A watchlist item's page: a "Get Notified" line, a bell and the words as plain text and the Telegram icon as the only link. It shows only when the site gives the channel's address in <meta name="watchlist-telegram"> (Settings, Code injection, Site header). */
+(function () {
+  var m = document.querySelector('meta[name="watchlist-telegram"]'), u = m ? (m.getAttribute('content') || '').trim() : '', box = document.querySelector('.watch-item .watch-data');
+  if (!box || !/^https:\/\/t\.me\//i.test(u) || document.querySelector('.watch-notify')) return;
+  var p = document.createElement('p'); p.className = 'watch-notify';
+  p.innerHTML = '<span class="watch-notify-label"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span>Get Notified:</span></span><a class="watch-notify-icon" target="_blank" rel="noopener" aria-label="Get notified on Telegram"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M21.9 3.3 2.6 10.7c-.9.4-.9 1.3 0 1.6l4.9 1.5 1.9 5.8c.2.6.8.7 1.2.3l2.7-2.3 4.9 3.6c.6.4 1.3.1 1.5-.6l3.2-15.8c.2-.9-.5-1.3-1-1.5zM8.6 13.3l9.7-6.1c.2-.1.3.1.2.2l-7.9 7.2-.3 3.2-1.7-4.5z"/></svg></a>';
+  p.querySelector('a').href = u; box.parentNode.insertBefore(p, box.nextSibling);
+})();

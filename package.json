@@ -49,10 +49,6 @@
         "default": "",
         "group": "homepage"
       },
-      "telegram_url": {
-        "type": "text",
-        "default": ""
-      },
       "color_scheme": {
         "type": "select",
         "options": [
