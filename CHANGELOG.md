@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.21.7
+
+- **A slim scrollbar in the watchlist drop-downs.** The theme list showed the browser's thick grey scrollbar. It is now a thin bar in the page's own colours (a soft tint of the text colour, no track), in light and dark.
+- **A line about analytics in the Colophon.** One muted line at the foot of the page: "Visits are counted with Google Analytics, which uses cookies", with a link to Google's own explanation of how it uses that data. The tag itself is added in Ghost's code injection, not in the theme. Checked in Chrome on desktop and a phone-sized window; not on a real phone, Safari or Firefox.
+
 ## 2.21.6
 
 - **Stories on the Lego and Diecast pages.** A short row under a list's introduction for the few pieces worth reading about that list: a sale note, your own review. It is hand-picked, never automatic: tag a page or post with the hidden tag #story-lego (Lego list) or #story-diecast (Diecast list), or both. The newest becomes a big card with its picture and summary, the next two plain rows; tag one #story-lead to make it the big card whatever its date. The big card is dark for a piece tagged Sale and paper-coloured otherwise, and a piece tagged Review or Deal says so (anything else says Story). Three at most; a list with none shows nothing. Looked at in Chrome (desktop, a 390 px phone width, dark mode) with test pieces; not on a real phone, Safari or Firefox. See docs/watchlist.md.
