@@ -262,7 +262,7 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
 .lb-curio.lb-settle { transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), scale 0.15s; }
 .lb-curio svg { display: block; overflow: visible; filter: drop-shadow(2px 1px 2px rgba(0, 0, 0, 0.4)); }
 .lb-curio:focus-visible { outline: 2px solid #E3B23C; outline-offset: 3px; }
-.lb-nocurios .lb-curio { display: none; }
+.lb-nocurios .lb-curio:not(.lb-pile) { display: none; }
 .lb-orn { position: absolute; left: 0; top: 0; pointer-events: none; }
 .lb-orn svg { display: block; }
 .lb-sel { outline: 3px solid #E3B23C; outline-offset: 2px; }
@@ -333,3 +333,14 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
     .lib-r-w { grid-column: 3; grid-row: 1; }
     .lib-r-a, .lib-r-m { grid-column: 2 / 4; }
 }
+
+/* The card of a pile of comics: a search box, pages of twenty, and the list */
+#lib-info .lb-f-pile { display: flex; flex-direction: column; }
+.lb-pq { width: 100%; box-sizing: border-box; margin: 0.45rem 0; padding: 0.45rem 0.8rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 0.875rem; }
+.lb-pn { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0 0 0.4rem; }
+.lb-pg { padding: 0.2rem 0.6rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 0.78rem; cursor: pointer; }
+.lb-pg[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.lb-pl { list-style: none; margin: 0; padding: 0; }
+.lb-pl li { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; border-top: 1px solid var(--rule); font-size: 0.85rem; }
+.lb-pl i { flex: none; width: 8px; height: 18px; border-radius: 2px; }
+.lb-pl small { margin-left: auto; padding-left: 0.5rem; text-align: right; color: var(--graphite); }

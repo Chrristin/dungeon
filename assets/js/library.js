@@ -15,8 +15,18 @@
      (data-render="landing"): extras/shelves does that to make the pictures. */
   var TPL = root.innerHTML, landing = document.getElementById('lib-landing'), shelves = document.getElementById('lib-shelves'), DATA = null, api = null;
   var REDUCE = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* A comic that stands in a pile ("pile" in the data file) carries only its title and topics: the rest comes from its pile */
+  function inflate(d) {
+    var P = {}; (d.piles || []).forEach(function (p) { P[p.id] = p; });
+    (d.books || []).forEach(function (b) {
+      var p = b.pile && P[b.pile]; if (!p) return;
+      b.s = p.s; b.pl = 'pile'; b.a = b.a || p.a || ''; b.p = b.p || p.p || ''; b.g = b.g || 'Comics'; b.tags = b.tags || ['Comics']; b.h = b.h || p.h || 170; b.w = b.w || p.th || 6;
+      b.c = b.c || p.c || '#17171A'; b.c2 = b.c2 || p.c2 || '#E7C63A'; b.cn = b.cn || p.cn || 'black';
+    });
+    return d;
+  }
   function load() {
-    if (!DATA) DATA = fetch(root.dataset.src).then(function (r) { if (!r.ok) throw new Error('data'); return r.json(); }).catch(function (e) { DATA = null; throw e; });
+    if (!DATA) DATA = fetch(root.dataset.src).then(function (r) { if (!r.ok) throw new Error('data'); return r.json(); }).then(inflate).catch(function (e) { DATA = null; throw e; });
     return DATA;
   }
   if (root.dataset.render === 'landing') { load().then(function (d) { boot(d, true); }); return; }
@@ -129,13 +139,13 @@
     if (LV.bk) return;
     var bs = d.books || d, cs = d.cases && d.cases.length ? d.cases : [{ name: 'Shelf 1', n: 6 }, { name: 'Shelf 2', n: 6 }], CS = [], a = 0;
     cs.forEach(function (c) { CS.push(a); a += c.n; });
-    LV.cases = cs;
+    LV.cases = cs; var PN = {}; (d.piles || []).forEach(function (p) { PN[p.id] = p.name; });
     LV.bk = bs.map(function (b, i) {
       var ci = 0; while (ci < cs.length - 1 && b.s >= CS[ci + 1]) ci++;
       var au = b.a || '', segs = au.split(/,| and | with /).map(function (x) { return x.trim(); }).filter(Boolean), first = segs[0] || '',
         /* "David and Stella Gemmell" sorts under Gemmell: a first name with no surname borrows the last author's */
         p = (first.indexOf(' ') < 0 && segs.length > 1 ? segs[segs.length - 1] : first).split(' '), title = b.t.indexOf('UNIDENTIFIED') === 0 ? 'Unidentified' : b.t, tags = b.tags || [];
-      return { i: i, ci: ci, t: title, a: au, g: b.g || 'Unsorted', tags: tags, c: b.c || '#888', where: cs[ci].name + ', row ' + (b.s - CS[ci] + 1),
+      return { i: i, ci: ci, t: title, a: au, g: b.g || 'Unsorted', tags: tags, c: b.c || '#888', where: cs[ci].name + ', row ' + (b.s - CS[ci] + 1) + (b.pile && PN[b.pile] ? ', ' + PN[b.pile].toLowerCase() : ''),
         key: title.replace(/^(The|A|An) /, '').toLowerCase(), sn: au ? (p[p.length - 1] + ' ' + p[0]).toLowerCase() : 'zzzz',
         hay: (title + ' ' + au + ' ' + (b.g || '') + ' ' + tags.join(' ')).toLowerCase() };
     });
@@ -245,8 +255,10 @@
     addEventListener('hashchange', route);
   }
   var hm = /^#CG(\d+)\./.exec(location.hash); if (hm) go(+hm[1] - 1, true); else route();
+  /* Each pile is one thing on its shelf. The back piles come first, so the front piles stand in front of them. */
+  function pileCurios(piles){return piles.slice().sort((a,b)=>(b.back?1:0)-(a.back?1:0)).map(P=>({k:'pile:'+P.id,pile:P.id,name:P.name,s:P.s,x:+((P.ax+(P.w||170)/2)/420).toFixed(3),ax:P.ax,dy:P.dy||0,back:!!P.back,note:''}))}
   function boot(d, render){
-    const books=d.books||d,cases=d.cases&&d.cases.length?d.cases:[{name:'Shelf 1',n:6},{name:'Shelf 2',n:6}],curios=d.curios||[],CS=[];
+    const books=d.books||d,cases=d.cases&&d.cases.length?d.cases:[{name:'Shelf 1',n:6},{name:'Shelf 2',n:6}],piles=d.piles||[],curios=pileCurios(piles).concat(d.curios||[]),CS=[];
     {let a=0;cases.forEach(c=>{CS.push(a);a+=c.n})}
     let AC=null,STD=shelves&&+shelves.dataset.std||0,FIXW0=shelves&&+shelves.dataset.fixw||0;
     function fresh(over){if(AC)AC.abort();AC=new AbortController();document.documentElement.classList.remove('lib-zoomed');root.innerHTML=TPL;root.classList.toggle('lib-over',over);root.hidden=false}
@@ -255,11 +267,11 @@
     function overview(){
       /* Back to the pictures: the live bookcase is thrown away, so this is instant */
       if(!render){clear();if(landing)landing.hidden=false;focusLanding();return}
-      fresh(true);start(books,d.covers,curios,cases,{landing:true,signal:AC.signal,pick:()=>{},std:w=>{STD=w;window.__libStd=w},fixw:w=>{window.__libFixW=w},ready:()=>{window.__libReady=true}})}
+      fresh(true);start(books,d.covers,curios,cases,{piles,landing:true,signal:AC.signal,pick:()=>{},std:w=>{STD=w;window.__libStd=w},fixw:w=>{window.__libFixW=w},ready:()=>{window.__libReady=true}})}
     function draw(ci,sel,opt){const c=cases[ci];
       const bs=books.map((b,gi)=>Object.assign({},b,{_g:gi})).filter(b=>b.s>=CS[ci]&&b.s<CS[ci]+c.n).map(b=>Object.assign(b,{s:b.s-CS[ci]})),
         cu=curios.filter(q=>q.s===-1-ci||(q.s>=CS[ci]&&q.s<CS[ci]+c.n)).map(q=>Object.assign({},q,{s:q.s<0?-1:q.s-CS[ci]}));
-      start(bs,d.covers,cu,[c],{ci,stdW:STD,fixW:FIXW0,signal:AC.signal,close:opt&&opt.back||overview,backLabel:opt&&opt.label,sel,list:()=>listFromShelf(ci)})}
+      start(bs,d.covers,cu,[c],{piles,ci,stdW:STD,fixW:FIXW0,signal:AC.signal,close:opt&&opt.back||overview,backLabel:opt&&opt.label,sel,list:()=>listFromShelf(ci)})}
     /* Draw a bookcase out of sight, at the size it will have when shown: the page's column, not in the page's flow */
     function prepare(ci,sel,opt){if(warmed===ci&&sel==null&&!opt)return;if(warmed>=0||AC)clear();
       const p=root.parentNode,cs=getComputedStyle(p),r=p.getBoundingClientRect();
@@ -298,7 +310,8 @@
     const boxes=CASES.map((c,i)=>{const b=document.createElement('div');b.className='lb-box'+(c.wood?' lb-'+c.wood:'')+(c.taper?' lb-ladder':'');
       ['deep','books2','books1','books','cur'].forEach(k=>{const q=document.createElement('div');q.className='lb-plane lb-p-'+k;b.appendChild(q);b['_'+k]=q});caseEl.appendChild(b);return b});
     let BOX=null,view='ring',focus=0,tucked=false,zs=1;
-    const books=DATA;books.forEach(b=>{b.a=b.a||'';b.p=b.p||'';b.n=b.n||'';b.an=b.an||'';b.pl=b.pl||'up';b.c2=b.c2||'#F4F2EC';b.cn=b.cn||'unsorted';b.g=b.g||'Unsorted'});
+    const ALL=DATA;ALL.forEach(b=>{b.a=b.a||'';b.p=b.p||'';b.n=b.n||'';b.an=b.an||'';b.pl=b.pl||'up';b.c2=b.c2||'#F4F2EC';b.cn=b.cn||'unsorted';b.g=b.g||'Unsorted'});
+    const books=ALL.filter(b=>!b.pile),PILE={};
     const seenEmb=new Set();
     books.forEach((e,i)=>{e.i=i;e.k=hsl(e.c);
       const el=document.createElement('button');el.type='button';el.className='lb-book'+(e.w<10?' lb-thin':'');el.style.setProperty('--c',e.c);
@@ -437,7 +450,7 @@
           for(let j=g.length-1;j>=0;j--){const b=g[j];place.push([b,x+(L-b.dw)/2,-(acc+b.dh)]);acc+=b.dh}
           tops.push({x0:x,x1:x+L,top:-acc});x+=L+GAP}
         else if(pl==='top'||pl==='face')later.push(e);
-        else{form(e,'up');place.push([e,x,-e.h]);e._x=x;tops.push({x0:x,x1:x+e.w,top:-e.h});x+=e.w+GAP}}
+        else{if(real&&e.lead)x+=e.lead;form(e,'up');place.push([e,x,-e.h]);e._x=x;tops.push({x0:x,x1:x+e.w,top:-e.h});x+=e.w+GAP}}
       const pts=[];tops.forEach(t=>pts.push([t.x0,t.top],[t.x1,t.top]));
       later.forEach(e=>{const a=list.find(b=>b!==e&&e.an&&b.t.startsWith(e.an)),ax=a&&a._x!=null?a._x:PAD;
         if(e.pl==='face'){form(e,'face');place.push([e,ax,-e.dh,0,true]);return}
@@ -570,6 +583,15 @@
       TALL=['bottleAmber','bottleBlue','jar','shotGlass','basket','duck'];
     /* Drawings that arrive already lit and shaded by hand (library-art.js, Shelves 4 and 5) are left exactly as drawn */
     Object.assign(CURIO,window.__libArt||{});MAT.x=Object.keys(window.__libArt||{});
+    /* A pile of comics is drawn as a stack of thin spines and is one clickable thing; its comics are listed in its card, twenty at a time */
+    function pileArt(P,ms){const n=ms.length,W=P.w||170,th=Math.min(P.th||6,(P.cap||240)/n),H=Math.ceil(n*th)+3,id='pg'+P.id.replace(/\W/g,''),lab=th>=4.2,f=v=>v.toFixed(2),fs=th*.58;
+      let g='<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient></defs><g stroke="none">';
+      ms.forEach((b,i)=>{const y=1+i*th,dx=((i*37)%7-3)*(th>=4?.8:.5),h=th*(th>=4?.9:.84);
+        g+='<rect x="'+f(dx)+'" y="'+f(y)+'" width="'+W+'" height="'+f(h)+'" rx=".8" fill="'+b.c+'"/>';
+        if(lab){const t=b.t.toUpperCase().replace(/&/g,'&amp;');g+='<text x="'+f(W*.07+dx)+'" y="'+f(y+th*.7)+'" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="'+f(fs)+'" fill="'+b.c2+'" textLength="'+f(Math.min(W*.58,t.length*fs*.6))+'" lengthAdjust="spacingAndGlyphs">'+t+'</text>';
+          if(P.imprint)g+='<text x="'+f(W*.7+dx)+'" y="'+f(y+th*.7)+'" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="'+f(fs)+'" fill="'+b.c2+'" textLength="'+f(W*.26)+'" lengthAdjust="spacingAndGlyphs">'+P.imprint+'</text>'}});
+      g+='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="url(#'+id+')"/></g>';return[Math.ceil(W+8),H,g]}
+    (CTX.piles||[]).forEach(P=>{const ms=ALL.filter(b=>b.pile===P.id);if(!ms.length)return;ms.forEach(b=>{b.hay=(b.t+' '+(b.tags||[]).join(' ')).toLowerCase()});PILE[P.id]=Object.assign({},P,{members:ms});CURIO['pile:'+P.id]=pileArt(P,ms);MAT.x.push('pile:'+P.id)});
     const matOf=k=>MAT.x.indexOf(k)>=0?'x':MAT.s.indexOf(k)>=0?'s':MAT.g.indexOf(k)>=0?'g':MAT.f.indexOf(k)>=0?'f':'m';
     function shade(mk,k){const m=matOf(k);if(m==='x')return mk;const tall=TALL.indexOf(k)>=0,keep=[];
       mk=mk.replace(/<defs>[\s\S]*?<\/defs>|<clipPath[\s\S]*?<\/clipPath>/g,x=>{keep.push(x);return'\u0001'+(keep.length-1)+'\u0002'});
@@ -598,9 +620,9 @@
     function dropCurio(c){const cx=c.wx+c.w/2,gc=(G[c.s]||G[0]).c;let best=null,bd=1e9;
       Object.keys(G).forEach(k=>{const g=G[k];if(g.c!==gc||cx<g.ox-40||cx>g.ox+g.colW+40)return;const d=Math.abs(c.wy-(g.by+(cx-g.ox)*Math.sin(g.th)));if(d<bd){bd=d;best=+k}});
       if(best!==null){const g=G[best];c.s=best;c.x=Math.max(0,Math.min(1,(cx-g.ox)/g.colW));cpos[c.id]={s:c.s,x:+c.x.toFixed(3)};try{localStorage.setItem('dungeon-library-curios'+KS,JSON.stringify(cpos))}catch(err){}}
-      c.el.classList.add('lb-settle');putCurio(c);setTimeout(()=>c.el.classList.remove('lb-settle'),500)}
+      if(c.pile)c._ax=null;c.el.classList.add('lb-settle');putCurio(c);setTimeout(()=>c.el.classList.remove('lb-settle'),500)}
     curios.forEach((c,i)=>{const sp=CURIO[c.k];c.id=c.id||c.k+'-'+i;c.curio=true;c.w=sp[0];c.h=sp[1];c.s0=c.s;c.x0=c.x;c.dy0=c.dy=+c.dy||0;if(cpos[c.id]){c.s=cpos[c.id].s;c.x=cpos[c.id].x}
-      const el=document.createElement('button');el.type='button';el.className='lb-curio';el.style.zIndex=500+i;el.setAttribute('aria-label',c.name||'Curio');
+      const el=document.createElement('button');el.type='button';el.className='lb-curio'+(c.pile?' lb-pile':'');el.style.zIndex=500+i;el.setAttribute('aria-label',c.name||'Curio');
       el.innerHTML=`<svg width="${c.w}" height="${c.h}" viewBox="0 0 ${c.w} ${c.h}" aria-hidden="true">${shadowOf(c,i)}<g ${SK}>${shade(sp[2],c.k)}</g></svg>`;c.el=el;caseEl.appendChild(el);
       let sx=0,sy=0,x0=0,y0=0,on=false,armed=true,timer=0;
       el.addEventListener('touchmove',ev=>{if(on&&armed)ev.preventDefault()},{passive:false});
@@ -692,9 +714,9 @@
         const ln=lean*RAD,mx=cx+CW/2,my=ty+TB/2;
         G[-1-c]={ox:mx-(CW/2)*Math.cos(ln)+(TB/2)*Math.sin(ln),by:my-(CW/2)*Math.sin(ln)-(TB/2)*Math.cos(ln),th:ln,colW:CW,front:2,c}}
       BOX=null;
-      curios.forEach(c=>{c._ax=null});
+      curios.forEach(c=>{c._ax=c.pile&&c.ax!=null&&!cpos[c.id]?c.ax:null});
       if(m.real&&!tk)CASES.forEach((cs,c)=>{if(!cs.layers)return;for(let rw=0;rw<cs.n;rw++){const si=CS[c]+rw,g=G[si];let gx=L[si].width+6;
-        curios.filter(q=>q.s===si&&!cpos[q.id]).sort((a,b)=>a.x-b.x).forEach(q=>{if(gx+q.w<=g.colW-PAD){q._ax=gx;gx+=q.w+12}})}});
+        curios.filter(q=>q.s===si&&!cpos[q.id]&&(!q.pile||q.back)).sort((a,b)=>a.x-b.x).forEach(q=>{if(gx+q.w<=g.colW-PAD){q._ax=gx;gx+=q.w+12}})}});
       curios.forEach(putCurio);
       root.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===mode));
       arrange()}
@@ -769,9 +791,22 @@
       fetch('https://openlibrary.org/search.json?limit=1&fields=cover_i&title='+encodeURIComponent(t)+(a?'&author='+encodeURIComponent(a):''))
         .then(r=>r.json()).then(d=>{const id=d.docs&&d.docs[0]&&d.docs[0].cover_i,u=id?'https://covers.openlibrary.org/b/id/'+id+'-M.jpg':'';
           cache[e.t]=u;try{localStorage.setItem('dungeon-library-covers',JSON.stringify(cache))}catch(err){}show(u)}).catch(()=>{})}
-    function select(e){if(sel)sel.el.classList.remove('lb-sel');info.textContent='';info.classList.remove('lb-on');
+    /* The card of a pile: its comics, twenty to a page, with a search box */
+    function pileCard(c,m){const P=PILE[c.pile],ms=P.members,f=add(info,'div',null,'f');f.classList.add('lb-f-pile');
+      add(f,'h2',P.name);add(f,'p',ms.length+' comics. '+where(c.s)+(P.back?', behind the front piles':'')+'.');
+      const q=add(f,'input',null,'pq');q.type='search';q.placeholder='Search this pile';q.setAttribute('aria-label','Search this pile');
+      const nav=add(f,'div',null,'pn'),ul=add(f,'ul',null,'pl');let page=0;
+      function draw(){const key=q.value.trim().toLowerCase().split(/\s+/).filter(Boolean),rows=ms.filter(b=>key.every(k=>b.hay.indexOf(k)>=0)),pages=Math.max(1,Math.ceil(rows.length/20));
+        if(page>=pages)page=pages-1;nav.textContent='';ul.textContent='';
+        if(pages>1)for(let i=0;i<pages;i++){const bt=add(nav,'button',(i*20+1)+'\u2013'+Math.min(rows.length,(i+1)*20),'pg');bt.type='button';bt.setAttribute('aria-pressed',i===page?'true':'false');bt.onclick=()=>{page=i;draw()}}
+        rows.slice(page*20,page*20+20).forEach(b=>{const li=add(ul,'li');const sw=document.createElement('i');sw.style.background=b.c;li.appendChild(sw);add(li,'span',b.t);add(li,'small',(b.tags||[]).filter(t=>t!=='Comics').join(', '))});
+        if(!rows.length)add(ul,'li','No comics match.')}
+      q.oninput=()=>{page=0;draw()};if(m)q.value=m.t;draw();
+      add(f,'button','Close','ctl').onclick=()=>select(sel)}
+    function select(e,m){if(sel)sel.el.classList.remove('lb-sel');info.textContent='';info.classList.remove('lb-on');
       if(sel===e||!e||e.item){sel=null;return}
       sel=e;e.el.classList.add('lb-sel');info.classList.add('lb-on');
+      if(e.curio&&e.pile&&PILE[e.pile])return pileCard(e,m);
       if(e.curio){const f=add(info,'div',null,'f');add(f,'h2',e.name||'Curio');add(f,'p',e.note||'No details yet.');
         add(f,'p',(e.s<0?'On top of the '+CASES[-1-e.s].name.toLowerCase():where(e.s))+', position '+(+e.x).toFixed(2));add(f,'button','Close','ctl').onclick=()=>select(sel);return}
       const cv=add(info,'div',null,'cover');cv.style.setProperty('--c',e.c);cv.style.color=e.oc;
@@ -837,7 +872,7 @@
     {const touch=typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
       if(touch)MODES.manual.note=' On a touch screen, tap and hold a book to pick it up.'}
     render('shelved');
-    if(CTX.sel!=null){const e=books.find(b=>b._g===CTX.sel);if(e)select(e)}
+    if(CTX.sel!=null){const e=books.find(b=>b._g===CTX.sel);if(e)select(e);else{const mm=ALL.find(b=>b._g===CTX.sel),pc=mm&&mm.pile&&curios.find(c=>c.pile===mm.pile);if(pc)select(pc,mm)}}
     if(location.hash.indexOf('#'+PFX+'.')===0){const sh=dec(location.hash.slice(1));if(sh){manual=normalise(sh);render('manual')}else msg.textContent='That link does not match the books on the shelves now, so the shelves are shown as they really are.'}
     const done=()=>{if(CTX.ready)setTimeout(CTX.ready,50)};
     /* The lettering is measured with its own font. If that font is already loaded (it is fetched ahead of time) the first draw is

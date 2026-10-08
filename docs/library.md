@@ -43,6 +43,29 @@ Each book:
 
 The order of the lines is the order on the shelves: within one shelf, books stand left to right in the order they appear in the file.
 
+## Piles of comics
+
+A pile of thin comics is one thing on its shelf, not hundreds. Click it and its card lists the comics, twenty to a page, with a search box. The comics are still in the book list at `#books`, with the pile named in their place ("Shelf 3, row 5, gotham super specials, left pile").
+
+The `piles` list near the top of the data file sets the piles:
+
+| Field | Meaning |
+|---|---|
+| `id` | A short name the comics refer to. |
+| `name` | Shown on the pile's card and in the list. |
+| `s` | The shelf it stands on (for Shelf 3's bottom row, 16). |
+| `ax` | Where its left edge stands on the shelf, in drawing units from the shelf's left end. The shelf is 420 wide when its layers are tucked together. |
+| `w` | How wide it is drawn (the length of a comic). |
+| `th` | How thick each comic is drawn. A pile is drawn no taller than `cap` (default 240), so a big pile has thinner slabs. |
+| `dy` | Optional. How far above the shelf it rests: the Archie digests stand on top of the Super Specials. |
+| `back` | `true` for a pile that stands behind the front piles. Where the layers lie side by side, a back pile stands beside the books instead. |
+| `a`, `p`, `h`, `c`, `c2`, `cn` | What each comic takes unless it says otherwise: author or publisher, height, spine colour, title colour and colour name. |
+| `imprint` | Optional. A second line of lettering on each spine ("GOTHAM COMICS"). |
+
+A comic in a pile is a line in `books` with only `t` (title), `pile` (the pile's `id`) and `tags`. It may add `c`, `w` or `n` of its own. The order of the lines is the order in the pile, top to bottom. A pile is not drawn comic by comic, so there is no cover lookup for its comics.
+
+A book can also have `lead`: empty room, in drawing units, before it, so the front piles have somewhere to stand. It is used only where the shelf is drawn as it really is.
+
 ## Curios
 
 After the books, the file lists the curios: the things standing in front of the books and on top of the cases. One line each:

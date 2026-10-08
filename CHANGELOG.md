@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.21.12
+
+- **The comics on Shelf 3's bottom row.** 386 comics, now in five piles that stand as in the photograph: the Gotham Super Specials in two piles (33 and 8), the Archie digests (29) standing on top of the second, and, behind them, two piles of Gotham single issues (121 DC and others, 195 Marvel). Click a pile and its card lists the comics, twenty to a page, with a search box. The 13 books that stand upright on the right (the Tintin and Jo, Zette and Jocko albums, Asterix the Bold, Fighting the Fakers, X-Force, Superman 8 and three Marvel Adventures) are ordinary books again.
+- **The book list has them all.** 924 entries now. A comic in a pile says which pile ("Shelf 3, row 5, gotham super specials, left pile"), and choosing one opens Shelf 3 with its pile open on that comic.
+- **Shelf 3 is the same size.** With the layers lying side by side, the back piles stand beside the books; tucked together ("How it really is"), they stand behind the front piles.
+- **The comics' covers are not looked up.** Open Library found a right match for none of the 106 it was tried on, and a wrong cover is worse than none.
+- **For editing:** a new `piles` list and `pile` on a book in the data file (docs/library.md, "Piles of comics").
+
 ## 2.21.11
 
 - **Two new bookcases in the Library: Shelf 4 and Shelf 5.** Shelf 4 is the tall oak case: the LEGO Perseverance rover on top, the Grogu shelf (the LEGO Grogu in his pod, the crocheted Grogu, three Grogu figures, a tiny LEGO Grogu and two potion bottles), the Batman shelf (Batman, Sung Jin-Woo on purple flames, a bear with a barrel, a hand stamp, a moon painting, an Archipelago gin box and postcards) and three rows of 25 books. Shelf 5 is the ladder that leans on the wall, with no back to it: the four turtles and the moon on the top shelf, then a shelf of posters and keepsakes, the Nightmare Before Christmas set, the LEGO Ferrari SF-24, and a pile of big books with the unopened LEGO Hamilton Helmet box resting on it. 33 books were added to the list (568 in all). The unopened LEGO Hamilton Helmet box is a curio, not a book; the Kobo e-reader box is still listed, because it stands among the books.
