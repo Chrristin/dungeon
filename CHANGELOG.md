@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.20.7
+
+- **An item's sheet fits a phone.** The three prices at the top of a sheet (today, lowest, usual) sized themselves to the screen's height only, so on a tall phone a price of five digits or more ran into its neighbour and the labels sat on top of each other. They now size to the screen's width as well, and the labels wrap. Checked on phones 360, 390 and 412 px wide in Chrome, not on a real phone, Safari or Firefox; a price of a lakh or more is wider still and was not tried.
+- **One line, not two, about earning from links.** Under a list, the "I may earn a commission if you buy through these links" line is gone where the site has an Amazon tag: the Associates statement already says it. A site with no tag set still shows the commission line, so a page with affiliate links is never left without one.
+
 ## 2.20.6
 
 - **A sale banner above the strip.** While a sale at another shop is on and some set costs less there than here, a dark banner sits above the Lego page's sale strip: a "Sale" label, the sale's headline, how many sets cost less there, what comes with it (a free gift, points), and links: "See the sets" (the list filtered to them), "Full comparison" (your own page about the sale, when you set one) and a link out to the shop's sale. It goes by itself after the end date, and does not appear at all on a list with no such sale. It follows the page's light and dark colours.
