@@ -7,7 +7,7 @@
     <article class="post-panel watch-item" data-key="{{slug}}">
         <p class="watch-top"><a class="watch-back" href="{{@site.url}}/" hidden>&larr; <span></span></a><span class="store-code watch-code"></span></p>
         <div class="watch-hero">
-            <div class="watch-pic store-tile store-tile--big">{{#if feature_image}}{{#match feature_image "~" "cdn.rebrickable.com"}}<img data-orig="{{feature_image}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}" referrerpolicy="no-referrer"><script>(function(){var s=document.currentScript,i=s.previousElementSibling,m=/^([0-9]{4,7})-/.exec(location.pathname.split("/").filter(Boolean).pop()||"");i.onerror=function(){i.onerror=null;i.src=i.getAttribute("data-orig")};i.src=m?"https://images.brickset.com/sets/images/"+m[1]+"-1.jpg":i.getAttribute("data-orig")})();</script><noscript><img src="{{feature_image}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}"></noscript>{{else}}<img src="{{img_url feature_image size="m" format="webp"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">{{/match}}{{/if}}</div>
+            <div class="watch-pic store-tile store-tile--big">{{#if feature_image}}{{#match feature_image "~" "cdn.rebrickable.com"}}<img data-orig="{{feature_image}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}" referrerpolicy="no-referrer"><script>(function(){var s=document.currentScript,i=s.previousElementSibling,m=/^([0-9]{4,7})-/.exec(location.pathname.split("/").filter(Boolean).pop()||"");var w=document.querySelector('meta[name="watchlist-data"]'),o="",l=[];try{o=new URL((w&&w.content||"").split(/\s+/)[0]).origin}catch(e){}if(m){if(o)l.push(o+"/img/sets/images/"+m[1]+"-1.jpg");l.push("https://images.brickset.com/sets/images/"+m[1]+"-1.jpg")}l.push(i.getAttribute("data-orig"));i.onerror=function(){var n=l.shift();if(n)i.src=n;else i.onerror=null};i.onerror()})();</script><noscript><img src="{{feature_image}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}"></noscript>{{else}}<img src="{{img_url feature_image size="m" format="webp"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">{{/match}}{{/if}}</div>
             <div class="watch-text">
                 <h1 class="watch-title">{{title}}</h1>
                 {{#if custom_excerpt}}<p class="watch-lede">{{custom_excerpt}}</p>{{/if}}
@@ -23,4 +23,4 @@
     {{> "stickies"}}
     {{/if}}{{/if}}
 </div>
-<script src="{{asset "js/store.js"}}&r=2.23.0" defer></script>
+<script src="{{asset "js/store.js"}}&r=2.23.1" defer></script>

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.23.1
+
+- **A set's own page loads its big picture from the Worker first.** The picture on a Lego set's page came straight from Brickset, which answered the page speed test with a 403 on 9 Oct. It now asks the Worker (which keeps a copy of every set picture since Worker build 32), then Brickset, and only then the set's original photo. The lists and the homepage already use the Worker's copies, since Worker build 33 changed the picture address the list publishes.
+
 ## 2.23.0
 
 - **Booster's walk is new, and smooth.** Six painted poses with her back legs actually stepping (the far one swinging back while the near one comes forward) were run through a frame interpolator to make 20 frames, played at 12 a second with no fade between them, so no two cats on top of each other. She walks slowly, like a stroll. The old 8-frame walk is gone. Where the loop would smear (the lifted paw going back to the start) it is cut, so the back legs jump a little once per step. Her walking speed is worked out from the new frames, so her paws stay on the board.
