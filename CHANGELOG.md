@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.23.0
+
+- **Booster's walk is new, and smooth.** Six painted poses with her back legs actually stepping (the far one swinging back while the near one comes forward) were run through a frame interpolator to make 20 frames, played at 12 a second with no fade between them, so no two cats on top of each other. She walks slowly, like a stroll. The old 8-frame walk is gone. Where the loop would smear (the lifted paw going back to the start) it is cut, so the back legs jump a little once per step. Her walking speed is worked out from the new frames, so her paws stay on the board.
+- **Fewer cats-on-top-of-cats.** The fade between one action and the next (sit to walk, say) is now a tenth of a second.
+- **She moves less.** She mostly sits, looks about, grooms and rests for longer, and walks or jumps to the next bookcase only now and then, with longer pauses between things.
+- **The teddy's edge is softer.** The cut-out has a rounded, furry edge now with the colour fringe from the photo removed, and no green specks.
+- **The shelf titles ("Shelf 1" and so on) are gone** from under the bookcases, on the first view and on an opened one.
+- **For editing:** the walk pictures are in `extras/booster/source/walk/` (01.png to 20.png, on white). `npm run booster` cuts them out like the other poses.
+
 ## 2.22.3
 
 - **A set picture that fails to load no longer pulls a 2 MB photo.** When the small Brickset picture did not load (it failed for the page speed test on 9 Oct), the page fell back to the set's own photo, a Rebrickable original of 2 to 9 MB, into a 50 px slot. On a slow phone connection that one image delayed everything. Now it tries the medium Brickset picture, then an Amazon picture if the item has one, and otherwise shows the set number. It never uses an original of unknown size. (A set's own page still falls back to its original if both Brickset pictures fail; that is its main picture.)

@@ -24,6 +24,27 @@ export function keyBlack(sh) {
     for (let i = 0; i < W * H; i++) data[i * 4 + 3] = bg[i] ? 0 : ring[i] ? 120 : 255;
     return sh;
 }
+/* frames that already come one to a picture, on plain white (the walk, after it was made smooth): each is keyed from the white and trimmed */
+export async function loadFolder(dir) {
+    const out = [], names = fs.readdirSync(path.join(HERE, 'source', dir)).filter(n => /.png$/i.test(n)).sort();
+    for (const n of names) {
+        const { data, info } = await sharp(path.join(HERE, 'source', dir, n)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+        const W = info.width, H = info.height, bg = new Uint8Array(W * H), st = [];
+        const light = i => Math.min(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]) > 236;
+        for (let x = 0; x < W; x++) st.push(x, (H - 1) * W + x);
+        for (let y = 0; y < H; y++) st.push(y * W, y * W + W - 1);
+        while (st.length) { const i = st.pop(); if (bg[i] || !light(i)) continue; bg[i] = 1; const x = i % W, y = (i / W) | 0; if (x > 0) st.push(i - 1); if (x < W - 1) st.push(i + 1); if (y > 0) st.push(i - W); if (y < H - 1) st.push(i + W); }
+        let x0 = W, x1 = -1, y0 = H, y1 = -1, area = 0;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (bg[i]) { data[i * 4 + 3] = 0; continue; }
+            const edge = bg[i - 1] || bg[i + 1] || bg[i - W] || bg[i + W];
+            data[i * 4 + 3] = edge ? Math.max(60, Math.min(255, Math.round((255 - Math.min(data[i * 4], data[i * 4 + 1], data[i * 4 + 2])) * 3))) : 255;
+            area++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        const w = x1 - x0 + 1, h = y1 - y0 + 1, buf = Buffer.alloc(w * h * 4);
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const si = ((y + y0) * W + x + x0) * 4, di = (y * w + x) * 4; buf[di] = data[si]; buf[di + 1] = data[si + 1]; buf[di + 2] = data[si + 2]; buf[di + 3] = data[si + 3]; }
+        out.push({ w, h, buf, area, green: 0 });
+    }
+    return out;
+}
 export function frames(sh, opt = {}) {
     const { data, W, H } = sh, lab = new Int32Array(W * H), comps = [null], R = opt.R || 4;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {

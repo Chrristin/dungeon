@@ -6,7 +6,7 @@ import sharp from 'sharp';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadSheet, keyBlack, frames } from './cut.mjs';
+import { loadSheet, keyBlack, frames, loadFolder } from './cut.mjs';
 import { SHEETS, CLIPS } from './clips.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const NATIVE = 0.77;   /* the sheets are drawn about 390 px across for the walk; the atlas keeps her about 300 px across */
@@ -14,6 +14,7 @@ const MAXW = 2048;
 
 const raw = {};
 for (const [name, s] of Object.entries(SHEETS)) {
+    if (s.dir) { raw[name] = await loadFolder(s.dir); if (raw[name].length !== s.count) throw new Error(name + ': found ' + raw[name].length + ' pictures, expected ' + s.count); continue; }
     let sh = await loadSheet(name + '.webp'); if (s.key === 'black') sh = keyBlack(sh);
     raw[name] = frames(sh, { rows: s.rows, R: s.R });
     const want = s.rows.reduce((a, b) => a + b, 0);
@@ -59,8 +60,8 @@ const walk = items.filter(i => i.clip === 'walk');
 function paws(it) { const xs = [], band = 6; for (let xx = 0; xx < it.w; xx++) { let on = false; for (let yy = it.ay - band; yy <= it.ay; yy++) if (yy >= 0 && it.buf[(yy * it.w + xx) * 4 + 3] > 128) { on = true; break; } xs.push(on); }
     const out = []; let s = -1; for (let i = 0; i <= xs.length; i++) { if (i < xs.length && xs[i]) { if (s < 0) s = i; } else if (s >= 0) { if (i - s > 5) out.push((s + i) / 2 - it.ax); s = -1; } } return out; }
 const steps = [];
-for (let i = 0; i < walk.length; i++) { const a = paws(walk[i]), b = paws(walk[(i + 1) % walk.length]); a.forEach(p => { let best = null; b.forEach(q => { const d = q - p; if (d > 3 && d < 70 && (best === null || d < best)) best = d; }); if (best !== null) steps.push(best); }); }
-steps.sort((a, b) => a - b); const walkStep = steps.length ? steps[Math.floor(steps.length / 2)] : 22;
+for (let i = 0; i < walk.length; i++) { const a = paws(walk[i]), b = paws(walk[(i + 1) % walk.length]); a.forEach(p => { let best = null; b.forEach(q => { const d = q - p; if (d > 0.4 && d < 40 && (best === null || d < best)) best = d; }); if (best !== null) steps.push(best); }); }
+steps.sort((a, b) => a - b); const walkStep = steps.length ? steps[Math.floor(steps.length / 2)] : 22; console.log('paw steps (quartiles, 90th)', [.25, .5, .75, .9].map(q => steps[Math.floor(steps.length * q)]).join(' '));
 
 const meta = { img: 'booster.webp', w: AW, h: AH, walkStep: +walkStep.toFixed(1), clips: {} };
 for (const it of items) (meta.clips[it.clip] = meta.clips[it.clip] || []).push([it.x, it.y, it.w, it.h, it.ax, it.ay]);

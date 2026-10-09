@@ -141,7 +141,6 @@ async function generate() {
            the page can grow the live bookcase from exactly where the artwork is */
         rows[i < PER_ROW ? 0 : 1] += '    <button class="lib-shelf" type="button" data-shelf="' + i + '" data-px="' + (padU / imgW).toFixed(5) + '" data-py="' + (padU / imgH).toFixed(5) + '" aria-label="Open ' + b.name + '"' + topAttr + ' style="width:' + pct(imgW / T) + '%;margin-left:' + pct(gap / T) + '%;--rel:' + (imgW / maxW).toFixed(4) + ';--cap:' + (24 / imgW * 100).toFixed(2) + 'cqw">\n'
             + '        ' + img('light') + '\n        ' + img('dark') + '\n'
-            + '        <span class="lib-shelf-cap" style="left:' + pct(capL) + '%;top:' + pct(capT) + '%;width:' + pct(capW) + '%;height:' + pct(capH) + '%" aria-hidden="true">' + b.name + '</span>\n'
             + '    </button>\n';
     });
     const partial = '{{!-- The Library landing: a picture of each bookcase, already in the page, each one button. Made by "npm run shelves"\n'
