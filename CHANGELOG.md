@@ -1,8 +1,12 @@
 # Changelog
 
+## 2.21.21
+
+- **The noindex on /lego/ and /diecast/ now takes effect.** The 2.21.19 and 2.21.20 versions of the rule did not match those listings. It now tests the address: any page that is not a post and whose address starts with /lego/ or /diecast/ (the listings and their later pages) is `noindex,follow`. Set pages, which are posts, and the watchlist pages are untouched.
+
 ## 2.21.20
 
-- **The noindex on /lego/ and /diecast/ now takes effect.** In 2.21.19 the rule tested the wrong thing (Ghost treats those listings as the home page), so the tag was not added. It now tests the address: any listing other than the homepage itself is `noindex,follow`.
+- **First try at the noindex fix (did not take effect).** See 2.21.21.
 
 ## 2.21.19
 
