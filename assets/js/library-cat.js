@@ -63,12 +63,12 @@
       else if (me.loop) { if (me.ti >= me.to + 1) me.ti = me.from + (me.ti - me.to - 1); }
       else if (me.ti >= me.to) { me.ti = me.to; me.playing = false; var r = me.resolve; me.resolve = null; if (r) r(); }
     }
-    if (me.xf) { me.xf.a -= dt / .18; if (me.xf.a <= 0) me.xf = null; }
+    if (me.xf) { me.xf.a -= dt / .45; if (me.xf.a <= 0) me.xf = null; }
     me.draw();
   };
   Cat.prototype.draw = function () {
     var me = this, c = me.ctx, n = me.m.clips[me.clip].length, i0 = clamp(Math.floor(me.ti), 0, n - 1), b = 0, i1 = i0;
-    if (me.playing) { i1 = i0 + 1; if (me.loop && !me.ping) { if (i1 > me.to) i1 = me.from; } else if (i1 > me.to) i1 = i0; b = i1 === i0 ? 0 : smooth((me.ti - Math.floor(me.ti) - .55) / .45); }
+    if (me.playing) { i1 = i0 + 1; if (me.loop && !me.ping) { if (i1 > me.to) i1 = me.from; } else if (i1 > me.to) i1 = i0; b = i1 === i0 ? 0 : smooth((me.ti - Math.floor(me.ti) - .15) / .85); }
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, me.canvas.width, me.canvas.height);
     function put(f, a) { if (a <= .003) return; c.save(); c.globalAlpha = a * me.opacity; c.setTransform(me.res, 0, 0, me.res, 0, 0); c.translate(me.cw / 2, me.ch - 3); if (me.dir > 0) c.scale(-1, 1);
       c.drawImage(me.img, f[0], f[1], f[2], f[3], -f[4] * me.k, -(f[5] + 1) * me.k, f[2] * me.k, f[3] * me.k); c.restore(); }
@@ -116,7 +116,7 @@
       P = []; spot = null; phone = typeof matchMedia === 'function' && matchMedia('(max-width: 899px)').matches;
       shelves.forEach(function (b) {
         var t = JSON.parse(b.dataset.top), r = b.getBoundingClientRect(), iw = +b.dataset.iw; if (!iw || !r.width) return;
-        ppu = r.width / iw; cat.k = ppu * .63; len = 300 * cat.k;
+        ppu = r.width / iw; cat.k = ppu * .85; len = 300 * cat.k;
         var ox = r.left - hr.left, oy = r.top - hr.top, m = .46 * len, x0 = ox + t.x0 * r.width + m, x1 = ox + t.x1 * r.width - m;
         if (x1 < x0) x0 = x1 = (x0 + x1) / 2;
         P.push({ shelf: +b.dataset.shelf, b: b, x0: x0, x1: x1, y: oy + t.y * r.height + 5 * ppu });
@@ -134,27 +134,27 @@
     async function holdBlink(sec, clip, base, blink) { cat.hold(clip, base); var rem = sec; while (rem > 0) { var s = Math.min(rem, rr(1.6, 3.6)); await W(s); rem -= s; if (rem > .3) { cat.hold(clip, blink); await W(.15); cat.hold(clip, base); } } }
     async function sit(s) { cat.hold('sit_side', 0); await holdBlink(s, 'sit_side', 0, 1); }
     async function look(s) { cat.hold('sit_front', 0); await holdBlink(s, 'sit_front', 0, 1); }
-    async function lookUp(s) { cat.hold('sit_side', 0); await W(.2); await P_(cat.play('look_up', { fps: 5 })); await W(s); await P_(cat.play('look_up', { fps: 5, from: 0, to: 2, at: 2 })); cat.hold('sit_side', 0); }
-    async function groom(times) { cat.hold('groom', 0); await W(.5); for (var i = 0; i < times; i++) await P_(cat.play('groom', { fps: 3.2, from: 0, to: 5 })); }
+    async function lookUp(s) { cat.hold('sit_side', 0); await W(.2); await P_(cat.play('look_up', { fps: 3.5 })); await W(s); await P_(cat.play('look_up', { fps: 3.5, from: 0, to: 2, at: 2 })); cat.hold('sit_side', 0); }
+    async function groom(times) { cat.hold('groom', 0); await W(.5); for (var i = 0; i < times; i++) await P_(cat.play('groom', { fps: 2.4, from: 0, to: 5 })); }
     async function stretch() { lock++; try { await stretch_(); } finally { lock--; } }
-    async function stretch_() { cat.hold('stretch', 0); await W(.35); await P_(cat.play('stretch', { fps: 4, from: 0, to: 2 })); await W(rr(.9, 1.5)); await P_(cat.play('stretch', { fps: 4, from: 2, to: 4 })); cat.hold('sit_side', 0); }
-    function idle() { cat.play('idle', { fps: 2.6, loop: true }); }
-    async function wake() { await P_(cat.play('wake', { fps: 2.6 })); cat.hold('sit_side', 0); await W(.6); await stretch(); }
-    async function sleepFor(s) { await P_(cat.play('lie', { fps: 2.8 })); cat.play('sleep', { fps: 1.5, ping: true }); await W(s); }
+    async function stretch_() { cat.hold('stretch', 0); await W(.35); await P_(cat.play('stretch', { fps: 3, from: 0, to: 2 })); await W(rr(.9, 1.5)); await P_(cat.play('stretch', { fps: 3, from: 2, to: 4 })); cat.hold('sit_side', 0); }
+    function idle() { cat.play('idle', { fps: 1.8, loop: true }); }
+    async function wake() { await P_(cat.play('wake', { fps: 2 })); cat.hold('sit_side', 0); await W(.6); await stretch(); }
+    async function sleepFor(s) { await P_(cat.play('lie', { fps: 2 })); cat.play('sleep', { fps: 1.5, ping: true }); await W(s); }
 
     /* walking: her speed comes from the frames, so her paws stay on the board */
-    function walkSpeed() { return walkStep * (cat.walkFps || 9) * cat.k; }
-    function A_walk(x) { return new Promise(function (res, rej) { pend.push(rej); cat.tx = x; cat.walkFps = 9; cat.play('walk', { fps: cat.walkFps, loop: true }); cat.arrive = function () { cat.hold('idle', 0); res(); }; }); }
+    function walkSpeed() { return walkStep * (cat.walkFps || 5.5) * cat.k; }
+    function A_walk(x) { return new Promise(function (res, rej) { pend.push(rej); cat.tx = x; cat.walkFps = 5.5; cat.play('walk', { fps: cat.walkFps, loop: true }); cat.arrive = function () { cat.hold('idle', 0); res(); }; }); }
     async function wander() { var p = P[cp]; await A_walk(rr(p.x0, p.x1)); fxNow(); }
     /* to the next bookcase along: walk to the edge, jump to the near end of the next top */
     async function hop(d) { lock++; try { await hop_(d); } finally { lock--; } }
     async function hop_(d) {
       var p = P[cp], q = P[cp + d]; if (!q) return;
       await A_walk(d > 0 ? p.x1 : p.x0); cat.dir = d; cat.hold('idle', 0); await W(.4);
-      await P_(cat.play('crouch', { fps: 7, to: 2 })); await W(.2); await P_(cat.play('ready', { fps: 4 })); await W(.25);
+      await P_(cat.play('crouch', { fps: 4.5, to: 2 })); await W(.2); await P_(cat.play('ready', { fps: 3 })); await W(.25);
       var x1 = d > 0 ? q.x0 : q.x1, y1 = q.y;
-      await new Promise(function (res, rej) { pend.push(rej); cat.air = { t: 0, T: 1.18, x0: cat.x, y0: cat.y, x1: x1, y1: y1, h: .75 * len + Math.abs(cat.y - y1) * .4, done: res }; });
-      cp += d; fx = d > 0 ? 0 : 1; place(); await P_(cat.play('land', { fps: 8 })); cat.hold('idle', 0); await W(.35);
+      await new Promise(function (res, rej) { pend.push(rej); cat.air = { t: 0, T: 1.6, x0: cat.x, y0: cat.y, x1: x1, y1: y1, h: .75 * len + Math.abs(cat.y - y1) * .4, done: res }; });
+      cp += d; fx = d > 0 ? 0 : 1; place(); await P_(cat.play('land', { fps: 5 })); cat.hold('idle', 0); await W(.35);
     }
     async function nap() { lock++; try { await nap_(); } finally { lock--; } }
     async function nap_() {
@@ -174,16 +174,16 @@
        var p = P[cp], dx = q.x - cat.x, dy = q.y - cat.y, dead = .7 * len;
       if (dy > 18 && Math.abs(dx) < 1.1 * len) { /* below her: to the edge, then look down */
         if (Math.abs(dx) > 8) { cat.dir = dx < 0 ? -1 : 1; await followWalk(); }
-        cat.dir = dx < 0 ? -1 : (dx > 0 ? 1 : cat.dir); cat.hold('sit_side', 0); await W(.3); await P_(cat.play('look_down', { fps: 5 }));
+        cat.dir = dx < 0 ? -1 : (dx > 0 ? 1 : cat.dir); cat.hold('sit_side', 0); await W(.3); await P_(cat.play('look_down', { fps: 3.5 }));
         while (following() && ptLocal().y > cat.y + 18 && Math.abs(ptLocal().x - cat.x) < 1.2 * len) await W(.25);
-        await P_(cat.play('look_down', { fps: 5, from: 0, to: 2, at: 2 })); cat.hold('sit_side', 0); await W(.2); return true; }
+        await P_(cat.play('look_down', { fps: 3.5, from: 0, to: 2, at: 2 })); cat.hold('sit_side', 0); await W(.2); return true; }
       if (dx > dead || dx < -dead) {
         var d = dx > 0 ? 1 : -1, beyond = d > 0 ? q.x > p.x1 + .4 * len : q.x < p.x0 - .4 * len;
         if (beyond && P[cp + d]) { await hop(d); return true; }
         cat.dir = d; await followWalk(); return true; }
       cat.dir = dx < 0 ? -1 : 1; if (dy < -1.1 * len) await lookUp(1.2); else await look(1.4); return true;
     }
-    function followWalk() { return new Promise(function (res, rej) { pend.push(rej); follow = true; var q = ptLocal(), p = P[cp]; cat.tx = clamp(q.x, p.x0, p.x1); cat.walkFps = 9; cat.play('walk', { fps: 9, loop: true }); cat.arrive = function () { follow = false; cat.hold('idle', 0); fxNow(); res(); }; }); }
+    function followWalk() { return new Promise(function (res, rej) { pend.push(rej); follow = true; var q = ptLocal(), p = P[cp]; cat.tx = clamp(q.x, p.x0, p.x1); cat.walkFps = 5.5; cat.play('walk', { fps: 5.5, loop: true }); cat.arrive = function () { follow = false; cat.hold('idle', 0); fxNow(); res(); }; }); }
 
     async function pick() {
       var r = Math.random();
@@ -258,13 +258,13 @@
     atlas().then(function (A) {
       if (signal && signal.aborted) return;
       var wrap = document.createElement('div'); wrap.className = 'lb-cat'; wrap.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;overflow:visible;pointer-events:none;z-index:520'; plane.appendChild(wrap);
-      var cat = new Cat(wrap, A, { k: .62, res: 2.2 }), bub = Bubble(wrap, 26); out.cat = cat;
+      var cat = new Cat(wrap, A, { k: .84, res: 2.2 }), bub = Bubble(wrap, 26); out.cat = cat;
       cat.dir = -1; cat.hold('sit_front', 0); cat.draw();
       out.go = function () { var q = out.pending; if (!q) return; cat.x = q[0]; cat.y = q[1]; cat.at(); cat.draw(); };
       var busy = false, auto = true, waits = [];
       function W(s) { return new Promise(function (res) { waits.push({ u: cat.t + s, res: res }); }); }
       async function life() { for (;;) { await W(rr(1.6, 3.6)); if (!auto || busy) continue; cat.hold('sit_front', 1); await W(.15); if (!busy) cat.hold('sit_front', 0); if (Math.random() < .25 && !busy) { await W(.5); cat.hold('sit_front', 2); await W(rr(.8, 1.4)); if (!busy) cat.hold('sit_front', 0); } } }
-      function poke() { bub.say('Hi! I am Booster', cat.x, cat.y - cat.box().h - 6); if (REDUCE || busy) return; busy = true; (async function () { cat.hold('stretch', 0); await W(.3); await cat.play('stretch', { fps: 4, from: 0, to: 2 }); await W(1.1); await cat.play('stretch', { fps: 4, from: 2, to: 4 }); cat.hold('sit_front', 0); busy = false; })(); }
+      function poke() { bub.say('Hi! I am Booster', cat.x, cat.y - cat.box().h - 6); if (REDUCE || busy) return; busy = true; (async function () { cat.hold('stretch', 0); await W(.3); await cat.play('stretch', { fps: 3, from: 0, to: 2 }); await W(1.1); await cat.play('stretch', { fps: 3, from: 2, to: 4 }); cat.hold('sit_front', 0); busy = false; })(); }
       hookClick(plane, cat, poke);
       out.go();
       if (REDUCE) return;

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.22.0
+
+- **Plot colours work for any colour.** A plot whose Ghost tag colour is dark now gets white writing automatically (it picks white or dark ink, whichever reads better), so a cobalt plot is no longer dark text on blue. Set the tag colours in Ghost to use it.
+- **The map at the end of a post:** the post's own picture is in the middle, a little bigger than the others. Each link gets a short solid green vine growing out of the middle along its dotted line. The flowers that bloomed over a node, the "This post" tooltip and the key under the map are gone. The hover card now opens beside its node, never over the middle picture.
+- **Boxes inside a plot** (Diecast, Lego, Library) each lean their own way, a little less than the cards, following the tilt setting, and wiggle when the mouse is over them.
+- **"Recently planted" fills the gap** under the shorter plot on wide screens; on narrow screens it stays below the plots.
+- **Smaller downloads:** the release now minifies the big script and the stylesheet (about 50 KB less on a first visit). The files in the repository stay readable.
+- **The Library's teddy is redrawn** from the real one: shaggy orange fur, tan muzzle and big nose, striped scarf, big foot pads with toe pads, and taller. The Shelf 1 picture is made again.
+- **Booster is bigger, calmer and one colour.** About 35% bigger. Every pose is pulled to the same brown and every frame to the same size (the sleeping cat was too small). She moves about 40% slower with longer fades between poses. The walk itself still has the old frames: its back legs do not step with the front ones, which needs a new painted sheet.
+
 ## 2.21.22
 
 - **Booster is painted now.** The drawn cat is replaced by the painted one: 65 frames of her (walking, standing, sitting from the front and the side, looking up and down, grooming, lying down, sleeping, waking, stretching, crouching, jumping, landing), played one after another with short fades between poses. Her paws now stay on the board as she walks, and she jumps from one bookcase to the next with her legs straight in the air.

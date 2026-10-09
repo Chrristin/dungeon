@@ -169,15 +169,15 @@ main { min-height: 100vh; min-height: 100svh; }
 .card[data-hue="cobalt"], .post-panel[data-hue="cobalt"] { --card: #2349c9; --card-hi: #2b52d8; }
 .card[data-hue="emerald"], .post-panel[data-hue="emerald"] { --card: #0b7d52; --card-hi: #0b8455; }
 .card[data-hue="ink"], .post-panel[data-hue="ink"] { --card: #2a2e37; --card-hi: #353a45; }
-:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) {
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"], [data-on="dark"]) {
     --on-card: #ffffff;
     --on-card-soft: rgba(255, 255, 255, 0.9);
     --on-card-meta: rgba(255, 255, 255, 0.82);
     --on-card-rule: rgba(255, 255, 255, 0.3);
 }
-:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) .card-line { background: rgba(255, 255, 255, 0.35); }
-:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) :is(code, pre) { background: rgba(255, 255, 255, 0.14); color: #fff; }
-:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) a { text-decoration-color: rgba(255, 255, 255, 0.7); }
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"], [data-on="dark"]) .card-line { background: rgba(255, 255, 255, 0.35); }
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"], [data-on="dark"]) :is(code, pre) { background: rgba(255, 255, 255, 0.14); color: #fff; }
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"], [data-on="dark"]) a { text-decoration-color: rgba(255, 255, 255, 0.7); }
 /* An ink card would disappear on the dark page: give it a faint outline there */
 html[data-scheme="dark"] .card[data-hue="ink"] { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 12px 26px -20px rgba(0, 0, 0, 0.8); }
 @media (prefers-color-scheme: dark) {
@@ -1098,7 +1098,7 @@ body.has-everything .colophon-secondary { display: none; }
    seconds. Tapping the button again lists the latest names. Ink is red, or white on bold cards. */
 .stamp { --ink: #c42b3c; position: relative; display: inline-flex; }
 .card[data-hue="red"] .stamp, .card[data-hue="tangerine"] .stamp, .card[data-hue="sunflower"] .stamp,
-.card[data-hue="cobalt"] .stamp, .card[data-hue="emerald"] .stamp, .card[data-hue="ink"] .stamp { --ink: rgba(255, 255, 255, 0.92); }
+.card[data-hue="cobalt"] .stamp, .card[data-hue="emerald"] .stamp, .card[data-hue="ink"] .stamp, .card[data-on="dark"] .stamp { --ink: rgba(255, 255, 255, 0.92); }
 .stamp[hidden] { display: none; }
 .stamp-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; height: 2.4rem; min-width: 2.4rem; padding: 0 0.8rem;
@@ -1950,35 +1950,28 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
 .pm-dot { cursor: pointer; outline: none; }
 .pm-hit { fill: transparent; }
 .pm-v { stroke: var(--ink); stroke-opacity: 0.6; stroke-width: 1.4; fill: #cfe86a; }
-.pm-v[data-g="growing"], .pm-key-dot[data-g="growing"] { fill: #4fc08a; background: #4fc08a; }
-.pm-v[data-g="evergreen"], .pm-key-dot[data-g="evergreen"] { fill: #1f6b4f; background: #1f6b4f; }
-.pm-v[data-g="post"], .pm-key-dot[data-g="post"] { fill: #fffdf7; background: #fffdf7; }
-.pm-key-dot[data-g="seedling"] { background: #cfe86a; }
+.pm-v[data-g="growing"] { fill: #4fc08a; }
+.pm-v[data-g="evergreen"] { fill: #1f6b4f; }
+.pm-v[data-g="post"] { fill: #fffdf7; }
 .pm-dot:hover .pm-v, .pm-dot.is-on .pm-v, .pm-dot:focus-visible .pm-v { stroke: #c42b3c; stroke-opacity: 1; stroke-width: 2.4; }
 .pm-self { stroke-opacity: 0.85; stroke-width: 2; }
 .pm-ring { fill: none; stroke: var(--ink); stroke-opacity: 0.35; stroke-width: 1.2; stroke-dasharray: 2 3; }
 .pm-edge { fill: none; stroke: rgba(23, 25, 30, 0.55); stroke-width: 2; }
 .pm-edge[data-g="seedling"] { stroke: #cfe86a; stroke-width: 3; } .pm-edge[data-g="growing"] { stroke: #4fc08a; stroke-width: 3; } .pm-edge[data-g="evergreen"] { stroke: #1f6b4f; stroke-width: 3; }
 .pm-dot:hover .pm-edge, .pm-dot.is-on .pm-edge, .pm-dot:focus-visible .pm-edge { stroke: #c42b3c; }
-.pm-bloom { display: none; pointer-events: none; }
-.pm-dot.is-on .pm-bloom { display: inline; }
+.pm-sv { fill: none; stroke: #3f8a3a; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 0 var(--f0) var(--l) 2; animation: pm-sv 0.8s ease-out backwards; pointer-events: none; }
+@keyframes pm-sv { from { stroke-dasharray: 0 var(--f0) 0 2; } }
 .pm-vn { fill: none; stroke: #3f8a3a; stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: pm-grow 0.7s ease-out forwards; }
 .pm-lv, .pm-fl { transform-box: fill-box; transform-origin: center; animation: pm-pop 0.45s cubic-bezier(.3, 1.5, .5, 1) backwards; }
 @keyframes pm-grow { to { stroke-dashoffset: 0; } }
 @keyframes pm-pop { from { transform: scale(0); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .pm-vn, .pm-lv, .pm-fl { animation: none; } .pm-vn { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .pm-vn, .pm-lv, .pm-fl, .pm-sv { animation: none; } .pm-vn { stroke-dashoffset: 0; } }
 /* The card is fixed paper and ink, so it reads the same on any panel in light or dark; it is only a label, so it takes no pointer */
-.pm-card { position: absolute; z-index: 5; bottom: 0.4rem; right: 0.4rem; display: flex; flex-direction: column; gap: 0.25rem; box-sizing: border-box; width: min(19rem, calc(100% - 0.8rem)); padding: 0.7rem 0.85rem; border-radius: 10px; background: #fffdf7; color: #17191e; box-shadow: 0 10px 24px -10px rgba(12, 13, 16, 0.55), inset 0 0 0 1px rgba(23, 25, 30, 0.14); pointer-events: none; }
-.pm-card.is-top { bottom: auto; top: 0.4rem; }
-.pm-card.is-left { right: auto; left: 0.4rem; }
+.pm-card { position: absolute; z-index: 5; top: 0; left: 0; display: flex; flex-direction: column; gap: 0.25rem; box-sizing: border-box; width: min(17rem, calc(100% - 0.8rem)); padding: 0.7rem 0.85rem; border-radius: 10px; background: #fffdf7; color: #17191e; box-shadow: 0 10px 24px -10px rgba(12, 13, 16, 0.55), inset 0 0 0 1px rgba(23, 25, 30, 0.14); pointer-events: none; }
 .pm-card[hidden] { display: none; }
 .pm-card-k { font: 0.66rem/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: #5e636c; }
 .pm-card-t { font-weight: 600; line-height: 1.25; }
 .pm-card-x { font-size: 0.8rem; line-height: 1.35; color: #4a4e55; }
-.pm-key { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1rem; margin: 0.5rem 0 0.9rem; font: 0.72rem/1.3 var(--mono); color: var(--graphite); }
-.pm-key-i { display: inline-flex; align-items: center; gap: 0.4rem; }
-.pm-key-dot { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; box-shadow: inset 0 0 0 1.3px color-mix(in srgb, var(--ink) 60%, transparent); }
-.pm-key-dot[data-g="post"] { border-radius: 2px; }
 .pm-list > summary { cursor: pointer; font: 0.75rem/1.2 var(--mono); color: var(--graphite); padding: 0.4rem 0; }
 .pm-list[open] > summary { margin-bottom: 0.7rem; }
 
@@ -2005,7 +1998,7 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
 .rated--small .rated-stars { font-size: 0.8rem; }
 .rated--small .rated-num { font-size: 0.6rem; }
 /* pastel cards and panels carry dark ink in light and dark mode alike; on the dark and red ones the stamp turns white */
-:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) .rated { --stamp: rgba(255, 255, 255, 0.92); }
+:is(.card, .post-panel):is([data-hue="red"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"], [data-on="dark"]) .rated { --stamp: rgba(255, 255, 255, 0.92); }
 @media (max-width: 560px) { .panel-head > .rated { float: none; margin: 0 0 0.9rem; } }
 
 .rate { margin-top: 1.6rem; padding: 1.1rem 1.2rem 1rem; border-radius: 12px; color: var(--on-card, var(--ink)); background: color-mix(in srgb, var(--on-card, var(--ink)) 7%, transparent); }
@@ -2020,7 +2013,7 @@ html[data-scheme="dark"] .post-panel.is-garden { background-image: linear-gradie
 .rate-fill { position: absolute; left: 0; top: 0.2rem; width: calc(var(--v) * 20%); overflow: hidden; white-space: nowrap; color: #e8a33a; pointer-events: none; }
 .rate-fill::before { content: "\2605\2605\2605\2605\2605"; }
 .rate-stars:focus-visible { outline: 2px solid var(--on-card, var(--ink)); outline-offset: 4px; }
-.post-panel:is([data-hue="red"], [data-hue="tangerine"], [data-hue="sunflower"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"]) .rate-fill { color: var(--on-card); } /* amber would vanish on the bold colours */
+.post-panel:is([data-hue="red"], [data-hue="tangerine"], [data-hue="sunflower"], [data-hue="cobalt"], [data-hue="emerald"], [data-hue="ink"], [data-on="dark"]) .rate-fill { color: var(--on-card); } /* amber would vanish on the bold colours */
 .rate.is-busy .rate-stars { opacity: 0.45; cursor: progress; }
 .rate-msg { margin: 0; font: 0.8rem/1.4 var(--mono); color: inherit; }
 .rate-msg.is-error { font-weight: 600; }
@@ -2143,6 +2136,7 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
 }
 /* Stacked by empty space (set by the script on wide screens): two columns, each plot placed under the shorter one */
 .plots-grid.is-packed { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); grid-auto-rows: 8px; row-gap: 0; }
+.plots-grid.is-packed > .plots-tended { padding: 0 0.5rem; }
 .plot { grid-column: span 6; padding: 1.2rem 1.3rem 1.1rem; gap: 0.7rem; transform: rotate(calc(var(--tilt) * 0.35)); }
 /* Hover: the plot straightens and lifts like every other card; its etching darkens and drifts closer */
 .plot { overflow: hidden; }
@@ -2257,6 +2251,15 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
 .plot-page.is-watchlist .plot-page-line:empty { display: none; }
 .plot-page.is-watchlist { flex-wrap: nowrap; align-items: center; }
 .plot-page.is-watchlist .plot-page-text { flex: 1 1 auto; }
+.plot-page.is-watchlist { transform: rotate(var(--pt, 0deg)); }
+@keyframes plot-box-wiggle {
+    0% { transform: rotate(var(--pt, 0deg)); } 28% { transform: rotate(calc(var(--pt, 0deg) + 1.6deg)); }
+    52% { transform: rotate(calc(var(--pt, 0deg) - 1deg)); } 76% { transform: rotate(calc(var(--pt, 0deg) + 0.5deg)); }
+    100% { transform: rotate(var(--pt, 0deg)); } }
+/* Mouse only, and not while the picture inside is doing its own wiggle */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .plot-page.is-watchlist:hover:not(:has(.plot-page-shot:hover)) { animation: plot-box-wiggle 460ms ease-out; }
+}
 /* The featured item: its picture leans, overlaps the box's top edge, and has its own slight zoom and wiggle when pointed at */
 .plot-pages:has(.plot-page-shot) { margin-top: 1.6rem; }
 .plot-page-feature { flex: none; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }

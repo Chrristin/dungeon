@@ -74,6 +74,18 @@
         </article>
     {{/foreach}}
     </div>
+    <script>
+    /* A plot whose colour is dark gets white writing: whichever of white and dark ink reads better on it */
+    (function () {
+        var lin = function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+        document.querySelectorAll('.plots-grid .plot[style*="--card"]').forEach(function (p) {
+            var m = /--card: ?#([0-9a-f]{6}|[0-9a-f]{3})(?![0-9a-f])/i.exec(p.getAttribute('style') || ''); if (!m) return;
+            var h = m[1].length === 3 ? m[1].replace(/./g, '$&$&') : m[1], c = [0, 2, 4].map(function (i) { return lin(parseInt(h.substr(i, 2), 16)); });
+            var L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+            if (1.05 / (L + 0.05) > (L + 0.05) / 0.0597) p.setAttribute('data-on', 'dark');
+        });
+    })();
+    </script>
 
     <div class="plots-after">
         {{#get "posts" limit="5" order="published_at desc" filter="tag:-[hash-now,hash-thing,hash-watch-item]" include="tags"}}
@@ -103,4 +115,4 @@
         {{/get}}
     </div>
 </section>
-<script src="{{asset "js/store.js"}}&r=2.21.22" defer></script>
+<script src="{{asset "js/store.js"}}&r=2.22.0" defer></script>

@@ -38,6 +38,11 @@
         fig.style.setProperty('--tilt', (t * imgMax).toFixed(2) + 'deg');
       });
     });
+    // The boxes inside a plot (the lists, the Library): each leans its own fixed way, a little less than a card
+    root.querySelectorAll('.plot-page').forEach(function (el) {
+      var t = (hash('box:' + (el.getAttribute('data-slug') || '') + (el.querySelector('.plot-page-title') || el).textContent.trim()) % 2001) / 1000 - 1;
+      el.style.setProperty('--pt', (maxTilt > 0 ? t * Math.min(maxTilt, 5) * 0.6 : 0).toFixed(2) + 'deg');
+    });
     root.querySelectorAll('.card[data-key], .post-panel[data-key]').forEach(function (el) {
       var h = hash(el.getAttribute('data-key') || '');
       // A colour tag on the post (e.g. #mint) fixes the colour; otherwise it comes from the slug.
@@ -3038,37 +3043,27 @@
   // and opens a small card with its title and a line of it. The card goes when you move off the node; the node opens it.
   // (On a phone: the first tap shows the card, the next tap opens the link.) No instructions: it is a map.
   function smallImg(u) { return u && /\/content\/images\//.test(u) && !/\/size\//.test(u) ? u.replace('/content/images/', '/content/images/size/w200/') : (u || ''); }
-  // short vines, leaves and flowers round a node of radius r at (x, y)
-  function bloomAround(x, y, r, seedKey) {
-    var out = '', k = hashOf(seedKey);
-    for (var i = 0; i < 3; i++) {
-      var a0 = (k % 628) / 100 + i * 2.09, a1 = a0 + 1.5, p0 = [x + Math.cos(a0) * (r + 1), y + Math.sin(a0) * (r + 1)], p1 = [x + Math.cos(a1) * (r + 9), y + Math.sin(a1) * (r + 9)];
-      var w = wildVine(p0[0], p0[1], p1[0], p1[1], seedKey + i, 0.9, 2), d = (i * 0.1).toFixed(2) + 's';
-      out += '<path class="pm-vn" pathLength="1" style="animation-delay:' + d + '" d="' + w.d + '"/><g class="pm-lv" style="animation-delay:' + (0.3 + i * 0.1).toFixed(2) + 's">' + w.leaves + w.curl + '</g>' +
-        '<g class="pm-fl" style="animation-delay:' + (0.5 + i * 0.1).toFixed(2) + 's">' + gflower(p1[0], p1[1], 4.6 + (k >> i & 1), FLOWERS[(k + i * 2) % FLOWERS.length]) + '</g>';
-    }
-    return '<g class="pm-bloom">' + out + '</g>';
-  }
   function postMap(slot, self, groups, L) {
     var nb = [], seen = {};
     groups.forEach(function (g) { g.items.forEach(function (x) { if (x.u && !seen[x.u] && nb.length < 12) { seen[x.u] = 1; nb.push({ t: x.t, u: x.u, g: x.g || 'seedling', i: x.i, x: x.x, kind: g.kind, label: g.label }); } }); });
     if (!nb.length) return;
     var stageOf = function (g) { return (L.stages && L.stages[g]) || g; };
-    var W = Math.max(300, Math.min(640, slot.clientWidth || 560)), H = nb.length <= 2 ? 190 : nb.length <= 5 ? 220 : 270, cx = W / 2, cy = H / 2, rx = W / 2 - 40, ry = H / 2 - 34, s = '', dots = '', defs = '';
+    var pic0 = !!self.im, CR = pic0 ? 19 : 14, W = Math.max(300, Math.min(640, slot.clientWidth || 560)), H = nb.length <= 2 ? 190 : nb.length <= 5 ? 220 : 270, cx = W / 2, cy = H / 2, rx = W / 2 - 40, ry = H / 2 - 34, s = '', dots = '', defs = '';
     nb.forEach(function (n, i) {
       var a = -Math.PI / 2 + i * 2 * Math.PI / nb.length, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry, v = wildVine(cx, cy, x, y, 'pm' + self.s + '>' + n.u, 1, n.kind === 'rel' ? 0 : 2), pic = !!n.i, R = pic ? 17 : (n.g === 'post' ? 8 : 9), sq = n.g === 'post';
-      s += n.kind === 'rel' ? '<path class="lm-rel" d="' + v.d + '"/>' : '<g class="lm-vine"><path d="' + v.d + '"/>' + v.leaves + v.curl + '</g>';
+      var dist = Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy)) || 1;
+      // the whole connection is dotted; a short solid vine grows from just outside the centre along the same curve
+      s += '<path class="lm-rel" d="' + v.d + '"/><path class="pm-sv" pathLength="1" style="--f0:' + ((CR + 3) / dist).toFixed(3) + ';--l:0.2;animation-delay:' + (i * 0.06).toFixed(2) + 's" d="' + v.d + '"/>';
       var shape = function (cls, extra) { return sq ? '<rect class="' + cls + '" ' + extra + ' x="' + (x - R).toFixed(1) + '" y="' + (y - R).toFixed(1) + '" width="' + R * 2 + '" height="' + R * 2 + '" rx="' + (pic ? 7 : 3) + '"/>' : '<circle class="' + cls + '" ' + extra + ' cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + R + '"/>'; };
       if (pic) defs += '<clipPath id="pmc' + i + '">' + (sq ? '<rect x="' + (x - R).toFixed(1) + '" y="' + (y - R).toFixed(1) + '" width="' + R * 2 + '" height="' + R * 2 + '" rx="7"/>' : '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + R + '"/>') + '</clipPath>';
       dots += '<a class="pm-dot" href="' + esc(n.u) + '" data-i="' + i + '" aria-label="' + esc(n.t + ' (' + n.label + ', ' + stageOf(n.g) + ')') + '"><circle class="pm-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (R + 9) + '"/>' +
-        shape('pm-v', 'data-g="' + esc(n.g) + '"') + (pic ? '<image href="' + esc(smallImg(n.i)) + '" x="' + (x - R).toFixed(1) + '" y="' + (y - R).toFixed(1) + '" width="' + R * 2 + '" height="' + R * 2 + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#pmc' + i + ')"/>' + shape('pm-edge', 'data-g="' + esc(n.g) + '"') : '') +
-        bloomAround(x, y, R, n.u) + '</a>';
+        shape('pm-v', 'data-g="' + esc(n.g) + '"') + (pic ? '<image href="' + esc(smallImg(n.i)) + '" x="' + (x - R).toFixed(1) + '" y="' + (y - R).toFixed(1) + '" width="' + R * 2 + '" height="' + R * 2 + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#pmc' + i + ')"/>' + shape('pm-edge', 'data-g="' + esc(n.g) + '"') : '') + '</a>';
     });
-    dots += '<circle class="pm-ring" cx="' + cx + '" cy="' + cy + '" r="20"/><circle class="pm-v pm-self" data-g="' + esc(self.g || 'post') + '" cx="' + cx + '" cy="' + cy + '" r="14"><title>' + esc(L.thisPost || 'This post') + '</title></circle>';
-    var present = {}; nb.forEach(function (n) { present[n.g] = 1; }); present[self.g || 'post'] = 1;
-    var key = ['seedling', 'growing', 'evergreen', 'post'].filter(function (g) { return present[g]; }).map(function (g) { return '<span class="pm-key-i"><i class="pm-key-dot" data-g="' + g + '"></i>' + esc(stageOf(g)) + '</span>'; }).join('');
+    var selfSq = (self.g || 'post') === 'post', selfPath = function (r, extra) { return selfSq ? '<rect ' + extra + ' x="' + (cx - r) + '" y="' + (cy - r) + '" width="' + r * 2 + '" height="' + r * 2 + '" rx="' + (r > 14 ? 7 : 3) + '"/>' : '<circle ' + extra + ' cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>'; };
+    if (pic0) defs += '<clipPath id="pmcs">' + selfPath(CR, '') + '</clipPath>';
+    dots += '<circle class="pm-ring" cx="' + cx + '" cy="' + cy + '" r="' + (CR + 6) + '"/>' + (pic0 ? selfPath(CR, 'class="pm-v pm-self" data-g="' + esc(self.g || 'post') + '"') + '<image href="' + esc(smallImg(self.im)) + '" x="' + (cx - CR) + '" y="' + (cy - CR) + '" width="' + CR * 2 + '" height="' + CR * 2 + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#pmcs)"/>' + selfPath(CR, 'class="pm-edge" data-g="' + esc(self.g || 'post') + '"') : '<circle class="pm-v pm-self" data-g="' + esc(self.g || 'post') + '" cx="' + cx + '" cy="' + cy + '" r="14"/>');
     slot.innerHTML = '<div class="pm"><svg viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="' + esc(L.map || '') + '"><defs>' + defs + '</defs>' + s + dots + '</svg>' +
-      '<div class="pm-card" aria-hidden="true" hidden><span class="pm-card-k"></span><span class="pm-card-t"></span><span class="pm-card-x"></span></div></div><p class="pm-key">' + key + '</p>';
+      '<div class="pm-card" aria-hidden="true" hidden><span class="pm-card-k"></span><span class="pm-card-t"></span><span class="pm-card-x"></span></div></div>';
     var wrap = slot.querySelector('.pm'), svg = wrap.querySelector('svg'), card = wrap.querySelector('.pm-card'), els = [].slice.call(wrap.querySelectorAll('.pm-dot')), cur = -1, touch = false;
     var k = card.querySelector('.pm-card-k'), t = card.querySelector('.pm-card-t'), x = card.querySelector('.pm-card-x');
     var close = function () { cur = -1; card.hidden = true; els.forEach(function (e) { e.classList.remove('is-on'); }); };
@@ -3078,8 +3073,17 @@
       var n = nb[i]; cur = i; k.textContent = n.label + ' · ' + stageOf(n.g); t.textContent = n.t;
       var ex = String(n.x || '').trim(); x.textContent = ex.length > 120 ? ex.slice(0, 119).replace(/\s+\S*$/, '') + '…' : ex;
       card.hidden = false;
-      var B = wrap.getBoundingClientRect(), D = els[i].querySelector('.pm-v').getBoundingClientRect(), up = D.top + D.height / 2 - B.top > B.height / 2, left = D.left + D.width / 2 - B.left > B.width / 2;
-      card.classList.toggle('is-top', up); card.classList.toggle('is-left', left); // the half of the map the node is not in
+      // beside its own node, on the side facing the centre, and kept inside the map
+      var B = wrap.getBoundingClientRect(), D = els[i].querySelector('.pm-v').getBoundingClientRect(), cw = card.offsetWidth, ch = card.offsetHeight, G = 10,
+        mx = D.left + D.width / 2 - B.left, my = D.top + D.height / 2 - B.top, onLeft = mx < B.width / 2, below = my > B.height / 2, px, py;
+      var roomX = onLeft ? B.width - (D.right - B.left) - G : D.left - B.left - G;
+      if (roomX >= cw) { px = onLeft ? D.right - B.left + G : D.left - B.left - G - cw; py = my - ch / 2; }
+      else { px = mx - cw / 2; py = below ? D.top - B.top - G - ch : D.bottom - B.top + G; }
+      px = Math.max(4, Math.min(B.width - cw - 4, px)); py = Math.max(4, Math.min(B.height - ch - 4, py));
+      var sc = B.width / W, hx = cx * sc, hy = cy * sc, hr = (CR + 8) * sc;
+      // never over the centre picture: if it would be, it hangs below its own node instead (it may reach past the map's lower edge)
+      if (px < hx + hr && px + cw > hx - hr && py < hy + hr && py + ch > hy - hr) { py = Math.max(hy + hr + 4, D.bottom - B.top + G); px = Math.max(4, Math.min(B.width - cw - 4, onLeft ? D.left - B.left : D.right - B.left - cw)); }
+      card.style.left = px.toFixed(0) + 'px'; card.style.top = py.toFixed(0) + 'px';
     };
     els.forEach(function (a, i) {
       a.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') open(i); });
@@ -3600,13 +3604,22 @@
     if (!grid || !window.matchMedia || !window.ResizeObserver) return;
     var cards = [].filter.call(grid.children, function (c) { return c.classList && c.classList.contains('plot'); });
     if (cards.length < 3) return;
+    // "Recently planted" counts as one more item on a wide screen, so it fills the gap under the shorter plot. It is moved
+    // into the grid only while the screen is wide; below that it goes back to where the page puts it, before the /garden card.
+    var tended = document.querySelector('.plots-tended'), home = tended && tended.parentNode, homeNext = tended && tended.nextSibling;
     var wide = window.matchMedia('(min-width: 901px)'), UNIT = 8, queued = 0;
     function lay() {
       queued = 0;
-      if (!wide.matches) { grid.classList.remove('is-packed'); cards.forEach(function (c) { c.style.gridColumn = ''; c.style.gridRow = ''; }); return; }
+      var items = cards.slice();
+      if (!wide.matches) {
+        grid.classList.remove('is-packed'); items.concat(tended ? [tended] : []).forEach(function (c) { c.style.gridColumn = ''; c.style.gridRow = ''; });
+        if (tended && tended.parentNode === grid) home.insertBefore(tended, homeNext && homeNext.parentNode === home ? homeNext : null);
+        return;
+      }
+      if (tended) { if (tended.parentNode !== grid) grid.appendChild(tended); items.push(tended); }
       grid.classList.add('is-packed');
       var gap = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) * 2.25, used = [0, 0];
-      cards.forEach(function (c) {
+      items.forEach(function (c) {
         var col = used[0] <= used[1] ? 0 : 1, column = String(col + 1);
         if (c.style.gridColumn !== column) c.style.gridColumn = column;
         var span = Math.max(1, Math.ceil((c.offsetHeight + gap) / UNIT)), row = (used[col] + 1) + ' / span ' + span;
@@ -3615,7 +3628,7 @@
       });
     }
     var ask = function () { if (!queued) queued = window.requestAnimationFrame(lay); };
-    var watcher = new ResizeObserver(ask); cards.forEach(function (c) { watcher.observe(c); });
+    var watcher = new ResizeObserver(ask); cards.concat(tended ? [tended] : []).forEach(function (c) { watcher.observe(c); });
     if (wide.addEventListener) wide.addEventListener('change', ask);
     lay();
   }

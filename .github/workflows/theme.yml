@@ -50,6 +50,19 @@ jobs:
           else
             echo "released=false" >> "$GITHUB_OUTPUT"
           fi
+      - uses: actions/setup-node@v4
+        if: steps.exists.outputs.released == 'false'
+        with:
+          node-version: 22
+      - name: Minify the big scripts and the stylesheet (the files in the repository stay readable)
+        if: steps.exists.outputs.released == 'false'
+        run: |
+          for f in assets/js/site.js assets/js/store.js; do
+            npx --yes esbuild@0.25.9 "$f" --minify --target=es2018 --legal-comments=none --outfile="$f" --allow-overwrite
+            node --check "$f"
+          done
+          npx --yes esbuild@0.25.9 assets/css/screen.css --minify --legal-comments=none --outfile=assets/css/screen.css --allow-overwrite
+          ls -l assets/js/site.js assets/js/store.js assets/css/screen.css
       - name: Build the zip and release notes
         if: steps.exists.outputs.released == 'false'
         run: |
