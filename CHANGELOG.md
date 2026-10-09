@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.21.20
+
+- **The noindex on /lego/ and /diecast/ now takes effect.** In 2.21.19 the rule tested the wrong thing (Ghost treats those listings as the home page), so the tag was not added. It now tests the address: any listing other than the homepage itself is `noindex,follow`.
+
 ## 2.21.19
 
 - **A lighter first card on phones.** The homepage's newest-post card offered a 1200 px picture to phones, which took one of them 550 KB (the 600 px one is 145 KB). Cards now use the 600 px picture only. The page speed test had this as its biggest image.
