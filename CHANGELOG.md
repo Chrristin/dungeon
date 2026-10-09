@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.25.1
+
+- **Booster moves a little again, in place, and does one thing per visit.** Each time the Library opens she picks one of three and keeps to it, so there is never a change from one pose to another: she sits and looks at you, blinking (now and then twice) and now and then turning her head to the side and back; or she sits side-on and now and then lifts a paw and licks it; or she is asleep and breathing slowly. She is on Shelf 1 or Shelf 2 as before and never walks or jumps. With reduced motion she is a still picture. Frames are cut from one to the next and never blended, so there is no ghosting. The animation stops while the page is hidden or she is scrolled out of sight. The cat picture file is 110 KB.
+
 ## 2.25.0
 
 - **Booster is only on Shelf 1 or Shelf 2** (sitting or asleep, picked by chance each time the Library opens).
