@@ -121,6 +121,7 @@
     }
     if (now) run(); else { requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(run, 0); }); }); setTimeout(run, 150); }
   }
+  if (window.LibCat && landing) LibCat.landing(landing, btns);
   btns.forEach(function (b, i) {
     b.addEventListener('click', function () { go(i); });
     /* The data and the lettering font are fetched as soon as a bookcase is pointed at or touched, so choosing one only waits for the drawing */
@@ -272,7 +273,7 @@
     function draw(ci,sel,opt){const c=cases[ci];
       const bs=books.map((b,gi)=>Object.assign({},b,{_g:gi})).filter(b=>b.s>=CS[ci]&&b.s<CS[ci]+c.n).map(b=>Object.assign(b,{s:b.s-CS[ci]})),
         cu=curios.filter(q=>q.s===-1-ci||(q.s>=CS[ci]&&q.s<CS[ci]+c.n)).map(q=>Object.assign({},q,{s:q.s<0?-1:q.s-CS[ci]}));
-      start(bs,d.covers,cu,[c],{piles,cc:d.cc,ci,stdW:STD,fixW:FIXW0,signal:AC.signal,close:opt&&opt.back||overview,backLabel:opt&&opt.label,sel,list:()=>listFromShelf(ci)})}
+      start(bs,d.covers,cu,[c],{cat:window.LibCat?LibCat.on(ci):null,piles,cc:d.cc,ci,stdW:STD,fixW:FIXW0,signal:AC.signal,close:opt&&opt.back||overview,backLabel:opt&&opt.label,sel,list:()=>listFromShelf(ci)})}
     /* Draw a bookcase out of sight, at the size it will have when shown: the page's column, not in the page's flow */
     function prepare(ci,sel,opt){if(warmed===ci&&sel==null&&!opt)return;if(warmed>=0||AC)clear();
       const p=root.parentNode,cs=getComputedStyle(p),r=p.getBoundingClientRect();
@@ -310,7 +311,7 @@
           msg=document.getElementById('lib-msg'),info=document.getElementById('lib-info');
     const boxes=CASES.map((c,i)=>{const b=document.createElement('div');b.className='lb-box'+(c.wood?' lb-'+c.wood:'')+(c.taper?' lb-ladder':'');
       ['deep','books2','books1','books','cur'].forEach(k=>{const q=document.createElement('div');q.className='lb-plane lb-p-'+k;b.appendChild(q);b['_'+k]=q});caseEl.appendChild(b);return b});
-    let BOX=null,view='ring',focus=0,tucked=CASES.some(c=>c.layers),zs=1;
+    let CAT=null,BOX=null,view='ring',focus=0,tucked=CASES.some(c=>c.layers),zs=1;
     const ALL=DATA;ALL.forEach(b=>{b.a=b.a||'';b.p=b.p||'';b.n=b.n||'';b.an=b.an||'';b.pl=b.pl||'up';b.c2=b.c2||'#F4F2EC';b.cn=b.cn||'unsorted';b.g=b.g||'Unsorted'});
     const books=ALL.filter(b=>!b.pile),PILE={};
     const seenEmb=new Set();
@@ -590,6 +591,11 @@
       TALL=['bottleAmber','bottleBlue','jar','shotGlass','basket','duck'];
     /* Drawings that arrive already lit and shaded by hand (library-art.js, Shelves 4 and 5) are left exactly as drawn */
     Object.assign(CURIO,window.__libArt||{});MAT.x=Object.keys(window.__libArt||{});
+    /* Booster: if she was on this bookcase's top, she sits in the widest free stretch of it, at the front, facing you */
+    function placeCat(){if(!CTX.cat||!window.LibCat)return;const g=G[-1];if(!g)return;if(!CAT)CAT=LibCat.live(boxes[0]._cur,CTX.signal);if(!CAT)return;
+      const lo=g.ox+10,hi=g.ox+g.colW-10,tops=curios.filter(c=>c.s<0&&c.w).map(c=>[c.wx,c.wx+c.w]).sort((a,b)=>a[0]-b[0]);let best=[lo,hi],bw=-1,cur=lo;
+      tops.forEach(o=>{if(o[0]-cur>bw){bw=o[0]-cur;best=[cur,o[0]]}cur=Math.max(cur,o[1])});if(hi-cur>bw)best=[cur,hi];
+      const x=(best[0]+best[1])/2;CAT.place(x,g.by+(x-g.ox)*Math.sin(g.th)+6)}
     /* A pile of comics is drawn as a stack of thin spines with their paper showing: a ragged cream edge, a slice of cover colour, uneven
        stacking. It is one clickable thing; its card lists its comics by title with their covers. The covers are one picture, a sprite
        of COLS x ROWS covers (SPR), taken from the photograph of the piles. */
@@ -781,7 +787,7 @@
       curios.forEach(c=>{c._ax=null});layPiles(L,tk);
       if(m.real&&!tk)CASES.forEach((cs,c)=>{if(!cs.layers)return;for(let rw=0;rw<cs.n;rw++){const si=CS[c]+rw,g=G[si];let gx=L[si].width+6;
         curios.filter(q=>q.s===si&&!cpos[q.id]&&!q.pile).sort((a,b)=>a.x-b.x).forEach(q=>{if(gx+q.w<=g.colW-PAD){q._ax=gx;gx+=q.w+12}})}});
-      curios.forEach(putCurio);
+      curios.forEach(putCurio);placeCat();
       root.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===mode));
       arrange()}
     /* How the bookcases stand. On a wide screen: a ring for choosing (one in front, its neighbours swinging away behind it

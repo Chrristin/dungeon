@@ -95,7 +95,9 @@ async function generate() {
                     std: window.__libStd, fixw: window.__libFixW,
                     boxes: boxes.map(b => {
                         const r = b.getBoundingClientRect(), c = b.querySelector('.lb-cap').getBoundingClientRect();
-                        return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, nat: parseFloat(b.style.width), name: b.querySelector('.lb-cap').textContent, cap: { x: c.left + scrollX, y: c.top + scrollY, w: c.width, h: c.height } };
+                        const tb = b.querySelector('.lb-topb'), tr = tb ? tb.getBoundingClientRect() : null, tY = tr ? tr.top + scrollY : null,
+                            on = [...b.querySelectorAll('.lb-curio')].map(e => { const q = e.getBoundingClientRect(); return { l: q.left + scrollX, r: q.right + scrollX, t: q.top + scrollY, b: q.bottom + scrollY, n: e.getAttribute('aria-label') || '' }; }).filter(q => tY != null && Math.abs(q.b - tY) <= 14);
+                        return { top: tr ? { y: tY, l: tr.left + scrollX, r: tr.right + scrollX, on } : null, x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, nat: parseFloat(b.style.width), name: b.querySelector('.lb-cap').textContent, cap: { x: c.left + scrollX, y: c.top + scrollY, w: c.width, h: c.height } };
                     })
                 };
             });
@@ -127,10 +129,17 @@ async function generate() {
         const gap = i && i !== PER_ROW ? u(b.x - left0) - u(bx[i - 1].x + bx[i - 1].w - left0) - 2 * padU : 0;
         const capL = (b.cap.x - (b.x - PAD)) / s / imgW, capT = (b.cap.y - (b.y - PAD)) / s / imgH, capW = b.cap.w / s / imgW, capH = b.cap.h / s / imgH;
         const dim = sizes['shelf-' + (i + 1) + '-light'];
+        /* where the cat can stand: the top board, the stretches of it with nothing on, and where the teddy sits; all as fractions of the picture */
+        const fx = v => +((v - (b.x - PAD)) / (b.w + 2 * PAD)).toFixed(4), fy = v => +((v - (b.y - PAD)) / (b.h + 2 * PAD)).toFixed(4);
+        let topAttr = '';
+        if (b.top) { const tp = b.top, x0 = fx(tp.l) , x1 = fx(tp.r), obs = tp.on.map(q => [fx(q.l), fx(q.r)]).sort((p, q) => p[0] - q[0]), teddy = tp.on.find(q => /teddy/i.test(q.n));
+            const free = []; let cur = x0 + 0.004; obs.forEach(o => { if (o[0] > cur) free.push([+cur.toFixed(4), +o[0].toFixed(4)]); cur = Math.max(cur, o[1]); }); if (x1 - 0.004 > cur) free.push([+cur.toFixed(4), +(x1 - 0.004).toFixed(4)]);
+            const t = { y: fy(tp.y + 2), x0, x1, free, teddy: teddy ? [fx(teddy.l), fy(teddy.t), fx(teddy.r), fy(teddy.b)] : null };
+            topAttr = " data-iw=\"" + imgW.toFixed(1) + "\" data-top='" + JSON.stringify(t) + "'"; }
         const img = scheme => '<img class="lib-shelf-img lib-shelf-' + scheme + '" src="{{asset "images/shelves/shelf-' + (i + 1) + '-' + scheme + '.webp"}}" width="' + dim.w + '" height="' + dim.h + '" alt="" loading="lazy" decoding="async">';
         /* data-px and data-py: the transparent margin round the artwork, as a fraction of the picture's width and height, so
            the page can grow the live bookcase from exactly where the artwork is */
-        rows[i < PER_ROW ? 0 : 1] += '    <button class="lib-shelf" type="button" data-shelf="' + i + '" data-px="' + (padU / imgW).toFixed(5) + '" data-py="' + (padU / imgH).toFixed(5) + '" aria-label="Open ' + b.name + '" style="width:' + pct(imgW / T) + '%;margin-left:' + pct(gap / T) + '%;--rel:' + (imgW / maxW).toFixed(4) + ';--cap:' + (24 / imgW * 100).toFixed(2) + 'cqw">\n'
+        rows[i < PER_ROW ? 0 : 1] += '    <button class="lib-shelf" type="button" data-shelf="' + i + '" data-px="' + (padU / imgW).toFixed(5) + '" data-py="' + (padU / imgH).toFixed(5) + '" aria-label="Open ' + b.name + '"' + topAttr + ' style="width:' + pct(imgW / T) + '%;margin-left:' + pct(gap / T) + '%;--rel:' + (imgW / maxW).toFixed(4) + ';--cap:' + (24 / imgW * 100).toFixed(2) + 'cqw">\n'
             + '        ' + img('light') + '\n        ' + img('dark') + '\n'
             + '        <span class="lib-shelf-cap" style="left:' + pct(capL) + '%;top:' + pct(capT) + '%;width:' + pct(capW) + '%;height:' + pct(capH) + '%" aria-hidden="true">' + b.name + '</span>\n'
             + '    </button>\n';

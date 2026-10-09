@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.21.18
+
+- **Booster, the library cat.** A small tortoiseshell cat lives on the Library's first view, on top of the bookcases, and she touches nothing. She walks along the front of the tops, jumps to the next bookcase, sits and looks at you, blinks, grooms, stretches, and now and then curls up asleep on the teddy bear. Press her and she stretches (or wakes up and stretches). She is smaller than the teddy.
+- **On an opened bookcase** she was on, she sits at the front of its top, faces you and blinks. If she is on another bookcase, she is not there.
+- **On a phone** she stays on one bookcase at a time: she sits, stands, stretches, grooms and sleeps, and moves to another bookcase now and then. With "reduce motion" on she is asleep on the teddy and does not move. She stops moving when the tab is hidden, the bookcases are off screen or a bookcase is open.
+- **For editing:** her drawing and behaviour are in `assets/js/library-cat.js`; where she can stand (the top of each bookcase, and the teddy) is written into each bookcase's button by `npm run shelves` (`data-top`).
+
 ## 2.21.17
 
 - **All the bookcases stand in one row on the Library's first view, and smaller.** The pictures were drawn so large that the page itself was lost: three bookcases across, two under them. Now every bookcase is in one row (made for up to six), the row is 80% of the window wide, and each bookcase is about two thirds the size it was, so the page shows around them. On a phone they still stand one under another.

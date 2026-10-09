@@ -368,3 +368,9 @@ html.lib-zoomed .lb-glow0, html.lib-zoomed .lb-glow1, html.lib-zoomed .lb-glow2 
 .lb-pn { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.6rem 0 0; }
 .lb-pg { padding: 0.2rem 0.6rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 0.78rem; cursor: pointer; }
 .lb-pg[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+/* Booster, the library cat. On the first view she is over the pictures; only she can be pressed. */
+.lib-landing { position: relative; }
+.lib-cat .booster, .lb-cat .booster { pointer-events: auto; cursor: pointer; }
+.lib-cat .booster:focus-visible, .lb-cat .booster:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.lib-cat .booster:focus:not(:focus-visible), .lb-cat .booster:focus:not(:focus-visible) { outline: none; }
+.lb-plane > svg.lb-cat { pointer-events: none; }

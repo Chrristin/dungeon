@@ -130,3 +130,7 @@ The `cases` list at the top of the data file sets the bookcases, left to right a
 | `taper` | A ladder: each shelf is narrower than the one below it by this fraction of the width, and the rails lean in and rise above the top shelf. Such a case has no back, no fairy lights and no shadow behind the shelves, so the page shows through. A curio on top of a ladder stands on its top shelf. |
 
 Shelves are numbered straight through: with cases of 6, 6 and 5 shelves, the third case's shelves are 12 to 16. A curio on top of a case uses a negative shelf: -1 for the first case, -2 for the second, -3 for the third, -4 for the fourth, -5 for the fifth.
+
+## Booster, the library cat
+
+`assets/js/library-cat.js` draws and moves her (a jointed vector cat; her poses are `BoosterPoses`) and decides where she goes (`LibCat`). She needs no data: `npm run shelves` writes where she can stand into each bookcase's button (`data-top`: the top surface, the free stretches on it and where a curio named "teddy" sits). To move her sleeping place, rename or move that curio. On an opened bookcase she sits in the widest free stretch of its top.
