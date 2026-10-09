@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.26.1
+
+- **The BELIEVE sign is always seen.** In 2.26.0 about half the notes lay over it, so with many stickies on a phone it was mostly covered. Now it is the top layer of the pile (a note lifted to be read still comes above it), the board grows by about the sign's height so there is room for it (an ordinary pile keeps its usual limit), no note is ever placed on its middle, and tapping it lifts it and puts it back where it was instead of sending it under the others. Checked in Chrome with 26 other notes at phone and wide width; the user's own phone screenshot showed the problem.
+
 ## 2.26.0
 
 - **Write BELIEVE as a sticky and it becomes a sign.** A sticky whose whole text is the word (any capitals; spaces or a "!" around it are ignored) is drawn as a taped sheet of paper that looks crumpled and then smoothed out, with blue marker letters, twice the width of an ordinary sticky, and the writer's name and date in pen in the corner. The others are scattered round it, not lined up: most below it and at its sides, at most about one in eight above it, tilted more than usual, some tucked under its edge and some lying over it. Only the oldest BELIEVE on a post becomes the sign. The drawing and the placement are the same code as in the dungeon-reactions stickies. Checked in Chrome on a real post at wide and phone width; not on a real phone, Safari or Firefox.

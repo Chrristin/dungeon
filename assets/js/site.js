@@ -1481,7 +1481,8 @@
     var W = o.W, nw = o.nw, nh = o.nh, count = o.count, keepOut = o.keepOut || [], rand = o.rand, maxH = o.maxH || 496;
     var sw = Math.min(W - 8, nw * 2), sh = sw * 0.535;
     var area = count * nw * nh * 0.5 + sw * sh * 1.2, top = Math.min(nh * 0.28, 48);
-    var H = Math.round(Math.min(maxH, Math.max(top + sh + nh * 1.5, (area / W) * 1.3 + top)));
+    var cap = maxH + sh * 0.9; // the board may grow a little beyond its usual limit, so the sign always has room
+    var H = Math.round(Math.min(cap, Math.max(top + sh + nh * 1.5, (area / W) * 1.3 + top)));
     var sign = { x: (W - sw) / 2 + (rand() - 0.5) * nw * 0.18, y: top, rot: (rand() - 0.5) * 2.6 };
     sign.x = Math.max(0, Math.min(W - sw, sign.x));
     var core = { x1: sign.x + nw * 0.2, y1: sign.y + nh * 0.14, x2: sign.x + sw - nw * 0.2, y2: sign.y + sh - nh * 0.14 };
@@ -1502,12 +1503,15 @@
         var score = (d + 0.15 * nw) * (below ? 1 : over ? 0.12 : 0.85) * near * (0.85 + rand() * 0.3);
         if (score > bestScore) { bestScore = score; best = { x: x, y: y }; }
       }
-      if (!best) best = { x: rand() * Math.max(1, W - nw), y: H - nh - rand() * nh * 0.3 }; // never lose one
+      if (!best) { // never lose one, and never on the sign: the first free spot, from the bottom up
+        for (var fy = H - nh; fy >= 0 && !best; fy -= nh / 3) for (var fx = 0; fx <= W - nw && !best; fx += nw / 3) if (!hits(fx, fy, core) && !clashes(fx, fy)) best = { x: fx, y: fy };
+        if (!best) best = { x: 0, y: Math.max(0, H - nh) };
+      }
       placed.push(best);
       if (isOver(best.x + nw / 2, best.y + nh / 2)) above++;
       out.push({ x: best.x, y: best.y, rot: (rand() - 0.5) * 20 + (best.x + nw / 2 < sign.x + sw / 2 ? -2.5 : 2.5) });
     }
-    sign.z = Math.max(1, Math.floor(count / 2)); // about half the others lie over the sign, half under
+    sign.z = count + 3; // the sign is the top layer of the pile, so it is always seen (a note lifted to be read still comes above it)
     return { H: H, sign: sign, others: out, sw: sw, sh: sh };
   }
   function stickyNode(el, s, waiting, asSign) {
@@ -1694,7 +1698,7 @@
     var probe = stickyNode(el, { id: 0, body: '' }, false); probe.style.visibility = 'hidden'; board.appendChild(probe);
     var nw = probe.offsetWidth, nh = probe.offsetHeight; board.removeChild(probe);
     // The area grows with the pile: as many rows as the stickies need, up to the maximum height.
-    var maxH = parseFloat(getComputedStyle(board).maxHeight) || 496;
+    board.style.maxHeight = ''; var maxH = parseFloat(getComputedStyle(board).maxHeight) || 496;
     // Off-limits: where the writing sticky and the list icon hang over the board (wide screens only)
     var br = board.getBoundingClientRect(), keepOut = [];
     ['.stickies-compose', '.stickies-head'].forEach(function (sel) {
@@ -1741,7 +1745,7 @@
   function layoutBelieve(el, board, all, signItem, W, nw, nh, maxH, keepOut) {
     var others = all.filter(function (it) { return it !== signItem; });
     var L = believeLayout({ W: W, nw: nw, nh: nh, count: others.length, keepOut: keepOut, rand: seeded(7), maxH: maxH });
-    board.style.height = L.H + 'px'; el.classList.toggle('is-crowded', L.H >= maxH);
+    board.style.height = L.H + 'px'; board.style.maxHeight = L.H + 'px'; el.classList.toggle('is-crowded', L.H >= maxH);
     var sn = stickyNode(el, signItem.s, signItem.waiting, true), srot = 'rotate(' + L.sign.rot.toFixed(1) + 'deg)';
     sn.style.width = L.sw + 'px'; sn.style.height = L.sh + 'px'; sn.style.setProperty('--rot', srot); sn.style.transform = srot;
     sn.style.left = L.sign.x + 'px'; sn.style.top = L.sign.y + 'px'; sn.style.zIndex = L.sign.z; sn.style.setProperty('--bw', L.sw + 'px');
@@ -1750,7 +1754,7 @@
     others.forEach(function (item, i) {
       var o = L.others[i], n = stickyNode(el, item.s, item.waiting), rot = 'rotate(' + o.rot.toFixed(1) + 'deg)';
       n.style.setProperty('--rot', rot); n.style.transform = rot; n.style.left = o.x + 'px'; n.style.top = o.y + 'px';
-      n.style.zIndex = i + 1 < L.sign.z ? i + 1 : i + 2;
+      n.style.zIndex = i + 1;
       if (item.s.id === el._landing) n.classList.add('is-landing');
       board.appendChild(n); fitSticky(n); addDoodle(el, n, item.s); addBorder(el, n, item.s);
     });
@@ -1884,6 +1888,11 @@
   }
   function sendStickyBack(el, n, from) {
     if (n.getAttribute('data-moving')) return;
+    if (n.classList.contains('sticky--believe')) { // the sign stays on top of the pile: it just settles back where it was
+      n.style.zIndex = n._z || n.style.zIndex;
+      if (!calmStamps && n.animate && from && from !== 'none') n.animate([{ transform: from }, { transform: n.style.getPropertyValue('--rot') + ' translate(0,0) scale(1)' }], { duration: 320, easing: 'cubic-bezier(.25,.8,.35,1)' });
+      return;
+    }
     var board = el.querySelector('.stickies-board'), notes = [].slice.call(board.children);
     var min = Math.min.apply(null, notes.map(function (x) { return +x.style.zIndex; }));
     var toBack = function () { notes.forEach(function (x) { if (x !== n) x.style.zIndex = +x.style.zIndex + 1; }); n.style.zIndex = min; };
