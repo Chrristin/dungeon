@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.21.19
+
+- **A lighter first card on phones.** The homepage's newest-post card offered a 1200 px picture to phones, which took one of them 550 KB (the 600 px one is 145 KB). Cards now use the 600 px picture only. The page speed test had this as its biggest image.
+- **The fonts are the theme's own.** Fira Mono (regular and bold) and JetBrains Mono bold are now in the theme, so the page no longer waits on fonts.bunny.net. **To get the benefit, clear the font choice in Ghost** (Settings, Design, Customize, Typography: set both to the theme default); until then Ghost keeps adding its own link. The look does not change: the theme falls back to the same two fonts.
+- **Clicks are counted.** Three events go to Google Analytics, when its tag is in Code injection: a click to Amazon (`buy_click`), a click to the Telegram channel (`telegram_click`) and an email sign-up form sent (`sign_up`), each with the page it happened on. Nothing about who clicked. If the tag is not there, nothing happens.
+- **The /lego/ and /diecast/ listings are kept out of search results.** They showed every set post under the same title, "Christin Emmanuel George (Page 1)", with no description, competing with the watchlist pages. They are marked `noindex,follow`: links on them still count, and they stay reachable.
+
 ## 2.21.18
 
 - **Booster, the library cat.** A small tortoiseshell cat lives on the Library's first view, on top of the bookcases, and she touches nothing. She walks along the front of the tops, jumps to the next bookcase, sits and looks at you, blinks, grooms, stretches, and now and then curls up asleep on the teddy bear. Press her and she stretches (or wakes up and stretches). She is smaller than the teddy.
