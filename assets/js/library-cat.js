@@ -1,6 +1,6 @@
 /* Booster, the Library's cat. Two still pictures of her (assets/images/booster, made by "npm run booster" from extras/booster):
    sitting and looking at you, or asleep. Nothing moves.
-   - LibCat.landing: on the first view she is on the top of one bookcase, picked by chance each time the page opens, either sitting or
+   - LibCat.landing: on the first view she is on the top of Shelf 1 or Shelf 2, picked by chance each time the page opens, either sitting or
      asleep. On the bookcase with the teddy bear, asleep means asleep in front of the teddy. Press her and she says hello.
    - LibCat.live: on an opened bookcase she was on, she is at the front of its top, in the same pose.
    Where she can stand comes from data-top on each bookcase's button, which "npm run shelves" writes. */
@@ -96,7 +96,7 @@
     }
     /* pick a bookcase and a spot on it by chance, in one of the roomier stretches of its top so she is not behind a toy */
     function choose() {
-      var i = Math.floor(Math.random() * shelves.length);
+      var i = Math.floor(Math.random() * Math.min(2, shelves.length)); /* Shelf 1 or Shelf 2 only */
       pick = { i: i, s: null, u: rr(.1, .9), pose: Math.random() < .5 ? 'sleep' : 'sit' };
     }
     function poke() { var b = cat.box(); bub.say('Hi! I am Booster', cat.x, cat.y - b.h - 8); }

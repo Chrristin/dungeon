@@ -23,7 +23,11 @@ html[data-scheme="dark"] .lib { --lb-under: 0.62; --lb-ground: 0.5; --lb-wood: #
 .lib-shelves { display: flex; align-items: flex-end; width: min(calc((100vw - 48px) * 0.8), 1900px); margin: 0.5rem 0 4rem calc((100% - min(calc((100vw - 48px) * 0.8), 1900px)) / 2); }
 .lib-landing[hidden], .lib-shelves[hidden] { display: none; }
 .lib-shelf { position: relative; flex: none; display: block; margin: 0; padding: 0; font: inherit; color: inherit; background: none; border: 0; cursor: pointer; container-type: inline-size; transition: translate 0.2s ease; -webkit-tap-highlight-color: transparent; }
-.lib-shelf:hover, .lib-shelf:focus-visible { translate: 0 -14px; }
+/* a bookcase you point at or tab to wobbles a little, about its top board, so Booster up there stays with it (it used to lift, and left her behind) */
+@keyframes lib-wobble { 0%, 100% { rotate: 0deg; } 18% { rotate: -1.1deg; } 42% { rotate: 0.9deg; } 66% { rotate: -0.55deg; } 85% { rotate: 0.25deg; } }
+.lib-shelf { transform-origin: 50% 9%; }
+.lib-shelf:hover, .lib-shelf:focus-visible { animation: lib-wobble 0.75s ease-in-out; }
+.lib-shelf.lib-opening { animation: none; }
 .lib-shelf:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 8px; }
 .lib-shelf-img { display: block; width: 100%; height: auto; pointer-events: none; -webkit-user-select: none; user-select: none; }
 .lib-shelf-dark { display: none; }
@@ -54,6 +58,7 @@ html[data-scheme="dark"] .lib-shelf-dark { display: block; }
 }
 @media (prefers-reduced-motion: reduce) {
     .lib-shelf { transition: none; }
+    .lib-shelf:hover, .lib-shelf:focus-visible { animation: none; }
         .lib.lib-bloom { animation: none; }
 }
 /* Nothing on the shelves can be text-selected, so a long press on a phone picks a thing up instead of opening the copy menu */

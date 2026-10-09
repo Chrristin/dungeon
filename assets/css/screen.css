@@ -968,7 +968,7 @@ body.has-everything .colophon-secondary { display: none; }
     left: -0.35rem;
     font-size: 6.5rem;
     line-height: 1;
-    font-family: var(--gh-font-heading, Georgia, serif);
+    font-family: Georgia, "Times New Roman", serif; /* not the heading font: a quote mark alone must not pull a web font in */
     color: color-mix(in srgb, var(--on-card) 30%, transparent);
     pointer-events: none;
 }
@@ -3044,3 +3044,14 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 @media (min-width: 761px) { .stories:not(.is-ready) { min-height: 20rem; } }
 .stories:not(.is-ready) .stories-list { visibility: hidden; animation: stories-show 0s 3s forwards; }
 @keyframes stories-show { to { visibility: visible; } }
+
+/* The weight tile when today is an all-time low (site.js): a purple glow on the number, a label rising a little, small stars passing it */
+.cg-stat { position: relative; }
+.cg-low-on .cg-stat-num { color: #534AB7; text-shadow: 0 0 10px rgba(83, 74, 183, 0.55), 0 0 22px rgba(83, 74, 183, 0.3); transition: text-shadow 0.3s ease, color 0.3s ease; }
+.cg-low-fx { position: absolute; z-index: 5; pointer-events: none; overflow: visible; }
+.cg-low-label { position: absolute; left: 50%; top: 0; transform: translate(-50%, 0); opacity: 0; white-space: nowrap; font: 600 0.62rem/1 var(--mono, monospace); letter-spacing: 0.06em; text-transform: lowercase; color: #534AB7; animation: cg-low-label 2s ease-out forwards; }
+.cg-low-star { position: absolute; top: 45%; opacity: 0; background: #7B6FE0; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: cg-low-star 1.3s ease-out forwards; }
+.cg-low-star:nth-child(3n) { background: #B8AEF5; } .cg-low-star:nth-child(4n) { background: #fff; filter: drop-shadow(0 0 2px #7B6FE0); }
+@keyframes cg-low-label { 0% { opacity: 0; transform: translate(-50%, 0); } 14% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -12px); } }
+@keyframes cg-low-star { 0% { opacity: 0; transform: translate(0, 0) scale(.4) rotate(0deg); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, -60px)) scale(1) rotate(120deg); } }
+@media (prefers-reduced-motion: reduce) { .cg-low-label { animation: cg-low-label-still 1.4s ease-out forwards; } @keyframes cg-low-label-still { 0%, 100% { opacity: 0; } 15%, 80% { opacity: 1; } } }

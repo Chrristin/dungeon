@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.25.0
+
+- **Booster is only on Shelf 1 or Shelf 2** (sitting or asleep, picked by chance each time the Library opens).
+- **A bookcase wobbles when you point at it** (or tab to it), a little, about its top board, instead of lifting up. The lift left Booster behind in mid-air; now she stays with the bookcase. Not with reduced motion.
+- **All-time-low sparkle on the weight tile.** When today's weight is lower than every earlier one, pointing at the tile (or tapping it on a phone) makes the number glow purple, a small "all time low" rises about 12 px, and 13 small stars start a moment later and rise faster, passing the label and ending above it. About two seconds, and it cannot restart until it is done. With reduced motion, only the label. On other days the tile does what it did. The tile itself still comes from the script in Ghost's code injection; this only adds to it.
+- **Small page-speed items.** The unused connection to Bunny Fonts is gone from the head, and the big quote mark on quote notes uses a plain serif font instead of the heading font, so it no longer makes the browser fetch a web font for one character. Not done from that list: the forced re-layouts in `site.js` (about 60 to 100 ms on desktop), which need measuring first, and the image width and height, since the logo already has them.
+
 ## 2.24.0
 
 - **Booster is two still pictures now.** No walking, jumping, grooming or following. Each time the Library opens she is on the top of a random bookcase, either sitting and looking at you or asleep (asleep in front of the teddy if she is on Shelf 1). Press her and she says "Hi! I am Booster". On an opened bookcase she is in the same pose at the front of its top, and no longer hangs over the edge of the board. The walk, the calmer behaviour and the other poses are kept in `extras/booster/source` for later; the cat picture file is 17 KB instead of 733 KB.

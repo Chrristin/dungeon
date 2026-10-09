@@ -3720,3 +3720,45 @@
     var f = e.target; if (f && f.matches && f.matches('form[data-members-form]')) send('sign_up', { page_path: location.pathname, form_type: f.getAttribute('data-members-form') || 'subscribe' });
   }, true);
 })();
+
+/* An all-time low on the weight tile in the footer (the tile comes from the stats script in Ghost's code injection). When the latest weight is
+   lower than every earlier one, pointing at the tile (or tapping it on a phone) makes the number glow, a small "all time low" rise about 12 px,
+   and 13 small stars start a moment later and rise faster, passing the label and ending above it. It lasts about two seconds and cannot restart
+   until it is done. With reduced motion there are no stars, only the label. On any other day the tile just does what it did. */
+(function () {
+  var URL = 'https://christingeorge-stats.christin-fireblade.workers.dev/stats.json', reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var low = null, busy = false;
+  function isLow(s) {
+    var w = s && s.weight; if (!w || !w.latest || !w.series || w.series.length < 2) return false;
+    var before = w.series.filter(function (p) { return p[0] < w.latest.date; }).map(function (p) { return p[1]; });
+    return before.length > 0 && w.latest.kg < Math.min.apply(null, before);
+  }
+  function play(tile) {
+    if (busy || !low) return; busy = true;
+    var num = tile.querySelector('.cg-stat-num') || tile, fx = document.createElement('span'), t = tile.getBoundingClientRect(), n = num.getBoundingClientRect(), h = '';
+    fx.className = 'cg-low-fx'; fx.setAttribute('aria-hidden', 'true');
+    fx.style.cssText = 'left:' + (n.left - t.left).toFixed(1) + 'px;top:' + (n.top - t.top).toFixed(1) + 'px;width:' + n.width.toFixed(1) + 'px;height:' + n.height.toFixed(1) + 'px';
+    h = '<b class="cg-low-label">all time low</b>';
+    if (!reduce) for (var i = 0; i < 13; i++) {
+      var x = 6 + Math.random() * 88, size = 3 + Math.random() * 2, dx = (Math.random() - .5) * 26, dy = 48 + Math.random() * 30, delay = .15 + Math.random() * .25, dur = 1.15 + Math.random() * .4;
+      h += '<i class="cg-low-star" style="left:' + x.toFixed(1) + '%;width:' + size.toFixed(1) + 'px;height:' + size.toFixed(1) + 'px;--dx:' + dx.toFixed(1) + 'px;--dy:-' + dy.toFixed(1) + 'px;animation-delay:' + delay.toFixed(2) + 's;animation-duration:' + dur.toFixed(2) + 's"></i>';
+    }
+    fx.innerHTML = h; tile.appendChild(fx); tile.classList.add('cg-low-on');
+    setTimeout(function () { tile.classList.remove('cg-low-on'); if (fx.parentNode) fx.parentNode.removeChild(fx); busy = false; }, reduce ? 1400 : 2100);
+  }
+  function hook(tile) {
+    if (tile.getAttribute('data-low')) return; tile.setAttribute('data-low', '1');
+    tile.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') play(tile); });
+    tile.addEventListener('click', function () { play(tile); }); /* a tap on a phone; the popup opens as usual */
+  }
+  function start() {
+    fetch(URL, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+      low = isLow(s); if (!low) return;
+      var find = function () { var tile = document.querySelector('.cg-stat[data-k="weight"]'); if (tile) { hook(tile); return true; } return false; };
+      if (find()) return;
+      var mo = new MutationObserver(function () { if (find()) mo.disconnect(); }); mo.observe(document.body, { childList: true, subtree: true });
+      setTimeout(function () { mo.disconnect(); }, 20000);
+    }).catch(function () {});
+  }
+  if (document.querySelector('.colophon') || document.readyState !== 'loading') start(); else document.addEventListener('DOMContentLoaded', start);
+})();
