@@ -4,6 +4,8 @@
 
 - **Booster moves a little again, in place, and does one thing per visit.** Each time the Library opens she picks one of three and keeps to it, so there is never a change from one pose to another: she sits and looks at you, blinking (now and then twice) and now and then turning her head to the side and back; or she sits side-on and now and then lifts a paw and licks it; or she is asleep and breathing slowly. She is on Shelf 1 or Shelf 2 as before and never walks or jumps. With reduced motion she is a still picture. Frames are cut from one to the next and never blended, so there is no ghosting. The animation stops while the page is hidden or she is scrolled out of sight. The cat picture file is 110 KB.
 
+- **A loader for Ghost's sign-up pop-up and search** (`assets/js/ghost-later.js`). Ghost adds two scripts of about 750 KB to every page (Portal, the sign-up and account pop-up, and its search), and they were the main thing holding back the first paint on a phone. Once Ghost's configuration points `portal__url` and `sodoSearch__url` at this file, they are fetched at the first touch, key press or scroll instead, or at once when the address asks for them (`#/portal/...`, `#/search`, or the link in a sign-in email). Nothing about what they do changes. On a throttled phone it takes about 750 KB off every page and roughly half the long-task time; the Garden's largest paint went from 6.9 s to 2.0 s. **The file does nothing until Ghost's configuration is changed** (two settings in Portainer, then a restart), and removing those two settings undoes it. The theme's own release is safe to install first.
+
 ## 2.25.0
 
 - **Booster is only on Shelf 1 or Shelf 2** (sitting or asleep, picked by chance each time the Library opens).
