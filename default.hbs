@@ -7,7 +7,7 @@
     <title>{{meta_title}}</title>
     <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
     <link rel="preload" href="{{asset "fonts/jetbrains-mono-latin-500-normal.woff2"}}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.23.0">
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.23.1">
     {{#is "post"}}{{#post}}{{#has tag="#thing"}}{{^if html}}<meta name="robots" content="noindex">{{/if}}{{/has}}{{/post}}{{/is}}
     {{!-- The /lego/ and /diecast/ collection pages list every set post under the title "Christin Emmanuel George (Page 1)" with no description. The watchlist pages are what people should find, so these listings are kept out of search results (links on them are still followed). The homepage is not affected. --}}
     {{^is "post"}}{{#match (url) "~^" "/lego/"}}<meta name="robots" content="noindex,follow">{{/match}}{{#match (url) "~^" "/diecast/"}}<meta name="robots" content="noindex,follow">{{/match}}{{/is}}
@@ -134,7 +134,7 @@
 </footer>
 
 
-<script src="{{asset "js/site.js"}}&r=2.23.0" defer></script>
+<script src="{{asset "js/site.js"}}&r=2.23.1" defer></script>
 {{ghost_foot}}
 <div class="gk" hidden data-labels='{"search":"{{t "Search the garden"}}","keys":"{{t "Keyboard shortcuts"}}","close":"{{t "Close"}}","s":"{{t "search the garden"}}","r":"{{t "a random note"}}","g":"{{t "go to the garden"}}","h":"{{t "show these shortcuts"}}","none":"{{t "No notes match."}}"}' data-garden="{{@site.url}}/garden/"></div>
 </body>
