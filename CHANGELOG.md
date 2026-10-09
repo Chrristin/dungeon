@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.25.1
+
+- **A loader for Ghost's sign-up pop-up and search** (`assets/js/ghost-later.js`). Ghost adds two scripts of about 750 KB to every page (Portal, the sign-up and account pop-up, and its search), and they were the main thing holding back the first paint on a phone. Once Ghost's configuration points `portal__url` and `sodoSearch__url` at this file, they are fetched at the first touch, key press or scroll instead, or at once when the address asks for them (`#/portal/...`, `#/search`, or the link in a sign-in email). Nothing about what they do changes. On a throttled phone it takes about 750 KB off every page and roughly half the long-task time; the Garden's largest paint went from 6.9 s to 2.0 s. **The file does nothing until Ghost's configuration is changed** (two settings in Portainer, then a restart), and removing those two settings undoes it. The theme's own release is safe to install first.
+
 ## 2.25.0
 
 - **Booster is only on Shelf 1 or Shelf 2** (sitting or asleep, picked by chance each time the Library opens).
