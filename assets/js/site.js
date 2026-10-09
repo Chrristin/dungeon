@@ -1422,12 +1422,107 @@
     arc(0, R, 100, -R, 90); for (t = 91; t >= 9; t -= 7) pts.push(at(0, nudge(), t, 0));
     return 'polygon(' + pts.join(',') + ')';
   }
-  function stickyNode(el, s, waiting) {
+  // The BELIEVE sign. A sticky whose whole text is the one word (any capitals, spaces or a "!" around it are ignored) is drawn as a
+  // taped, crumpled sheet with blue marker letters, twice the width of a sticky, and the others are scattered round it. Only the
+  // oldest such sticky becomes the sign. The drawing and the placement are the same code as in the dungeon-reactions stickies.
+  var isBelieve = function (body) { return /^believe$/i.test(String(body || '').replace(/[\s!.]+/g, '')); };
+  function believeSvg(seed) { // one SVG: wobbly marker letters, black tape on the corners, paper crumpled then smoothed out; viewBox 400 x 214
+    var rr = seeded(seed * 7 + 3), j = function (k) { return (rr() - 0.5) * 2 * k; }, f1 = function (v) { return v.toFixed(1); };
+    var w = function (v, k) { return f1(v + j(k === undefined ? 1.6 : k)); }, uid = 'b' + seed;
+    var X0 = 10, X1 = 390, Y0 = 14, Y1 = 200, pts = [];
+    var side = function (c, fn) { for (var i = 0; i < c; i++) pts.push(fn(i / c)); };
+    side(11, function (t) { return [X0 + (X1 - X0) * t + j(1.2), Y0 + j(2.2) + Math.sin(t * 9) * 1.2]; });
+    side(6, function (t) { return [X1 + j(2.2) + Math.sin(t * 7) * 1.4, Y0 + (Y1 - Y0) * t + j(1.2)]; });
+    side(11, function (t) { return [X1 - (X1 - X0) * t + j(1.2), Y1 + j(2.2) + Math.sin(t * 8) * 1.2]; });
+    side(6, function (t) { return [X0 + j(2.2) + Math.sin(t * 6) * 1.5, Y1 - (Y1 - Y0) * t + j(1.2)]; });
+    var paper = 'M' + pts.map(function (p) { return f1(p[0]) + ' ' + f1(p[1]); }).join(' L') + ' Z';
+    var cols = 10, rows = 5, grid = [], x, y;
+    for (y = 0; y <= rows; y++) { grid[y] = []; for (x = 0; x <= cols; x++) {
+      var edge = x === 0 || y === 0 || x === cols || y === rows;
+      grid[y][x] = [X0 - 4 + (X1 - X0 + 8) * (x / cols) + (edge ? 0 : j(15)), Y0 - 4 + (Y1 - Y0 + 8) * (y / rows) + (edge ? 0 : j(13))];
+    } }
+    var P = function (p) { return f1(p[0]) + ',' + f1(p[1]); }, facets = '', folds = '';
+    for (y = 0; y < rows; y++) for (x = 0; x < cols; x++) {
+      var a = grid[y][x], b = grid[y][x + 1], c = grid[y + 1][x + 1], d = grid[y + 1][x];
+      var tris = (x + y) % 2 ? [[a, b, d], [b, c, d]] : [[a, b, c], [a, c, d]];
+      tris.forEach(function (t) { var light = rr() < 0.5, o = (rr() * (light ? 0.085 : 0.075)).toFixed(3); facets += '<polygon points="' + t.map(P).join(' ') + '" fill="' + (light ? '#fff' : '#5a3400') + '" opacity="' + o + '"/>'; });
+      var diag = (x + y) % 2 ? [b, d] : [a, c];
+      [diag, rr() < 0.28 ? [a, b] : null, rr() < 0.28 ? [a, d] : null].filter(Boolean).forEach(function (e) { if (rr() < 0.55) {
+        folds += '<line x1="' + f1(e[0][0]) + '" y1="' + f1(e[0][1]) + '" x2="' + f1(e[1][0]) + '" y2="' + f1(e[1][1]) + '" stroke="#7a4a00" stroke-width="' + (0.6 + rr() * 0.6).toFixed(2) + '" opacity="' + (0.08 + rr() * 0.16).toFixed(2) + '"/>';
+        folds += '<line x1="' + f1(e[0][0] + 0.9) + '" y1="' + f1(e[0][1] + 0.9) + '" x2="' + f1(e[1][0] + 0.9) + '" y2="' + f1(e[1][1] + 0.9) + '" stroke="#fff" stroke-width="0.8" opacity="' + (0.1 + rr() * 0.16).toFixed(2) + '"/>'; } });
+    }
+    for (var i = 0; i < 5; i++) { // a few long folds right across
+      var fx = X0 + rr() * (X1 - X0), fy = Y0 + rr() * 20, dd = 'M' + f1(fx) + ' ' + f1(fy), dx = j(40);
+      for (var k = 0; k < 4; k++) { fx += dx / 4 + j(10); fy += (Y1 - Y0) / 4 + j(6); dd += ' L' + f1(fx) + ' ' + f1(fy); }
+      folds += '<path d="' + dd + '" fill="none" stroke="#6b3f00" stroke-width="1" opacity=".26"/><path d="' + dd + '" transform="translate(1 1)" fill="none" stroke="#fff" stroke-width="1" opacity=".3"/>';
+    }
+    var stroke = function (dv) { return '<path d="' + dv + '" fill="none" stroke="#1d5bb5" stroke-width="' + (10.5 + rr() * 2).toFixed(1) + '" stroke-linecap="round" stroke-linejoin="round"/>'; };
+    var T = 62, B = 160, M = 111;
+    var LT = {
+      B: function (x0) { return ['M' + w(x0) + ' ' + w(T) + ' L' + w(x0 + 1) + ' ' + w(B), 'M' + w(x0) + ' ' + w(T + 1) + ' C' + w(x0 + 32) + ' ' + w(T - 4) + ' ' + w(x0 + 36) + ' ' + w(M - 8) + ' ' + w(x0 + 4) + ' ' + w(M), 'M' + w(x0 + 3) + ' ' + w(M) + ' C' + w(x0 + 40) + ' ' + w(M - 4) + ' ' + w(x0 + 42) + ' ' + w(B + 4) + ' ' + w(x0 + 2) + ' ' + w(B)]; },
+      E: function (x0) { return ['M' + w(x0) + ' ' + w(T) + ' L' + w(x0 + 1) + ' ' + w(B), 'M' + w(x0) + ' ' + w(T) + ' L' + w(x0 + 28) + ' ' + w(T - 1), 'M' + w(x0) + ' ' + w(M) + ' L' + w(x0 + 24) + ' ' + w(M + 1), 'M' + w(x0 + 1) + ' ' + w(B) + ' L' + w(x0 + 29) + ' ' + w(B + 1)]; },
+      L: function (x0) { return ['M' + w(x0) + ' ' + w(T) + ' L' + w(x0 + 1) + ' ' + w(B), 'M' + w(x0 + 1) + ' ' + w(B) + ' L' + w(x0 + 26) + ' ' + w(B + 1)]; },
+      I: function (x0) { return ['M' + w(x0) + ' ' + w(T) + ' L' + w(x0 + 1) + ' ' + w(B)]; },
+      V: function (x0) { return ['M' + w(x0 - 2) + ' ' + w(T) + ' L' + w(x0 + 20) + ' ' + w(B), 'M' + w(x0 + 40) + ' ' + w(T - 1) + ' L' + w(x0 + 20) + ' ' + w(B)]; }
+    };
+    var letters = [['B', 42], ['E', 102], ['L', 148], ['I', 192], ['E', 210], ['V', 254], ['E', 318]].map(function (l) { return LT[l[0]](l[1]).map(stroke).join(''); }).join('');
+    var tape = function (tx, ty, rot) { return '<g transform="translate(' + tx + ' ' + ty + ') rotate(' + rot + ')"><rect x="-27" y="-9.5" width="54" height="19" rx="1.5" fill="#17181b"/><rect x="-27" y="-9.5" width="54" height="5" fill="#fff" opacity=".1"/><path d="M-27 -9.5 l3 3 l-3 3 l3 3 l-3 3 l3 3 l-3 3" fill="none" stroke="#000" stroke-width="1" opacity=".5"/><path d="M27 -9.5 l-3 3 l3 3 l-3 3 l3 3 l-3 3 l3 3" fill="none" stroke="#000" stroke-width="1" opacity=".5"/></g>'; };
+    return '<svg class="believe-svg" overflow="visible" viewBox="0 0 400 214" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<defs><filter id="' + uid + 's" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".35"/></filter><filter id="' + uid + 'b"><feGaussianBlur stdDeviation="1.1"/></filter><clipPath id="' + uid + 'c"><path d="' + paper + '"/></clipPath></defs>' +
+      '<g filter="url(#' + uid + 's)"><path d="' + paper + '" fill="#f2b233"/></g>' + letters +
+      '<g clip-path="url(#' + uid + 'c)"><g filter="url(#' + uid + 'b)">' + facets + '</g>' + folds + '</g>' +
+      '<path d="' + paper + '" fill="none" stroke="#b97a0e" stroke-width="1" opacity=".55"/>' +
+      '<g fill="#1d5bb5"><circle cx="78" cy="183" r="2.3"/><circle cx="88" cy="178" r="1.5"/><circle cx="97" cy="182" r="2.8"/><circle cx="108" cy="186" r="1.3"/></g>' +
+      tape(30, 26, -36) + tape(372, 22, 38) + tape(26, 192, 34) + tape(376, 190, -36) + '</svg>';
+  }
+  // Where the stickies go round the sign: the sign top-centre (a little off true), the rest scattered, not lined up: at most about one
+  // in eight above it, most below and at its sides, tilted more than usual, some tucked under its edge and some lying over it.
+  function believeLayout(o) {
+    var W = o.W, nw = o.nw, nh = o.nh, count = o.count, keepOut = o.keepOut || [], rand = o.rand, maxH = o.maxH || 496;
+    var sw = Math.min(W - 8, nw * 2), sh = sw * 0.535;
+    var area = count * nw * nh * 0.5 + sw * sh * 1.2, top = Math.min(nh * 0.28, 48);
+    var H = Math.round(Math.min(maxH, Math.max(top + sh + nh * 1.5, (area / W) * 1.3 + top)));
+    var sign = { x: (W - sw) / 2 + (rand() - 0.5) * nw * 0.18, y: top, rot: (rand() - 0.5) * 2.6 };
+    sign.x = Math.max(0, Math.min(W - sw, sign.x));
+    var core = { x1: sign.x + nw * 0.2, y1: sign.y + nh * 0.14, x2: sign.x + sw - nw * 0.2, y2: sign.y + sh - nh * 0.14 };
+    var hits = function (x, y, b) { return x < b.x2 && x + nw > b.x1 && y < b.y2 && y + nh > b.y1; };
+    var clashes = function (x, y) { return keepOut.some(function (kk) { return hits(x, y, kk); }); };
+    var isOver = function (cx, cy) { return cx > sign.x - nw * 0.6 && cx < sign.x + sw + nw * 0.6 && cy < sign.y + sh * 0.45; };
+    var out = [], placed = [], maxAbove = Math.floor(count * 0.12), above = 0;
+    for (var i = 0; i < count; i++) {
+      var best = null, bestScore = -1;
+      for (var k = 0; k < 40; k++) {
+        var x = rand() * Math.max(1, W - nw), y = rand() * Math.max(1, H - nh);
+        if (hits(x, y, core) || clashes(x, y)) continue;
+        var d = 0.9 * nw; for (var q = 0; q < placed.length; q++) d = Math.min(d, Math.hypot(placed[q].x - x, placed[q].y - y));
+        var cx = x + nw / 2, cy = y + nh / 2, below = cy > sign.y + sh * 0.85, over = isOver(cx, cy);
+        if (over && above >= maxAbove) continue;
+        var dx = Math.max(sign.x - cx, 0, cx - (sign.x + sw)), dy = Math.max(sign.y - cy, 0, cy - (sign.y + sh));
+        var near = 0.55 + 0.45 * (1 - Math.min(1, Math.hypot(dx, dy) / (2.6 * nw)));
+        var score = (d + 0.15 * nw) * (below ? 1 : over ? 0.12 : 0.85) * near * (0.85 + rand() * 0.3);
+        if (score > bestScore) { bestScore = score; best = { x: x, y: y }; }
+      }
+      if (!best) best = { x: rand() * Math.max(1, W - nw), y: H - nh - rand() * nh * 0.3 }; // never lose one
+      placed.push(best);
+      if (isOver(best.x + nw / 2, best.y + nh / 2)) above++;
+      out.push({ x: best.x, y: best.y, rot: (rand() - 0.5) * 20 + (best.x + nw / 2 < sign.x + sw / 2 ? -2.5 : 2.5) });
+    }
+    sign.z = Math.max(1, Math.floor(count / 2)); // about half the others lie over the sign, half under
+    return { H: H, sign: sign, others: out, sw: sw, sh: sh };
+  }
+  function stickyNode(el, s, waiting, asSign) {
     var n = document.createElement('div');
-    n.className = 'sticky' + (waiting ? ' is-waiting' : ''); n.setAttribute('role', 'listitem'); n.tabIndex = 0;
+    n.className = 'sticky' + (waiting ? ' is-waiting' : '') + (asSign ? ' sticky--believe' : ''); n.setAttribute('role', 'listitem'); n.tabIndex = 0;
     n.setAttribute('data-id', s.id); n.setAttribute('data-c', paperOf(s, el));
+    if (asSign) { // the BELIEVE sign: the drawing, the writer's name and the date in pen, and the x for the writer
+      var sp = document.createElement('div'); sp.className = 'sticky-paper believe-paper'; sp.innerHTML = believeSvg(Math.abs(Number(s.id)) + 1); // only our own drawing goes in as markup
+      var who = document.createElement('span'); who.className = 'believe-by'; var sd = new Date(s.date || s.created), mo = isNaN(sd) ? '' : MONTHS[sd.getUTCMonth()];
+      who.textContent = (s.name ? s.name + ', ' : '') + (mo ? sd.getUTCDate() + ' ' + mo.charAt(0) + mo.slice(1).toLowerCase() : ''); sp.appendChild(who); // "Priya, 9 Oct", in pen
+      if (isOwn(el, s.id)) { var bx = document.createElement('button'); bx.type = 'button'; bx.className = 'sticky-remove'; bx.innerHTML = '&times;'; bx.setAttribute('aria-label', el.getAttribute('data-remove')); sp.appendChild(bx); }
+      n.appendChild(sp); n.setAttribute('aria-label', s.body + (s.name ? ', ' + s.name : '') + '. ' + el.getAttribute('data-send-back'));
+      return n;
+    }
     var paper = document.createElement('div'); paper.className = 'sticky-paper'; paper.style.setProperty('--fray', frayClip(s.id));
-    if (waiting) { var w = document.createElement('span'); w.className = 'sticky-waiting'; w.textContent = el.getAttribute('data-waiting'); paper.appendChild(w); }
     var p = document.createElement('p'); p.className = 'sticky-text'; p.textContent = s.body; paper.appendChild(p);
     var foot = document.createElement('div'); foot.className = 'sticky-foot';
     var by = document.createElement('span'); by.className = 'sticky-by'; by.textContent = s.name || (s.role === 'member' ? el.getAttribute('data-a-member') : ''); foot.appendChild(by);
@@ -1578,6 +1673,7 @@
     var approved = (el._stickies || []).slice(), mine = myStickies(el).filter(function (m) { return m.status === 'pending'; });
     var shownIds = {}; approved.forEach(function (s) { shownIds[s.id] = true; });
     mine = mine.filter(function (m) { return !shownIds[m.id]; });
+    var modNote = el.querySelector('.stickies-note'); if (modNote) modNote.hidden = isMember(el) || !mine.length; // "after moderation": only while a visitor's own sticky waits
     board.textContent = ''; list.textContent = '';
     var all = approved.slice().reverse().map(function (s) { return { s: s, waiting: false }; }).concat(mine.map(function (m) { return { s: m, waiting: true }; }));
     el.classList.toggle('is-empty', !all.length);
@@ -1606,6 +1702,8 @@
       var r = e.getBoundingClientRect(); if (!r.width) return;
       keepOut.push({ x1: r.left - br.left - 14, y1: r.top - br.top - 14, x2: r.right - br.left + 14, y2: r.bottom - br.top + 14 });
     });
+    var signItem = null; all.some(function (it) { if (isBelieve(it.s.body)) { signItem = it; return true; } return false; }); // the oldest BELIEVE
+    if (signItem) { layoutBelieve(el, board, all, signItem, W, nw, nh, maxH, keepOut); return; }
     var clashes = function (x, y) { return keepOut.some(function (k) { return x < k.x2 && x + nw > k.x1 && y < k.y2 && y + nh > k.y1; }); };
     var perRow = Math.max(1, Math.floor(W / (nw * 1.12))), gapX = (W - perRow * nw) / perRow, slots = [];
     for (var sIdx = 0; slots.length < all.length && sIdx < 400; sIdx++) {
@@ -1637,12 +1735,36 @@
       board.appendChild(n); fitSticky(n); addDoodle(el, n, item.s); addBorder(el, n, item.s);
     });
     el._landing = null;
-    // Stickies this reader has moved go back where they put them (in this browser only), on top, in the order moved
-    var spots = stickySpots(el), z = all.length + 1;
+    restoreMoved(el, board, all, W, H, nw, nh);
+  }
+  // The pile when one sticky is the BELIEVE sign: the sign, then the others scattered round it (see believeLayout)
+  function layoutBelieve(el, board, all, signItem, W, nw, nh, maxH, keepOut) {
+    var others = all.filter(function (it) { return it !== signItem; });
+    var L = believeLayout({ W: W, nw: nw, nh: nh, count: others.length, keepOut: keepOut, rand: seeded(7), maxH: maxH });
+    board.style.height = L.H + 'px'; el.classList.toggle('is-crowded', L.H >= maxH);
+    var sn = stickyNode(el, signItem.s, signItem.waiting, true), srot = 'rotate(' + L.sign.rot.toFixed(1) + 'deg)';
+    sn.style.width = L.sw + 'px'; sn.style.height = L.sh + 'px'; sn.style.setProperty('--rot', srot); sn.style.transform = srot;
+    sn.style.left = L.sign.x + 'px'; sn.style.top = L.sign.y + 'px'; sn.style.zIndex = L.sign.z; sn.style.setProperty('--bw', L.sw + 'px');
+    if (signItem.s.id === el._landing) sn.classList.add('is-landing');
+    board.appendChild(sn);
+    others.forEach(function (item, i) {
+      var o = L.others[i], n = stickyNode(el, item.s, item.waiting), rot = 'rotate(' + o.rot.toFixed(1) + 'deg)';
+      n.style.setProperty('--rot', rot); n.style.transform = rot; n.style.left = o.x + 'px'; n.style.top = o.y + 'px';
+      n.style.zIndex = i + 1 < L.sign.z ? i + 1 : i + 2;
+      if (item.s.id === el._landing) n.classList.add('is-landing');
+      board.appendChild(n); fitSticky(n); addDoodle(el, n, item.s); addBorder(el, n, item.s);
+    });
+    el._landing = null;
+    restoreMoved(el, board, all, W, L.H, nw, nh);
+  }
+  // Stickies this reader has moved go back where they put them (in this browser only), on top, in the order moved
+  function restoreMoved(el, board, all, W, H, nw, nh) {
+    var spots = stickySpots(el), z = all.length + 3;
     Object.keys(spots).sort(function (a, b) { return spots[a][2] - spots[b][2]; }).forEach(function (id) {
       var n = board.querySelector('.sticky[data-id="' + id + '"]'); if (!n) return;
-      n.style.left = Math.max(0, Math.min(W - nw, spots[id][0] * W)) + 'px';
-      n.style.top = Math.max(0, Math.min(H - nh, spots[id][1] * H)) + 'px';
+      var w = n.offsetWidth || nw, h = n.offsetHeight || nh;
+      n.style.left = Math.max(0, Math.min(W - w, spots[id][0] * W)) + 'px';
+      n.style.top = Math.max(0, Math.min(H - h, spots[id][1] * H)) + 'px';
       n.style.zIndex = z++;
     });
   }
@@ -1999,7 +2121,7 @@
     var tog = ev.target.closest('.stickies-toggle');
     if (tog) {
       var on = el.classList.toggle('is-list'); el.querySelector('.stickies-list').hidden = !on;
-      tog.setAttribute('aria-pressed', String(on)); var lbl = tog.getAttribute(on ? 'data-pile' : 'data-list'); tog.setAttribute('aria-label', lbl); tog.title = lbl;
+      tog.setAttribute('aria-pressed', String(on)); var lbl = tog.getAttribute(on ? 'data-pile' : 'data-list'); tog.setAttribute('aria-label', lbl);
       if (!on) layoutStickies(el); else listAroundComposer(el);
       return;
     }

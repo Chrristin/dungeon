@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.26.0
+
+- **Write BELIEVE as a sticky and it becomes a sign.** A sticky whose whole text is the word (any capitals; spaces or a "!" around it are ignored) is drawn as a taped sheet of paper that looks crumpled and then smoothed out, with blue marker letters, twice the width of an ordinary sticky, and the writer's name and date in pen in the corner. The others are scattered round it, not lined up: most below it and at its sides, at most about one in eight above it, tilted more than usual, some tucked under its edge and some lying over it. Only the oldest BELIEVE on a post becomes the sign. The drawing and the placement are the same code as in the dungeon-reactions stickies. Checked in Chrome on a real post at wide and phone width; not on a real phone, Safari or Firefox.
+- **Less help text on the stickies.** Gone: the note under the writing sticky, the "Sign in to skip the wait" link, the "waiting to be pinned" label (a waiting sticky keeps its faded look) and the hover tooltips on the buttons (the spoken names stay). Instead, after a visitor pins one, a single small line: "It will appear for others after moderation. Sign up to skip." with "Sign up" opening the sign-up pop-up. Signed-in members, whose stickies appear at once, see nothing.
+
 ## 2.25.1
 
 - **Booster moves a little again, in place, and does one thing per visit.** Each time the Library opens she picks one of three and keeps to it, so there is never a change from one pose to another: she sits and looks at you, blinking (now and then twice) and now and then turning her head to the side and back; or she sits side-on and now and then lifts a paw and licks it; or she is asleep and breathing slowly. She is on Shelf 1 or Shelf 2 as before and never walks or jumps. With reduced motion she is a still picture. Frames are cut from one to the next and never blended, so there is no ghosting. The animation stops while the page is hidden or she is scrolled out of sight. The cat picture file is 110 KB.
