@@ -4,9 +4,9 @@
       The curios standing on the shelves are listed there too, and can be dragged about or hidden.
       Visitors can re-sort the shelves, try patterns, or arrange them by hand and send you the result: the first
       email link in this page's text is where "Send" goes. See docs/library.md. Context: the page. --}}
-<link rel="stylesheet" href="{{asset "css/library.css"}}&r=2.22.1">
+<link rel="stylesheet" href="{{asset "css/library.css"}}&r=2.22.2">
 {{> "library-shelves"}}
-<div class="lib" data-src="{{asset "data/library.json"}}" data-cat="{{asset "images/booster/booster.webp"}}" data-cat-json="{{asset "images/booster/booster.json"}}" hidden>
+<div class="lib" data-src="{{asset "data/library.json"}}" data-cat="{{asset "images/booster/booster.webp"}}" data-teddy="{{asset "images/teddy.webp"}}" data-cat-json="{{asset "images/booster/booster.json"}}" hidden>
     <div class="lib-nav" id="lib-nav"></div>
     <div id="lib-vp"><div id="lib-sizer"><div id="lib-case"></div></div></div>
     <p class="lib-msg" id="lib-msg" aria-live="polite">{{t "Loading the shelves"}}…</p>
@@ -52,6 +52,6 @@
 </section>
 {{/post}}
 <noscript><p class="lib-msg">{{t "This page needs JavaScript to draw the shelves."}}</p></noscript>
-<script src="{{asset "js/library-cat.js"}}&r=2.22.1" defer></script>
-<script src="{{asset "js/library-art.js"}}&r=2.22.1" defer></script>
-<script src="{{asset "js/library.js"}}&r=2.22.1" defer></script>
+<script src="{{asset "js/library-cat.js"}}&r=2.22.2" defer></script>
+<script src="{{asset "js/library-art.js"}}&r=2.22.2" defer></script>
+<script src="{{asset "js/library.js"}}&r=2.22.2" defer></script>

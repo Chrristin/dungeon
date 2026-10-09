@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.22.2
+
+- **The Library's teddy is the real one.** The drawn teddy is replaced by a cut-out of your photo of it (`assets/images/teddy.webp`, 80 KB, fetched with the page). Booster still sleeps in front of it, between its big feet. The Shelf 1 picture is made again.
+
 ## 2.22.1
 
 - **Booster: fewer "two cats at once" moments.** Between two frames the old picture now fades out only over the last 40% of the time it is shown (it was nearly all of it in 2.22.0), and the fade from one action to the next is shorter. The walk is a little quicker than 2.22.0 and still slower than before. Her frames are lined up on the middle of her body, not the whole shape. Honest limit: where two painted poses differ a lot, a fade shows both; real smoothness needs more painted frames, and the walk needs the new sheet with the hind legs stepping.
