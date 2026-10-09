@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.24.0
+
+- **Booster is two still pictures now.** No walking, jumping, grooming or following. Each time the Library opens she is on the top of a random bookcase, either sitting and looking at you or asleep (asleep in front of the teddy if she is on Shelf 1). Press her and she says "Hi! I am Booster". On an opened bookcase she is in the same pose at the front of its top, and no longer hangs over the edge of the board. The walk, the calmer behaviour and the other poses are kept in `extras/booster/source` for later; the cat picture file is 17 KB instead of 733 KB.
+- **The teddy sits on the shelf.** The real teddy is tilted 8 degrees so both of its feet are level, its underside reaches the board, and a small plant in a round terracotta pot sits between its paws. Everything standing on a bookcase top now sits down into the board a little, so nothing hovers over it.
+- **The cushions are stacked and woven.** The three cushions are upright and level, one behind another, resting on the board, with a fine fabric weave, a stitched edge and a button with creases. Their shadows start where the cushions do.
+- **For editing:** `npm run booster` makes the two pictures; the teddy picture is `assets/images/teddy.webp`, set by `data-teddy` on the `.lib` element.
+
 ## 2.23.1
 
 - **A set's own page loads its big picture from the Worker first.** The picture on a Lego set's page came straight from Brickset, which answered the page speed test with a 403 on 9 Oct. It now asks the Worker (which keeps a copy of every set picture since Worker build 32), then Brickset, and only then the set's original photo. The lists and the homepage already use the Worker's copies, since Worker build 33 changed the picture address the list publishes.
