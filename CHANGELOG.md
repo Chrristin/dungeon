@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.21.22
+
+- **Booster is painted now.** The drawn cat is replaced by the painted one: 65 frames of her (walking, standing, sitting from the front and the side, looking up and down, grooming, lying down, sleeping, waking, stretching, crouching, jumping, landing), played one after another with short fades between poses. Her paws now stay on the board as she walks, and she jumps from one bookcase to the next with her legs straight in the air.
+- **She follows the pointer.** Move it to her right and she walks right; to her left, left; and below her, she goes to the edge and looks down. A few seconds after you stop moving it she goes back to her own business. Not on a phone, and not while she is jumping, stretching or asleep.
+- **Press her and she says "Hi! I am Booster"** in a speech bubble, and stretches (or wakes up, then stretches). Pressing the bookcase beside her still opens it.
+- **She sleeps in front of the teddy, between its feet.**
+- **Weight:** one 640 KB picture of all her frames, fetched once the page is idle, and only on the Library.
+- **For editing:** the painted sheets are in `extras/booster/source`; `npm run booster` cuts the frames out, sizes them so she is one size in every pose, and writes `assets/images/booster/booster.webp` and `booster.json`. `extras/booster/clips.mjs` says which frames make which action and how big each sheet is drawn.
+
 ## 2.21.21
 
 - **The noindex on /lego/ and /diecast/ now takes effect.** The 2.21.19 and 2.21.20 versions of the rule did not match those listings. It now tests the address: any page that is not a post and whose address starts with /lego/ or /diecast/ (the listings and their later pages) is `noindex,follow`. Set pages, which are posts, and the watchlist pages are untouched.

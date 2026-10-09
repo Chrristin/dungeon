@@ -1,7 +1,7 @@
 {
   "name": "dungeon",
   "description": "A playful Ghost theme of tilted pastel index cards, an optional homepage of plots, a floating menu, a Now page, a Scatter wall and a lightsaber colour switch.",
-  "version": "2.21.21",
+  "version": "2.21.22",
   "license": "MIT",
   "author": {
     "name": "Christin Emmanuel George",
@@ -19,7 +19,8 @@
   ],
   "scripts": {
     "shelves": "node extras/shelves/build.mjs",
-    "shelves:check": "node extras/shelves/build.mjs --check"
+    "shelves:check": "node extras/shelves/build.mjs --check",
+    "booster": "node extras/booster/build.mjs"
   },
   "config": {
     "posts_per_page": 25,
