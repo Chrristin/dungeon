@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.22.3
+
+- **A set picture that fails to load no longer pulls a 2 MB photo.** When the small Brickset picture did not load (it failed for the page speed test on 9 Oct), the page fell back to the set's own photo, a Rebrickable original of 2 to 9 MB, into a 50 px slot. On a slow phone connection that one image delayed everything. Now it tries the medium Brickset picture, then an Amazon picture if the item has one, and otherwise shows the set number. It never uses an original of unknown size. (A set's own page still falls back to its original if both Brickset pictures fail; that is its main picture.)
+
 ## 2.22.2
 
 - **The Library's teddy is the real one.** The drawn teddy is replaced by a cut-out of your photo of it (`assets/images/teddy.webp`, 80 KB, fetched with the page). Booster still sleeps in front of it, between its big feet. The Shelf 1 picture is made again.

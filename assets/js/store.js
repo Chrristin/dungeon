@@ -138,12 +138,21 @@
     return lower ? 'Near MRP. It has hit ' + hit + '.' : days ? 'No discount yet in ' + dayWord(days) + ' tracked.' : 'Near MRP. No price history yet.';
   }
 
-  /* Which picture: for a set with a LEGO number, the shelf's pattern first (Brickset: 20 KB small, 117 KB medium, where the item's own picture can be 3.7 MB); small is for a tile, and an Amazon picture is asked for at 250 px. orig: the item's own picture, the fallback when that one does not load. */
-  function srcFor(it, s, small, orig) {
-    var own = safeUrl(it.image), pat = s.imagePattern && it.image !== false && /^\d{4,7}$/.test(String(it.code)) ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : '';
-    if (!orig && pat) return small ? pat.replace('/sets/images/', '/sets/small/') : pat;
-    if (own) return small && /^https:\/\/m\.media-amazon\.com\//.test(own) ? own.replace(/\._(?:AC_)?[A-Z]{2}\d{2,4}_\./, '._SL250_.') : own;
-    return pat || (s.imagePattern && it.image !== false ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : '');
+  /* Which picture: for a set with a LEGO number, the shelf's pattern first (Brickset: 20 KB small, 117 KB medium, where the item's own picture can be 3.7 MB); small is for a tile, and an Amazon picture is asked for at 250 px.
+     tries is how many pictures have already failed. After the first, the medium Brickset picture; after that, the item's own picture only if it is an Amazon one. An original of unknown size (a Rebrickable photo is 2 to 9 MB) is never used as a fallback: no picture is better than a slow page. */
+  function srcFor(it, s, small, tries) {
+    var own = safeUrl(it.image), amazon = !!own && /^https:\/\/m\.media-amazon\.com\//.test(own), pat = s.imagePattern && it.image !== false && /^\d{4,7}$/.test(String(it.code)) ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : '';
+    tries = tries || 0;
+    var amz = function () { return small ? own.replace(/\._(?:AC_)?[A-Z]{2}\d{2,4}_\./, '._SL250_.') : own; };
+    if (!tries) return pat ? (small ? pat.replace('/sets/images/', '/sets/small/') : pat) : own ? (amazon ? amz() : own) : s.imagePattern && it.image !== false ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : '';
+    if (tries === 1 && pat && small) return pat;
+    return amazon ? amz() : '';
+  }
+  /* Used by the two picture handlers: the next picture to try after one fails, or false when there is none */
+  function nextPic(img, it, s, small) {
+    var n = +img.getAttribute('data-alt') || 0, alt = n < 2 && srcFor(it, s, small, n + 1);
+    if (!alt || alt === img.src) return false;
+    img.setAttribute('data-alt', String(n + 1)); img.src = alt; return true;
   }
   function tile(o, cls) {
     var t = el('span', cls || 'store-tile'); t.style.setProperty('--tilt', tilt(o.it.code).toFixed(2) + 'deg');
@@ -153,7 +162,7 @@
     var ph = el('span', 'store-ph', o.it.code);
     if (src) {
       var img = el('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.referrerPolicy = 'no-referrer';
-      img.onerror = function () { var alt = !img.getAttribute('data-alt') && srcFor(o.it, shelf, small, true); if (alt && alt !== img.src) { img.setAttribute('data-alt', '1'); img.src = alt; return; } if (img.parentNode) img.parentNode.replaceChild(ph, img); };
+      img.onerror = function () { if (nextPic(img, o.it, shelf, small)) return; if (img.parentNode) img.parentNode.replaceChild(ph, img); };
       img.src = src; t.appendChild(img);
     } else t.appendChild(ph);
     return t;
@@ -664,7 +673,7 @@
         var top = musts[0].it, feature = el('span', 'plot-page-feature'), u = srcFor(top, d, true);
         if (u) {
           var box = el('span', 'plot-page-shot'), img = el('img'); img.alt = top.name || ''; img.loading = 'lazy'; img.decoding = 'async'; img.referrerPolicy = 'no-referrer';
-          img.onerror = function () { var alt = !img.getAttribute('data-alt') && srcFor(top, d, true, true); if (alt && alt !== img.src) { img.setAttribute('data-alt', '1'); img.src = alt; return; } if (box.parentNode) box.parentNode.removeChild(box); };
+          img.onerror = function () { if (nextPic(img, top, d, true)) return; if (box.parentNode) box.parentNode.removeChild(box); };
           img.src = u; box.appendChild(img); feature.appendChild(box);
         }
         var m = el('span', 'plot-page-must'); m.appendChild(el('span', 'plot-page-dot')); m.appendChild(document.createTextNode(label('must'))); feature.appendChild(m);
