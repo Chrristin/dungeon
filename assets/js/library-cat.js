@@ -63,12 +63,12 @@
       else if (me.loop) { if (me.ti >= me.to + 1) me.ti = me.from + (me.ti - me.to - 1); }
       else if (me.ti >= me.to) { me.ti = me.to; me.playing = false; var r = me.resolve; me.resolve = null; if (r) r(); }
     }
-    if (me.xf) { me.xf.a -= dt / .45; if (me.xf.a <= 0) me.xf = null; }
+    if (me.xf) { me.xf.a -= dt / .28; if (me.xf.a <= 0) me.xf = null; }
     me.draw();
   };
   Cat.prototype.draw = function () {
     var me = this, c = me.ctx, n = me.m.clips[me.clip].length, i0 = clamp(Math.floor(me.ti), 0, n - 1), b = 0, i1 = i0;
-    if (me.playing) { i1 = i0 + 1; if (me.loop && !me.ping) { if (i1 > me.to) i1 = me.from; } else if (i1 > me.to) i1 = i0; b = i1 === i0 ? 0 : smooth((me.ti - Math.floor(me.ti) - .15) / .85); }
+    if (me.playing) { i1 = i0 + 1; if (me.loop && !me.ping) { if (i1 > me.to) i1 = me.from; } else if (i1 > me.to) i1 = i0; b = i1 === i0 ? 0 : smooth((me.ti - Math.floor(me.ti) - .6) / .4); }
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, me.canvas.width, me.canvas.height);
     function put(f, a) { if (a <= .003) return; c.save(); c.globalAlpha = a * me.opacity; c.setTransform(me.res, 0, 0, me.res, 0, 0); c.translate(me.cw / 2, me.ch - 3); if (me.dir > 0) c.scale(-1, 1);
       c.drawImage(me.img, f[0], f[1], f[2], f[3], -f[4] * me.k, -(f[5] + 1) * me.k, f[2] * me.k, f[3] * me.k); c.restore(); }
@@ -143,8 +143,8 @@
     async function sleepFor(s) { await P_(cat.play('lie', { fps: 2 })); cat.play('sleep', { fps: 1.5, ping: true }); await W(s); }
 
     /* walking: her speed comes from the frames, so her paws stay on the board */
-    function walkSpeed() { return walkStep * (cat.walkFps || 5.5) * cat.k; }
-    function A_walk(x) { return new Promise(function (res, rej) { pend.push(rej); cat.tx = x; cat.walkFps = 5.5; cat.play('walk', { fps: cat.walkFps, loop: true }); cat.arrive = function () { cat.hold('idle', 0); res(); }; }); }
+    function walkSpeed() { return walkStep * (cat.walkFps || 7) * cat.k; }
+    function A_walk(x) { return new Promise(function (res, rej) { pend.push(rej); cat.tx = x; cat.walkFps = 7; cat.play('walk', { fps: cat.walkFps, loop: true }); cat.arrive = function () { cat.hold('idle', 0); res(); }; }); }
     async function wander() { var p = P[cp]; await A_walk(rr(p.x0, p.x1)); fxNow(); }
     /* to the next bookcase along: walk to the edge, jump to the near end of the next top */
     async function hop(d) { lock++; try { await hop_(d); } finally { lock--; } }
@@ -183,7 +183,7 @@
         cat.dir = d; await followWalk(); return true; }
       cat.dir = dx < 0 ? -1 : 1; if (dy < -1.1 * len) await lookUp(1.2); else await look(1.4); return true;
     }
-    function followWalk() { return new Promise(function (res, rej) { pend.push(rej); follow = true; var q = ptLocal(), p = P[cp]; cat.tx = clamp(q.x, p.x0, p.x1); cat.walkFps = 5.5; cat.play('walk', { fps: 5.5, loop: true }); cat.arrive = function () { follow = false; cat.hold('idle', 0); fxNow(); res(); }; }); }
+    function followWalk() { return new Promise(function (res, rej) { pend.push(rej); follow = true; var q = ptLocal(), p = P[cp]; cat.tx = clamp(q.x, p.x0, p.x1); cat.walkFps = 7; cat.play('walk', { fps: 7, loop: true }); cat.arrive = function () { follow = false; cat.hold('idle', 0); fxNow(); res(); }; }); }
 
     async function pick() {
       var r = Math.random();

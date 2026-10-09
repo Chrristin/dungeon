@@ -41,8 +41,10 @@ for (const [clip, [sheet, first, n]] of Object.entries(CLIPS)) {
         const f = raw[sheet][first - 1 + i], z = sizeOf[sheet], own = Math.sqrt(z.T / (f.area * SHEETS[sheet].scale * SHEETS[sheet].scale)), k = SHEETS[sheet].scale * NATIVE * z.sheet * Math.min(1.1, Math.max(.9, own / z.sheet)), w = Math.max(2, Math.round(f.w * k)), h = Math.max(2, Math.round(f.h * k));
         const buf = await sharp(f.buf, { raw: { width: f.w, height: f.h, channels: 4 } }).resize(w, h, { kernel: 'lanczos3' }).ensureAlpha().raw().toBuffer();
         /* her centre of weight sideways, and the lowest point of her */
-        let sx = 0, cnt = 0, bot = 0; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (buf[(y * w + x) * 4 + 3] > 128) { sx += x; cnt++; if (y > bot) bot = y; }
-        items.push({ clip, i, w, h, buf, ax: Math.round(sx / cnt), ay: bot });
+        let sx = 0, cnt = 0, bot = 0, tx = 0, tn = 0; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (buf[(y * w + x) * 4 + 3] > 128) { sx += x; cnt++; if (y > bot) bot = y; }
+        /* the anchor is the middle of her trunk (the band of rows across her back and belly), not of everything: legs, head and tail swing, the trunk is what must stay put from one frame to the next, or the fade between two frames shows two cats */
+        for (let y = Math.round(h * .22); y < Math.round(h * .62); y++) for (let x = 0; x < w; x++) if (buf[(y * w + x) * 4 + 3] > 128) { tx += x; tn++; }
+        items.push({ clip, i, w, h, buf, ax: Math.round((tn > 40 ? tx / tn : sx / cnt)), ay: bot });
     }
 }
 /* pack, left to right in rows */
