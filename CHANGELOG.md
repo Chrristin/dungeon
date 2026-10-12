@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.26.2
+
+- **The Collection's boxes are paper cards.** Diecast Cars, Lego and the Library were tinted boxes that clashed with an orange plot. They are now cream paper with a faint stitched edge and a soft shadow, the same on every plot colour. A hidden tag on the Plots page changes the look: `#boxes-frosted` for light glass, `#boxes-classic` for the old tinted boxes; no tag gives paper. Looked at in Chrome (wide, phone, tangerine, sunflower) on the live homepage with the new styles added; not in true dark mode, Safari, Firefox or on a real phone, and the tags were not tried in Ghost.
+
 ## 2.26.1
 
 - **The BELIEVE sign is always seen.** In 2.26.0 about half the notes lay over it, so with many stickies on a phone it was mostly covered. Now it is the top layer of the pile (a note lifted to be read still comes above it), the board grows by about the sign's height so there is room for it (an ordinary pile keeps its usual limit), no note is ever placed on its middle, and tapping it lifts it and puts it back where it was instead of sending it under the others. Checked in Chrome with 26 other notes at phone and wide width; the user's own phone screenshot showed the problem.

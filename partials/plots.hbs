@@ -2,7 +2,7 @@
       its title is the badge, its excerpt the statement, its text the introduction (a bulleted list of links becomes
       a row of buttons), and its public tags, in order, are the plots. A tag's name, description and posts fill its
       plot; a tag with no posts yet shows as unplanted. Context: that page. --}}
-<section class="plots" data-labels='{"0":"{{t "unplanted"}}","prep":"{{t "preparing ground"}}","1":"{{t "sprouting"}}","2":"{{t "growing"}}","3":"{{t "growing"}}","4":"{{t "flourishing"}}","5":"{{t "lit"}}","pieces":"{{t "pieces"}}","plots":"{{t "plots"}}","page":"{{t "page"}}","pagesWord":"{{t "pages"}}"}'>
+<section class="plots"{{#has tag="#boxes-frosted"}} data-boxes="frosted"{{else}}{{#has tag="#boxes-classic"}} data-boxes="classic"{{/has}}{{/has}} data-labels='{"0":"{{t "unplanted"}}","prep":"{{t "preparing ground"}}","1":"{{t "sprouting"}}","2":"{{t "growing"}}","3":"{{t "growing"}}","4":"{{t "flourishing"}}","5":"{{t "lit"}}","pieces":"{{t "pieces"}}","plots":"{{t "plots"}}","page":"{{t "page"}}","pagesWord":"{{t "pages"}}"}'>
     <div class="plots-band">
         <a class="plots-badge" href="{{@site.url}}">{{title}}</a>
         <span class="plots-stats" aria-live="polite"></span>
@@ -115,4 +115,4 @@
         {{/get}}
     </div>
 </section>
-<script src="{{asset "js/store.js"}}&r=2.26.1" defer></script>
+<script src="{{asset "js/store.js"}}&r=2.26.2" defer></script>

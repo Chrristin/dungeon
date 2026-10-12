@@ -3061,3 +3061,9 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 @keyframes cg-low-label { 0% { opacity: 0; transform: translate(-50%, 0); } 14% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -12px); } }
 @keyframes cg-low-star { 0% { opacity: 0; transform: translate(0, 0) scale(.4) rotate(0deg); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, -60px)) scale(1) rotate(120deg); } }
 @media (prefers-reduced-motion: reduce) { .cg-low-label { animation: cg-low-label-still 1.4s ease-out forwards; } @keyframes cg-low-label-still { 0%, 100% { opacity: 0; } 15%, 80% { opacity: 1; } } }
+
+/* The Collection's boxes (Diecast, Lego, Library): paper cards with a stitched edge, whatever the plot's colour. A hidden tag on the Plots page changes the look: #boxes-frosted (light glass) or #boxes-classic (the old tinted boxes). */
+.plots:not([data-boxes]) .plot-page.is-watchlist, .plots:not([data-boxes]) .plot-page.is-library { background: rgba(255, 250, 240, 0.92); color: #23252b; box-shadow: 0 6px 14px -8px rgba(20, 12, 0, 0.45); outline: 1.5px dashed color-mix(in srgb, #23252b 32%, transparent); outline-offset: -7px; }
+.plots:not([data-boxes]) .plot-page.is-watchlist *, .plots:not([data-boxes]) .plot-page.is-library * { --on-card: #23252b; --on-card-meta: #6b6e75; }
+.plots[data-boxes="frosted"] .plot-page.is-watchlist { background: rgba(255, 255, 255, 0.26); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5); }
+.plots[data-boxes="frosted"] .plot-page.is-library { background: rgba(255, 255, 255, 0.36); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6); }
