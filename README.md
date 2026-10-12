@@ -252,6 +252,7 @@ Copy `locales/en.json` to a file named after your language (for example `locales
 - Design inspired by [Jake Przespo](https://www.jake.design/).
 - Floating navigation inspired by [Hiran Venugopalan](https://hiran.in).
 - Fonts: [Geist](https://vercel.com/font) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/), and IM Fell English SC by Igino Marini for the Library's spines, all under the SIL Open Font License (licences in `assets/fonts`).
+- The Klingon letters used for filing codes and "Translate to Klingon" come from a subset of the Klingon pIqaD HaSta font by Mike Neff and Michael Everson ([Evertype](https://www.evertype.com/fonts/tlh/)), under the SIL Open Font License (`assets/fonts/LICENSE-pIqaD.txt`). The subset is renamed "Dungeon pIqaD", as the licence's reserved font names require. The translation is a letter-for-letter cipher, not the language.
 
 ## Licence
 

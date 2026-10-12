@@ -5,6 +5,77 @@
     return h >>> 0;
   }
 
+  // pIqaD: a letter-for-letter cipher (not a translation). Filing codes are always drawn in it, and a post's own
+  // "Translate to Klingon" line turns that post's words into it and the codes back to plain letters. The font
+  // holds private-use characters, so nothing is drawn in it until the font has loaded.
+  var PQ = { a: 0xF8D0, b: 0xF8D1, c: 0xF8D2, d: 0xF8D3, e: 0xF8D4, g: 0xF8D5, h: 0xF8D6, i: 0xF8D7, j: 0xF8D8, l: 0xF8D9, m: 0xF8DA, n: 0xF8DB, f: 0xF8DC, o: 0xF8DD, p: 0xF8DE, k: 0xF8DF, q: 0xF8E0, r: 0xF8E1, s: 0xF8E2, t: 0xF8E3, x: 0xF8E4, u: 0xF8E5, v: 0xF8E6, w: 0xF8E7, y: 0xF8E8, z: 0xF8E9 };
+  function toPiqad(str) {
+    return Array.from(str).map(function (ch) {
+      var l = ch.toLowerCase();
+      if (PQ[l]) return String.fromCodePoint(PQ[l]);
+      if (/[0-9]/.test(ch)) return String.fromCodePoint(0xF8F0 + Number(ch));
+      if (ch === '.') return String.fromCodePoint(0xF8FE);
+      if (ch === ',') return String.fromCodePoint(0xF8FD);
+      return ch;
+    }).join('');
+  }
+  var klOn = false, piqadReady = false;
+  var KL_SKIP = 'code, pre, script, style, textarea, svg, .visually-hidden';
+  var KL_WORDS = ['Translate to Klingon', 'Back to English'];
+  // Codes: the glyphs are for the eye, a hidden copy of the plain code is for screen readers.
+  function paintCodes(root) {
+    if (!piqadReady) return;
+    root.querySelectorAll('.code, .tag-code').forEach(function (el) {
+      var en = el.getAttribute('data-en');
+      if (en === null) { en = el.textContent; el.setAttribute('data-en', en); }
+      if (klOn) { el.textContent = en; return; }
+      el.textContent = '';
+      var g = document.createElement('span'); g.className = 'piqad'; g.setAttribute('aria-hidden', 'true'); g.textContent = toPiqad(en);
+      var h = document.createElement('span'); h.className = 'visually-hidden'; h.textContent = en;
+      el.appendChild(g); el.appendChild(h);
+    });
+  }
+  function klConvert(panel) {
+    if (panel.__kl) return;
+    var done = [];
+    panel.querySelectorAll('.panel-image figcaption, .panel-title, .panel-lede, .panel-content').forEach(function (box) {
+      var w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT), nodes = [];
+      while (w.nextNode()) { var n = w.currentNode; if (n.nodeValue.trim() && !(n.parentElement && n.parentElement.closest(KL_SKIP))) nodes.push(n); }
+      nodes.forEach(function (n) {
+        var g = document.createElement('span'); g.className = 'piqad'; g.setAttribute('aria-hidden', 'true'); g.textContent = toPiqad(n.nodeValue);
+        var h = document.createElement('span'); h.className = 'visually-hidden'; h.textContent = n.nodeValue;
+        n.replaceWith(g); g.after(h); done.push([n, g, h]);
+      });
+    });
+    panel.__kl = done;
+  }
+  function klRestore(panel) {
+    (panel.__kl || []).forEach(function (r) { r[1].replaceWith(r[0]); r[2].remove(); });
+    panel.__kl = null;
+  }
+  function klSync(root) {
+    if (!piqadReady) return;
+    root.querySelectorAll('.klingon-toggle').forEach(function (b) {
+      b.hidden = false; b.textContent = KL_WORDS[klOn ? 1 : 0];
+      var panel = b.closest('.post-panel'); if (panel && klOn) klConvert(panel);
+    });
+    paintCodes(root);
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.klingon-toggle'); if (!b || !piqadReady) return;
+    var panel = b.closest('.post-panel'); if (!panel) return;
+    klOn = !klOn;
+    document.querySelectorAll('.post-panel').forEach(function (p) { if (klOn) { if (p === panel) klConvert(p); } else klRestore(p); });
+    document.querySelectorAll('.klingon-toggle').forEach(function (t) { t.textContent = KL_WORDS[klOn ? 1 : 0]; });
+    paintCodes(document);
+  });
+  if (document.fonts && document.fonts.load) {
+    document.fonts.load('1em "Dungeon pIqaD"', '').then(function (faces) {
+      if (!faces || !faces.length) return;
+      piqadReady = true; klSync(document);
+    }).catch(function () {});
+  }
+
   var maxTilt = parseFloat(document.body.getAttribute('data-tilt') || '0');
   if (window.matchMedia('(max-width: 900px), (pointer: coarse) and (max-width: 1100px)').matches) maxTilt = Math.min(maxTilt, 2);
 
@@ -24,6 +95,9 @@
       var letters = parts.length > 1 ? parts[0][0] + parts[1][0] : (parts[0] || 'xx').slice(0, 2);
       el.textContent = '#' + letters.toUpperCase();
     });
+    // Codes were just written in plain letters: draw them in pIqaD again (and show a new post's toggle)
+    root.querySelectorAll('.code[data-en], .tag-code[data-en]').forEach(function (el) { if (el.matches('.code[data-date]:not([data-prefix]), .tag-code[data-tag]')) el.removeAttribute('data-en'); });
+    klSync(root);
     // Inside a post: tags up to 2 degrees, images up to 1.5, text never.
     root.querySelectorAll('.post-panel[data-key]').forEach(function (panel) {
       if (maxTilt <= 0) return;

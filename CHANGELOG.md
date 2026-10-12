@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.26.3
+
+- **Filing codes are in Klingon letters, and every post can be read in them.** Every `#CODEDATE` (homepage cards, post rows, related cards, post pages, notes, the plots' `#TC` labels) is drawn in pIqaD, with the plain code kept hidden for screen readers. A small "Translate to Klingon" line sits at the right of the date and reading time on each post; one press turns the post's title, lede, caption and body into the same letters (links keep working, code blocks and image descriptions are left alone) and the codes back to plain letters; a second press restores everything exactly. Nothing persists: every page load starts as before. It is a letter-for-letter cipher, not a translation, and the line's hover text says so. The font is a 7 KB subset of Klingon pIqaD HaSta (Mike Neff and Michael Everson, SIL Open Font License), renamed "Dungeon pIqaD" as the licence requires; the licence is `assets/fonts/LICENSE-pIqaD.txt`. Nothing is drawn in it until the font has loaded. Looked at in Chrome on the live pages with the new files at wide and phone width, including a post opened over the homepage; not in Safari, Firefox or with a real screen reader. The test post with code blocks had none, so that skip is untested.
+
 ## 2.26.2
 
 - **The Collection's boxes are paper cards.** Diecast Cars, Lego and the Library were tinted boxes that clashed with an orange plot. They are now cream paper with a faint stitched edge and a soft shadow, the same on every plot colour. A hidden tag on the Plots page changes the look: `#boxes-frosted` for light glass, `#boxes-classic` for the old tinted boxes; no tag gives paper. Looked at in Chrome (wide, phone, tangerine, sunflower) on the live homepage with the new styles added; not in true dark mode, Safari, Firefox or on a real phone, and the tags were not tried in Ghost.
