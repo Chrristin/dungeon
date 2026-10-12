@@ -29,11 +29,26 @@
       var en = el.getAttribute('data-en');
       if (en === null) { en = el.textContent; el.setAttribute('data-en', en); }
       if (klOn) { el.textContent = en; return; }
+      var had = !!el.querySelector('.piqad');
       el.textContent = '';
       var g = document.createElement('span'); g.className = 'piqad'; g.setAttribute('aria-hidden', 'true'); g.textContent = toPiqad(en);
       var h = document.createElement('span'); h.className = 'visually-hidden'; h.textContent = en;
       el.appendChild(g); el.appendChild(h);
+      // Plain letters turning into the glyphs: a short scramble, only for codes on screen
+      if (!had && !calmCodes) { var r = el.getBoundingClientRect(); if (r.width && r.bottom > 0 && r.top < window.innerHeight) glitch(g, en); }
     });
+  }
+  var calmCodes = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var PQ_ALL = Object.keys(PQ).map(function (k) { return String.fromCodePoint(PQ[k]); });
+  function glitch(node, en) {
+    var real = Array.from(toPiqad(en)), plain = Array.from(en), n = real.length, t0 = null, MS = 420;
+    function frame(t) {
+      if (t0 === null) t0 = t;
+      var k = Math.min(1, (t - t0) / MS), done = Math.floor(k * n);
+      node.textContent = real.map(function (c, i) { return i < done || plain[i] === '#' || !PQ[plain[i].toLowerCase()] && !/[0-9.,]/.test(plain[i]) ? c : PQ_ALL[Math.floor(Math.random() * PQ_ALL.length)]; }).join('');
+      if (k < 1) requestAnimationFrame(frame); else node.textContent = real.join('');
+    }
+    requestAnimationFrame(frame);
   }
   function klConvert(panel) {
     if (panel.__kl) return;
@@ -69,11 +84,16 @@
     document.querySelectorAll('.klingon-toggle').forEach(function (t) { t.textContent = KL_WORDS[klOn ? 1 : 0]; });
     paintCodes(document);
   });
-  if (document.fonts && document.fonts.load) {
+  // The font is fetched only once the page has finished loading, so it never competes with what the visitor came to see
+  function loadPiqad() {
     document.fonts.load('1em "Dungeon pIqaD"', '').then(function (faces) {
       if (!faces || !faces.length) return;
       piqadReady = true; klSync(document);
     }).catch(function () {});
+  }
+  if (document.fonts && document.fonts.load) {
+    var later = function () { if (window.requestIdleCallback) requestIdleCallback(loadPiqad, { timeout: 2000 }); else setTimeout(loadPiqad, 300); };
+    if (document.readyState === 'complete') later(); else window.addEventListener('load', later);
   }
 
   var maxTilt = parseFloat(document.body.getAttribute('data-tilt') || '0');

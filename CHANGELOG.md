@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.26.5
+
+- **Filing codes arrive in plain letters, then glitch into Klingon.** The Klingon font is no longer preloaded; it is fetched once the page has finished loading, so it stays out of the way of what the visitor came to see (PageSpeed had it in the chain of fonts the first paint waits for). Codes show as plain letters at first. When the font is in, each code on screen scrambles through random glyphs for about 0.4 s and settles left to right; codes out of sight change quietly, and visitors who ask their device for reduced motion get an instant swap. Turning Klingon mode off plays the same glitch. Screen readers are unchanged: the plain code is always in the page and the scrambling letters are hidden from them. Looked at in Chrome at wide and phone width, with and without reduced motion; the swap adds no layout shift (0.031 with it, 0.031 with the font blocked). Not seen in Safari or Firefox.
+
 ## 2.26.4
 
 - **Smaller pictures on the homepage.** PageSpeed showed several images sent much larger than they are drawn. A new 400 px image size (`thumb`) is now used for the plots' background pictures on phones (they chose 600 px before), for the Library box thumbnail, and for the masthead logo (with a 200 px one for small screens). Nothing changes in how they look. The Klingon font's `font-display` is now `swap`, which clears a PageSpeed note and changes nothing visible (nothing is drawn in it before it has loaded). Not measured on PageSpeed itself yet; the card photos in the feed are unchanged.
