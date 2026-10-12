@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.26.4
+
+- **Smaller pictures on the homepage.** PageSpeed showed several images sent much larger than they are drawn. A new 400 px image size (`thumb`) is now used for the plots' background pictures on phones (they chose 600 px before), for the Library box thumbnail, and for the masthead logo (with a 200 px one for small screens). Nothing changes in how they look. The Klingon font's `font-display` is now `swap`, which clears a PageSpeed note and changes nothing visible (nothing is drawn in it before it has loaded). Not measured on PageSpeed itself yet; the card photos in the feed are unchanged.
+
 ## 2.26.3
 
 - **Filing codes are in Klingon letters, and every post can be read in them.** Every `#CODEDATE` (homepage cards, post rows, related cards, post pages, notes, the plots' `#TC` labels) is drawn in pIqaD, with the plain code kept hidden for screen readers. A small "Translate to Klingon" line sits at the right of the date and reading time on each post; one press turns the post's title, lede, caption and body into the same letters (links keep working, code blocks and image descriptions are left alone) and the codes back to plain letters; a second press restores everything exactly. Nothing persists: every page load starts as before. It is a letter-for-letter cipher, not a translation, and the line's hover text says so. The font is a 7 KB subset of Klingon pIqaD HaSta (Mike Neff and Michael Everson, SIL Open Font License), renamed "Dungeon pIqaD" as the licence requires; the licence is `assets/fonts/LICENSE-pIqaD.txt`. Nothing is drawn in it until the font has loaded. Looked at in Chrome on the live pages with the new files at wide and phone width, including a post opened over the homepage; not in Safari, Firefox or with a real screen reader. The test post with code blocks had none, so that skip is untested.
