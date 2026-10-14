@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{meta_title}}</title>
     <link rel="preload" href="{{asset "fonts/jetbrains-mono-latin-500-normal.woff2"}}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.27.3">
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}&r=2.27.4">
     {{#is "post"}}{{#post}}{{#has tag="#thing"}}{{^if html}}<meta name="robots" content="noindex">{{/if}}{{/has}}{{/post}}{{/is}}
     {{!-- The /lego/ and /diecast/ collection pages list every set post under the title "Christin Emmanuel George (Page 1)" with no description. The watchlist pages are what people should find, so these listings are kept out of search results (links on them are still followed). The homepage is not affected. --}}
     {{^is "post"}}{{#match (url) "~^" "/lego/"}}<meta name="robots" content="noindex,follow">{{/match}}{{#match (url) "~^" "/diecast/"}}<meta name="robots" content="noindex,follow">{{/match}}{{/is}}
@@ -128,12 +128,12 @@
             {{/if}}
         </div>
         {{#if @custom.footer_line_two}}<p class="colophon-fonts">{{@custom.footer_line_two}}</p>{{/if}}
-        <p class="colophon-privacy">{{t "As an Amazon Associate I earn from qualifying purchases, so buying anything from this site may earn me a commission."}} {{t "Visits are counted with Google Analytics, which uses cookies."}} <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">{{t "How Google uses that data"}}</a>.</p>
+        <p class="colophon-privacy"><span class="colophon-line">{{t "As an Amazon Associate I earn from qualifying purchases."}}</span> <span class="colophon-line">{{t "Visits are counted with Google Analytics, which uses cookies."}} <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">{{t "How Google uses that data"}}</a>.</span></p>
     </div>
 </footer>
 
 
-<script src="{{asset "js/site.js"}}&r=2.27.3" defer></script>
+<script src="{{asset "js/site.js"}}&r=2.27.4" defer></script>
 {{ghost_foot}}
 <div class="gk" hidden data-labels='{"search":"{{t "Search the garden"}}","keys":"{{t "Keyboard shortcuts"}}","close":"{{t "Close"}}","s":"{{t "search the garden"}}","r":"{{t "a random note"}}","g":"{{t "go to the garden"}}","h":"{{t "show these shortcuts"}}","none":"{{t "No notes match."}}"}' data-garden="{{@site.url}}/garden/"></div>
 </body>

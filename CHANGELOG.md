@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.27.4
+
+- **A shorter footer.** The small print at the bottom is two short lines again: "As an Amazon Associate I earn from qualifying purchases." and "Visits are counted with Google Analytics, which uses cookies." (with its "How Google uses that data" link). The longer commission sentence added in 2.27.2 is gone. The lines sit closer under the "Set in JetBrains Mono and Fira Mono" line (about 11 px instead of 33 on a desktop, 8 px on a phone), and the rows above them are a little closer together too. Looked at in Chrome at 1280, 820 and 390 px with the new markup added in the browser; not in Safari or Firefox or on a real phone.
+
 ## 2.27.3
 
 - **The Klingon switch glitches both ways.** Pressing the filing code now scrambles the text that is on screen through random glyphs as it turns into Klingon, settling left to right over about 0.6 s, and the code scrambles into plain letters; pressing the plain code scrambles the text back into English and the code back into Klingon letters. Only text on screen is animated (up to about 2,500 characters; the rest swaps at once), a second press within three quarters of a second is ignored so the page cannot end half-converted, and visitors who ask for reduced motion get an instant switch.

@@ -1487,7 +1487,7 @@ body.has-everything .colophon-secondary { display: none; }
         display: grid;
         grid-template-columns: auto 1fr auto 1fr auto;
         column-gap: 2rem;
-        row-gap: 0.9rem;
+        row-gap: 0.4rem;
         align-items: center;
     }
     .colophon-inspire { display: contents; }
@@ -1497,7 +1497,7 @@ body.has-everything .colophon-secondary { display: none; }
     .colophon-fonts { grid-area: 2 / 1; }
     .colophon-inspire .saber-wrap { grid-area: 2 / 5; justify-self: start; }
     .colophon-secondary { grid-column: 1 / -1; grid-row: 3; }
-    .colophon-privacy { grid-column: 1 / -1; grid-row: 4; }
+    .colophon-privacy { grid-column: 1 / -1; grid-row: 3; }
 }
 .colophon-privacy { margin: 0; font-size: 0.78rem; line-height: 1.5; color: var(--graphite); }
 .colophon-privacy a { color: inherit; text-decoration: underline; text-underline-offset: 0.2em; }
@@ -3229,3 +3229,7 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .review-buy-go { align-items: flex-end; }
 /* "I paid": about half the size it was; the figure is a note, not a headline */
 .store-extra .store-paid, .watch-item .store-paid, .store-sheet .store-paid { font-size: 0.85rem; font-weight: 600; line-height: 1.35; }
+/* Footer: the two small-print lines each on their own, close under the fonts line */
+.colophon-line { display: block; }
+.colophon-privacy { margin-top: 0.2rem; }
+@media (max-width: 899px) { .colophon-row { row-gap: 0.4rem; } .colophon-row .colophon-privacy { margin-top: 0.2rem; } }
