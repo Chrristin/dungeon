@@ -388,6 +388,13 @@
     var hero = el('div', 'store-sheet-hero'); hero.appendChild(tile(o, 'store-tile store-tile--big'));
     var txt = el('div', 'store-sheet-text'); txt.appendChild(el('h2', 'store-sheet-name', it.name)); var ff = factsLine(o); if (ff) txt.appendChild(ff); txt.appendChild(chips(o, true, true));
     txt.appendChild(el('p', 'store-sheet-why', it.note || reason(o))); hero.appendChild(txt); sheet.appendChild(hero);
+    /* A review of this item (the list page carries a hidden list of them): "Review: its title, rating", top right of the card */
+    var rvSrc = null; [].forEach.call(document.querySelectorAll('.rv-data .rv-src'), function (s) { if (!rvSrc && it.slug && (' ' + s.getAttribute('data-for') + ' ').indexOf(' hash-for-' + it.slug + ' ') > -1) rvSrc = s; });
+    if (rvSrc) {
+      var rvLine = el('a', 'rv-line'); rvLine.href = rvSrc.href; rvLine.appendChild(el('span', 'rv-k', 'Review'));
+      var rvT = rvSrc.querySelector('.rv-t'), rvR = rvSrc.querySelector('.rated'); if (rvT) rvLine.appendChild(rvT.cloneNode(true)); if (rvR) rvLine.appendChild(rvR.cloneNode(true));
+      rvLine.style.rotate = (tilt('rv' + it.code) * 0.7).toFixed(2) + 'deg'; hero.appendChild(rvLine);
+    }
 
     detail(o).forEach(function (n) { sheet.appendChild(n); });
 
@@ -817,6 +824,8 @@
       /* A review of this item (the template draws it in the top card): on a phone the same line sits last in the strip, under Get Notified */
       var rvHero = page.querySelector('.watch-hero > .rv-line'), rvAfter = itemBox.querySelector('.watch-notify--buy') || itemBox.querySelector('.store-buy');
       if (rvHero && rvAfter) { var rvCopy = rvHero.cloneNode(true); rvCopy.className += ' rv-line--strip'; rvAfter.insertAdjacentElement('afterend', rvCopy); }
+      /* A little tilt, the same every visit (from the item's code), like the page's other cards */
+      [].forEach.call(page.querySelectorAll('.rv-line'), function (l) { l.style.rotate = (tilt('rv' + o.it.code) * 0.7).toFixed(2) + 'deg'; });
       /* The price and Buy strip sits straight under the top card, ahead of the long text, so the way to buy is on the first screen */
       var buyPanel = itemBox.querySelector(':scope > .store-panel--buy'), heroEl = page.querySelector('.watch-hero');
       if (buyPanel && heroEl) heroEl.insertAdjacentElement('afterend', buyPanel);

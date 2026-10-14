@@ -238,9 +238,13 @@ For an image with a paragraph next to it, add an HTML card just above an image c
 
 The image and the paragraph after it become one block, image on the left. Add `data-paras="3"` to take in more paragraphs, or `data-side="right"` to put the image on the right. The image keeps its tilt and wiggles when the pointer is over it; on a phone the two stack. In the editor and in email they simply stack.
 
+## An image to the left or right of the text
+
+Type `#left` or `#right` in an image's caption. The image floats to that side (about two fifths of the column) and the text flows round it; the tag is removed from the caption, and the caption goes if nothing else is in it. On a phone the image is full width. Without JavaScript or in email the tag stays visible in the caption. For an image kept together with its paragraph, use the beside block above.
+
 ## A review on an item's page
 
-A post that reviews a LEGO or diecast item shows as "Review: its title, rating" on that item's page. Give the review post an internal tag named `#for-` plus the item page's address (for example `#for-42207-ferrari-sf-24-f1-car`), and a rating tag such as `#rated-4-5` if you want the stamp. The line sits at the top right of the item's card, and last in the price strip on a phone. No tag, no line.
+A post that reviews a LEGO or diecast item shows as "Review: its title, rating" on that item's page. Give the review post an internal tag named `#for-` plus the item page's address (for example `#for-42207-ferrari-sf-24-f1-car`), and a rating tag such as `#rated-4-5` if you want the stamp. The line sits at the top right of the item's card, and last in the price strip on a phone. No tag, no line. The list page's pop-up shows the same line, and the review post itself carries a small Buy card (the item's price today and a Buy button).
 
 ## routes.yaml
 

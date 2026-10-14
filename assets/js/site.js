@@ -122,6 +122,45 @@
     });
   }
 
+  // An image whose caption holds #left or #right is floated to that side with the text flowing round it; the tag is
+  // taken out of the caption (and the caption goes if nothing else is left). Wide and full-width images are left alone.
+  function floats(root) {
+    root.querySelectorAll('.panel-content .kg-image-card:not(.kg-width-wide):not(.kg-width-full):not(.is-floated)').forEach(function (fig) {
+      var cap = fig.querySelector('figcaption'); if (!cap) return;
+      var m = /(^|\s)#(left|right)(?=\s|$|[.,;:!?])/i.exec(cap.textContent); if (!m) return;
+      var side = m[2].toLowerCase();
+      var w = document.createTreeWalker(cap, NodeFilter.SHOW_TEXT), nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+      nodes.forEach(function (n) { n.nodeValue = n.nodeValue.replace(/\s*#(left|right)(?=\s|$|[.,;:!?])/ig, '').replace(/^\s+/, ''); });
+      if (!cap.textContent.trim() && !cap.querySelector('a, img')) cap.remove();
+      fig.classList.add('is-floated', 'kg-float-' + side);
+    });
+  }
+  // A post that reviews an item carries a hidden card; fill it with the item's price today and a Buy button.
+  function reviewBuy(root) {
+    root.querySelectorAll('.review-buy[hidden]:not([data-done])').forEach(function (box) {
+      box.setAttribute('data-done', '1');
+      var slug = (box.getAttribute('data-item') || '').replace(/^hash-for-/, ''); if (!slug) return;
+      var meta = document.querySelector('meta[name="watchlist-data"]'), named = (meta ? (meta.getAttribute('content') || '') : '').trim().split(/\s+/).filter(function (u) { return /^https?:\/\//i.test(u) || u.charAt(0) === '/'; });
+      var sources = named.length ? named : [box.getAttribute('data-src')];
+      Promise.all(sources.map(function (u) { return fetch(u).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); })).then(function (all) {
+        var found = null, shelf = null;
+        all.forEach(function (d) { if (d && Array.isArray(d.items)) d.items.forEach(function (it) { if (!found && it.slug === slug) { found = it; shelf = d; } }); });
+        if (!found || !(found.price > 0) || !/^https:\/\//.test(found.url || '')) return;
+        var cur = shelf.currency || '', loc = shelf.locale || 'en-IN', money = function (n) { return cur + Math.round(n).toLocaleString(loc); };
+        var usual = found.orp > 0 && found.orpDays >= 30 ? found.orp : (found.mrp > 0 ? found.mrp : 0), off = usual > found.price ? Math.round((1 - found.price / usual) * 100) : 0;
+        box.textContent = '';
+        var t = document.createElement('div'); t.className = 'review-buy-t';
+        var name = document.createElement('strong'); name.textContent = found.name; t.appendChild(name);
+        var line = document.createElement('span'); line.textContent = money(found.price) + ' today' + (off >= 5 ? ' \u00b7 ' + off + '% under its usual price' : ''); t.appendChild(line);
+        var home = document.createElement('a'); home.href = (shelf.pageBase || '/lego/') + found.slug + '/'; home.textContent = 'Price history \u2192'; home.className = 'review-buy-hist'; t.appendChild(home);
+        var go = document.createElement('a'); go.className = 'store-go'; go.href = found.url; go.target = '_blank'; go.rel = 'sponsored nofollow noopener'; go.textContent = shelf.linkLabel || 'Buy on Amazon';
+        var aff = document.createElement('span'); aff.className = 'review-buy-aff'; aff.textContent = 'Affiliate link';
+        var r = document.createElement('div'); r.className = 'review-buy-go'; r.appendChild(go); r.appendChild(aff);
+        box.appendChild(t); box.appendChild(r); box.hidden = false;
+      });
+    });
+  }
+
   // Filing codes, colours and tilt. Everything is derived from the post's slug,
   // so a post keeps the same code, colour and angle on every visit.
   function decorate(root) {
@@ -142,6 +181,8 @@
     root.querySelectorAll('.code[data-en], .tag-code[data-en]').forEach(function (el) { if (el.matches('.code[data-date]:not([data-prefix]), .tag-code[data-tag]')) el.removeAttribute('data-en'); });
     klSync(root);
     besides(root);
+    floats(root);
+    reviewBuy(root);
     // Inside a post: tags up to 2 degrees, images up to 1.5, text never.
     root.querySelectorAll('.post-panel[data-key]').forEach(function (panel) {
       if (maxTilt <= 0) return;

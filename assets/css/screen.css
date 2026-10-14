@@ -3183,8 +3183,12 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .rv-line { display: flex; align-items: center; gap: 0.55rem; min-width: 0; color: #17191e; text-decoration: none; font: 0.78rem/1.3 var(--mono); }
 .rv-k { flex: none; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #2b2f36; }
 .rv-k::after { content: ":"; margin-left: 0.1rem; }
-.rv-t { overflow: hidden; font-weight: 600; text-overflow: ellipsis; text-decoration: underline; text-decoration-color: #c9c5b8; text-underline-offset: 0.25em; white-space: nowrap; }
-.rv-line:hover .rv-t, .rv-line:focus-visible .rv-t { color: #1f7a4d; text-decoration-color: #1f7a4d; }
+.rv-t { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.rv-line:hover .rv-t, .rv-line:focus-visible .rv-t { color: #1f7a4d; }
+.rv-line:focus-visible { outline: 2px solid #1f7a4d; outline-offset: 3px; }
+.rv-line { transition: rotate 150ms ease; }
+.rv-line:hover { rotate: 0deg !important; }
+@media (prefers-reduced-motion: reduce) { .rv-line { transition: none; } }
 .rv-line .rated { flex: none; rotate: 0deg; padding: 0.1rem 0.35rem; }
 .rv-line--strip { display: none; }
 @media (min-width: 761px) {
@@ -3195,3 +3199,31 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
   .watch-item .watch-hero > .rv-line { display: none; }
   .store-panel--buy .rv-line--strip { display: flex; grid-column: 1 / -1; grid-row: 5; margin: 0.2rem 0 0; padding-top: 0.7rem; border-top: 1px solid #ece9e0; }
 }
+
+/* An image with #left or #right in its caption floats to that side; the text flows round it. Phones: full width, no float. */
+.panel-content { display: flow-root; }
+.panel-content .kg-image-card.kg-float-left, .panel-content .kg-image-card.kg-float-right { width: min(40%, 24rem); max-width: 24rem; margin-top: 0.3em; margin-bottom: 1rem; }
+.panel-content .kg-image-card.kg-float-left { float: left; margin-right: 1.75rem; margin-left: max(0px, calc((100% - 60rem) / 2)); }
+.panel-content .kg-image-card.kg-float-right { float: right; margin-left: 1.75rem; margin-right: max(0px, calc((100% - 60rem) / 2)); }
+.panel-content .kg-image-card.is-floated img { width: 100%; height: auto; }
+.panel-content :is(h2, h3, h4):not(.beside *) { clear: both; }
+@media (max-width: 640px) { .panel-content .kg-image-card.kg-float-left, .panel-content .kg-image-card.kg-float-right { float: none; width: auto; max-width: none; margin: 1rem auto; } }
+
+/* The Review line in the list's pop-up (the same look as on an item's page) */
+.store-sheet > .store-sheet-hero { position: relative; }
+@media (min-width: 761px) {
+  .store-sheet > .store-sheet-hero > .rv-line { position: absolute; top: 0.6rem; right: 1.2rem; max-width: 22rem; }
+  .store-sheet > .store-sheet-hero:has(> .rv-line) { padding-top: 2.3rem; }
+}
+@media (max-width: 760px) { .store-sheet > .store-sheet-hero > .rv-line { order: -1; width: 100%; } }
+
+/* A review post's Buy card */
+.review-buy[hidden] { display: none; }
+.review-buy { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem 1.2rem; margin: 1rem 0 1.4rem; padding: 0.9rem 1.1rem; border-radius: 14px; background: #fcfcfa; color: #17191e; }
+.review-buy-t { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; font: 0.82rem/1.4 var(--mono); }
+.review-buy-t strong { font-size: 0.95rem; }
+.review-buy-hist { color: #1f7a4d; font-weight: 600; text-decoration: none; }
+.review-buy-hist:hover { text-decoration: underline; text-underline-offset: 0.25em; }
+.review-buy-go { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; }
+.review-buy-aff { font: 0.7rem/1 var(--mono); color: #5e636c; }
+@media (max-width: 560px) { .review-buy-go { align-items: stretch; width: 100%; } .review-buy .store-go { width: 100%; } }

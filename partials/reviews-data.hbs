@@ -1,0 +1,2 @@
+{{!-- Every post that reviews an item (an internal tag #for-<item address>), as a hidden list; the list page's pop-up shows a "Review" line from it. Context: any. --}}
+<div class="rv-data" hidden>{{#get "posts" filter="tags:~'hash-for'" limit="all" include="tags"}}{{#foreach posts}}<a class="rv-src" href="{{url}}" data-for="{{#foreach tags visibility="all"}}{{slug}} {{/foreach}}"><span class="rv-t">{{title}}</span>{{> "rating-stamp" size="small"}}</a>{{/foreach}}{{/get}}</div>

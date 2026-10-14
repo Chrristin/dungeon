@@ -32,6 +32,8 @@
             <p class="panel-sub"><span><time datetime="{{date format="YYYY-MM-DD"}}">{{date format="D MMM YYYY"}}</time>, {{reading_time minute="1 min read" minutes="% min read"}}</span><button type="button" class="klingon-toggle" title="Not a translation. A Klingon would object." hidden>Translate to Klingon</button></p>
             {{#if custom_excerpt}}<p class="panel-lede">{{custom_excerpt}}</p>{{/if}}
         </header>
+        {{!-- A post that reviews an item (internal tag #for-<item address>) carries a Buy card for it; site.js fills it with today's price --}}
+        {{#foreach tags visibility="all"}}{{#match slug "~^" "hash-for-"}}<aside class="review-buy" data-item="{{slug}}" data-src="{{asset "data/store-lego.json"}}" hidden></aside>{{/match}}{{/foreach}}
 
 
         <div class="panel-content gh-content">
