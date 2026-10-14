@@ -70,20 +70,25 @@
   }
   function klSync(root) {
     if (!piqadReady) return;
-    root.querySelectorAll('.klingon-toggle').forEach(function (b) {
-      b.hidden = false; b.textContent = KL_WORDS[klOn ? 1 : 0];
-      var panel = b.closest('.post-panel'); if (panel && klOn) klConvert(panel);
+    // A post's own filing code is the control: in Klingon letters it turns the post into Klingon; in plain letters it turns it back
+    root.querySelectorAll('.post-panel .panel-meta .code').forEach(function (c) {
+      c.setAttribute('data-kl', '1'); c.setAttribute('role', 'button'); c.tabIndex = 0; c.title = klOn ? 'Back to English' : 'Not a translation. A Klingon would object.';
+      c.setAttribute('aria-label', KL_WORDS[klOn ? 1 : 0] + ', ' + (c.getAttribute('data-en') || c.textContent).replace(/^#/, '#'));
+      var panel = c.closest('.post-panel'); if (panel && klOn) klConvert(panel);
     });
     paintCodes(root);
+    root.querySelectorAll('.post-panel .panel-meta .code[data-kl]').forEach(function (c) { c.title = klOn ? 'Back to English' : 'Not a translation. A Klingon would object.'; c.setAttribute('aria-label', KL_WORDS[klOn ? 1 : 0]); });
   }
-  document.addEventListener('click', function (e) {
-    var b = e.target.closest && e.target.closest('.klingon-toggle'); if (!b || !piqadReady) return;
+  function klToggle(b) {
+    if (!piqadReady) return;
     var panel = b.closest('.post-panel'); if (!panel) return;
     klOn = !klOn;
     document.querySelectorAll('.post-panel').forEach(function (p) { if (klOn) { if (p === panel) klConvert(p); } else klRestore(p); });
-    document.querySelectorAll('.klingon-toggle').forEach(function (t) { t.textContent = KL_WORDS[klOn ? 1 : 0]; });
     paintCodes(document);
-  });
+    document.querySelectorAll('.post-panel .panel-meta .code[data-kl]').forEach(function (c) { c.title = klOn ? 'Back to English' : 'Not a translation. A Klingon would object.'; c.setAttribute('aria-label', KL_WORDS[klOn ? 1 : 0]); });
+  }
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.post-panel .panel-meta .code[data-kl]'); if (b) klToggle(b); });
+  document.addEventListener('keydown', function (e) { if (e.key !== 'Enter' && e.key !== ' ') return; var b = e.target.closest && e.target.closest('.post-panel .panel-meta .code[data-kl]'); if (b) { e.preventDefault(); klToggle(b); } });
   // The font is fetched only once the page has finished loading, so it never competes with what the visitor came to see
   function loadPiqad() {
     document.fonts.load('1em "Dungeon pIqaD"', '').then(function (faces) {
@@ -154,8 +159,7 @@
         var line = document.createElement('span'); line.textContent = money(found.price) + ' today' + (off >= 5 ? ' \u00b7 ' + off + '% under its usual price' : ''); t.appendChild(line);
         var home = document.createElement('a'); home.href = (shelf.pageBase || '/lego/') + found.slug + '/'; home.textContent = 'Price history \u2192'; home.className = 'review-buy-hist'; t.appendChild(home);
         var go = document.createElement('a'); go.className = 'store-go'; go.href = found.url; go.target = '_blank'; go.rel = 'sponsored nofollow noopener'; go.textContent = shelf.linkLabel || 'Buy on Amazon';
-        var aff = document.createElement('span'); aff.className = 'review-buy-aff'; aff.textContent = 'Affiliate link';
-        var r = document.createElement('div'); r.className = 'review-buy-go'; r.appendChild(go); r.appendChild(aff);
+        var r = document.createElement('div'); r.className = 'review-buy-go'; r.appendChild(go);
         box.appendChild(t); box.appendChild(r); box.hidden = false;
       });
     });

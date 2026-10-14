@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.27.2
+
+- **One commission line, in the footer.** Every page now says, in the small line at the bottom, "As an Amazon Associate I earn from qualifying purchases, so buying anything from this site may earn me a commission." The separate "Affiliate link" notes (on a review's Buy card and beside "Get Notified" on an item's page) and the Associate sentence at the foot of an item's page are gone; the list pop-up keeps its own "I may earn a commission if you buy." line. With the note gone, the button on a review's Buy card sits centred in the card.
+- **The Klingon code is the language switch.** The "Translate to Klingon" text button under a post's date is gone. The filing code above the title, in Klingon letters, is now the control: pressing it turns the post into Klingon and shows the code in plain letters; pressing the plain code brings the English back. It is a real button (Tab, Enter and Space work; its name says "Translate to Klingon" or "Back to English"; pointing at it says "Not a translation. A Klingon would object."). A phone has no pointing, so nothing there says the code can be pressed.
+- The review list on the list page now asks Ghost for up to 50 reviews instead of "all" (gscan flagged "all"; no change to what shows).
+- Looked at in Chrome at 1280 and 390 px on live pages with the changed template parts added in the browser (the toggle both ways by click, Enter and Space; the footer line; no per-card notes on an item page or a review card), 25 automatic checks. Not seen in Safari or Firefox or on a real phone.
+
 ## 2.27.1
 
 - **A Buy card on a review's own page.** A post that reviews an item (the internal tag `#for-<item address>`) now carries a small white card under its intro: the item's name, today's price with how far under its usual price it is, "Price history →" to the item's page, and a Buy on Amazon button (with the affiliate tag and an "Affiliate link" note). It is drawn from the same price data as the item pages, so it shows the live price; if the item has no price today, no card.
