@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.26.8
+
+- **A LEGO or diecast item's page, redrawn around buying.** The top of the page is now one white card inside the colour block: the picture and name, then the price and Buy strip, then the intro text. The price history, "Lows hit in" and "I paid" stay on the colour as before. The strip comes straight after the name, ahead of the long text, so on a phone the Buy button is on the first screen (about 500 px down at 390 px wide) and the picture is centred; on a desktop the button is at the right end of the strip. The "Buy now →" in the pill row and the "Buy Now" status box are gone (the page said "buy" three times); for a set that is not a Must Buy the line says what a Must Buy price would be ("Must Buy under ₹13,166"), as before. Type is smaller throughout.
+- **A cleaner price block on a phone.** One large price with its "% off" tag; for a Must Buy a single small line, "Usual ₹23,025 · Lowest ₹11,449"; for any other set the usual and lowest as two small labelled columns. The pieces and the price per piece sit under the name ("1,361 pieces · ₹8.4 a piece"); the short descriptive sentence and "At or near its lowest ever." are hidden on a phone (the pill says it).
+- **The commission note moved.** The page's foot now carries "As an Amazon Associate I earn from qualifying purchases."; beside "Get Notified" a small "Affiliate link" tag sits at the right. The list's pop-up keeps its "I may earn a commission if you buy." line. The second "Get Notified" at the foot of the page is gone (the one under the Buy button stays).
+- **Buy buttons** now have a thin orange edge along the bottom (green with white text; white with a green ring and the orange edge on hover or focus).
+- **The list's pop-up** gets the same card: its top part and the price strip are one white card, with the pieces line and the Buy button at the right on desktop and full width on a phone.
+- Looked at in Chrome (wide and phone, including the pop-up) on seven LEGO item pages in different colours and verdicts and one diecast page, with 102 automatic checks for order, colours, the tag on the Buy link, no sideways scroll, the Buy button above the fold and a centred picture. Not seen in Safari or Firefox or on a real phone. Not checked: a very long item name, and a dark-coloured page with a Must Buy.
+
 ## 2.26.7
 
 - **"Get Notified" under the Buy button.** An item's page now carries the same small line that was at its foot (a bell, the words "Get Notified:" and the Telegram icon as the link) right under the Buy on Amazon button, so a visitor who is not ready to buy can still follow the deals. The one at the foot stays. It shows only when the site names the Telegram channel (Settings, Code injection, as before); clicks are counted as before. Email will sit beside it once Ghost can send mail.

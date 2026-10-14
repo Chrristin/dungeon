@@ -115,6 +115,11 @@
   /* "LOWEST SINCE 4 OCT": for an item with no lowest on record yet, the lowest seen and from when */
   function since(word, d) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return el('span', 'store-fig-k', m ? word + ' ' + (+m[3]) + ' ' + MONTHS[+m[2] - 1] : 'Lowest so far'); }
   function dayWord(n) { return n + (n === 1 ? ' day' : ' days'); }
+  /* "1,361 pieces · ₹8.4 a piece": the line under an item's name on a phone */
+  function factsLine(o) {
+    var bits = []; if (num(o.it.pieces)) bits.push(o.it.pieces.toLocaleString(shelf.locale || 'en-IN') + ' pieces'); if (o.ppp != null) bits.push(perPiece(o.ppp) + ' a piece');
+    return bits.length ? el('p', 'watch-facts', bits.join(' \u00b7 ')) : null;
+  }
   function perPiece(v) { return shelf.currency + (v < 100 ? (Math.round(v * 10) / 10).toFixed(1) : String(Math.round(v))); }
   /* The discount, written small beside a price. It steps up in strength with the shelf's own rules:
      plain below a fair discount, green from there, a solid green pill at a Must Buy discount. */
@@ -234,13 +239,21 @@
     if (o.priced || num(it.low)) {
       /* The price section: three prices on one line (today's the largest), then one plain sentence saying where
          the Must Buy price is and how far today is from it, then the buy button */
-      var panel = el('div', 'store-panel'), figs = el('div', 'store-figs'), rules = rulesOf(shelf);
+      var panel = el('div', 'store-panel store-panel--buy'), figs = el('div', 'store-figs'), rules = rulesOf(shelf);
       var vs = el('div', 'store-figs-row is-prices'), ks = el('div', 'store-figs-row');
       var now = el('span', 'store-fig-today'); now.appendChild(el('strong', 'store-fig-v is-today', o.priced ? money(it.price) : '\u2014'));
       var tag = offTag(o); if (tag) now.appendChild(tag); else if (o.priced && o.base) now.appendChild(el('span', 'store-off store-off--0', o.usual != null ? (it.price > o.usual * 1.05 ? 'above usual' : 'at usual') : o.over ? 'above MRP' : 'at MRP'));
       vs.appendChild(now); var seen = !num(it.low) && num(it.seenLow); vs.appendChild(el('strong', 'store-fig-v', num(it.low) ? money(it.low) : seen ? money(it.seenLow) : '\u2014')); vs.appendChild(el('strong', 'store-fig-v', o.base ? money(o.base) : '\u2014'));
       ks.appendChild(dated('Today', it.checked || shelf.updated)); ks.appendChild(seen ? since('Lowest since', it.seenSince) : dated('Lowest', it.lowDate)); ks.appendChild(el('span', 'store-fig-k', o.usual != null ? 'Usual' : 'MRP'));
       figs.appendChild(vs); figs.appendChild(ks); panel.appendChild(figs);
+      /* On a phone the three prices become one: today's price, and the usual and lowest as small facts (equal and tiny when it is a Must Buy, a little larger when it is not) */
+      var lim0 = mustPrice(it, rules), isMust = !!o.priced && (o.verdict === 'must' || (lim0 != null && it.price <= lim0));
+      var fm = el('div', 'store-figs-m'), fmNow = el('div', 'store-figs-m-now'), tagEl = now.querySelector('.store-off');
+      fmNow.appendChild(el('strong', 'store-fig-v is-today', o.priced ? money(it.price) : '\u2014')); if (tagEl) fmNow.appendChild(tagEl.cloneNode(true)); fm.appendChild(fmNow);
+      var lowTxt = num(it.low) ? money(it.low) : seen ? money(it.seenLow) : '\u2014', baseTxt = o.base ? money(o.base) : '\u2014', baseKey = o.usual != null ? 'Usual' : 'MRP';
+      if (isMust) { var fsub = el('p', 'store-figs-m-sub'); fsub.appendChild(document.createTextNode(baseKey + ' ')); fsub.appendChild(el('strong', '', baseTxt)); fsub.appendChild(document.createTextNode(' \u00b7 Lowest ')); fsub.appendChild(el('strong', '', lowTxt)); fm.appendChild(fsub); }
+      else { var fcols = el('div', 'store-figs-m-cols'); [[baseKey, baseTxt], ['Lowest', lowTxt]].forEach(function (pair) { var c = el('div', ''); c.appendChild(el('small', '', pair[0])); c.appendChild(el('strong', '', pair[1])); fcols.appendChild(c); }); fm.appendChild(fcols); }
+      panel.appendChild(fm);
       /* One short line: the Must Buy price, "Buy Now" when today is within it, or "Collecting Data" when there
          isn't enough history. The price per piece sits at its right when the shelf has a piece count. */
       var limit = mustPrice(it, rules), say = el('p', 'store-rule'), words = el('span', ''), dot = el('span', 'store-rule-dot');
@@ -251,7 +264,8 @@
       else { words.appendChild(document.createTextNode('Must Buy under ')); words.appendChild(el('strong', '', money(limit))); }
       say.appendChild(dot);
       say.appendChild(words);
-      if (o.ppp != null) say.appendChild(el('span', 'store-rule-ppp', perPiece(o.ppp) + ' per piece \u00b7 ' + it.pieces.toLocaleString(shelf.locale || 'en-IN') + ' pieces'));
+      if (isMust) say.className += ' is-must';
+      if (o.ppp != null) say.appendChild(el('span', 'store-rule-ppp store-rule-pp', perPiece(o.ppp) + ' per piece \u00b7 ' + it.pieces.toLocaleString(shelf.locale || 'en-IN') + ' pieces'));
       /* The label's MRP is not what the verdict goes by; when it is far above the usual price, say so */
       if (o.usual != null && o.mrp != null && o.mrp > o.usual * 1.15) say.appendChild(el('span', 'store-rule-ppp', 'Listed MRP ' + money(o.mrp) + ' is well above the usual price'));
       panel.appendChild(say);
@@ -372,7 +386,7 @@
     sheet.appendChild(bar1);
 
     var hero = el('div', 'store-sheet-hero'); hero.appendChild(tile(o, 'store-tile store-tile--big'));
-    var txt = el('div', 'store-sheet-text'); txt.appendChild(el('h2', 'store-sheet-name', it.name)); txt.appendChild(chips(o, true, true));
+    var txt = el('div', 'store-sheet-text'); txt.appendChild(el('h2', 'store-sheet-name', it.name)); var ff = factsLine(o); if (ff) txt.appendChild(ff); txt.appendChild(chips(o, true, true));
     txt.appendChild(el('p', 'store-sheet-why', it.note || reason(o))); hero.appendChild(txt); sheet.appendChild(hero);
 
     detail(o).forEach(function (n) { sheet.appendChild(n); });
@@ -788,11 +802,8 @@
       /* Your own photo (kept on this site) fills its tile; a catalogue picture, which comes on white, is blended into the page's colour */
       var shot = pic && pic.querySelector('img'); if (shot) { try { if (new URL(shot.src, location.href).host === location.host) pic.className += ' is-photo'; } catch (e) {} }
       var verdict = page.querySelector('.watch-verdict');
-      if (verdict) {
-        var pillRow = chips(o, true, true), topUrl = o.priced ? safeUrl(o.it.url) : '';
-        if (topUrl) { var topGo = el('a', 'store-go store-go--top', 'Buy now →'); topGo.href = topUrl; topGo.target = '_blank'; topGo.rel = isAffiliate(topUrl) ? 'sponsored nofollow noopener' : 'noopener'; pillRow.appendChild(topGo); }
-        verdict.appendChild(pillRow); verdict.appendChild(el('p', 'store-sheet-why', found.note || reason(o)));
-      }
+      if (verdict) { verdict.appendChild(chips(o, true, true)); verdict.appendChild(el('p', 'store-sheet-why', found.note || reason(o))); }
+      var factsEl = factsLine(o), ledeEl = page.querySelector('.watch-lede'); if (factsEl && ledeEl) ledeEl.insertAdjacentElement('afterend', factsEl);
       detail(o).forEach(function (n) { itemBox.appendChild(n); });
       /* Under the Buy button: the same "Get Notified" line as at the foot of the page (bell, the words, the Telegram icon as the link). */
       var tgMeta = document.querySelector('meta[name="watchlist-telegram"]'), tgUrl = tgMeta && tgMeta.getAttribute('content'), buyBox = itemBox.querySelector('.store-buy');
@@ -800,9 +811,14 @@
         var follow = el('p', 'watch-notify watch-notify--buy');
         follow.innerHTML = '<span class="watch-notify-label"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span>Get Notified:</span></span><a class="watch-notify-icon" target="_blank" rel="noopener" aria-label="Get notified on Telegram"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M21.9 3.3 2.6 10.7c-.9.4-.9 1.3 0 1.6l4.9 1.5 1.9 5.8c.2.6.8.7 1.2.3l2.7-2.3 4.9 3.6c.6.4 1.3.1 1.5-.6l3.2-15.8c.2-.9-.5-1.3-1-1.5zM8.6 13.3l9.7-6.1c.2-.1.3.1.2.2l-7.9 7.2-.3 3.2-1.7-4.5z"/></svg></a>';
         follow.querySelector('a').href = tgUrl;
+        var buyHref = safeUrl(o.it.url); if (buyHref && isAffiliate(buyHref)) follow.appendChild(el('span', 'watch-notify-aff', 'Affiliate link'));
         buyBox.insertAdjacentElement('afterend', follow);
       }
-      var foot = el('div', 'store-sheet-foot'); foot.appendChild(el('span', 'store-sheet-note', shelf.method || ''));
+      /* The price and Buy strip sits straight under the top card, ahead of the long text, so the way to buy is on the first screen */
+      var buyPanel = itemBox.querySelector(':scope > .store-panel--buy'), heroEl = page.querySelector('.watch-hero');
+      if (buyPanel && heroEl) heroEl.insertAdjacentElement('afterend', buyPanel);
+      var foot = el('div', 'store-sheet-foot'), footAff = safeUrl(o.it.url) && isAffiliate(safeUrl(o.it.url)) ? 'As an Amazon Associate I earn from qualifying purchases. ' : '';
+      foot.appendChild(el('span', 'store-sheet-note', footAff + (shelf.method || '')));
       itemBox.appendChild(foot);
     });
   }
