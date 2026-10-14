@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.26.9
+
+- **Easier to read, and "Get Notified" in the right place.** The small usual and lowest prices and their labels on an item's white card were too faint; they are now darker and a little larger. On a phone, a Must Buy had its "Get Notified" line above the Buy button (the hidden status line left the row empty); it now always comes after the button. Checked in Chrome on 14 LEGO item pages at phone and wide width for the order, and by eye on a Must Buy, a Wait for Sale and the desktop top card; not in Safari or Firefox or on a real phone.
+
 ## 2.26.8
 
 - **A LEGO or diecast item's page, redrawn around buying.** The top of the page is now one white card inside the colour block: the picture and name, then the price and Buy strip, then the intro text. The price history, "Lows hit in" and "I paid" stay on the colour as before. The strip comes straight after the name, ahead of the long text, so on a phone the Buy button is on the first screen (about 500 px down at 390 px wide) and the picture is centred; on a desktop the button is at the right end of the strip. The "Buy now →" in the pill row and the "Buy Now" status box are gone (the page said "buy" three times); for a set that is not a Must Buy the line says what a Must Buy price would be ("Must Buy under ₹13,166"), as before. Type is smaller throughout.

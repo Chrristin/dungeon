@@ -3150,3 +3150,14 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
   .store-sheet > .store-sheet-hero .store-sheet-text { align-self: stretch; }
   .store-panel--buy .store-aff { grid-row: 4; }
 }
+/* On the white card the small usual / lowest figures and their labels are darker and a touch larger (the grey was too faint) */
+.store-figs-m-sub { font-size: 0.88rem; font-weight: 500; color: #2b2f36; }
+.store-figs-m-sub strong { font-weight: 700; color: #17191e; }
+.store-figs-m-cols small { font-size: 0.74rem; font-weight: 600; color: #2b2f36; }
+.store-figs-m-cols strong { color: #17191e; }
+.watch-item .store-panel--buy .store-fig-k { font-size: 0.74rem; font-weight: 500; color: #2b2f36; }
+.watch-item .store-panel--buy .store-rule, .watch-item .store-panel--buy .store-rule-ppp { color: #2b2f36; }
+.watch-facts { color: #2b2f36; }
+/* The Get Notified line always comes after the Buy button (on a phone the button is in the third row, so a Must Buy, whose status line is hidden, put it above) */
+.store-panel--buy .watch-notify--buy { grid-row: 3; }
+@media (max-width: 760px) { .store-panel--buy .watch-notify--buy { grid-row: 4; } }
