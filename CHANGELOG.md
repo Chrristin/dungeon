@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.28.0
+
+- **The review page's Buy card when the set is not on sale.** If the set a review is about has no seller on Amazon India right now (the Ferrari SF-24 today), the card used to vanish. It now stays, says "Not available on Amazon India right now.", offers "View on Amazon" and, where the list has a Telegram link, "Tell me when it is back (Telegram)". With a price it looks as before.
+- **A slim bar inside Instagram's and Facebook's own browsers.** Those browsers show the page small and without a visitor's usual tools. A dark bar at the top says so. On Android it has an "Open in Chrome" button that opens the same page there; on an iPhone it says where Instagram keeps "Open in browser" (tap the three dots). The bar has a close button and stays closed for the rest of the visit. It appears nowhere else. It does not cover the Buy button.
+- Looked at in Chrome and in Safari's engine (WebKit) on phone-sized screens, against the live pages with the new files swapped in: card with and without a price, the bar with Android and iPhone Instagram browser strings, closing it, no page errors. Firefox would not start on this computer, so it was not tested; the Android "Open in Chrome" link was not tried inside a real Instagram app; not seen on a real phone.
+
 ## 2.27.4
 
 - **A shorter footer.** The small print at the bottom is two short lines again: "As an Amazon Associate I earn from qualifying purchases." and "Visits are counted with Google Analytics, which uses cookies." (with its "How Google uses that data" link). The longer commission sentence added in 2.27.2 is gone. The lines sit closer under the "Set in JetBrains Mono and Fira Mono" line (about 11 px instead of 33 on a desktop, 8 px on a phone), and the rows above them are a little closer together too. Looked at in Chrome at 1280, 820 and 390 px with the new markup added in the browser; not in Safari or Firefox or on a real phone.

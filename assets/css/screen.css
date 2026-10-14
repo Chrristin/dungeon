@@ -3233,3 +3233,10 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .colophon-line { display: block; }
 .colophon-privacy { margin-top: 0.2rem; }
 @media (max-width: 899px) { .colophon-row { row-gap: 0.4rem; } .colophon-row .colophon-privacy { margin-top: 0.2rem; } }
+
+/* The bar inside Instagram's and Facebook's own browsers */
+.iab-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 70; display: flex; align-items: center; gap: 0.6rem; min-height: 2.4rem; padding: 0.3rem 0.5rem 0.3rem 0.8rem; background: #17191e; color: #fff; font: 0.74rem/1.3 var(--mono); }
+.iab-msg { flex: 1 1 auto; min-width: 0; }
+.iab-go { flex: none; padding: 0.35rem 0.7rem; border-radius: 999px; background: #1f7a4d; color: #fff; font-weight: 700; text-decoration: none; box-shadow: inset 0 -2px 0 #ff9900; white-space: nowrap; }
+.iab-x { flex: none; width: 1.9rem; height: 1.9rem; border: 0; border-radius: 50%; background: transparent; color: #fff; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+.iab-go:focus-visible, .iab-x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }

@@ -172,15 +172,18 @@
       Promise.all(sources.map(function (u) { return fetch(u).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); })).then(function (all) {
         var found = null, shelf = null;
         all.forEach(function (d) { if (d && Array.isArray(d.items)) d.items.forEach(function (it) { if (!found && it.slug === slug) { found = it; shelf = d; } }); });
-        if (!found || !(found.price > 0) || !/^https:\/\//.test(found.url || '')) return;
+        if (!found || !/^https:\/\//.test(found.url || '')) return;
+        var priced = found.price > 0;
         var cur = shelf.currency || '', loc = shelf.locale || 'en-IN', money = function (n) { return cur + Math.round(n).toLocaleString(loc); };
         var usual = found.orp > 0 && found.orpDays >= 30 ? found.orp : (found.mrp > 0 ? found.mrp : 0), off = usual > found.price ? Math.round((1 - found.price / usual) * 100) : 0;
         box.textContent = '';
         var t = document.createElement('div'); t.className = 'review-buy-t';
         var name = document.createElement('strong'); name.textContent = found.name; t.appendChild(name);
-        var line = document.createElement('span'); line.textContent = money(found.price) + ' today' + (off >= 5 ? ' \u00b7 ' + off + '% under its usual price' : ''); t.appendChild(line);
+        var line = document.createElement('span'); line.textContent = priced ? money(found.price) + ' today' + (off >= 5 ? ' \u00b7 ' + off + '% under its usual price' : '') : 'Not available on Amazon India right now.'; t.appendChild(line);
         var home = document.createElement('a'); home.href = (shelf.pageBase || '/lego/') + found.slug + '/'; home.textContent = 'Price history \u2192'; home.className = 'review-buy-hist'; t.appendChild(home);
-        var go = document.createElement('a'); go.className = 'store-go'; go.href = found.url; go.target = '_blank'; go.rel = 'sponsored nofollow noopener'; go.textContent = shelf.linkLabel || 'Buy on Amazon';
+        var tgm = document.querySelector('meta[name="watchlist-telegram"]'), tgu = tgm && (tgm.getAttribute('content') || '').trim();
+        if (!priced && /^https:\/\/t\.me\//i.test(tgu || '')) { var tg = document.createElement('a'); tg.href = tgu; tg.target = '_blank'; tg.rel = 'noopener'; tg.textContent = 'Tell me when it is back (Telegram) \u2192'; tg.className = 'review-buy-hist'; t.appendChild(tg); }
+        var go = document.createElement('a'); go.className = 'store-go'; go.href = found.url; go.target = '_blank'; go.rel = 'sponsored nofollow noopener'; go.textContent = priced ? (shelf.linkLabel || 'Buy on Amazon') : 'View on Amazon';
         var r = document.createElement('div'); r.className = 'review-buy-go'; r.appendChild(go);
         box.appendChild(t); box.appendChild(r); box.hidden = false;
       });
@@ -4011,6 +4014,31 @@
     if (window.MutationObserver) new MutationObserver(function (list) { list.forEach(function (m) { [].forEach.call(m.addedNodes, function (n) { if (n.nodeType === 1) sweep(n); }); }); }).observe(document.body, { childList: true, subtree: true });
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+/* Inside Instagram's or Facebook's own browser a page is shown small and without the visitor's usual tools. A slim bar at the top says so
+   and, on Android, opens the page in Chrome; on an iPhone it says where Instagram keeps "Open in browser". Dismissed for the visit. Nowhere else. */
+(function () {
+  var ua = navigator.userAgent || '';
+  if (!/Instagram|FBAN|FBAV|FB_IAB/i.test(ua)) return;
+  try { if (sessionStorage.getItem('dungeon-iab') === '1') return; } catch (e) {}
+  var android = /Android/i.test(ua), ios = /iPhone|iPad|iPod/i.test(ua);
+  var bar = document.createElement('div'); bar.className = 'iab-bar'; bar.setAttribute('role', 'region'); bar.setAttribute('aria-label', 'Open in your browser');
+  var msg = document.createElement('span'); msg.className = 'iab-msg';
+  msg.textContent = android ? 'This page looks best in your browser.' : ios ? 'For the best view: tap \u00b7\u00b7\u00b7 then "Open in browser".' : 'This page looks best in your browser.';
+  bar.appendChild(msg);
+  if (android) {
+    var go = document.createElement('a'); go.className = 'iab-go'; go.textContent = 'Open in Chrome';
+    var here = location.href;
+    go.href = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(here) + ';end';
+    go.addEventListener('click', function () { try { if (typeof window.gtag === 'function') window.gtag('event', 'iab_open_click', { page_path: location.pathname }); } catch (e) {} });
+    bar.appendChild(go);
+  }
+  var x = document.createElement('button'); x.type = 'button'; x.className = 'iab-x'; x.setAttribute('aria-label', 'Close'); x.textContent = '\u00d7';
+  x.addEventListener('click', function () { bar.remove(); try { sessionStorage.setItem('dungeon-iab', '1'); } catch (e) {} });
+  bar.appendChild(x);
+  var add = function () { document.body.appendChild(bar); };
+  if (document.body) add(); else document.addEventListener('DOMContentLoaded', add);
 })();
 
 /* Analytics events. The Google tag is added in Settings, Code injection; when it is not there, nothing below does anything. Three things are counted: a click to Amazon (buy_click), a click to the Telegram channel (telegram_click) and an email sign-up form sent (sign_up). Only where the click happened is recorded, never who clicked. */
