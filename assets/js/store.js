@@ -794,6 +794,14 @@
         verdict.appendChild(pillRow); verdict.appendChild(el('p', 'store-sheet-why', found.note || reason(o)));
       }
       detail(o).forEach(function (n) { itemBox.appendChild(n); });
+      /* Under the Buy button: the same "Get Notified" line as at the foot of the page (bell, the words, the Telegram icon as the link). */
+      var tgMeta = document.querySelector('meta[name="watchlist-telegram"]'), tgUrl = tgMeta && tgMeta.getAttribute('content'), buyBox = itemBox.querySelector('.store-buy');
+      if (buyBox && tgUrl && /^https:\/\/t\.me\//i.test(tgUrl)) {
+        var follow = el('p', 'watch-notify watch-notify--buy');
+        follow.innerHTML = '<span class="watch-notify-label"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span>Get Notified:</span></span><a class="watch-notify-icon" target="_blank" rel="noopener" aria-label="Get notified on Telegram"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M21.9 3.3 2.6 10.7c-.9.4-.9 1.3 0 1.6l4.9 1.5 1.9 5.8c.2.6.8.7 1.2.3l2.7-2.3 4.9 3.6c.6.4 1.3.1 1.5-.6l3.2-15.8c.2-.9-.5-1.3-1-1.5zM8.6 13.3l9.7-6.1c.2-.1.3.1.2.2l-7.9 7.2-.3 3.2-1.7-4.5z"/></svg></a>';
+        follow.querySelector('a').href = tgUrl;
+        buyBox.insertAdjacentElement('afterend', follow);
+      }
       var foot = el('div', 'store-sheet-foot'); foot.appendChild(el('span', 'store-sheet-note', shelf.method || ''));
       itemBox.appendChild(foot);
     });

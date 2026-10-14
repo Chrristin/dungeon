@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.26.7
+
+- **"Get Notified" under the Buy button.** An item's page now carries the same small line that was at its foot (a bell, the words "Get Notified:" and the Telegram icon as the link) right under the Buy on Amazon button, so a visitor who is not ready to buy can still follow the deals. The one at the foot stays. It shows only when the site names the Telegram channel (Settings, Code injection, as before); clicks are counted as before. Email will sit beside it once Ghost can send mail.
+- **Price labels no longer run into each other on a narrow phone.** "Lowest (26 Sep 2025)" ran into "Usual" on an item's page at 390 px wide; the small labels now wrap there, as they already did in the list's pop-up. Looked at in Chrome on three live item pages at wide and phone width (360, 390 and 412 px for the labels); not in Safari or Firefox or on a real phone.
+
 ## 2.26.6
 
 - **A green "Buy now" button on every item's page, and green Buy buttons throughout.** The page for a LEGO or diecast item gets a "Buy now →" button at the right end of the pill row (beside Must Buy and Lowest Ever), so the way to buy is in the first screen, not only at the bottom. It goes to the same Amazon link with the same site tag as the Buy on Amazon button, and appears only when the item has a price today. Every Buy button (item pages, the list's sheet) is now the site's green with white text instead of black, and turns white with green text and a thin green edge on hover or keyboard focus (instant for visitors who ask for reduced motion). On a phone the new button sits at the right of the pills, and drops to its own line if there is no room. Looked at in Chrome on three live item pages (Time Machine on yellow, Enterprise, Volvo excavator) at wide and phone width, checking the tag on both buttons, the hover colours and no sideways scroll; not in Safari or Firefox or on a real phone. Not looked at in dark mode.

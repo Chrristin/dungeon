@@ -3082,3 +3082,7 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .store-chips .store-go--top { margin-left: auto; min-height: 2.2rem; padding: 0 1.1rem; font-size: 0.82rem; }
 @media (max-width: 760px) { .store-chips .store-go--top { width: auto; } }
 @media (prefers-reduced-motion: reduce) { .store-go { transition: none; } }
+/* On an item's page the small price labels may wrap on a narrow phone (the pop-up sheet already allowed it); before, "LOWEST (26 SEP 2025)" ran into "USUAL" */
+.watch-item .store-figs-row .store-fig-k { white-space: normal; overflow-wrap: anywhere; }
+/* The Get Notified line under an item's Buy button sits a little closer than the one at the foot of the page */
+.watch-notify--buy { margin: 0.9rem 0 0; }
