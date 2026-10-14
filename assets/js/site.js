@@ -99,6 +99,29 @@
   var maxTilt = parseFloat(document.body.getAttribute('data-tilt') || '0');
   if (window.matchMedia('(max-width: 900px), (pointer: coarse) and (max-width: 1100px)').matches) maxTilt = Math.min(maxTilt, 2);
 
+  // Image beside text. An HTML card holding <div class="beside"></div> goes just above an image card;
+  // the image and the paragraph after it (or data-paras="3" for more) become one block, image on the left
+  // (data-side="right" for the other side). The image stays an ordinary image card, so it keeps its tilt.
+  // Without JavaScript, in email and in the editor, the marker shows nothing and everything simply stacks.
+  function besides(root) {
+    root.querySelectorAll('.panel-content .beside:not(.is-set)').forEach(function (mark) {
+      var fig = mark.nextElementSibling;
+      if (!fig || !fig.classList.contains('kg-image-card')) return;
+      var want = Math.max(1, parseInt(mark.getAttribute('data-paras'), 10) || 1);
+      var paras = [], next = fig.nextElementSibling;
+      while (next && paras.length < want && next.tagName === 'P') { paras.push(next); next = next.nextElementSibling; }
+      if (!paras.length) return;
+      var text = document.createElement('div');
+      text.className = 'beside-text';
+      paras.forEach(function (p) { text.appendChild(p); });
+      if (mark.getAttribute('data-side') === 'right') mark.classList.add('beside--right');
+      mark.classList.add('is-set');
+      mark.textContent = '';
+      mark.appendChild(fig);
+      mark.appendChild(text);
+    });
+  }
+
   // Filing codes, colours and tilt. Everything is derived from the post's slug,
   // so a post keeps the same code, colour and angle on every visit.
   function decorate(root) {
@@ -118,6 +141,7 @@
     // Codes were just written in plain letters: draw them in pIqaD again (and show a new post's toggle)
     root.querySelectorAll('.code[data-en], .tag-code[data-en]').forEach(function (el) { if (el.matches('.code[data-date]:not([data-prefix]), .tag-code[data-tag]')) el.removeAttribute('data-en'); });
     klSync(root);
+    besides(root);
     // Inside a post: tags up to 2 degrees, images up to 1.5, text never.
     root.querySelectorAll('.post-panel[data-key]').forEach(function (panel) {
       if (maxTilt <= 0) return;

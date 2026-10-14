@@ -13,6 +13,8 @@
                 {{#if custom_excerpt}}<p class="watch-lede">{{custom_excerpt}}</p>{{/if}}
                 <div class="watch-verdict"></div>
             </div>
+            {{!-- A review of this item: a post tagged #for-<this page's address> (an internal tag), with its rating from #rated-4-5 and so on --}}
+            {{#get "posts" filter="tag:hash-for-{{slug}}" limit="1" include="tags"}}{{#foreach posts}}<a class="rv-line" href="{{url}}"><span class="rv-k">{{t "Review"}}</span><span class="rv-t">{{title}}</span>{{> "rating-stamp" size="small"}}</a>{{/foreach}}{{/get}}
         </div>
         {{#if html}}<section class="watch-notes panel-content gh-content">{{content}}</section>{{/if}}
         <div class="watch-data" data-slug="{{slug}}" data-src="{{asset "data/store-lego.json"}}"><p class="store-wait">{{t "Loading prices"}}…</p></div>
@@ -23,4 +25,4 @@
     {{> "stickies"}}
     {{/if}}{{/if}}
 </div>
-<script src="{{asset "js/store.js"}}&r=2.26.9" defer></script>
+<script src="{{asset "js/store.js"}}&r=2.27.0" defer></script>

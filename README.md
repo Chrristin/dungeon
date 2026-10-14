@@ -228,6 +228,20 @@ For a thank-you section, put round faces in a row; each shows a small card with 
 
 Use `<img src="..." alt="Their Name">` in place of the initials span for a photo.
 
+## An image beside its text
+
+For an image with a paragraph next to it, add an HTML card just above an image card:
+
+```html
+<div class="beside"></div>
+```
+
+The image and the paragraph after it become one block, image on the left. Add `data-paras="3"` to take in more paragraphs, or `data-side="right"` to put the image on the right. The image keeps its tilt and wiggles when the pointer is over it; on a phone the two stack. In the editor and in email they simply stack.
+
+## A review on an item's page
+
+A post that reviews a LEGO or diecast item shows as "Review: its title, rating" on that item's page. Give the review post an internal tag named `#for-` plus the item page's address (for example `#for-42207-ferrari-sf-24-f1-car`), and a rating tag such as `#rated-4-5` if you want the stamp. The line sits at the top right of the item's card, and last in the price strip on a phone. No tag, no line.
+
 ## routes.yaml
 
 Upload [`docs/routes.yaml`](docs/routes.yaml) in Ghost Admin (Settings > Labs > Routes). It puts the Library page at `/collection/library/` and keeps Now entries, Scatter notes, garden notes and things out of the homepage's list, each on its own page, while garden notes keep their addresses through a second collection at `/notes/`. Leaving garden notes out matters: the theme never shows them as cards, so if the homepage list included them they'd still take up places on each page, and a page of 25 could show only a handful of cards. Ghost doesn't apply a theme's routes file by itself when the theme updates, so upload it again whenever this file changes. [`docs/redirects.yaml`](docs/redirects.yaml) optionally sends visitors of `/notes/` to the Garden page.

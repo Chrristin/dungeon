@@ -814,6 +814,9 @@
         var buyHref = safeUrl(o.it.url); if (buyHref && isAffiliate(buyHref)) follow.appendChild(el('span', 'watch-notify-aff', 'Affiliate link'));
         buyBox.insertAdjacentElement('afterend', follow);
       }
+      /* A review of this item (the template draws it in the top card): on a phone the same line sits last in the strip, under Get Notified */
+      var rvHero = page.querySelector('.watch-hero > .rv-line'), rvAfter = itemBox.querySelector('.watch-notify--buy') || itemBox.querySelector('.store-buy');
+      if (rvHero && rvAfter) { var rvCopy = rvHero.cloneNode(true); rvCopy.className += ' rv-line--strip'; rvAfter.insertAdjacentElement('afterend', rvCopy); }
       /* The price and Buy strip sits straight under the top card, ahead of the long text, so the way to buy is on the first screen */
       var buyPanel = itemBox.querySelector(':scope > .store-panel--buy'), heroEl = page.querySelector('.watch-hero');
       if (buyPanel && heroEl) heroEl.insertAdjacentElement('afterend', buyPanel);

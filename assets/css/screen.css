@@ -3161,3 +3161,37 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 /* The Get Notified line always comes after the Buy button (on a phone the button is in the third row, so a Must Buy, whose status line is hidden, put it above) */
 .store-panel--buy .watch-notify--buy { grid-row: 3; }
 @media (max-width: 760px) { .store-panel--buy .watch-notify--buy { grid-row: 4; } }
+
+/* Image beside text: <div class="beside"></div> in an HTML card above an image card (site.js builds the block).
+   The image keeps its tilt, straightens on hover and gives a sticky's wiggle as it does. Phones stack it. */
+.gh-content .beside:not(.is-set) { display: none; }
+.gh-content .beside.is-set { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 1.75rem; align-items: center; margin-top: 2.2em; margin-bottom: 2.2em; }
+.gh-content .beside--right.is-set { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.gh-content .beside--right > .kg-image-card { order: 2; }
+.gh-content .beside > .kg-image-card { margin: 0; max-width: none; width: auto; }
+.gh-content .beside > .kg-image-card img { width: 100%; height: auto; }
+.beside-text > :first-child { margin-top: 0; }
+.beside-text > :last-child { margin-bottom: 0; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) { .gh-content .beside > .kg-image-card:hover { animation: sticky-wobble 0.55s ease-in-out; } }
+@media (max-width: 640px) {
+  .gh-content .beside.is-set { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
+  .gh-content .beside--right > .kg-image-card { order: 0; }
+}
+
+/* A review of an item, on its page: "Review: Title ★★★★½" in the top card's top-right corner; on a phone the same line sits last in the price strip */
+.watch-item .watch-hero { position: relative; }
+.rv-line { display: flex; align-items: center; gap: 0.55rem; min-width: 0; color: #17191e; text-decoration: none; font: 0.78rem/1.3 var(--mono); }
+.rv-k { flex: none; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #2b2f36; }
+.rv-k::after { content: ":"; margin-left: 0.1rem; }
+.rv-t { overflow: hidden; font-weight: 600; text-overflow: ellipsis; text-decoration: underline; text-decoration-color: #c9c5b8; text-underline-offset: 0.25em; white-space: nowrap; }
+.rv-line:hover .rv-t, .rv-line:focus-visible .rv-t { color: #1f7a4d; text-decoration-color: #1f7a4d; }
+.rv-line .rated { flex: none; rotate: 0deg; padding: 0.1rem 0.35rem; }
+.rv-line--strip { display: none; }
+@media (min-width: 761px) {
+  .watch-item .watch-hero > .rv-line { position: absolute; top: 0.75rem; right: 1.5rem; max-width: 30rem; }
+  .watch-item .watch-hero:has(> .rv-line) { padding-top: 2.3rem; }
+}
+@media (max-width: 760px) {
+  .watch-item .watch-hero > .rv-line { display: none; }
+  .store-panel--buy .rv-line--strip { display: flex; grid-column: 1 / -1; grid-row: 5; margin: 0.2rem 0 0; padding-top: 0.7rem; border-top: 1px solid #ece9e0; }
+}
