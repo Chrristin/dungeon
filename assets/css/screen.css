@@ -3227,3 +3227,5 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .panel-meta .code[data-kl]:hover { opacity: 0.7; }
 .panel-meta .code[data-kl]:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 3px; }
 .review-buy-go { align-items: flex-end; }
+/* "I paid": about half the size it was; the figure is a note, not a headline */
+.store-extra .store-paid, .watch-item .store-paid, .store-sheet .store-paid { font-size: 0.85rem; font-weight: 600; line-height: 1.35; }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.27.3
+
+- **The Klingon switch glitches both ways.** Pressing the filing code now scrambles the text that is on screen through random glyphs as it turns into Klingon, settling left to right over about 0.6 s, and the code scrambles into plain letters; pressing the plain code scrambles the text back into English and the code back into Klingon letters. Only text on screen is animated (up to about 2,500 characters; the rest swaps at once), a second press within three quarters of a second is ignored so the page cannot end half-converted, and visitors who ask for reduced motion get an instant switch.
+- **"I paid" at about half the size.** On an item's page and in the list's pop-up the figure goes from about 25 px to 13.6 px (on a phone from 16.8 px to 11.9 px), still semi-bold; in the pop-up it now fits on one line.
+- Looked at in Chrome on a live post at 1280 and 390 px and with reduced motion: the text and the code showed several different frames before settling, both ways, and the end states were clean (no leftover spans, quick double press tolerated); "I paid" seen before and after on the page, the pop-up and a phone. Not seen in Safari or Firefox or on a real phone.
+
 ## 2.27.2
 
 - **One commission line, in the footer.** Every page now says, in the small line at the bottom, "As an Amazon Associate I earn from qualifying purchases, so buying anything from this site may earn me a commission." The separate "Affiliate link" notes (on a review's Buy card and beside "Get Notified" on an item's page) and the Associate sentence at the foot of an item's page are gone; the list pop-up keeps its own "I may earn a commission if you buy." line. With the note gone, the button on a review's Buy card sits centred in the card.

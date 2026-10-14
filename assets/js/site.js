@@ -28,8 +28,12 @@
     root.querySelectorAll('.code, .tag-code').forEach(function (el) {
       var en = el.getAttribute('data-en');
       if (en === null) { en = el.textContent; el.setAttribute('data-en', en); }
-      if (klOn) { el.textContent = en; return; }
       var had = !!el.querySelector('.piqad');
+      if (klOn) {
+        if (had && !calmCodes && inView(el)) { el.textContent = ''; var sp = document.createElement('span'); sp.className = 'piqad'; el.appendChild(sp); scrambleTo(sp, en, 420, function () { el.textContent = en; }); }
+        else el.textContent = en;
+        return;
+      }
       el.textContent = '';
       var g = document.createElement('span'); g.className = 'piqad'; g.setAttribute('aria-hidden', 'true'); g.textContent = toPiqad(en);
       var h = document.createElement('span'); h.className = 'visually-hidden'; h.textContent = en;
@@ -40,6 +44,19 @@
   }
   var calmCodes = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var PQ_ALL = Object.keys(PQ).map(function (k) { return String.fromCodePoint(PQ[k]); });
+  function inView(el) { var r = el.getBoundingClientRect(); return r.height > 0 && r.bottom > 0 && r.top < window.innerHeight; }
+  // Letters settle left to right out of random glyphs (spaces and punctuation stay put); done() runs when the last has settled
+  var klBudget = 0, klBusy = false;
+  function scrambleTo(node, target, ms, done) {
+    var chars = Array.from(target), n = chars.length, t0 = null;
+    function frame(ts) {
+      if (t0 === null) t0 = ts;
+      var k = Math.min(1, (ts - t0) / ms), cut = Math.floor(k * n);
+      node.textContent = chars.map(function (c, i) { return i < cut || /[\s#.,;:!?'"()\-]/.test(c) ? c : PQ_ALL[Math.floor(Math.random() * PQ_ALL.length)]; }).join('');
+      if (k < 1) requestAnimationFrame(frame); else { node.textContent = target; if (done) done(); }
+    }
+    requestAnimationFrame(frame);
+  }
   function glitch(node, en) {
     var real = Array.from(toPiqad(en)), plain = Array.from(en), n = real.length, t0 = null, MS = 420;
     function frame(t) {
@@ -50,7 +67,7 @@
     }
     requestAnimationFrame(frame);
   }
-  function klConvert(panel) {
+  function klConvert(panel, animate) {
     if (panel.__kl) return;
     var done = [];
     panel.querySelectorAll('.panel-image figcaption, .panel-title, .panel-lede, .panel-content').forEach(function (box) {
@@ -60,12 +77,16 @@
         var g = document.createElement('span'); g.className = 'piqad'; g.setAttribute('aria-hidden', 'true'); g.textContent = toPiqad(n.nodeValue);
         var h = document.createElement('span'); h.className = 'visually-hidden'; h.textContent = n.nodeValue;
         n.replaceWith(g); g.after(h); done.push([n, g, h]);
+        if (animate && !calmCodes && klBudget < 2500 && inView(g)) { klBudget += n.nodeValue.length; scrambleTo(g, toPiqad(n.nodeValue), 600); }
       });
     });
     panel.__kl = done;
   }
-  function klRestore(panel) {
-    (panel.__kl || []).forEach(function (r) { r[1].replaceWith(r[0]); r[2].remove(); });
+  function klRestore(panel, animate) {
+    (panel.__kl || []).forEach(function (r) {
+      var swap = function () { r[1].replaceWith(r[0]); r[2].remove(); };
+      if (animate && !calmCodes && klBudget < 2500 && r[1].isConnected && inView(r[1])) { klBudget += r[0].nodeValue.length; scrambleTo(r[1], r[0].nodeValue, 600, swap); } else swap();
+    });
     panel.__kl = null;
   }
   function klSync(root) {
@@ -81,9 +102,10 @@
   }
   function klToggle(b) {
     if (!piqadReady) return;
-    var panel = b.closest('.post-panel'); if (!panel) return;
+    var panel = b.closest('.post-panel'); if (!panel || klBusy) return;
+    klBusy = true; klBudget = 0; setTimeout(function () { klBusy = false; }, 750);
     klOn = !klOn;
-    document.querySelectorAll('.post-panel').forEach(function (p) { if (klOn) { if (p === panel) klConvert(p); } else klRestore(p); });
+    document.querySelectorAll('.post-panel').forEach(function (p) { if (klOn) { if (p === panel) klConvert(p, true); } else klRestore(p, true); });
     paintCodes(document);
     document.querySelectorAll('.post-panel .panel-meta .code[data-kl]').forEach(function (c) { c.title = klOn ? 'Back to English' : 'Not a translation. A Klingon would object.'; c.setAttribute('aria-label', KL_WORDS[klOn ? 1 : 0]); });
   }
