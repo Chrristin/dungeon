@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.26.6
+
+- **A green "Buy now" button on every item's page, and green Buy buttons throughout.** The page for a LEGO or diecast item gets a "Buy now →" button at the right end of the pill row (beside Must Buy and Lowest Ever), so the way to buy is in the first screen, not only at the bottom. It goes to the same Amazon link with the same site tag as the Buy on Amazon button, and appears only when the item has a price today. Every Buy button (item pages, the list's sheet) is now the site's green with white text instead of black, and turns white with green text and a thin green edge on hover or keyboard focus (instant for visitors who ask for reduced motion). On a phone the new button sits at the right of the pills, and drops to its own line if there is no room. Looked at in Chrome on three live item pages (Time Machine on yellow, Enterprise, Volvo excavator) at wide and phone width, checking the tag on both buttons, the hover colours and no sideways scroll; not in Safari or Firefox or on a real phone. Not looked at in dark mode.
+
 ## 2.26.5
 
 - **Filing codes arrive in plain letters, then glitch into Klingon.** The Klingon font is no longer preloaded; it is fetched once the page has finished loading, so it stays out of the way of what the visitor came to see (PageSpeed had it in the chain of fonts the first paint waits for). Codes show as plain letters at first. When the font is in, each code on screen scrambles through random glyphs for about 0.4 s and settles left to right; codes out of sight change quietly, and visitors who ask their device for reduced motion get an instant swap. Turning Klingon mode off plays the same glitch. Screen readers are unchanged: the plain code is always in the page and the scrambling letters are hidden from them. Looked at in Chrome at wide and phone width, with and without reduced motion; the swap adds no layout shift (0.031 with it, 0.031 with the font blocked). Not seen in Safari or Firefox.

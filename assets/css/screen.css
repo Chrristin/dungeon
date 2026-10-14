@@ -2802,11 +2802,11 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .store-sheet-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
 .store-sheet-note { max-width: 24rem; font: 0.68rem/1.4 var(--mono); }
 .store-buy { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; }
-.store-go { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0 1.4rem; border-radius: 999px; background: #17191e; color: #fcfcfa; font-weight: 500; font-size: 0.88rem; text-decoration: none; }
+.store-go { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0 1.4rem; border-radius: 999px; background: #1f7a4d; color: #fff; font-weight: 700; font-size: 0.88rem; text-decoration: none; box-shadow: inset 0 0 0 1.5px #1f7a4d; }
 .store-aff { flex: 0 1 auto; margin-left: auto; text-align: right; font: 0.68rem/1.4 var(--mono); color: #5e636c; }
 .store-see { font: 500 0.75rem/1 var(--mono); color: #17191e; text-decoration: none; }
 .store-see:hover, .store-see:focus-visible { text-decoration: underline; text-underline-offset: 0.25em; }
-.store-go:hover { background: #1e8b4c; }
+.store-go:hover, .store-go:focus-visible { background: #fff; color: #1f7a4d; }
 /* The sheet fits the window: its spacing, picture and type follow the window's height, so a laptop shows all of it
    without scrolling. Where it still cannot fit (a phone on its side, a long note) it scrolls, without showing a bar. */
 .store-sheet { scrollbar-width: none; padding: clamp(0.9rem, 2.6vh, 1.75rem) 1.75rem; }
@@ -2891,8 +2891,6 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .watch-item .store-panel .store-off--0 { color: var(--graphite); }
 .watch-item.is-dark .store-panel .store-off--1 { color: #fff; }
 .watch-item .store-panel .store-chip.is-off { border-color: var(--rule); color: var(--graphite); }
-.watch-item.is-dark .store-go { background: #fff; color: #17191e; }
-.watch-item.is-dark .store-go:hover { background: #17191e; color: #fff; }
 .watch-item.is-dark .store-see, .watch-item.is-dark .watch-back { color: #fff; }
 .watch-item .post-actions { margin-top: 0; }
 .watch-item.is-dark .stamp { --ink: rgba(255, 255, 255, 0.92); }
@@ -3076,3 +3074,11 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .klingon-toggle[hidden] { display: none; }
 .klingon-toggle:hover { opacity: 1; }
 .klingon-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; opacity: 1; }
+
+/* Buy buttons: green, turning white (with a green edge) on hover or focus. The "Buy now" one sits at the right end of the pill row on an item's page. */
+.store-go { transition: background-color 150ms ease, color 150ms ease; }
+.store-go:focus-visible { outline: 2px solid #1f7a4d; outline-offset: 3px; }
+.watch-item.is-dark .store-go:focus-visible { outline-color: #fff; }
+.store-chips .store-go--top { margin-left: auto; min-height: 2.2rem; padding: 0 1.1rem; font-size: 0.82rem; }
+@media (max-width: 760px) { .store-chips .store-go--top { width: auto; } }
+@media (prefers-reduced-motion: reduce) { .store-go { transition: none; } }

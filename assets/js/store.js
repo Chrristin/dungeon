@@ -788,7 +788,11 @@
       /* Your own photo (kept on this site) fills its tile; a catalogue picture, which comes on white, is blended into the page's colour */
       var shot = pic && pic.querySelector('img'); if (shot) { try { if (new URL(shot.src, location.href).host === location.host) pic.className += ' is-photo'; } catch (e) {} }
       var verdict = page.querySelector('.watch-verdict');
-      if (verdict) { verdict.appendChild(chips(o, true, true)); verdict.appendChild(el('p', 'store-sheet-why', found.note || reason(o))); }
+      if (verdict) {
+        var pillRow = chips(o, true, true), topUrl = o.priced ? safeUrl(o.it.url) : '';
+        if (topUrl) { var topGo = el('a', 'store-go store-go--top', 'Buy now →'); topGo.href = topUrl; topGo.target = '_blank'; topGo.rel = isAffiliate(topUrl) ? 'sponsored nofollow noopener' : 'noopener'; pillRow.appendChild(topGo); }
+        verdict.appendChild(pillRow); verdict.appendChild(el('p', 'store-sheet-why', found.note || reason(o)));
+      }
       detail(o).forEach(function (n) { itemBox.appendChild(n); });
       var foot = el('div', 'store-sheet-foot'); foot.appendChild(el('span', 'store-sheet-note', shelf.method || ''));
       itemBox.appendChild(foot);
