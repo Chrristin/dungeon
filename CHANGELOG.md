@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.29.1
+
+- **The pictures' scroll trail is for touch screens only.** With a mouse wheel the page moves a notch at a time and the trailing felt jumpy, so on a computer pictures no longer move or get the 6% enlargement at all. On a phone or tablet it works as in 2.29.0.
+- **Fixed: a picture could keep a small offset after it scrolled away mid-motion.** It is now put back as it leaves the screen. The 6% enlargement is also given only to a picture whose own frame clips it (before, a clipping frame one level further out counted too).
+- Frame times while scrolling the homepage were measured five times with the trail on and off in Chrome (headless, so only relative): no difference beyond the run-to-run noise. Checked on a desktop-size and a phone-size touch window against the live homepage with the new script swapped in: nothing moved or was enlarged on desktop; on the touch window the shift peaked at about 3 px, nothing was left offset afterwards, and there were no page errors. Not tried on a real phone, Safari or Firefox.
+
 ## 2.29.0
 
 - **Round pictures on the plots.** Under each plot's description on the homepage (and the Plots page) the plot's latest posts now show as a row of small round pictures, in the same order as the rows below. The ring round each picture is the post's growth stage, in the garden map's colours (plain grey-green when a post has no stage). Point at a post's title and its picture grows, wobbles once and gets a white ring while the others dim; point at a picture and its row lights up. Tabbing to a row does the same. On a touch screen a tap on a picture opens the post. A post with no picture shows a small plain dot. The pictures are the 200 px copies (about 90 KB for all sixteen, against about 610 KB for the 600 px ones the list further down uses), loaded lazily, so the top of the page does not wait on them.
