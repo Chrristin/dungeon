@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.29.3
+
+- **Pastel hover colours on the plots.** Pointing at a post's title or its round picture now uses the theme's own light pastels instead of dark ink: the post's row gets a pastel wash (mint, sky, lilac, peach, butter, a different one for each post by position) and its picture a ring in the same colour with a soft shadow, so the pair visibly belong together. A highlighted row's text turns dark so it reads on the bold cards (the blue Workshop) as well as the pastel ones. Pictures of posts with no growth stage have a soft white ring instead of a dark grey one; the stage colours are unchanged.
+- Checked in Chrome at 1280 px in light and dark against the live homepage with the new styles swapped in: a row and a picture hovered on the blue card and the yellow card, the computed colours were the pastels with dark text, no page errors. Not seen on a phone (no hover there), Safari or Firefox.
+
 ## 2.29.2
 
 - **The Ratings page no longer lists an item next to its own review.** It gathers everything carrying a rating tag, and an item's own page (anything tagged `#watch-item`) can carry one too, so the Lego Ferrari SF-24 appeared as its own card beside the review "Worth Every Piece". Item pages are now left out; the review stays, and the item page still shows its rating through its Review line. Not looked at before release (the list is drawn by Ghost from the filter); checked on the live Ratings page after it.

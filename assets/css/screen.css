@@ -2198,13 +2198,19 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
    Ring colour is the growth stage (as on the garden map). Pointing at a picture lights its row; pointing at a row (or tabbing to it)
    lifts its picture and wobbles it once. Hover only: on a touch screen a tap on a picture simply opens the post. */
 .plot-faces { order: 2; display: flex; align-items: center; margin: 0.35rem 0 0 4px; }
-.plot-face { --fr: color-mix(in srgb, var(--on-card) 45%, transparent); position: relative; flex: none; display: block; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: #fffdf7; box-shadow: 0 0 0 2.5px var(--fr); transition: transform 200ms ease, opacity 200ms ease, box-shadow 200ms ease; }
+.plot-face { --fr: rgba(255, 255, 255, 0.6); position: relative; flex: none; display: block; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: #fffdf7; box-shadow: 0 0 0 2.5px var(--fr); transition: transform 200ms ease, opacity 200ms ease, box-shadow 200ms ease; }
 .plot-face + .plot-face { margin-left: -4px; }
 .plot-face[data-stage="seedling"] { --fr: #cfe86a; }
 .plot-face[data-stage="growing"] { --fr: #4fc08a; }
 .plot-face[data-stage="evergreen"] { --fr: #1f6b4f; }
 .plot-face img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .plot-face i { position: absolute; inset: 0; margin: auto; width: 1rem; height: 1rem; border-radius: 50%; background: var(--fr); }
+/* Hover colours are the theme's light pastels (mint, sky, lilac, peach, butter), a different one for each post, shared by its picture and its row */
+.plot-rows li:nth-child(1), .plot-face:nth-child(1) { --pc: #b6ecd3; }
+.plot-rows li:nth-child(2), .plot-face:nth-child(2) { --pc: #bcdcf7; }
+.plot-rows li:nth-child(3), .plot-face:nth-child(3) { --pc: #e2c9f3; }
+.plot-rows li:nth-child(4), .plot-face:nth-child(4) { --pc: #f8d0b2; }
+.plot-rows li:nth-child(5), .plot-face:nth-child(5) { --pc: #f6e3a3; }
 .plot-rows a { border-radius: 8px; padding-left: 0.5rem; padding-right: 0.5rem; margin: 0 -0.4rem; }
 @keyframes plot-face-wobble { 0% { transform: scale(1.18) rotate(0); } 25% { transform: scale(1.18) rotate(-9deg); } 55% { transform: scale(1.18) rotate(7deg); } 80% { transform: scale(1.18) rotate(-3deg); } 100% { transform: scale(1.18) rotate(0); } }
 @media (hover: hover) {
@@ -2213,7 +2219,7 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
     .plot:has(.plot-rows li:nth-child(2) a:is(:hover, :focus-visible)) .plot-face:nth-child(2),
     .plot:has(.plot-rows li:nth-child(3) a:is(:hover, :focus-visible)) .plot-face:nth-child(3),
     .plot:has(.plot-rows li:nth-child(4) a:is(:hover, :focus-visible)) .plot-face:nth-child(4),
-    .plot:has(.plot-rows li:nth-child(5) a:is(:hover, :focus-visible)) .plot-face:nth-child(5) { z-index: 2; transform: scale(1.18); box-shadow: 0 0 0 3px var(--on-card); animation: plot-face-wobble 500ms ease-in-out; }
+    .plot:has(.plot-rows li:nth-child(5) a:is(:hover, :focus-visible)) .plot-face:nth-child(5) { z-index: 2; transform: scale(1.18); box-shadow: 0 0 0 3px var(--pc), 0 4px 12px rgba(0, 0, 0, 0.18); animation: plot-face-wobble 500ms ease-in-out; }
     .plot-faces:has(.plot-face:hover) .plot-face:not(:hover),
     .plot:has(.plot-rows li:nth-child(1) a:is(:hover, :focus-visible)) .plot-face:not(:nth-child(1)),
     .plot:has(.plot-rows li:nth-child(2) a:is(:hover, :focus-visible)) .plot-face:not(:nth-child(2)),
@@ -2224,13 +2230,13 @@ body[data-tilt="0"] .plots-hero .statement-text { transform: none; }
     .plot-faces:has(.plot-face:nth-child(2):hover) ~ .plot-rows li:nth-child(2) a,
     .plot-faces:has(.plot-face:nth-child(3):hover) ~ .plot-rows li:nth-child(3) a,
     .plot-faces:has(.plot-face:nth-child(4):hover) ~ .plot-rows li:nth-child(4) a,
-    .plot-faces:has(.plot-face:nth-child(5):hover) ~ .plot-rows li:nth-child(5) a { background: color-mix(in srgb, var(--on-card) 16%, transparent); }
+    .plot-faces:has(.plot-face:nth-child(5):hover) ~ .plot-rows li:nth-child(5) a { background: var(--pc); color: #17191e; --on-card: #17191e; --on-card-meta: rgba(23, 25, 30, 0.78); --on-card-rule: rgba(23, 25, 30, 0.16); }
     .plot-faces:has(.plot-face:nth-child(1):hover) ~ .plot-rows li:nth-child(1) .plot-row-title,
     .plot-faces:has(.plot-face:nth-child(2):hover) ~ .plot-rows li:nth-child(2) .plot-row-title,
     .plot-faces:has(.plot-face:nth-child(3):hover) ~ .plot-rows li:nth-child(3) .plot-row-title,
     .plot-faces:has(.plot-face:nth-child(4):hover) ~ .plot-rows li:nth-child(4) .plot-row-title,
     .plot-faces:has(.plot-face:nth-child(5):hover) ~ .plot-rows li:nth-child(5) .plot-row-title { text-decoration: underline; text-decoration-color: var(--on-card-rule); text-underline-offset: 0.2em; }
-    .plot-rows a:hover { background: color-mix(in srgb, var(--on-card) 16%, transparent); }
+    .plot-rows a:is(:hover, :focus-visible) { background: var(--pc); color: #17191e; --on-card: #17191e; --on-card-meta: rgba(23, 25, 30, 0.78); --on-card-rule: rgba(23, 25, 30, 0.16); }
 }
 @media (prefers-reduced-motion: reduce) {
     .plot-face { transition: none; }
