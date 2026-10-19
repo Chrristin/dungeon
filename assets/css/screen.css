@@ -2689,7 +2689,9 @@ html[data-scheme="dark"] .store-hand { color: #f0707e; }
 .store-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; padding: 1.1rem 1.35rem; border-radius: 14px; background: var(--wash); font: 0.8rem/1.4 var(--mono); color: var(--graphite); }
 .store-strip-lead { display: inline-flex; align-items: center; gap: 0.6rem; font: 600 1.05rem/1.3 var(--sans); color: var(--ink); }
 .store-strip-end { margin-left: auto; }
-.store-led { width: 0.62rem; height: 0.62rem; border-radius: 50%; background: var(--led); }
+.store-led { width: 0.62rem; height: 0.62rem; border-radius: 50%; background: #d0213a; box-shadow: 0 0 0 3px rgba(208, 33, 58, 0.18); }
+.store-strip-tg { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; font-weight: 600; }
+.store-strip-tg:hover { text-decoration-thickness: 2px; }
 .store-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.6rem; margin: 0 0 0.9rem; font-size: 1.5rem; line-height: 1.2; }
 .store-tagline { margin-left: 0.5rem; font-size: 1.45rem; }
 .store-row, .store-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); }

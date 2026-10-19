@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.29.4
+
+- **The banner above the Lego and Diecast lists is now a standing invitation to Telegram.** A red dot, "Never miss a Sale!", then "Join my curated Telegram channel." as the link (the address in the site's `watchlist-telegram` code injection, opened in a new tab; plain text if that setting is missing). The Worker's "Festival sale opens 8 Oct" label and the "Sales: Sep-Oct, May, July" line are gone, along with the hard-coded "Festival Sale Is Live" the list pages in Ghost used to write over them. The "Get Notified" group on the right of the banner (Telegram, WhatsApp, email) is the list pages' own and is unchanged, so Telegram now appears on both sides of the banner.
+- Checked in Chrome on the live Lego and Diecast list pages with the new script and styles swapped in: light, dark and a 390 px touch window; the link goes to the channel in a new tab, the dot is red, no page errors. Not seen in Safari or Firefox or on a real phone, and the Telegram channel itself was not opened.
+
 ## 2.29.3
 
 - **Pastel hover colours on the plots.** Pointing at a post's title or its round picture now uses the theme's own light pastels instead of dark ink: the post's row gets a pastel wash (mint, sky, lilac, peach, butter, a different one for each post by position) and its picture a ring in the same colour with a soft shadow, so the pair visibly belong together. A highlighted row's text turns dark so it reads on the bold cards (the blue Workshop) as well as the pastel ones. Pictures of posts with no growth stage have a soft white ring instead of a dark grey one; the stage colours are unchanged.

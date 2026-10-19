@@ -560,8 +560,12 @@
       ban.appendChild(acts); root.appendChild(ban);
     } else if (onSalePage) root.appendChild(el('p', 'store-sale-ended', 'This sale has ended. Here is everything on the list.'));
     var strip = el('section', 'store-strip');
-    if (shelf.sale && shelf.sale.label) { var s1 = el('strong', 'store-strip-lead'); s1.appendChild(el('span', 'store-led')); s1.appendChild(document.createTextNode(shelf.sale.label)); strip.appendChild(s1); }
-    if (shelf.sale && shelf.sale.windows && shelf.sale.windows.length) strip.appendChild(el('span', '', 'sales: ' + shelf.sale.windows.join(' \u00b7 ')));
+    /* The lead line is a standing invitation to the Telegram channel (link from <meta name="watchlist-telegram"> in code injection); the Worker's sale label and sale windows are no longer shown here */
+    var s1 = el('strong', 'store-strip-lead'), tgMetaS = document.querySelector('meta[name="watchlist-telegram"]'), tgUrlS = tgMetaS && (tgMetaS.getAttribute('content') || '').trim();
+    s1.appendChild(el('span', 'store-led')); s1.appendChild(document.createTextNode('Never miss a Sale! '));
+    if (/^https:\/\/(t\.me|telegram\.me)\//i.test(tgUrlS || '')) { var tgA = el('a', 'store-strip-tg', 'Join my curated Telegram channel.'); tgA.href = tgUrlS; tgA.target = '_blank'; tgA.rel = 'noopener'; s1.appendChild(tgA); }
+    else s1.appendChild(document.createTextNode('Join my curated Telegram channel.'));
+    strip.appendChild(s1);
     if (shelf.updated) strip.appendChild(el('span', 'store-strip-end', 'updated ' + fullDate(shelf.updated)));
     if (strip.childNodes.length) root.appendChild(strip);
     /* Why the percentages here differ from the shop's own: only on a list whose items carry usual prices */
