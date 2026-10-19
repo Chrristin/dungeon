@@ -15,7 +15,7 @@
         <div class="ratings-sort garden-filter" role="group" aria-label="{{t "Sort"}}"><button type="button" data-sort="mine" aria-pressed="true">{{t "My rating"}}</button>{{#if @custom.stamps_endpoint}}<button type="button" data-sort="readers" aria-pressed="false">{{t "Readers"}}</button>{{/if}}<button type="button" data-sort="recent" aria-pressed="false">{{t "Recent"}}</button></div>
     </div>
     <div class="cards ratings-cards">
-    {{#get "posts" limit="100" include="tags" filter="tag:[hash-rated-0-5,hash-rated-1,hash-rated-1-5,hash-rated-2,hash-rated-2-5,hash-rated-3,hash-rated-3-5,hash-rated-4,hash-rated-4-5,hash-rated-5]"}}
+    {{#get "posts" limit="100" include="tags" filter="tag:[hash-rated-0-5,hash-rated-1,hash-rated-1-5,hash-rated-2,hash-rated-2-5,hash-rated-3,hash-rated-3-5,hash-rated-4,hash-rated-4-5,hash-rated-5]+tag:-hash-watch-item"}}
         {{#foreach posts}}
         <article class="card ratings-card" data-key="{{slug}}" data-r="{{> "rating-value"}}" data-date="{{date format="YYYY-MM-DD"}}" data-topic="{{#primary_tag}}{{name}}{{/primary_tag}}">
             {{#if feature_image}}

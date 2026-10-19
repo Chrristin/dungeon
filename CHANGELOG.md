@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.29.2
+
+- **The Ratings page no longer lists an item next to its own review.** It gathers everything carrying a rating tag, and an item's own page (anything tagged `#watch-item`) can carry one too, so the Lego Ferrari SF-24 appeared as its own card beside the review "Worth Every Piece". Item pages are now left out; the review stays, and the item page still shows its rating through its Review line. Not looked at before release (the list is drawn by Ghost from the filter); checked on the live Ratings page after it.
+
 ## 2.29.1
 
 - **The pictures' scroll trail is for touch screens only.** With a mouse wheel the page moves a notch at a time and the trailing felt jumpy, so on a computer pictures no longer move or get the 6% enlargement at all. On a phone or tablet it works as in 2.29.0.
