@@ -4097,3 +4097,39 @@
   }
   if (document.querySelector('.colophon') || document.readyState !== 'loading') start(); else document.addEventListener('DOMContentLoaded', start);
 })();
+(function () {
+  // Pictures trail the page a little while it scrolls and settle when it stops. Each picture on screen is pushed a few pixels (6 at most)
+  // the way the page is not going, and a spring brings it back to rest. Only pictures on screen are moved, with the `translate` property
+  // (so it never fights a hover transform), and the loop runs only while the page is moving. A picture inside a clipping frame is
+  // enlarged by 6% so the shift never shows an edge. Skipped for reduced motion and on the Library page (its books open by measuring
+  // the pictures).
+  if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches || document.querySelector('.lib')) return;
+  var MAX = 6, PUSH = 0.012, PULL = 0.09, DAMP = 0.82, MIN = 64, SKIP = '.plot-etch, .masthead-logo, .plot-face, .thing-sheet';
+  var seen = new WeakSet(), vis = new Set(), y = window.scrollY, pos = 0, vel = 0, running = false;
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) vis.add(e.target); else vis.delete(e.target); }); }, { rootMargin: '150px 0px' });
+  function clipped(img) {
+    for (var el = img.parentElement, n = 0; el && n < 2; el = el.parentElement, n++) if (getComputedStyle(el).overflow !== 'visible') return true;
+    return false;
+  }
+  function scan() {
+    [].forEach.call(document.images, function (img) {
+      if (seen.has(img)) return;
+      var r = img.getBoundingClientRect();
+      if (r.width < MIN || r.height < MIN) return; // not drawn yet, or too small: looked at again next time
+      seen.add(img);
+      if (img.closest(SKIP)) return;
+      if (clipped(img)) img.style.scale = '1.06';
+      io.observe(img);
+    });
+  }
+  function tick() {
+    var dy = Math.max(-80, Math.min(80, window.scrollY - y)); y = window.scrollY;
+    vel += dy * PUSH - pos * PULL; vel *= DAMP; pos = Math.max(-MAX, Math.min(MAX, pos + vel));
+    var t = '0 ' + pos.toFixed(2) + 'px';
+    vis.forEach(function (img) { img.style.translate = t; });
+    if (Math.abs(pos) < 0.02 && Math.abs(vel) < 0.02 && !dy) { pos = vel = 0; vis.forEach(function (img) { img.style.translate = ''; }); running = false; return; }
+    requestAnimationFrame(tick);
+  }
+  scan();
+  addEventListener('scroll', function () { if (running) return; running = true; scan(); requestAnimationFrame(tick); }, { passive: true });
+})();

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.29.0
+
+- **Round pictures on the plots.** Under each plot's description on the homepage (and the Plots page) the plot's latest posts now show as a row of small round pictures, in the same order as the rows below. The ring round each picture is the post's growth stage, in the garden map's colours (plain grey-green when a post has no stage). Point at a post's title and its picture grows, wobbles once and gets a white ring while the others dim; point at a picture and its row lights up. Tabbing to a row does the same. On a touch screen a tap on a picture opens the post. A post with no picture shows a small plain dot. The pictures are the 200 px copies (about 90 KB for all sixteen, against about 610 KB for the 600 px ones the list further down uses), loaded lazily, so the top of the page does not wait on them.
+- **The "post" tag is gone from the plot rows.** Garden notes keep their "note" tag; the growth sprout stays.
+- **Pictures trail the page a little while you scroll.** Every picture on screen (apart from the logo, the plots' faint drawings, the round pictures and anything under 64 px) is pushed up to 6 px the way the page is not going and a spring settles it back to rest soon after you stop. Pictures inside a clipping frame are enlarged by 6% so the shift never shows an edge. Off for visitors who ask for reduced motion, and off on the Library page (its bookcases open by measuring their pictures).
+- Looked at in Chrome at 1280 and 390 px against the live homepage with the new styles and script swapped in and the round-picture markup added in the browser (hovering a row and a picture both ways, the scroll shift reaching about 4.5 px and returning to nothing within a second, no page errors). The Ghost template itself was checked with gscan but not rendered, so the round pictures' markup has not been seen coming from Ghost. Not seen in Safari or Firefox or on a real phone, and the scroll feel has not been judged by eye or profiled.
+
 ## 2.28.0
 
 - **The review page's Buy card when the set is not on sale.** If the set a review is about has no seller on Amazon India right now (the Ferrari SF-24 today), the card used to vanish. It now stays, says "Not available on Amazon India right now.", offers "View on Amazon" and, where the list has a Telegram link, "Tell me when it is back (Telegram)". With a price it looks as before.
