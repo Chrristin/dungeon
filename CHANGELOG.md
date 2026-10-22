@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.29.6
+
+- **The floral divider is half the size.** In 2.29.5 it was drawn at 44 px tall, which was too big on a real page. It is now 22 px tall, with the vines and flower in proportion, 40% of the text column wide and never narrower than 11rem. Four sizes (44, 33, 28 and 22 px) were put side by side on a real post and 22 px was chosen. The rule is the one that was supplied, unchanged.
+- Looked at in Chrome and in Safari's engine (WebKit) with the same checks as 2.29.5: the old border is gone, the vine is cropped and not stretched, and the smoke tests pass. Not tested in Firefox or on a real iPhone.
+
 ## 2.29.5
 
 - **A floral divider.** A divider card in a post or page (type `---` then Enter in the editor) is now a small five-petal flower with a vine growing out of each side: leaves that get smaller towards the ends and two curls. It replaces the thin line. It is 44 px tall, 40% of the text column wide (never narrower than 20rem), and takes the card's ink colour, so it is right on every pastel card, in light and in dark mode. On a narrow column the vines are trimmed at their outer ends, not squashed, so the leaves keep their shape. It is drawn in dividers inside a post or page body, in the notes on a watchlist item, and in posts and Now notes opened in place; the intro text on pages, Scatter notes, Now cards and the things sheet keep the plain line they had.
