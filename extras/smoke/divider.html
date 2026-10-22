@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Divider check</title>
+<!-- Open this file straight from the repository in any browser (Firefox, Safari, a phone). It uses the theme's own stylesheet.
+     What to look for: a small five-petal flower in the middle with a vine growing out each side, leaves getting smaller towards
+     the ends. Narrow the window and the vines get shorter by being trimmed at the outer end. They must never look squashed:
+     the leaves and curls keep their shape at every width. No thin straight line should run behind the vine. -->
+<link rel="stylesheet" href="../../assets/css/screen.css">
+<style>
+  body { margin: 0; padding: 1.5rem 1rem 4rem; font-family: system-ui, sans-serif; }
+  h1 { font-size: 1rem; margin: 0 0 1rem; }
+  .box { max-width: 42rem; margin: 0 auto 1.5rem; padding: 1.2rem 1.6rem; border-radius: 14px; background: var(--card); }
+  .box p { margin: 0; color: var(--on-card); }
+  .narrow { max-width: 14rem; }
+  :root { color-scheme: light dark; }
+</style>
+</head>
+<body>
+<h1>Divider check: resize the window, and try light and dark mode</h1>
+<div class="box post-panel" data-hue="2"><div class="panel-content"><p>Above the divider (sky).</p><hr><p>Below the divider.</p><hr><p>Two in a row.</p></div></div>
+<div class="box post-panel" data-hue="7"><div class="panel-content"><p>Above the divider (butter).</p><hr><p>Below the divider.</p></div></div>
+<div class="box post-panel" data-hue="3"><div class="panel-content"><p>Above the divider (mint).</p><hr><p>Below the divider.</p></div></div>
+<div class="box post-panel" data-hue="ink"><div class="panel-content"><p>Above the divider (dark card).</p><hr><p>Below the divider.</p></div></div>
+<div class="box post-panel narrow" data-hue="5"><div class="panel-content"><p>A very narrow column.</p><hr><p>The divider is never narrower than 11rem.</p></div></div>
+</body>
+</html>
