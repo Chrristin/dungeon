@@ -25,6 +25,7 @@
   // Codes: the glyphs are for the eye, a hidden copy of the plain code is for screen readers.
   function paintCodes(root) {
     if (!piqadReady) return;
+    var toGlitch = [];
     root.querySelectorAll('.code, .tag-code').forEach(function (el) {
       var en = el.getAttribute('data-en');
       if (en === null) { en = el.textContent; el.setAttribute('data-en', en); }
@@ -39,8 +40,10 @@
       var h = document.createElement('span'); h.className = 'visually-hidden'; h.textContent = en;
       el.appendChild(g); el.appendChild(h);
       // Plain letters turning into the glyphs: a short scramble, only for codes on screen
-      if (!had && !calmCodes) { var r = el.getBoundingClientRect(); if (r.width && r.bottom > 0 && r.top < window.innerHeight) glitch(g, en); }
+      if (!had && !calmCodes) toGlitch.push([el, g, en]);
     });
+    // The page is measured once all the writing is done: measuring between writes made the browser lay the page out again for every code
+    toGlitch.filter(function (x) { var r = x[0].getBoundingClientRect(); return r.width && r.bottom > 0 && r.top < window.innerHeight; }).forEach(function (x) { glitch(x[1], x[2]); });
   }
   var calmCodes = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var PQ_ALL = Object.keys(PQ).map(function (k) { return String.fromCodePoint(PQ[k]); });
@@ -509,15 +512,16 @@
     focusQueued = false;
     if (!noHover.matches) return;
     var vh = window.innerHeight;
+    var next = []; // every card is measured first and styled after, so the page is laid out once, not once per card
     focusCards.forEach(function (card) {
       if (!card.offsetParent) return; // hidden copy (e.g. desktop-only opening card)
       var r = card.getBoundingClientRect();
       var visible = Math.min(r.bottom, vh) - Math.max(r.top, 0);
       var needed = Math.min(r.height, vh * 0.85);
       var f = visible <= 0 ? 0 : Math.min(1, visible / needed);
-      var v = f.toFixed(2); // only touch the style when the value moves: cards far off screen stay at 0 and cost nothing
-      if (card._focusV !== v) { card._focusV = v; card.style.setProperty('--focus', v); }
+      next.push([card, f.toFixed(2)]);
     });
+    next.forEach(function (x) { var card = x[0], v = x[1]; if (card._focusV !== v) { card._focusV = v; card.style.setProperty('--focus', v); } }); // only touch the style when the value moves: cards far off screen stay at 0 and cost nothing
   }
   function queueFocus() { if (!focusQueued) { focusQueued = true; requestAnimationFrame(updateFocus); } }
   if (focusCards.length) {
@@ -586,32 +590,6 @@
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMonth(card); }
     });
   });
-
-  // Touch devices: scroll-linked "hover". Each card's --focus is the share of it that's
-  // on screen, reaching 1 once the card (or most of the screen, for tall cards) is in view.
-  var noHover = window.matchMedia('(hover: none)');
-  var focusCards = [].slice.call(document.querySelectorAll('.cards .card, .hero-card .card, .now-card'));
-  var focusQueued = false;
-  function updateFocus() {
-    focusQueued = false;
-    if (!noHover.matches) return;
-    var vh = window.innerHeight;
-    focusCards.forEach(function (card) {
-      if (!card.offsetParent) return; // hidden copy (e.g. desktop-only opening card)
-      var r = card.getBoundingClientRect();
-      var visible = Math.min(r.bottom, vh) - Math.max(r.top, 0);
-      var needed = Math.min(r.height, vh * 0.85);
-      var f = visible <= 0 ? 0 : Math.min(1, visible / needed);
-      var v = f.toFixed(2); // only touch the style when the value moves: cards far off screen stay at 0 and cost nothing
-      if (card._focusV !== v) { card._focusV = v; card.style.setProperty('--focus', v); }
-    });
-  }
-  function queueFocus() { if (!focusQueued) { focusQueued = true; requestAnimationFrame(updateFocus); } }
-  if (focusCards.length) {
-    window.addEventListener('scroll', queueFocus, { passive: true });
-    window.addEventListener('resize', queueFocus);
-    updateFocus();
-  }
 
   // Now page: clamp long months, with a "Read the rest" toggle.
   document.querySelectorAll('.now-card').forEach(function (card) {

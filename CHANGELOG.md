@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.29.7
+
+- **The Scatter wall's cards now follow your scroll on a phone.** On a touch screen a card brightens as it scrolls into view. The Scatter cards got that effect once, when the page opened, and then stopped updating, so they stayed as they were whatever you scrolled past. The cause was a block of code in `site.js` that had been pasted in twice on 6 October (2.13.5), the older copy overriding the newer one. The older copy is gone. Checked on a phone-sized window in Chrome: after scrolling, the cards' values follow the scroll; before, they did not.
+- **A little less work when a page opens.** Three small changes, none of which changes what a visitor sees: prices are formatted with one reusable formatter instead of building one for every price (about 66 times faster per price, which is most of the time a price list took to write its numbers); the filing codes and the touch-screen card brightness measure the page once after they have written to it, instead of making the browser lay it out again for every code and every card. Measured with the processor slowed four times (about a modest phone), averaged over three loads: the home page's own scripts went from about 257 to 212 ms and an item page's from 173 to 140 ms; the price list, a post and the Library were within the run-to-run noise. All 387 prices shown on the Lego list, the Time Machine page and the Diecast list are identical before and after, and the pages' structure is identical in Chrome and WebKit.
+- Not checked in Firefox or on a real phone. A split of `site.js` into pieces was looked at and left alone: the browser only spends about 4 ms compiling it, so it would not help.
+
 ## 2.29.6
 
 - **The floral divider is half the size.** In 2.29.5 it was drawn at 44 px tall, which was too big on a real page. It is now 22 px tall, with the vines and flower in proportion, 40% of the text column wide and never narrower than 11rem. Four sizes (44, 33, 28 and 22 px) were put side by side on a real post and 22 px was chosen. The rule is the one that was supplied, unchanged.

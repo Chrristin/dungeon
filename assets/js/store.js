@@ -28,7 +28,8 @@
 
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   function num(v) { return typeof v === 'number' && isFinite(v); }
-  function money(v) { try { return shelf.currency + Math.round(v).toLocaleString(shelf.locale || 'en-IN'); } catch (e) { return shelf.currency + Math.round(v); } }
+  var numberFormats = {}; // one formatter per locale: building one for every price cost about 0.13 ms each on a phone, and a list has hundreds
+  function money(v) { try { var loc = shelf.locale || 'en-IN', nf = numberFormats[loc] || (numberFormats[loc] = new Intl.NumberFormat(loc)); return shelf.currency + nf.format(Math.round(v)); } catch (e) { return shelf.currency + Math.round(v); } }
   function monthYear(d) { var m = /^(\d{4})-(\d{2})/.exec(d || ''); return m ? MONTHS[+m[2] - 1] + ' ' + m[1] : ''; }
   function fullDate(d) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return m ? +m[3] + ' ' + MONTHS[+m[2] - 1] + ' ' + m[1] : (d || ''); }
   function safeUrl(u) { return /^https?:\/\//i.test(u || '') ? u : ''; }

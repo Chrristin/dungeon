@@ -110,7 +110,8 @@ for (const name of ENGINES) {
         await card.scrollIntoViewIfNeeded(); await card.click({ timeout: 8000 }).catch(() => {}); await pg.waitForTimeout(1800);
         const open = await pg.evaluate(() => { const d = document.querySelector('dialog.reader'); return !!(d && d.open && d.querySelector('.post-panel')); });
         ck(`${name} home: a card opens its post in place`, open);
-        await pg.keyboard.press('Escape'); await pg.waitForTimeout(900);
+        await pg.keyboard.press('Escape');
+        await pg.waitForFunction(() => !document.querySelector('dialog.reader').open, null, { timeout: 4000 }).catch(() => {}); // closing takes a moment; a slow machine needs longer than a fixed wait
         ck(`${name} home: Escape closes it`, await pg.evaluate(() => !document.querySelector('dialog.reader').open));
       } else ck(`${name} home: has post cards to open`, false);
     }); }
