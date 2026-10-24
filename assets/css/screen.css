@@ -3335,3 +3335,6 @@ html[data-scheme="dark"] .store-sale { background: #2a2e37; box-shadow: inset 0 
 .store-offers-list { margin: 0.45rem 0 0; padding-left: 1.1rem; font-size: 0.85rem; line-height: 1.5; }
 .store-offers-list li + li { margin-top: 0.15rem; }
 .store-offers-note { margin: 0.55rem 0 0; font: 0.7rem/1.4 var(--mono); opacity: 0.75; }
+
+/* The commission line, under "Amazon India prices." at the foot of an item's sheet and page */
+.store-aff-line { display: block; margin-top: 0.2rem; }

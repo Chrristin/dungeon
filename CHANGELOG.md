@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.29.10
+
+- **A set at its lowest price no longer says "Wait for Sale".** A set in the Wait for Sale group whose price is the lowest on record, and at least 5% under its usual price, now says **Lowest Ever** instead, and its reason line says so: "Its lowest price in 384 days, 10% under its usual price. Not yet a big sale." The separate "Lowest Ever" chip it used to show beside "Wait for Sale" is gone, so it is not said twice. The set stays in the same group, and nothing else changes. On today’s lists this is 1 Lego set (New York City, 21066, whose first drop below its usual price came on 23 Oct) and 4 diecast cars. It does not read "Never on Sale" because it now has had a drop.
+- **The commission line moved.** "I may earn a commission if you buy." is no longer beside the Buy button on an item’s sheet and page; it sits under "Amazon India prices." at the foot, where the Associates wording belongs. The list page’s own footer is unchanged.
+
 ## 2.29.9
 
 - **Bank offers.** Where the list carries them (`offers` per item, from reader 1.6.0 and Worker build 41), a card shows "As low as ₹12,234 with offers*" under its price, and an item’s sheet and page get a section "Get it for as low as ₹12,234 with offers*" that lists each offer in words: the card, what it takes off, what you pay, EMI months and the monthly amount, and the offers only Prime members get. "As low as" is the lowest full-payment card offer that is not Prime-only, the figure Amazon itself shows as "Buy for". The foot of the list says "* Offers depend on your card, bank and account, and can change at any time." They show only while the list was read in the last 6 hours, only for a price from the main seller, and a Must Buy or any other verdict still goes by the plain price. Looked at in Chrome (desktop, a 390 px phone width, dark mode) with test offers; not on a real phone, Safari or Firefox. See docs/watchlist.md.

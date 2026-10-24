@@ -84,7 +84,9 @@
     /* Price per piece, where the shelf gives a piece count */
     o.ppp = o.priced && v !== 'skip' && num(it.pieces) && it.pieces > 0 ? it.price / it.pieces : null;
     o.flags = (it.flags || []).slice();
-    if (v !== 'skip' && o.atLow && o.off >= rules.lowRowOff) o.flags.unshift('Lowest Ever');
+    /* A Wait for Sale set at its lowest price on record and at least 5% under its usual price is not one to wait on: its chip says Lowest Ever, so the flag is not added twice */
+    o.lowest = v === 'wait' && !o.never && o.atLow && o.off >= rules.neverOff;
+    if (v !== 'skip' && v !== 'wait' && o.atLow && o.off >= rules.lowRowOff) o.flags.unshift('Lowest Ever');
     return o;
   }
   /* Whether today's price is close enough to the lowest on record for a Must Buy. Only asked of an item with a usual price and a believable low. */
@@ -143,6 +145,7 @@
     if (o.verdict === 'must') return o.atLow ? 'At or near its lowest ever.' : under ? under + ' Rarely lower.' : 'Deep discount. Rarely lower.';
     if (o.verdict === 'new') return o.thin ? 'Only ' + (it.orpDays > 0 ? dayWord(it.orpDays) : 'a day') + ' of prices. Too soon to say what is usual, so no verdict yet.' : days ? 'Only ' + dayWord(days) + ' tracked. No real discount yet.' : 'Just added. No price history yet.';
     if (o.verdict === 'fair') return lower ? 'Decent, but it has hit ' + hit + '.' : hasLow ? 'Decent, and as low as it has been.' : 'Decent discount. No price history yet.';
+    if (o.lowest) return 'Its lowest price' + (num(it.days) && it.days > 0 ? ' in ' + dayWord(it.days) : '') + ', ' + Math.round(o.off * 100) + '% under ' + (o.usual != null ? 'its usual price' : 'its MRP') + '. Not yet a big sale.';
     if (o.never) { var best = Math.round((1 - it.low / o.usual) * 100); return (best >= 1 ? 'Never more than ' + best + '% under its usual price' : 'Never under its usual price') + ' in ' + dayWord(it.days) + ' tracked.'; }
     if (o.usual != null) return (o.priced && it.price > o.usual * 1.05 ? 'Above its usual price.' : 'Near its usual price.') + (lower ? ' It has hit ' + hit + '.' : '');
     return lower ? 'Near MRP. It has hit ' + hit + '.' : days ? 'No discount yet in ' + dayWord(days) + ' tracked.' : 'Near MRP. No price history yet.';
@@ -179,7 +182,7 @@
   }
   function chips(o, solid, bare) {
     var c = el('span', 'store-chips');
-    var v = el('span', 'store-chip store-chip--' + o.verdict + (solid ? ' is-solid' : ''), o.never && o.verdict === 'wait' ? 'Never on Sale' : label(o.verdict)); c.appendChild(v);
+    var v = el('span', 'store-chip store-chip--' + o.verdict + (solid ? ' is-solid' : ''), o.never && o.verdict === 'wait' ? 'Never on Sale' : o.lowest ? 'Lowest Ever' : label(o.verdict)); c.appendChild(v);
     if (o.value) c.appendChild(el('span', 'store-chip', 'Best per Piece'));
     if (o.shopSave) c.appendChild(el('span', 'store-chip', 'Cheaper at ' + o.shop.name));
     o.flags.forEach(function (f) { c.appendChild(el('span', 'store-chip', f)); });
@@ -238,6 +241,8 @@
     return { all: it.offers, low: pay.length ? pay[0] : null };
   }
   function offerLine(o) { var f = offersOf(o.it); return f && f.low ? el('span', 'store-offer', 'As low as ' + money(f.low.buy) + ' with offers*') : null; }
+  /* The line at the foot of an item's sheet and page: "Amazon India prices.", and under it the commission line when the Buy link earns one */
+  function noteOf(it) { var n = el('span', 'store-sheet-note', shelf.method || ''); if (isAffiliate(safeUrl(it.url))) n.appendChild(el('span', 'store-aff-line', AFF)); return n; }
   var OFFER_NOTE = '* Offers depend on your card, bank and account, and can change at any time.';
   function offerBlock(o) {
     var f = offersOf(o.it); if (!f) return null;
@@ -305,7 +310,7 @@
       var buyUrl = safeUrl(it.url);
       if (buyUrl) {
         var buy = el('div', 'store-buy'), go = el('a', 'store-go', o.priced ? (shelf.linkLabel || 'Buy') : 'View on Amazon'); go.href = buyUrl; go.target = '_blank'; go.rel = 'noopener';
-        buy.appendChild(go); if (isAffiliate(buyUrl)) { go.rel = 'sponsored nofollow noopener'; buy.appendChild(el('span', 'store-aff', AFF)); }
+        buy.appendChild(go); if (isAffiliate(buyUrl)) go.rel = 'sponsored nofollow noopener';
         panel.appendChild(buy);
       }
       /* Another shop's price for the same item, said plainly whichever way it falls, with a plain link (no referral) and what comes with it */
@@ -432,7 +437,7 @@
 
     detail(o).forEach(function (n) { sheet.appendChild(n); });
 
-    var foot = el('div', 'store-sheet-foot'); foot.appendChild(el('span', 'store-sheet-note', shelf.method || ''));
+    var foot = el('div', 'store-sheet-foot'); foot.appendChild(noteOf(it));
     /* The item's own page, when the shelf has them */
     if (pageUrl(it)) { var pg = el('a', 'store-see', 'Open page \u2192'); pg.href = pageUrl(it); foot.appendChild(pg); }
     sheet.appendChild(foot);
@@ -868,7 +873,7 @@
       var buyPanel = itemBox.querySelector(':scope > .store-panel--buy'), heroEl = page.querySelector('.watch-hero');
       if (buyPanel && heroEl) heroEl.insertAdjacentElement('afterend', buyPanel);
       var foot = el('div', 'store-sheet-foot');
-      foot.appendChild(el('span', 'store-sheet-note', shelf.method || ''));
+      foot.appendChild(noteOf(o.it));
       itemBox.appendChild(foot);
     });
   }
