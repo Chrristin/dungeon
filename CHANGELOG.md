@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.29.12
+
+- **The offers block leads with the price.** “Get it for as low as” is a small label and the price under it is large, the same size as the Today price above it. The cards themselves are folded away behind one line, “Depends on your card and bank. See the offers”, which opens the list and the footnote on a click (a plain HTML disclosure: no script, and it works from the keyboard). Closed is the default.
+- **The item sheet is as wide as the story panel on a wide screen.** From 1,100 px up it opens at 70.5rem (about 1,128 px, as the item’s own page already did) instead of 45rem; on narrower screens and phones nothing changes. The Today, Lowest and Usual prices keep the spacing they have in the narrower sheet and do not spread across the wider one. The price chart is bigger because it scales with the width, as it is on the item page. Looked at in Chrome (desktop, a 390 px phone width, dark mode); not on a real phone, Safari or Firefox.
+
 ## 2.29.11
 
 - **The analytics link check is exact again.** The test that decides whether a clicked link goes to Amazon had lost two backslashes, so its dots matched any letter: a link to a site such as `amazonia.example` would have counted as a Buy click, and "www." was not stripped cleanly. Only amazon sites and `amzn.to` count now, as intended. Checked with fake clicks on amazon.in, amazon.com, smile.amazon.co.uk and amzn.to (counted), the Telegram link (counted as a Telegram click), and `amazonia.example`, `notamazon.com`, `wwwamazon.in` and an unrelated site (not counted).

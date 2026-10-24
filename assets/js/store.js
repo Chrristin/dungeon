@@ -255,10 +255,13 @@
       else lines.push(money(x.save) + ' off with ' + x.n + how + (x.k === 'pay' && num(x.buy) ? ': pay ' + money(x.buy) : ''));
     });
     if (!lines.length) return null;
-    var box = el('div', 'store-panel store-offers'), ul = el('ul', 'store-offers-list');
-    box.appendChild(el('strong', 'store-offers-h', f.low ? 'Get it for as low as ' + money(f.low.buy) + ' with offers*' : 'Offers on this listing*'));
+    /* The "as low as" price is the headline, large; the cards themselves are folded away until asked for, with the reason the figure is not a promise on the closed line */
+    var box = el('div', 'store-panel store-offers'), more = el('details', 'store-offers-more'), ul = el('ul', 'store-offers-list');
+    if (f.low) { box.appendChild(el('span', 'store-offers-k', 'Get it for as low as')); box.appendChild(el('strong', 'store-offers-price', money(f.low.buy) + '*')); }
+    else box.appendChild(el('strong', 'store-offers-h', 'Offers on this listing*'));
+    more.appendChild(el('summary', '', 'Depends on your card and bank. See the offers'));
     lines.slice(0, 5).forEach(function (t) { ul.appendChild(el('li', '', t)); });
-    box.appendChild(ul); box.appendChild(el('p', 'store-offers-note', OFFER_NOTE));
+    more.appendChild(ul); more.appendChild(el('p', 'store-offers-note', OFFER_NOTE)); box.appendChild(more);
     return box;
   }
   function card(o, i, feature) {
