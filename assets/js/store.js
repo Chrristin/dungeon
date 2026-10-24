@@ -19,7 +19,7 @@
      mustNearLow: with a usual price, a Must Buy must also be within this much of the lowest price on record, so a set
      that is 25% under its usual price but twice its best price is not one. lowFloor: a recorded low under this share of
      the usual price is treated as a slip, not a price, and ignored. */
-  var DEFAULTS = { mustOff: 0.4, mustGrace: 0.02, nearLow: 0.03, nearLowOff: 0.25, fairOff: 0.15, newDays: 30, newOff: 0.15, lowRowOff: 0.1, usualDays: 30, usualMustOff: 0.25, mustNearLow: 0.15, lowFloor: 0.15 };
+  var DEFAULTS = { mustOff: 0.4, mustGrace: 0.02, nearLow: 0.03, nearLowOff: 0.25, fairOff: 0.15, newDays: 30, newOff: 0.15, lowRowOff: 0.1, usualDays: 30, usualMustOff: 0.25, mustNearLow: 0.10, lowFloor: 0.15 };
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var PAGE = 60;
   var taglines = {}; // a handwritten line beside a row's heading, set in the watchlist page's own text

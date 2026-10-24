@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.29.8
+
+- **A Must Buy must be within 10% of the lowest price on record, not 15%.** With a usual price, 25% under it is still the first test, but today’s price must now also be within 10% (was 15%) of the lowest the set has ever been, so a set that has crept back up after a sale is not recommended. On today’s lists this changes nothing (the two Must Buys, C-3PO and a Bburago Ferrari, are 6% and 0% above their lows); it stops a set 11 to 15% above its sale low from counting. The sale alerts and the dashboard’s Must Buy list on the Worker follow the same rule from build 40, so a set the page does not call a Must Buy is no longer announced as one. A list can still set its own limit with `mustNearLow`. See docs/watchlist.md.
+
 ## 2.29.7
 
 - **The Scatter wall's cards now follow your scroll on a phone.** On a touch screen a card brightens as it scrolls into view. The Scatter cards got that effect once, when the page opened, and then stopped updating, so they stayed as they were whatever you scrolled past. The cause was a block of code in `site.js` that had been pasted in twice on 6 October (2.13.5), the older copy overriding the newer one. The older copy is gone. Checked on a phone-sized window in Chrome: after scrolling, the cards' values follow the scroll; before, they did not.

@@ -71,7 +71,7 @@ In this order, with `off` meaning today's discount from the item's usual price w
 
 1. No price, or `seller` is `other`: Skip.
 2. The item has an `orp` but under `usualDays` of record, and under `usualDays` of history overall: Collecting Data, never a Must Buy. (An older item whose usual price is not worked out yet is judged from MRP.)
-3. `off` is at least `mustOff` (`usualMustOff`, 0.25, when measured from the usual price), or today's price is within `nearLow` of the lowest and `off` is at least `nearLowOff`: Must Buy. With a usual price, the price must also be within `mustNearLow` (0.15) of the lowest on record; a recorded low under `lowFloor` (0.15) of the usual price is treated as a slip and ignored.
+3. `off` is at least `mustOff` (`usualMustOff`, 0.25, when measured from the usual price), or today's price is within `nearLow` of the lowest and `off` is at least `nearLowOff`: Must Buy. With a usual price, the price must also be within `mustNearLow` (0.10) of the lowest on record; a recorded low under `lowFloor` (0.15) of the usual price is treated as a slip and ignored.
 4. Fewer than `newDays` of history and `off` below `newOff`: Too New.
 5. `off` is at least `fairOff`: Fair Price.
 6. Otherwise: Wait for Sale.
