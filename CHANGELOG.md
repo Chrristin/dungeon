@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.29.11
+
+- **The analytics link check is exact again.** The test that decides whether a clicked link goes to Amazon had lost two backslashes, so its dots matched any letter: a link to a site such as `amazonia.example` would have counted as a Buy click, and "www." was not stripped cleanly. Only amazon sites and `amzn.to` count now, as intended. Checked with fake clicks on amazon.in, amazon.com, smile.amazon.co.uk and amzn.to (counted), the Telegram link (counted as a Telegram click), and `amazonia.example`, `notamazon.com`, `wwwamazon.in` and an unrelated site (not counted).
+- **A smaller picture in the homepage boxes.** The picture in a homepage box is about 52 px wide. An Amazon one is now asked for at 160 px instead of 250: 6.6 KB instead of 12.9 KB. List tiles and the sets' own pages are unchanged.
+- **The stats address is no longer buried in the script.** `<meta name="stats-endpoint" content="https://…/stats.json">` in Ghost's code injection (site header) sets it, like the other addresses; an empty value turns the footer weight tile's all-time-low glow off, and with no such line it uses the address this site has always used, so nothing changes today.
+- **Tidying, nothing to see:** the set-number hash lives in one place in `store.js` instead of two, and the headers for a member's stickies requests are built in one place in `site.js` instead of three.
+- Checked in Chrome and in Safari's engine (WebKit): the smoke tests pass, the structure of the home page, a post, the Garden, the price list, an item and the Library is identical before and after, and all 387 prices on the Lego list, the Time Machine page and the Diecast list are unchanged. Posting a sticky was not tried (it would write to the live site); the one-line header helper was checked by reading it. Not checked in Firefox or on a real phone.
+- **Looked at and left alone:** moving the watchlist styles into a file of their own would take only 7 KB (compressed) out of the stylesheet, because five of its classes are used by other pages too: about 35 ms on slow 4G, not worth the risk. The PageSpeed fall from 87 to 69 on 25 October is not from the theme: versions 2.29.6, 2.29.7 and 2.29.10 measure the same in a controlled test.
+
 ## 2.29.10
 
 - **A set at its lowest price no longer says "Wait for Sale".** A set in the Wait for Sale group whose price is the lowest on record, and at least 5% under its usual price, now says **Lowest Ever** instead, and its reason line says so: "Its lowest price in 384 days, 10% under its usual price. Not yet a big sale." The separate "Lowest Ever" chip it used to show beside "Wait for Sale" is gone, so it is not said twice. The set stays in the same group, and nothing else changes. On today’s lists this is 1 Lego set (New York City, 21066, whose first drop below its usual price came on 23 Oct) and 4 diecast cars. It does not read "Never on Sale" because it now has had a drop.

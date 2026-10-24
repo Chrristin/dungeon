@@ -44,10 +44,11 @@
     } catch (e) { return false; }
   }
   var AFF = 'I may earn a commission if you buy.';
+  /* A set's number turned into a steady number from 0 to 996: the same set always gets the same tilt and colour */
+  function codeHash(code) { var h = 0, s = String(code); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 997; return h; }
   function tilt(code) {
     var max = parseFloat(document.body.getAttribute('data-tilt')); if (!isFinite(max)) max = 2.5;
-    var h = 0, s = String(code); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 997;
-    return ((h / 997) - 0.5) * 2 * Math.min(max, 4);
+    return ((codeHash(code) / 997) - 0.5) * 2 * Math.min(max, 4);
   }
 
   /* One item, with everything worked out: discount, where today's price sits, verdict */
@@ -156,7 +157,7 @@
   function srcFor(it, s, small, tries) {
     var own = safeUrl(it.image), amazon = !!own && /^https:\/\/m\.media-amazon\.com\//.test(own), pat = s.imagePattern && it.image !== false && /^\d{4,7}$/.test(String(it.code)) ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : '';
     tries = tries || 0;
-    var amz = function () { return small ? own.replace(/\._(?:AC_)?[A-Z]{2}\d{2,4}_\./, '._SL250_.') : own; };
+    var amz = function () { return small ? own.replace(/\._(?:AC_)?[A-Z]{2}\d{2,4}_\./, '._SL' + (small === 'tiny' ? 160 : 250) + '_.') : own; };
     if (!tries) return pat ? (small ? pat.replace('/sets/images/', '/sets/small/') : pat) : own ? (amazon ? amz() : own) : s.imagePattern && it.image !== false ? safeUrl(String(s.imagePattern).replace(/\{code\}/g, encodeURIComponent(it.code))) : '';
     if (tries === 1 && pat && small) return pat;
     return amazon ? amz() : '';
@@ -206,8 +207,7 @@
   var TINTS = ['#9fe3c3', '#a3cff8', '#b4b4f7', '#d7b0ef', '#f6aebb', '#f8bd92', '#f3d56b', '#9fdede'].map(function (c) { return { c: c }; });
   var BOLD = [{ c: '#d0213a', dark: true }, { c: '#f47a20' }, { c: '#ffcc2e' }, { c: '#2349c9', dark: true }, { c: '#0b7d52', dark: true }, { c: '#2a2e37', dark: true, ink: true }];
   function tintFor(code, used, set) {
-    var h = 0, t = String(code); for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 997;
-    var k = h % set.length, n = 0; while (used.indexOf(k) > -1 && n < set.length) { k = (k + 1) % set.length; n += 1; }
+    var k = codeHash(code) % set.length, n = 0; while (used.indexOf(k) > -1 && n < set.length) { k = (k + 1) % set.length; n += 1; }
     used.push(k); return set[k];
   }
   function paint(node, tint, base) {
@@ -735,10 +735,10 @@
          label stays. With no Must Buy, nothing is featured. */
       [].forEach.call(a.querySelectorAll('.plot-page-feature'), function (n) { n.remove(); });
       if (musts.length) {
-        var top = musts[0].it, feature = el('span', 'plot-page-feature'), u = srcFor(top, d, true);
+        var top = musts[0].it, feature = el('span', 'plot-page-feature'), u = srcFor(top, d, 'tiny'); // the picture in a homepage box is about 52 px: an Amazon one is asked for at 160 px, not 250
         if (u) {
           var box = el('span', 'plot-page-shot'), img = el('img'); img.alt = top.name || ''; img.loading = 'lazy'; img.decoding = 'async'; img.referrerPolicy = 'no-referrer';
-          img.onerror = function () { if (nextPic(img, top, d, true)) return; if (box.parentNode) box.parentNode.removeChild(box); };
+          img.onerror = function () { if (nextPic(img, top, d, 'tiny')) return; if (box.parentNode) box.parentNode.removeChild(box); };
           img.src = u; box.appendChild(img); feature.appendChild(box);
         }
         var m = el('span', 'plot-page-must'); m.appendChild(el('span', 'plot-page-dot')); m.appendChild(document.createTextNode(label('must'))); feature.appendChild(m);

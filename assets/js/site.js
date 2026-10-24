@@ -2213,6 +2213,7 @@
     return new Promise(function (res) { var t0 = Date.now(); (function poll() { if (el._ts || Date.now() - t0 > ms) res(el._ts || null); else setTimeout(poll, 200); })(); });
   }
   var isMember = function (el) { return el.getAttribute('data-member') === '1'; };
+  function memberHeaders(pass) { var h = { 'Content-Type': 'application/json' }; if (pass) h.Authorization = 'GhostMember ' + pass; return h; } // the headers for a request to the stamps Worker: with the member's pass when there is one
   function memberPass() { // a short-lived signed pass from Ghost, proving who the signed-in member is
     return fetch('/members/api/session', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.text() : ''; })
       .then(function (t) { t = (t || '').trim(); return t.split('.').length === 3 ? t : ''; }).catch(function () { return ''; });
@@ -2228,7 +2229,7 @@
     (isMember(el) ? memberPass() : Promise.resolve('')).then(function (pass) {
       if (!pass) { msg.textContent = el._ts ? '' : el.getAttribute('data-checking'); startSpamCheck(el); } // a visitor, or a member whose pass didn't come
       return (pass ? Promise.resolve(null) : waitForToken(el, 10000)).then(function (token) {
-        var h = { 'Content-Type': 'application/json' }; if (pass) h.Authorization = 'GhostMember ' + pass;
+        var h = memberHeaders(pass);
         return fetch(stickyApi(el), { method: 'POST', headers: h, body: JSON.stringify({ body: body, name: name, colour: Number(form.getAttribute('data-c')), turnstile: token }) })
           .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); });
       });
@@ -2255,7 +2256,7 @@
     var viaPass = isMember(el) && (el._own || []).indexOf(Number(id)) >= 0;
     if (!m && !viaPass) return;
     (viaPass ? memberPass() : Promise.resolve('')).then(function (pass) {
-      var h = { 'Content-Type': 'application/json' }; if (pass) h.Authorization = 'GhostMember ' + pass;
+      var h = memberHeaders(pass);
       return fetch(stickyApi(el) + '/' + id, { method: 'DELETE', headers: h, body: JSON.stringify({ token: m ? m.token : '' }) });
     }).then(function (r) { if (!r.ok) throw r; }).then(function () {
         saveMyStickies(el, mine.filter(function (x) { return x !== m; }));
@@ -2270,7 +2271,7 @@
       newPaper(el);
       var api = stickyApi(el), mine = myStickies(el);
       var statuses = (mine.length || isMember(el)) ? (isMember(el) ? memberPass() : Promise.resolve('')).then(function (pass) {
-        var h = { 'Content-Type': 'application/json' }; if (pass) h.Authorization = 'GhostMember ' + pass;
+        var h = memberHeaders(pass);
         return fetch(api + '/mine', { method: 'POST', headers: h, body: JSON.stringify({ items: mine.map(function (m) { return { id: m.id, token: m.token }; }) }) });
       }).then(function (r) { return r.ok ? r.json() : { items: [] }; }).catch(function () { return { items: [] }; }) : Promise.resolve({ items: [] });
       // Load the handwriting before laying out, so each sticky's text is measured in the real font:
@@ -4024,9 +4025,9 @@
   var send = function (name, params) { try { if (typeof window.gtag === 'function') window.gtag('event', name, params); } catch (e) { /* analytics must never break the page */ } };
   document.addEventListener('click', function (e) {
     var a = e.target && e.target.closest ? e.target.closest('a[href]') : null; if (!a) return;
-    var host = ''; try { host = new URL(a.href, location.href).hostname.toLowerCase().replace(/^www./, ''); } catch (x) { return; }
+    var host = ''; try { host = new URL(a.href, location.href).hostname.toLowerCase().replace(/^www\./, ''); } catch (x) { return; }
     var where = location.pathname;
-    if (/(^|.)amazon.[a-z.]+$/.test(host) || host === 'amzn.to' || host === 'amzn.in') send('buy_click', { page_path: where, link_host: host, link_text: (a.textContent || '').trim().slice(0, 40) });
+    if (/(^|\.)amazon\.[a-z.]+$/.test(host) || host === 'amzn.to' || host === 'amzn.in') send('buy_click', { page_path: where, link_host: host, link_text: (a.textContent || '').trim().slice(0, 40) });
     else if (host === 't.me' || host === 'telegram.me') send('telegram_click', { page_path: where });
   }, true);
   document.addEventListener('submit', function (e) {
@@ -4039,7 +4040,10 @@
    and 13 small stars start a moment later and rise faster, passing the label and ending above it. It lasts about two seconds and cannot restart
    until it is done. With reduced motion there are no stars, only the label. On any other day the tile just does what it did. */
 (function () {
-  var URL = 'https://christingeorge-stats.christin-fireblade.workers.dev/stats.json', reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* The address of the stats file: <meta name="stats-endpoint" content="https://…/stats.json"> in Ghost's code injection (site header), like the other addresses.
+     An empty content turns this off. With no such line at all it uses the address this site has always used. */
+  var statsMeta = document.querySelector('meta[name="stats-endpoint"]'), STATS = statsMeta ? (statsMeta.getAttribute('content') || '').trim() : 'https://christingeorge-stats.christin-fireblade.workers.dev/stats.json';
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var low = null, busy = false;
   function isLow(s) {
     var w = s && s.weight; if (!w || !w.latest || !w.series || w.series.length < 2) return false;
@@ -4065,7 +4069,8 @@
     tile.addEventListener('click', function () { play(tile); }); /* a tap on a phone; the popup opens as usual */
   }
   function start() {
-    fetch(URL, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+    if (!/^https:\/\//.test(STATS)) return;
+    fetch(STATS, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
       low = isLow(s); if (!low) return;
       var find = function () { var tile = document.querySelector('.cg-stat[data-k="weight"]'); if (tile) { hook(tile); return true; } return false; };
       if (find()) return;
