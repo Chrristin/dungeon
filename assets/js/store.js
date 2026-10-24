@@ -19,7 +19,7 @@
      mustNearLow: with a usual price, a Must Buy must also be within this much of the lowest price on record, so a set
      that is 25% under its usual price but twice its best price is not one. lowFloor: a recorded low under this share of
      the usual price is treated as a slip, not a price, and ignored. */
-  var DEFAULTS = { mustOff: 0.4, mustGrace: 0.02, nearLow: 0.03, nearLowOff: 0.25, fairOff: 0.15, newDays: 30, newOff: 0.15, lowRowOff: 0.1, usualDays: 30, usualMustOff: 0.25, mustNearLow: 0.10, lowFloor: 0.15 };
+  var DEFAULTS = { mustOff: 0.4, mustGrace: 0.02, nearLow: 0.03, nearLowOff: 0.25, fairOff: 0.15, newDays: 30, newOff: 0.15, lowRowOff: 0.1, usualDays: 30, usualMustOff: 0.25, mustNearLow: 0.10, neverOff: 0.05, neverDays: 90, lowFloor: 0.15 };
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var PAGE = 60;
   var taglines = {}; // a handwritten line beside a row's heading, set in the watchlist page's own text
@@ -65,6 +65,9 @@
     o.mustOff = o.usual != null ? rules.usualMustOff : rules.mustOff;
     o.off = o.priced && o.base ? Math.max(0, 1 - it.price / o.base) : 0;
     o.atLow = o.priced && num(it.low) && it.price <= it.low * (1 + rules.nearLow);
+    /* Never on sale: with a usual price and 90 or more days of record, the lowest it has ever been is under 5% below that usual price.
+       A recorded low far under the usual price is a slip, not a sale, so it says nothing either way. */
+    o.never = o.usual != null && num(it.low) && num(it.days) && it.days >= rules.neverDays && it.low >= o.usual * rules.lowFloor && it.low >= o.usual * (1 - rules.neverOff);
     o.pos = o.priced && o.base && num(it.low) && o.base > it.low ? Math.min(1, Math.max(0, (it.price - it.low) / (o.base - it.low))) : null;
     var v = it.verdict;
     if (!v) {
@@ -140,6 +143,7 @@
     if (o.verdict === 'must') return o.atLow ? 'At or near its lowest ever.' : under ? under + ' Rarely lower.' : 'Deep discount. Rarely lower.';
     if (o.verdict === 'new') return o.thin ? 'Only ' + (it.orpDays > 0 ? dayWord(it.orpDays) : 'a day') + ' of prices. Too soon to say what is usual, so no verdict yet.' : days ? 'Only ' + dayWord(days) + ' tracked. No real discount yet.' : 'Just added. No price history yet.';
     if (o.verdict === 'fair') return lower ? 'Decent, but it has hit ' + hit + '.' : hasLow ? 'Decent, and as low as it has been.' : 'Decent discount. No price history yet.';
+    if (o.never) { var best = Math.round((1 - it.low / o.usual) * 100); return (best >= 1 ? 'Never more than ' + best + '% under its usual price' : 'Never under its usual price') + ' in ' + dayWord(it.days) + ' tracked.'; }
     if (o.usual != null) return (o.priced && it.price > o.usual * 1.05 ? 'Above its usual price.' : 'Near its usual price.') + (lower ? ' It has hit ' + hit + '.' : '');
     return lower ? 'Near MRP. It has hit ' + hit + '.' : days ? 'No discount yet in ' + dayWord(days) + ' tracked.' : 'Near MRP. No price history yet.';
   }
@@ -175,7 +179,7 @@
   }
   function chips(o, solid, bare) {
     var c = el('span', 'store-chips');
-    var v = el('span', 'store-chip store-chip--' + o.verdict + (solid ? ' is-solid' : ''), label(o.verdict)); c.appendChild(v);
+    var v = el('span', 'store-chip store-chip--' + o.verdict + (solid ? ' is-solid' : ''), o.never && o.verdict === 'wait' ? 'Never on Sale' : label(o.verdict)); c.appendChild(v);
     if (o.value) c.appendChild(el('span', 'store-chip', 'Best per Piece'));
     if (o.shopSave) c.appendChild(el('span', 'store-chip', 'Cheaper at ' + o.shop.name));
     o.flags.forEach(function (f) { c.appendChild(el('span', 'store-chip', f)); });
@@ -224,11 +228,39 @@
     if (o.shopSave) h.appendChild(el('span', 'store-shop', o.shop.name + ' ' + money(o.shop.price) + ' · ' + money(o.shopSave) + ' less'));
     return h;
   }
+  /* Bank offers the reader saw in the listing's Offers box (list file: it.offers, each {k: 'pay' | 'emi', n: card, save, buy | emi: [months, each], cb: cashback on top, p: Prime only}).
+     Shown for a priced main-seller item only, and only while the list's newest reading is under 6 hours old. "As low as" is the lowest full-payment card that is not
+     Prime-only: the figure Amazon itself shows as "Buy for". It is never used for a verdict. */
+  function offersOf(it) {
+    if (!it || !Array.isArray(it.offers) || !it.offers.length || !num(it.price) || it.seller === 'other') return null;
+    var at = Date.parse(shelf.updatedAt || ''); if (!isFinite(at) || Date.now() - at > 6 * 36e5) return null;
+    var pay = it.offers.filter(function (x) { return x.k === 'pay' && !x.p && num(x.buy) && x.buy < it.price; }).sort(function (a, b) { return a.buy - b.buy; });
+    return { all: it.offers, low: pay.length ? pay[0] : null };
+  }
+  function offerLine(o) { var f = offersOf(o.it); return f && f.low ? el('span', 'store-offer', 'As low as ' + money(f.low.buy) + ' with offers*') : null; }
+  var OFFER_NOTE = '* Offers depend on your card, bank and account, and can change at any time.';
+  function offerBlock(o) {
+    var f = offersOf(o.it); if (!f) return null;
+    var lines = [];
+    /* An ordinary full-payment card first (the one "as low as" comes from), then EMI cards, then offers only Prime members get */
+    f.all.slice().sort(function (x, y) { return ((x.p ? 2 : 0) + (x.k === 'emi' ? 1 : 0)) - ((y.p ? 2 : 0) + (y.k === 'emi' ? 1 : 0)); }).forEach(function (x) {
+      if (!num(x.save)) return;
+      var how = x.k === 'emi' && x.emi ? ' on a ' + x.emi[0] + '-month EMI (' + money(x.emi[1]) + ' a month)' : '';
+      if (x.p) lines.push('With Prime: ' + money(x.save) + ' off' + (num(x.cb) ? ' and ' + money(x.cb) + ' cashback' : '') + ' with ' + x.n + how);
+      else lines.push(money(x.save) + ' off with ' + x.n + how + (x.k === 'pay' && num(x.buy) ? ': pay ' + money(x.buy) : ''));
+    });
+    if (!lines.length) return null;
+    var box = el('div', 'store-panel store-offers'), ul = el('ul', 'store-offers-list');
+    box.appendChild(el('strong', 'store-offers-h', f.low ? 'Get it for as low as ' + money(f.low.buy) + ' with offers*' : 'Offers on this listing*'));
+    lines.slice(0, 5).forEach(function (t) { ul.appendChild(el('li', '', t)); });
+    box.appendChild(ul); box.appendChild(el('p', 'store-offers-note', OFFER_NOTE));
+    return box;
+  }
   function card(o, i, feature) {
     var a = el('button', 'store-card store-card--' + o.verdict + (feature ? ' is-feature' : '')); a.type = 'button';
     a.setAttribute('data-i', i);
     var top = el('span', 'store-card-top'); top.appendChild(tile(o)); top.appendChild(head(o, null, feature)); a.appendChild(top);
-    if (!feature) { var b = lowLine(o); if (b) a.appendChild(b); }
+    if (!feature) { var b = lowLine(o); if (b) a.appendChild(b); var ob = offerLine(o); if (ob) a.appendChild(ob); }
     a.appendChild(chips(o, feature));
     return a;
   }
@@ -287,6 +319,7 @@
         panel.appendChild(sl);
       }
       out.push(panel);
+      var offs = offerBlock(o); if (offs) out.push(offs);
       var line = graphBox(it); if (line) out.push(line);
     }
     if (!(o.priced || num(it.low)) && safeUrl(it.url)) { var only = el('div', 'store-panel'), b0 = el('div', 'store-buy'), g0 = el('a', 'store-go', 'View on Amazon'); g0.href = safeUrl(it.url); g0.target = '_blank'; g0.rel = isAffiliate(g0.href) ? 'sponsored nofollow noopener' : 'noopener'; b0.appendChild(g0); only.appendChild(b0); out.push(only); }
@@ -668,6 +701,7 @@
     var foot = el('footer', 'store-foot');
     if (shelf.method) foot.appendChild(el('p', '', shelf.method));
     if ((shelf.items || []).some(function (it) { return isAffiliate(safeUrl(it.url)); })) foot.appendChild(el('p', '', meta('amazon-tag') ? 'As an Amazon Associate I earn from qualifying purchases.' : 'I may earn a commission if you buy through these links.'));
+    if ((shelf.items || []).some(function (it) { return offersOf(it); })) foot.appendChild(el('p', '', OFFER_NOTE));
     root.appendChild(foot);
     if (alertsEl && alertsHome && alertsEl.parentNode !== root) { alertsEl.classList.remove('is-hook'); alertsHome.p.insertBefore(alertsEl, alertsHome.n && alertsHome.n.parentNode === alertsHome.p ? alertsHome.n : null); }
   }

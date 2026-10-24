@@ -74,7 +74,7 @@ In this order, with `off` meaning today's discount from the item's usual price w
 3. `off` is at least `mustOff` (`usualMustOff`, 0.25, when measured from the usual price), or today's price is within `nearLow` of the lowest and `off` is at least `nearLowOff`: Must Buy. With a usual price, the price must also be within `mustNearLow` (0.10) of the lowest on record; a recorded low under `lowFloor` (0.15) of the usual price is treated as a slip and ignored.
 4. Fewer than `newDays` of history and `off` below `newOff`: Too New.
 5. `off` is at least `fairOff`: Fair Price.
-6. Otherwise: Wait for Sale.
+6. Otherwise: Wait for Sale. If the item has a usual price, at least `neverDays` (90) of record, and its lowest price on record is under `neverOff` (0.05) below that usual price, it is labelled **Never on Sale** instead, and its reason line says so ("Never more than 3% under its usual price in 384 days tracked."). A recorded low under `lowFloor` of the usual price is a slip and rules it out. The label is on the chip only; the item stays in the Wait for Sale group.
 
 "Just Missed" and the Must Buy price shown on an item use the same starting point.
 
@@ -123,6 +123,7 @@ your own, and are left out when it is not there:
 
 ## Other things an item can carry
 
+- `"offers"`: the bank offers seen on the listing, each `{"k": "pay" or "emi", "n": the card, "save": rupees off, "buy": the price after it (pay) or "emi": [months, each], "cb": cashback on top, "p": 1 if Prime only}`. A card shows "As low as ₹X with offers*" from the lowest full-payment offer that is not Prime-only, the item's sheet and page list every offer in words, and the foot of the list carries the line "* Offers depend on your card, bank and account, and can change at any time." They are drawn only while the list's `updatedAt` is under 6 hours old, only for a priced main-seller item, and are never used for a verdict.
 - `"line"`: one sentence of your own, shown under its name on featured cards.
 - `"pending": true` (no price yet): the item is shown as Collecting Data.
 
