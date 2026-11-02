@@ -104,6 +104,7 @@
 .rl-chart canvas { width: 100%; height: 48px; display: block; }
 .rl-chart i { position: absolute; top: 0.5rem; bottom: 0; width: 1px; background: var(--ink); left: var(--lab); pointer-events: none; }
 .run-hero { width: 100%; border-radius: 0.9rem; display: block; margin: 0 0 1.2rem; }
+.run-page > .watch-top { margin-bottom: 1.1rem; }
 
 .rl-splits { border-collapse: collapse; width: 100%; font: 0.9rem var(--mono); }
 .rl-splits td, .rl-splits th { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--rule); text-align: left; }

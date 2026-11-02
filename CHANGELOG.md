@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.33.1
+
+- **The “← Runlog” link no longer sits on the photo.** On a run’s page the link at the top had no space under it, so the hero picture started right at its baseline. It now has the same gap as the watchlist item pages (a little over 1 rem).
+- Looked at in Chrome with a hero picture, light mode; not on a phone, and not on a run with no hero picture.
+
 ## 2.33.0
 
 - **The footprints are gone.** The runner is now a soft orange ring on the ground that breathes, with a ripple that spreads outward and fades, a faint shadow, and a faint tint inside it, in the same colour as the marker on the route map. The route already run is strongest near the runner and fades behind: full strength for the last 36 units, most of the way to 90, a faint trace beyond that. With reduced motion the ring holds still.
