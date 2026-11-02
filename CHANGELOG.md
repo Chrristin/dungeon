@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.31.0
+
+- **A real chase cam, and a sharp map.** The replay no longer enlarges a stored picture of the map (which was blurry on a wide screen). The streets, canals, fields and buildings are drawn live, at your screen’s own sharpness, from a camera behind and above the runner looking ahead along the path: roads narrow toward a hazy horizon, buildings stand up a little, and the footprints and the trail are drawn on the ground. Only what is near the runner is drawn each frame, and if frames come slowly it drops the far detail, and then the buildings, by itself.
+- **The cam and the route map side by side.** On a wide screen the chase cam is on the left and the route map on the right, with the part run so far in strong colour, the rest faint, and a marker showing where the runner is and which way they face. On a phone the cam is on top and the map under it. The control bar is gone: three small speed buttons (60×, 120×, 300×) sit on the cam’s corner, tapping the cam plays and pauses, and a thin line under both is the progress and can be dragged. Space and the arrow keys still work.
+- **The Movement plot is the map.** A plot that holds the Runlog page becomes one card: the latest run, drawn live, is its whole background, and the plot’s code, title and the run’s stats sit on top of it. The whole card is the link. It starts only after the page has painted and the browser is idle, runs at up to 30 frames a second, pauses when off screen or in a hidden tab, and shows one still frame with reduced motion.
+- Measured here, in Chrome on a desktop: about 6 ms of drawing per frame in the middle, 11 ms at the 95th percentile. **Not measured on a phone, and not seen in Safari or Firefox.** Looked at in Chrome only, in dark mode at 1,200 px and 390 px.
+
 ## 2.30.1
 
 - **A run’s page reads properly in dark mode.** The page’s card stays cream in dark mode, but the run page had taken the dark page colours, so its stats, replay controls and records were dark boxes with dark text, and the map was the dark one on cream. Inside the card the page now uses the card’s own colours, and the map style (light or dark) follows the background it actually sits on.
