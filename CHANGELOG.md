@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.30.1
+
+- **A run’s page reads properly in dark mode.** The page’s card stays cream in dark mode, but the run page had taken the dark page colours, so its stats, replay controls and records were dark boxes with dark text, and the map was the dark one on cream. Inside the card the page now uses the card’s own colours, and the map style (light or dark) follows the background it actually sits on.
+- The records are separate boxes (no grey filler block beside them) and the “this run” mark sits under the value instead of over the label.
+- Checked in Chrome in dark mode on a card at about 1,100 px; not on a phone, Safari or Firefox.
+
 ## 2.30.0
 
 - **A runlog.** Every run gets a page of its own at `/runs/<name>/` (a post tagged `#run`; the same name as its data file) and `/runlog/` (the Runlog template) is the index: totals, distance per week, a card with a route picture for each run, and the records so far.

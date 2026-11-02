@@ -1,4 +1,12 @@
 /* Runlog: the index page, a run's own page, the records, and the live box on the homepage. Drawn by assets/js/runlog.js. */
+/* A run's page is a card (cream, in dark mode too), so inside it the page's tokens are swapped for the card's own */
+.run-page {
+    --paper: rgba(255, 255, 255, 0.62);
+    --wash: rgba(255, 255, 255, 0.4);
+    --ink: var(--on-card, #17191e);
+    --graphite: var(--on-card-meta, #5e636c);
+    --rule: var(--on-card-rule, rgba(23, 25, 30, 0.16));
+}
 .rl-wrap { max-width: 72rem; margin: 0 auto; padding: 0 var(--gutter); }
 .rl-wait { font: 0.85rem var(--mono); color: var(--graphite); }
 .rl-h { font-size: 1.2rem; letter-spacing: -0.01em; margin: 2.6rem 0 0.8rem; }
@@ -20,13 +28,13 @@
 .rl-bar b { font-weight: 500; color: var(--ink); }
 .rl-spark { width: 100%; height: 70px; }
 
-.rl-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 1px; margin: 0; background: var(--rule); border: 1px solid var(--rule); border-radius: 1rem; overflow: hidden; }
-.rl-rec { position: relative; background: var(--paper); padding: 0.8rem 1rem; }
+.rl-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.6rem; margin: 0; }
+.rl-rec { position: relative; background: var(--paper); border: 1px solid var(--rule); border-radius: 0.8rem; padding: 0.8rem 1rem; }
 .rl-rec dt { font: 0.7rem var(--mono); color: var(--graphite); text-transform: uppercase; letter-spacing: 0.06em; }
 .rl-rec dd { margin: 0.1rem 0 0; font: 600 1.5rem/1.1 var(--sans); letter-spacing: -0.02em; }
 .rl-rec small { font: 400 0.75rem var(--mono); color: var(--graphite); }
 .rl-rec.is-this { background: color-mix(in srgb, var(--led) 12%, var(--paper)); }
-.rl-rec-tag { position: absolute; right: 0.6rem; top: 0.6rem; font: 0.62rem var(--mono); color: var(--led); text-transform: uppercase; letter-spacing: 0.06em; }
+.rl-rec-tag { display: block; margin-top: 0.25rem; font: 0.62rem var(--mono); color: var(--led); text-transform: uppercase; letter-spacing: 0.06em; }
 
 .rl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1.25rem; }
 .rl-card { display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.1rem; border-radius: 1rem; background: var(--card, #d9ecd8); color: var(--on-card, #17191e); box-shadow: var(--card-shadow); text-decoration: none; }

@@ -14,8 +14,11 @@
     dark: { land: '#1a221e', water: '#1b3040', canal: '#21394a', paddy: '#222f20', green: '#1d2d20', built: '#212823', bldg: '#2b322d', minorC: '#161c19', minor: '#343c37', majorC: '#2a2618', major: '#4d4730', path: '#2b332e', label: '#a6b2a0', halo: '#141a17' }
   };
 
-  function isDark() {
-    var c = (getComputedStyle(D.body).backgroundColor.match(/[\d.]+/g) || [255, 255, 255]).map(Number);
+  /* Dark or light is decided by the first solid background behind the element (a run's page is a cream card even in dark mode) */
+  function isDark(from) {
+    var n = from || D.body, c = null;
+    while (n && n.nodeType === 1) { c = getComputedStyle(n).backgroundColor.match(/[\d.]+/g); if (c && !(c.length > 3 && +c[3] === 0)) break; c = null; n = n.parentElement; }
+    c = (c || [255, 255, 255]).map(Number);
     return c[0] * 0.299 + c[1] * 0.587 + c[2] * 0.114 < 110;
   }
   function pace(s) { if (!s || !isFinite(s)) return '–'; s = Math.round(s); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
@@ -148,7 +151,7 @@
     }).catch(function () { host.innerHTML = '<p class="rl-wait">This run’s data could not be loaded.</p>'; });
   }
   function build(host, run, idx, M) {
-    var S = run.summary, N = run.x.length, MT = run.mt, total = MT[N - 1], dark = isDark();
+    var S = run.summary, N = run.x.length, MT = run.mt, total = MT[N - 1], dark = isDark(host);
     var paceAt = function (i) { var j = i; while (j > 0 && run.t[i] - run.t[j] < 60) j--; var dd = run.d[i] - run.d[j]; return dd > 5 ? (run.t[i] - run.t[j]) / dd * 1000 : null; };
     var pc = run.x.map(function (_, i) { return paceAt(i); });
     var html = '<dl class="rl-stats"><div><dt>Distance</dt><dd>' + run.km.toFixed(2) + '<small> km</small></dd></div><div><dt>Time</dt><dd>' + clock(run.durationS) + '</dd></div><div><dt>Pace</dt><dd>' + pace(S.paceS) + '<small> /km</small></dd></div><div><dt>Heart rate</dt><dd>' + S.hrAvg + '<small> avg, ' + S.hrMax + ' max</small></dd></div><div><dt>Cadence</dt><dd>' + S.cadAvg + '<small> spm</small></dd></div></dl>';
@@ -163,7 +166,7 @@
     var pinsBy = run.pins || [];
     var mapBox = $('#rl-map', host), mapSvg;
     function drawOverview() {
-      var d2 = isDark(), url = '';
+      var d2 = isDark(host), url = '';
       if (M) url = drawBase(D.createElement('canvas'), 1.3, 200, PAL[d2 ? 'dark' : 'light'], true, M, run.w, run.h).toDataURL('image/png');
       var segs = '', cur = -1, d = '';
       for (var i = 0; i < N; i++) { var b = band(run.hr[i]); if (b !== cur) { if (cur >= 0) segs += '<path d="' + d + '" stroke="' + BAND[cur] + '"/>'; cur = b; d = i ? 'M' + run.x[i - 1] + ' ' + run.y[i - 1] + 'L' + run.x[i] + ' ' + run.y[i] : 'M' + run.x[i] + ' ' + run.y[i]; } else d += 'L' + run.x[i] + ' ' + run.y[i]; }
@@ -232,7 +235,7 @@
     charts(); addEventListener('resize', charts);
     show();
     // a change of light or dark scheme redraws the maps
-    new MutationObserver(function () { var d2 = isDark(); if (d2 !== dark) { dark = d2; cam.base(dark); drawOverview(); show(); } }).observe(D.documentElement, { attributes: true, attributeFilter: ['data-scheme'] });
+    new MutationObserver(function () { var d2 = isDark(host); if (d2 !== dark) { dark = d2; cam.base(dark); drawOverview(); show(); } }).observe(D.documentElement, { attributes: true, attributeFilter: ['data-scheme'] });
   }
 
   /* ---- the live box on the homepage: the latest run, as the whole box's background ---- */
