@@ -61,9 +61,17 @@
     return S;
   }
 
+  /* photos within 0.35 km of each other are one pin */
+  function makeGroups(pins) {
+    var groups = [];
+    pins.forEach(function (p, i) { p._i = i; var g = groups[groups.length - 1]; if (g && p.km - g.items[g.items.length - 1].km <= 0.35) g.items.push(p); else groups.push({ items: [p] }); });
+    groups.forEach(function (g, n) { g.n = n; g.x = g.items[0].x; g.y = g.items[0].y; g.mt = g.items[0].mt; g.km = g.items[0].km; });
+    return groups;
+  }
+
   function Cam(cv, run, M, o) {
     var ctx = cv.getContext('2d'), N = run.x.length, w = 0, h = 0, dpr = 1, S = M ? prep(M) : null, ang = null, pal = PAL.dark;
-    var pins = o.pins || [], maxDpr = o.maxDpr || 2;
+    var pins = o.pins || [], maxDpr = o.maxDpr || 2; pins.forEach(function (g) { g.items.forEach(function (p) { if (!p._img && (p.thumb || p.src)) { p._img = new Image(); p._img.src = p.thumb || p.src; } }); });
     var TH = (o.pitch || 34) * Math.PI / 180, CT = Math.cos(TH), ST = Math.sin(TH), CH = 26, CB = 14, LYMIN = -CB - CH * Math.tan(TH) + 4;
     var F = 1, CX = 0, CY = 0, HY = 0, sx = 0, sy = 0, ss = 0, px = 0, py = 0, ca = 1, sa = 0, lx = 0, ly = 0;
     var CUM = [0], k;
@@ -120,6 +128,56 @@
         ctx.beginPath(); ctx.moveTo(rx[0], ry[0]); for (i = 1; i < n; i++) ctx.lineTo(rx[i], ry[i]); ctx.closePath(); ctx.fillStyle = pal.bldg; ctx.fill();
       });
     }
+    function tri(img, x0, y0, x1, y1, x2, y2, u0, v0, u1, v1, u2, v2) {
+      var d = u0 * (v1 - v2) + u1 * (v2 - v0) + u2 * (v0 - v1); if (!d) return;
+      var A = (x0 * (v1 - v2) + x1 * (v2 - v0) + x2 * (v0 - v1)) / d, B = (y0 * (v1 - v2) + y1 * (v2 - v0) + y2 * (v0 - v1)) / d,
+        C = (x0 * (u2 - u1) + x1 * (u0 - u2) + x2 * (u1 - u0)) / d, Dd = (y0 * (u2 - u1) + y1 * (u0 - u2) + y2 * (u1 - u0)) / d,
+        E = (x0 * (u1 * v2 - u2 * v1) + x1 * (u2 * v0 - u0 * v2) + x2 * (u0 * v1 - u1 * v0)) / d, Fv = (y0 * (u1 * v2 - u2 * v1) + y1 * (u2 * v0 - u0 * v2) + y2 * (u0 * v1 - u1 * v0)) / d;
+      var cx = (x0 + x1 + x2) / 3, cy = (y0 + y1 + y2) / 3;
+      function out(x, y) { var dx = x - cx, dy = y - cy, l = Math.hypot(dx, dy) || 1; return [x + dx / l * 0.6, y + dy / l * 0.6]; }
+      var p0 = out(x0, y0), p1 = out(x1, y1), p2 = out(x2, y2);
+      ctx.save(); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.closePath(); ctx.clip(); ctx.transform(A, B, C, Dd, E, Fv); ctx.drawImage(img, 0, 0); ctx.restore();
+    }
+    function P3(x, y, z) { loc(x, y); proj(lx, ly, z); return [sx, sy, ss]; }
+    function floater(p, cxw, cyw, dx, dy, W, Hh, z0, alpha) {
+      var ax = cxw - dx * W / 2, ay = cyw - dy * W / 2, bx = cxw + dx * W / 2, by = cyw + dy * W / 2, z1 = z0 + Hh, G = 6, i, jx, V = [];
+      var TL = P3(ax, ay, z1), TR = P3(bx, by, z1), BL = P3(ax, ay, z0), BR = P3(bx, by, z0);
+      if ((TR[0] - TL[0]) * (BL[1] - TL[1]) - (TR[1] - TL[1]) * (BL[0] - TL[0]) <= 0) return null;
+      var img = p._img; if (!img || !img.complete || !img.naturalWidth) return { TL: TL, BL: BL, BR: BR };
+      var iw = img.naturalWidth, ih = img.naturalHeight;
+      ctx.globalAlpha = alpha;
+      for (i = 0; i <= G; i++) { V[i] = []; for (jx = 0; jx <= G; jx++) V[i][jx] = P3(ax + (bx - ax) * i / G, ay + (by - ay) * i / G, z1 - Hh * jx / G); }
+      for (i = 0; i < G; i++) for (jx = 0; jx < G; jx++) {
+        var a = V[i][jx], b = V[i + 1][jx], c = V[i][jx + 1], d = V[i + 1][jx + 1], u0 = iw * i / G, u1 = iw * (i + 1) / G, v0 = ih * jx / G, v1 = ih * (jx + 1) / G;
+        tri(img, a[0], a[1], b[0], b[1], c[0], c[1], u0, v0, u1, v0, u0, v1); tri(img, b[0], b[1], d[0], d[1], c[0], c[1], u1, v0, u1, v1, u0, v1);
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.85 * alpha) + ')'; ctx.lineWidth = Math.max(1, TL[2] * 0.22); ctx.beginPath(); ctx.moveTo(TL[0], TL[1]); ctx.lineTo(TR[0], TR[1]); ctx.lineTo(BR[0], BR[1]); ctx.lineTo(BL[0], BL[1]); ctx.closePath(); ctx.stroke();
+      ctx.globalAlpha = 1; return { TL: TL, BL: BL, BR: BR };
+    }
+    function floaters(tnow) {
+      var list = [];
+      pins.forEach(function (g) {
+        if (!g.geo) { var bi = 0, bd = 1e9, i; for (i = 0; i < N; i++) { var dd = (run.x[i] - g.x) * (run.x[i] - g.x) + (run.y[i] - g.y) * (run.y[i] - g.y); if (dd < bd) { bd = dd; bi = i; } } var a = Math.min(N - 1, bi + 4), b = Math.max(0, bi - 4); g.geo = { ang: Math.atan2(run.y[a] - run.y[b], run.x[a] - run.x[b]), side: g.n % 2 ? 1 : -1 }; }
+        loc(g.x, g.y); if (ly < -6 || ly > 135) return; list.push([ly, g]);
+      });
+      list.sort(function (a, b) { return b[0] - a[0]; });
+      list.forEach(function (q) {
+        var g = q[1], dist = q[0], a = g.geo.ang, side = g.geo.side, c = Math.cos(a), s = Math.sin(a), rxv = -s, ryv = c, off = 8;
+        var alpha = 0.9 * Math.max(0, Math.min(1, (135 - dist) / 50)) * Math.max(0, Math.min(1, (dist + 2) / 12)); if (alpha <= 0.02) return;
+        var bx = g.x + rxv * side * off, by = g.y + ryv * side * off;
+        /* each photo turns toward the runner, a little off square so it reads as hanging in the scene */ var cdx = px - bx, cdy = py - by, cl = Math.hypot(cdx, cdy) || 1, yaw = -side * 0.45; cdx /= cl; cdy /= cl; var nx = cdx * Math.cos(yaw) - cdy * Math.sin(yaw), ny = cdx * Math.sin(yaw) + cdy * Math.cos(yaw), wx = ny, wy = -nx, m = g.items.length;
+        var z0 = 2.3 + (reduced ? 0 : 0.3 * Math.sin(tnow * 1.1 + g.n * 1.7)), first = null;
+        /* a soft shadow on the ground under them */
+        var sh = P3(bx, by, 0); ctx.fillStyle = 'rgba(0,0,0,' + (0.12 * alpha) + ')'; ctx.beginPath();
+        for (var k0 = 0; k0 < 12; k0++) { var tt = k0 / 12 * 6.2832, qq = P3(bx + Math.cos(tt) * 3.2 * m * 0.8, by + Math.sin(tt) * 2.2, 0); if (k0) ctx.lineTo(qq[0], qq[1]); else ctx.moveTo(qq[0], qq[1]); } ctx.closePath(); ctx.fill();
+        g.items.forEach(function (p, k) {
+          var im = p._img, ar = im && im.naturalWidth ? im.naturalWidth / im.naturalHeight : 1.33, Wp = ar >= 1 ? 6 : 6 * ar, Hp = ar >= 1 ? 6 / ar : 6;
+          var fold = m > 1 ? (k % 2 ? 0.2 : -0.2) : 0, ca = Math.cos(fold), sa = Math.sin(fold), dxk = wx * ca - wy * sa, dyk = wx * sa + wy * ca, along = m > 1 ? (k - (m - 1) / 2) * 5.2 : 0;
+          var r = floater(p, bx + wx * along, by + wy * along, dxk, dyk, Wp, Hp, z0 + (m > 1 && k % 2 ? 0.35 : 0), alpha); if (r && !first) first = r;
+        });
+        if (first) { var mx = (first.BL[0] + first.BR[0]) / 2, my = (first.BL[1] + first.BR[1]) / 2 + Math.max(5, first.BL[2] * 0.9), rr = Math.max(3.5, first.BL[2] * 0.55); ctx.globalAlpha = alpha; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(mx, my, rr, 0, 7); ctx.fill(); if (rr >= 5.5) { ctx.fillStyle = '#17191e'; ctx.font = '600 ' + Math.round(rr * 1.2) + 'px monospace'; ctx.textAlign = 'center'; ctx.fillText(String(g.n + 1), mx, my + rr * 0.42); } ctx.globalAlpha = 1; }
+      });
+    }
     function foot(wx, wy, a, side, alpha) {
       var c2 = Math.cos(a), s2 = Math.sin(a), ox = wx - s2 * side * 1.5, oy = wy + c2 * side * 1.5, i, t;
       ctx.globalAlpha = alpha; ctx.fillStyle = pal.feet;
@@ -161,6 +219,7 @@
         ctx.beginPath(); ribbon(arr, 2.1); fillAll(BAND[q.b]);
       });
       if (S && q > 0.55) buildings(110 * q);
+      floaters(T0 / 1000);
       /* a haze where the ground meets the sky, drawn over the far shapes */
       var hz = ctx.createLinearGradient(0, HY - 2, 0, HY + h * 0.3); hz.addColorStop(0, pal.sky1); hz.addColorStop(1, dark ? 'rgba(23,32,27,0)' : 'rgba(230,233,227,0)'); ctx.fillStyle = hz; ctx.fillRect(0, HY - 2, w, h * 0.3 + 2);
       /* footprints, one every few units along the path behind the runner */
@@ -171,10 +230,6 @@
         foot(run.x[j] + (run.x[j + 1] - run.x[j]) * u, run.y[j] + (run.y[j + 1] - run.y[j]) * u, Math.atan2(run.y[j + 1] - run.y[j], run.x[j + 1] - run.x[j]), mIx % 2 ? 1 : -1, Math.max(0, 1 - (here - dd) / (STRIDE * 10)) * 0.95);
       }
       ema = ema * 0.9 + (performance.now() - T0) * 0.1; if (ema > 14 && q > 0.4) { q -= 0.15; ema = 6; }
-      pins.forEach(function (pn) {
-        loc(pn.x, pn.y); if (ly < -5 || ly > 200) return; proj(lx, ly, 0); var bx = sx, by = sy, bs = ss; proj(lx, ly, 5); ctx.strokeStyle = '#17191e'; ctx.lineWidth = Math.max(1, bs * 0.35); ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(sx, sy); ctx.stroke();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(sx, sy, Math.max(3, ss * 1.7), 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#17191e'; ctx.beginPath(); ctx.arc(sx, sy, Math.max(1.4, ss * 0.7), 0, 7); ctx.fill();
-      });
     }
     size();
     return { draw: draw, size: size, snap: function () { ang = null; }, ang: function () { return ang === null ? 0 : ang; }, cum: CUM };
@@ -251,7 +306,8 @@
     html += recordsBlock(idx, run.slug);
     host.innerHTML = html;
 
-    var pinsBy = run.pins || [], rep = $('.rl-replay', host), mapBox = $('#rl-map', host), mapSvg, cam = Cam($('canvas', rep), run, M, { pins: pinsBy });
+    var pinsBy = run.pins || [], rep = $('.rl-replay', host), mapBox = $('#rl-map', host), mapSvg, side = $('.rl-side', host), groups = makeGroups(pinsBy), cam = Cam($('canvas', rep), run, M, { pins: groups });
+    if (pinsBy.length) { var gl = el('div', 'rl-photos'); gl.innerHTML = '<h2 class="rl-h">Photos from the run</h2><div class="rl-strip">' + pinsBy.map(function (p, n) { return '<button type="button" class="rl-ph" data-i="' + n + '"><img src="' + esc(p.thumb || p.src) + '" alt="' + esc(p.alt || p.title) + '" loading="lazy"><span>' + esc(p.title) + (p.approx ? '' : ' · km ' + p.km) + '</span></button>'; }).join('') + '</div>'; rep.parentNode.insertBefore(gl, rep.nextSibling); gl.onclick = function (e) { var b = e.target.closest('[data-i]'); if (b) openBox(+b.getAttribute('data-i')); }; }
     var line = $('.rl-line', rep), playLbl = $('.rl-state', rep), clk = $('.rl-clock', rep), pop = $('.rl-pop', rep), pos = 0, playing = false, speed = 120, last = 0, hold = 0;
 
     /* the overview map: the route faint, the part run so far strong, and where the runner is, facing the way they face */
@@ -262,13 +318,15 @@
       for (var i = 0; i < N; i++) { var b = band(run.hr[i]); all += (i ? 'L' : 'M') + run.x[i] + ' ' + run.y[i]; if (b !== cur) { if (cur >= 0) segs += '<path d="' + d + '" stroke="' + BAND[cur] + '"/>'; cur = b; d = i ? 'M' + run.x[i - 1] + ' ' + run.y[i - 1] + 'L' + run.x[i] + ' ' + run.y[i] : 'M' + run.x[i] + ' ' + run.y[i]; } else d += 'L' + run.x[i] + ' ' + run.y[i]; }
       segs += '<path d="' + d + '" stroke="' + BAND[cur] + '"/>';
       var ends = '<circle cx="' + run.x[0] + '" cy="' + run.y[0] + '" r="12" fill="#1e8b4c" stroke="#fff" stroke-width="4"/><circle cx="' + run.x[N - 1] + '" cy="' + run.y[N - 1] + '" r="12" fill="#17191e" stroke="#fff" stroke-width="4"/>';
-      var pins = pinsBy.map(function (p, n) { return '<g><circle cx="' + p.x + '" cy="' + p.y + '" r="15" fill="#fff" stroke="#17191e" stroke-width="4"/><text x="' + p.x + '" y="' + (p.y + 5) + '" text-anchor="middle" font-size="15" font-family="monospace" font-weight="600" fill="#17191e">' + (n + 1) + '</text></g>'; }).join('');
+      var pins = groups.map(function (g, n) { var p = g.items[0], cy = g.y - 30; return '<g class="rl-pin"><clipPath id="rl-pc' + n + '"><circle cx="' + g.x + '" cy="' + cy + '" r="21"/></clipPath><path d="M' + (g.x - 10) + ' ' + (cy + 16) + 'L' + g.x + ' ' + g.y + 'L' + (g.x + 10) + ' ' + (cy + 16) + 'Z" fill="#fff"/><circle cx="' + g.x + '" cy="' + cy + '" r="25" fill="#fff"/><image href="' + esc(p.thumb || p.src) + '" x="' + (g.x - 21) + '" y="' + (cy - 21) + '" width="42" height="42" preserveAspectRatio="xMidYMid slice" clip-path="url(#rl-pc' + n + ')"/>' + (g.items.length > 1 ? '<circle cx="' + (g.x + 19) + '" cy="' + (cy + 17) + '" r="11" fill="#e07a3a" stroke="#fff" stroke-width="3"/><text x="' + (g.x + 19) + '" y="' + (cy + 22) + '" text-anchor="middle" font-size="14" font-family="monospace" font-weight="700" fill="#fff">' + g.items.length + '</text>' : '') + '</g>'; }).join('');
       mapBox.innerHTML = '<svg viewBox="-30 -30 ' + (run.w + 60) + ' ' + (run.h + 60) + '" role="img" aria-label="Map of the route, coloured by heart rate, with where the runner is now. Select a point to move the replay there."><defs><mask id="rl-mask" maskUnits="userSpaceOnUse" x="-200" y="-200" width="' + (run.w + 400) + '" height="' + (run.h + 400) + '"><path class="rl-mp" d="' + all + '" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0 999999"/></mask></defs>' + (url ? '<image x="-200" y="-200" width="' + (run.w + 400) + '" height="' + (run.h + 400) + '" preserveAspectRatio="none" href="' + url + '"/>' : '') + '<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.38">' + segs + '</g><g fill="none" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" mask="url(#rl-mask)">' + segs + '</g>' + ends + pins + '<g class="rl-here"><path d="M0 0 L-30 -70 A76 76 0 0 1 30 -70Z" fill="#e07a3a" opacity="0.38"/><circle r="12" fill="#e07a3a" stroke="#17191e" stroke-width="3.5"/></g></svg>';
       mapSvg = $('svg', mapBox);
     }
     drawOverview();
     mapBox.addEventListener('click', function (e) {
       var pt = mapSvg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; var q = pt.matrixTransform(mapSvg.getScreenCTM().inverse()), bi = 0, bd = 1e9;
+      for (var pq = 0; pq < groups.length; pq++) if (Math.min(Math.hypot(groups[pq].x - q.x, groups[pq].y - q.y), Math.hypot(groups[pq].x - q.x, groups[pq].y - 30 - q.y)) < 34) { openFan(pq); return; }
+      closeFan();
       for (var i = 0; i < N; i++) { var dd = Math.hypot(run.x[i] - q.x, run.y[i] - q.y); if (dd < bd) { bd = dd; bi = i; } }
       seek(MT[bi]);
     });
@@ -289,13 +347,31 @@
       $$('.rl-chart i', host).forEach(function (c) { c.style.left = 'calc(var(--lab) + (100% - var(--lab)) * ' + (pos / total) + ')'; });
       $$('.rl-splits tbody tr', host).forEach(function (r) { var k = +r.getAttribute('data-km'); r.classList.toggle('is-now', run.d[i] / 1000 > k - 1 && run.d[i] / 1000 <= k + 0.0001); });
     }
+    function whenText(p) { var d = new Date(run.start + ':00Z'); d.setUTCSeconds(d.getUTCSeconds() + p.t); return (p.approx ? 'somewhere along the route' : 'km ' + p.km + ' · ' + timeOfDay(d.toISOString().slice(0, 16))) + (p.credit ? (p.approx ? ' · ' : ' · ') + 'photo: ' + esc(p.credit) : ''); }
+    function popHtml(g) { var p = g.items[0]; return '<button type="button" class="rl-pop-main" data-i="' + p._i + '" aria-label="Open this photo full size"><img src="' + esc(p.src) + '" alt="' + esc(p.alt || p.title) + '"></button><div class="rl-pop-t"><b>' + esc(p.title) + (g.items.length > 1 ? ' <i>+' + (g.items.length - 1) + ' more</i>' : '') + '</b><small>' + whenText(p) + '</small></div>' + (g.items.length > 1 ? '<div class="rl-pop-row">' + g.items.map(function (it) { return '<button type="button" data-i="' + it._i + '" aria-label="Open ' + esc(it.title) + '"><img src="' + esc(it.thumb || it.src) + '" alt=""></button>'; }).join('') + '</div>' : ''); }
+    function goGroup(n) { seek(groups[n].mt); pop.innerHTML = popHtml(groups[n]); pop.hidden = false; hold = 8; }
+    function closeFan() { $$('.rl-fan', side).forEach(function (f) { f.remove(); }); }
+    function openFan(n) {
+      closeFan(); var g = groups[n], pt = mapSvg.createSVGPoint(); pt.x = g.x; pt.y = g.y - 30; var sp = pt.matrixTransform(mapSvg.getScreenCTM()), sb = side.getBoundingClientRect(), mb = mapBox.getBoundingClientRect();
+      var f = el('div', 'rl-fan'); f.style.left = (sp.x - sb.left) + 'px'; f.style.top = (Math.max(sp.y, mb.top + 150) - sb.top) + 'px';
+      var m = g.items.length; f.innerHTML = g.items.map(function (it, k) { var ang = (k - (m - 1) / 2) * 22; return '<button type="button" class="rl-fan-c" data-i="' + it._i + '" style="--a:' + ang + 'deg;--k:' + k + '"><img src="' + esc(it.thumb || it.src) + '" alt="' + esc(it.alt || it.title) + '"><span>' + (it.approx ? 'along the route' : 'km ' + it.km) + '</span></button>'; }).join('') + '<button type="button" class="rl-fan-go">Show in the replay</button>';
+      side.appendChild(f); requestAnimationFrame(function () { f.classList.add('on'); });
+      f.onclick = function (e) { var b = e.target.closest('[data-i]'); if (b) openBox(+b.getAttribute('data-i')); else if (e.target.closest('.rl-fan-go')) { goGroup(n); closeFan(); rep.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); } };
+    }
+    function openBox(i) {
+      var p = pinsBy[i], b = $('.rl-lb') || el('div', 'rl-lb'); b.setAttribute('role', 'dialog'); b.setAttribute('aria-modal', 'true'); b.setAttribute('aria-label', p.title);
+      b.innerHTML = '<button type="button" class="rl-lb-x" aria-label="Close">✕</button><button type="button" class="rl-lb-p" aria-label="Previous photo">‹</button><button type="button" class="rl-lb-n" aria-label="Next photo">›</button><figure><img src="' + esc(p.src) + '" alt="' + esc(p.alt || p.title) + '"><figcaption><b>' + esc(p.title) + '</b><span>' + (i + 1) + ' of ' + pinsBy.length + ' · ' + whenText(p) + '</span><button type="button" class="rl-lb-go">Show in the replay</button></figcaption></figure>';
+      D.body.appendChild(b); $('.rl-lb-x', b).focus();
+      function shut() { b.remove(); }
+      b.onclick = function (e) { if (e.target.closest('.rl-lb-x') || e.target === b) shut(); else if (e.target.closest('.rl-lb-p')) openBox((i + pinsBy.length - 1) % pinsBy.length); else if (e.target.closest('.rl-lb-n')) openBox((i + 1) % pinsBy.length); else if (e.target.closest('.rl-lb-go')) { var gi = groups.findIndex(function (g) { return g.items.indexOf(p) >= 0; }); shut(); closeFan(); goGroup(gi); rep.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); } };
+    }
     function seek(t) { pos = Math.max(0, Math.min(total, t)); hold = 0; pop.hidden = true; cam.snap(); show(); }
     function tick(now) {
       if (!playing) { last = 0; return; }
       var dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now;
       if (hold > 0) { hold -= dt; if (hold <= 0) pop.hidden = true; } else {
         var np = pos + dt * speed;
-        for (var n = 0; n < pinsBy.length; n++) if (pinsBy[n].mt > pos && pinsBy[n].mt <= np) { np = pinsBy[n].mt; hold = 3; pop.innerHTML = (pinsBy[n].src ? '<img src="' + esc(pinsBy[n].src) + '" alt="">' : '') + '<b>' + esc(pinsBy[n].title) + '</b><small>km ' + pinsBy[n].km + (pinsBy[n].credit ? ' · photo: ' + esc(pinsBy[n].credit) : '') + '</small>'; pop.hidden = false; break; }
+        for (var n = 0; n < groups.length; n++) if (groups[n].mt > pos && groups[n].mt <= np) { np = groups[n].mt; hold = 3.5; pop.innerHTML = popHtml(groups[n]); pop.hidden = false; break; }
         pos = np; if (pos >= total) { pos = total; playing = false; playLbl.textContent = 'tap to replay'; }
       }
       show(); requestAnimationFrame(tick);
@@ -322,7 +398,7 @@
       });
     }
     charts(); addEventListener('resize', charts);
-    show();
+    show(); pop.addEventListener('click', function (e) { var b = e.target.closest('[data-i]'); if (b) { e.stopPropagation(); openBox(+b.getAttribute('data-i')); } }); D.addEventListener('keydown', function (e) { var lb = $('.rl-lb'); if (!lb) return; if (e.key === 'Escape') lb.remove(); else if (e.key === 'ArrowRight') $('.rl-lb-n', lb).click(); else if (e.key === 'ArrowLeft') $('.rl-lb-p', lb).click(); }); D.addEventListener('click', function (e) { if (!e.target.closest('.rl-fan') && !e.target.closest('#rl-map')) closeFan(); });
     new MutationObserver(function () { var d2 = isDark(host); if (d2 !== dark) { dark = d2; drawOverview(); show(); } }).observe(D.documentElement, { attributes: true, attributeFilter: ['data-scheme'] });
   }
 

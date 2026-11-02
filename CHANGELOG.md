@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.32.0
+
+- **Photos on a run.** A run can carry photos. In the chase cam each one is a quiet, slightly translucent picture floating at the side of the road, in perspective, with a soft shadow and a small numbered dot; it fades in as you approach and out behind you, bobs very slightly, turns toward the runner, and holds still with reduced motion. Photos within 0.35 km of each other are one pin and float as a fanned pair. On the route map a pin is a round photo (with a count when it holds more than one) that fans out into its photos when clicked; a click on a photo opens it full size, with previous, next, Escape and arrow keys, its title, who took it and a button that jumps the replay there. The replay pauses at each pin for a few seconds and shows a card at the cam’s top right. A strip of every photo sits under the replay, so the photos can be reached without the map.
+- **Where a photo goes comes from the photo.** `extras/runlog/photos.mjs` reads each original’s EXIF capture time and GPS, places it on the run by time, checks it against the GPS, and writes resized copies **with all EXIF removed (no GPS, no time)**, which are kept in Ghost’s image storage, not in this repository. A photo with no EXIF can be given a kilometre by hand; the page then says “somewhere along the route” and shows no km or time for it.
+- **A second run: Georgian Run 10K** (20 Oct 2026, 10.16 km, 1:20:01), with five photos placed by hand. The index, the totals and the records now cover both runs.
+- **The fastest km ignores GPS jumps.** A single km more than 30% faster than the run’s own average pace is a jump (that run’s first km was short while the watch found its signal, and its second looked 5:25), not a record.
+- Looked at in Chrome only, at one width: the floating photos, the foldout, the full-size view, the strip, the index with two runs. Not on a phone, in Safari or Firefox, or in dark mode; no frame-rate measurement of the photo drawing.
+
 ## 2.31.0
 
 - **A real chase cam, and a sharp map.** The replay no longer enlarges a stored picture of the map (which was blurry on a wide screen). The streets, canals, fields and buildings are drawn live, at your screen’s own sharpness, from a camera behind and above the runner looking ahead along the path: roads narrow toward a hazy horizon, buildings stand up a little, and the footprints and the trail are drawn on the ground. Only what is near the runner is drawn each frame, and if frames come slowly it drops the far detail, and then the buildings, by itself.

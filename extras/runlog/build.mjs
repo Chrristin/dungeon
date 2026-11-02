@@ -91,15 +91,16 @@ function best(len) {
   for (let i = 0; i < raw.length; i++) { while (j < raw.length - 1 && raw[j].d - raw[i].d < len) j++; if (raw[j].d - raw[i].d >= len) b = Math.min(b, raw[j].t - raw[i].t); }
   return Number.isFinite(b) ? Math.round(b) : null;
 }
-const fullSplits = run.splits.filter(s => !s.part).map(s => s.s);
+// a single km more than 30% faster than the run's average pace is a GPS jump (the first km is often short while the watch finds its signal), not a record
+const avgKm = durationS / (officialM / 1000), fullSplits = run.splits.filter(s => !s.part && s.s >= 0.7 * avgKm).map(s => s.s);
 const bestK = { 1: fullSplits.length ? Math.min(...fullSplits) : null, 5: best(5000), 10: best(10000), 21: best(21097) };
 
-// optional pins: [{km, title, credit, src}] placed on the route by distance
+// optional pins, from photos.mjs once its copies are uploaded: [{km, title, credit, alt, src, thumb, approx}] placed on the route by distance; approx: true says the place is a guess
 const pinsPath = opt('pins', null);
 run.pins = [];
 if (pinsPath && pinsPath !== true) for (const p of JSON.parse(fs.readFileSync(pinsPath, 'utf8'))) {
   const i = raw.findIndex(q => q.d >= p.km * 1000); if (i < 0) continue;
-  run.pins.push({ km: p.km, t: Math.round(raw[i].t), mt: Math.round(raw[i].mt), x: P(raw[i].la, raw[i].lo)[0], y: P(raw[i].la, raw[i].lo)[1], title: p.title || '', credit: p.credit || '', src: p.src || '' });
+  run.pins.push({ km: p.km, t: Math.round(raw[i].t), mt: Math.round(raw[i].mt), x: P(raw[i].la, raw[i].lo)[0], y: P(raw[i].la, raw[i].lo)[1], title: p.title || '', credit: p.credit || '', alt: p.alt || '', src: p.src || '', thumb: p.thumb || p.src || '', ...(p.approx ? { approx: true } : {}) });
 }
 
 const avg = a => a.reduce((x, y) => x + y, 0) / a.length;

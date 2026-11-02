@@ -24,8 +24,28 @@ node extras/runlog/build.mjs run.gpx --slug 2026-10-31-kochi-dawn-15k --title "K
 `--osm map.osm --fetch` downloads the OpenStreetMap extract for the route (plus about 450 m around it) the first time, through
 the public API, and keeps it in `map.osm`; later runs over the same ground can reuse the file. Credit "© OpenStreetMap
 contributors" is on every page that shows the map. `--trim 200` leaves out the first and last 200 m of the published route
-(none by default: the run's start is a public place). `--pins pins.json` places photos: `[{"km": 6.0, "title": "...",
-"credit": "...", "src": "https://..."}]`; the replay stops at each for three seconds.
+(none by default: the run's start is a public place). `--pins pins.json` places photos (see "Photos"); the replay stops at
+each pin for a few seconds.
+
+## Photos
+
+Photos are not kept in this repository. `extras/runlog/photos.mjs` turns the originals into clean copies and a pin list:
+
+```
+node extras/runlog/photos.mjs run.gpx photos/ meta.json out/ --slug 2026-10-31-kochi-dawn-15k
+```
+
+`meta.json` gives, per original file name, `{"title", "credit", "alt"}` (alt is a plain description of the picture). Each
+photo's EXIF capture time is matched to the run's clock to find where on the route it was taken, and its GPS position is
+checked against that (a photo more than 60 m off the route is reported). A photo with no EXIF (one that came through a
+messaging app) can be given `"km": 4.2` instead; its pin is then marked `approx` and the page says "somewhere along the
+route" instead of a km and a time. The tool writes `<slug>-p<n>.jpg` (1,400 px) and `-s.jpg` (480 px), **with all EXIF
+removed, including GPS**, and checks that before finishing. Upload those to Ghost's image storage (the pin's `src` and
+`thumb` are the uploaded addresses, which the tool that does the upload writes into `pins.json`), then give `pins.json` to
+`build.mjs --pins`. In the replay, photos within 0.35 km of each other are one pin: in the cam it is a quiet, slightly
+translucent photo floating at the side of the road (two or more are fanned), on the map it is a round photo that fans out
+when clicked, and a click opens the photo full size. The strip under the replay lists every photo, so the photos can be
+reached without the map or the cam.
 
 ## Data
 
@@ -43,4 +63,8 @@ contributors" is on every page that shows the map. `--trim 200` leaves out the f
 - **Elevation is not used.** The watch's altitude is not credible on flat ground (the first run reports 165 m of climb and
   none of descent). A terrain-model profile would be within its own error of the whole climb; add one only on a hilly run.
 - Heart rate and cadence gaps are carried forward from the last reading.
-- Fastest km is the quickest marked kilometre. Fastest 5K, 10K and half are the quickest stretch of that length, to the second.
+- Fastest km is the quickest marked kilometre, **ignoring any single km more than 30% faster than the run's average pace**:
+  that is a GPS jump (the first km is often short while the watch finds its signal), not a record. Fastest 5K, 10K and half
+  are the quickest stretch of that length, to the second.
+- The watch shows distance truncated (10.15 km), the page rounds (10.16 km). Average heart rate and cadence are averaged from
+  every second of the track, so they can differ from the watch's own figure by one.
