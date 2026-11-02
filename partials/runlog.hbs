@@ -1,0 +1,16 @@
+{{!-- The Runlog index: totals, weekly distance, the records so far, and a card for every run. Drawn by assets/js/runlog.js
+      from assets/data/runs/index.json, which extras/runlog/build.mjs writes. A run's own page is a post tagged #run at
+      /runs/<its slug>/ (docs/routes.yaml). See docs/runlog.md. Context: the page. --}}
+{{#post}}
+<section class="statement statement--small store-head">
+    <h1 class="statement-text">{{title}}</h1>
+    {{#if custom_excerpt}}<p class="statement-desc">{{custom_excerpt}}</p>{{/if}}
+    <div class="store-intro gh-content">{{content}}</div>
+</section>
+{{/post}}
+<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.30.0">
+<div class="rl-wrap">
+    <div class="rl-index" data-src="{{asset "data/runs/index.json"}}" data-runs-url="{{@site.url}}/runs/" aria-live="polite"><p class="rl-wait">Loading the runlog…</p></div>
+    <noscript><p class="rl-wait">This page needs JavaScript to show the runs.</p></noscript>
+</div>
+<script src="{{asset "js/runlog.js"}}&r=2.30.0" defer></script>

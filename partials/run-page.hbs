@@ -1,0 +1,21 @@
+{{!-- A run's own page: a post with the internal tag #run, at /runs/<slug>/. Ghost supplies the title, the picture (the post's
+      feature image), the short line (excerpt) and the story (the post's body). The map, replay, charts, splits and records are
+      drawn by assets/js/runlog.js from assets/data/runs/<slug>.json, so the post's slug must be that run's slug.
+      See docs/runlog.md. Context: the post. --}}
+<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.30.0">
+<div class="post-stage">
+    <article class="post-panel run-page" data-key="{{slug}}">
+        <p class="watch-top"><a class="watch-back" href="{{@site.url}}/runlog/">&larr; <span>Runlog</span></a></p>
+        {{#if feature_image}}<img class="run-hero" src="{{img_url feature_image size="l" format="webp"}}" alt="{{#if feature_image_alt}}{{feature_image_alt}}{{else}}{{title}}{{/if}}">{{/if}}
+        <h1 class="watch-title">{{title}}</h1>
+        {{#if custom_excerpt}}<p class="watch-lede">{{custom_excerpt}}</p>{{/if}}
+        {{#if html}}<section class="watch-notes panel-content gh-content">{{content}}</section>{{/if}}
+        <div class="rl-run" data-slug="{{slug}}" data-src="{{asset "data/runs/index.json"}}" aria-live="polite"><p class="rl-wait">Loading the run…</p></div>
+        <noscript><p class="rl-wait">This page needs JavaScript to show the run.</p></noscript>
+        {{> "post-actions"}}
+    </article>
+    {{#if @custom.stickies_site_key}}{{#if @custom.stamps_endpoint}}
+    {{> "stickies"}}
+    {{/if}}{{/if}}
+</div>
+<script src="{{asset "js/runlog.js"}}&r=2.30.0" defer></script>

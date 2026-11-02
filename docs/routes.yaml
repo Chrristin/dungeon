@@ -12,7 +12,7 @@ collections:
     # Garden notes have to be left out here, not just hidden by the theme: otherwise they still take up
     # places on each page of the homepage, and a page of 25 can show only a handful of cards.
     # Watchlist items (#watch-item) have pages of their own under their watchlist's address, below.
-    filter: tag:-[hash-now,hash-note,hash-garden,hash-thing,hash-watch-item]
+    filter: tag:-[hash-now,hash-note,hash-garden,hash-thing,hash-watch-item,hash-run]
   /notes/:
     permalink: /{slug}/
     template: index
@@ -34,6 +34,13 @@ collections:
     template: index
     # Diecast watchlist items (#diecast-item) live at /diecast/<n>/
     filter: tag:hash-diecast-item
+
+  /runs/:
+    permalink: /runs/{slug}/
+    template: index
+    # Runs (#run) live at /runs/<slug>/. The Runlog page itself (the Runlog template, at /runlog/) lists them from assets/data/runs/index.json,
+    # so a run post must have the same slug as its data file. See docs/runlog.md.
+    filter: tag:hash-run
 
 taxonomies:
   tag: /tag/{slug}/

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.30.0
+
+- **A runlog.** Every run gets a page of its own at `/runs/<name>/` (a post tagged `#run`; the same name as its data file) and `/runlog/` (the Runlog template) is the index: totals, distance per week, a card with a route picture for each run, and the records so far.
+- **A run’s page is a replay.** The route on a map of the real streets, canals, fields and buildings (OpenStreetMap, credited under it), coloured by heart rate; a follow cam that turns so the way you are going is up, with footprints behind you; play, pause, five speeds, a scrubber, and Space and the arrow keys; pace, heart rate and cadence charts you can click; a kilometre table where a row jumps the replay there. Photos can be pinned to the route: the replay stops at a pin for three seconds and shows the picture and who took it.
+- **The records so far** (total, longest run, fastest km, 5K, 10K, biggest week, longest streak) are the same block on the index and under every run, and mark the ones the run you are reading set. They are worked out in the page from each run’s summary.
+- **A homepage box for the latest run.** A page with the Runlog template and a plot’s tag gets a box in that plot whose whole background is the latest run: the route is drawn first, then, once the page has painted and the browser is idle, the follow cam fades in. It plays only while the box is on screen, stays still with reduced motion, and nothing is fetched until the page is idle.
+- **Where the data comes from.** `extras/runlog/build.mjs` turns a GPX and an OpenStreetMap extract into `assets/data/runs/<name>.json`, `<name>.map.json` and `index.json` (docs/runlog.md). Distance is scaled to the watch’s own figure; elevation is not used (the watch’s is not credible on flat ground). Needs the new `/runs/` block in docs/routes.yaml uploaded in Ghost, a page with the Runlog template at `/runlog/`, and a post tagged `#run` for each run.
+- Checked in Chrome only, at one width, in dark mode: the run page, the index and the homepage box with the first run. Not seen on a phone, in Safari or Firefox, or inside a real plot card. The map is drawn in the browser, which is fine for one run but is heavier than a baked picture; baking it at build time is the next step, with the reel.
+
 ## 2.29.12
 
 - **The offers block leads with the price.** “Get it for as low as” is a small label and the price under it is large, the same size as the Today price above it. The cards themselves are folded away behind one line, “Depends on your card and bank. See the offers”, which opens the list and the footnote on a click (a plain HTML disclosure: no script, and it works from the keyboard). Closed is the default.
