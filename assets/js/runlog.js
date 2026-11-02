@@ -178,14 +178,27 @@
         if (first) { var mx = (first.BL[0] + first.BR[0]) / 2, my = (first.BL[1] + first.BR[1]) / 2 + Math.max(5, first.BL[2] * 0.9), rr = Math.max(3.5, first.BL[2] * 0.55); ctx.globalAlpha = alpha; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(mx, my, rr, 0, 7); ctx.fill(); if (rr >= 5.5) { ctx.fillStyle = '#17191e'; ctx.font = '600 ' + Math.round(rr * 1.2) + 'px monospace'; ctx.textAlign = 'center'; ctx.fillText(String(g.n + 1), mx, my + rr * 0.42); } ctx.globalAlpha = 1; }
       });
     }
-    function foot(wx, wy, a, side, alpha) {
-      var c2 = Math.cos(a), s2 = Math.sin(a), ox = wx - s2 * side * 1.5, oy = wy + c2 * side * 1.5, i, t;
-      ctx.globalAlpha = alpha; ctx.fillStyle = pal.feet;
-      [[0, -0.86, 0.9, 1.43], [0, 1.05, 0.67, 0.76]].forEach(function (E) {
-        ctx.beginPath();
-        /* ex is across the way of travel, ey along it (negative is ahead) */
-        for (i = 0; i < 10; i++) { t = i / 10 * 6.2832; var ex = E[0] + Math.cos(t) * E[2], ey = E[1] + Math.sin(t) * E[3]; loc(ox - ey * c2 - ex * s2, oy - ey * s2 + ex * c2); proj(lx, ly, 0.05); if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }
-        ctx.closePath(); ctx.fill();
+    /* a circle on the ground, in world units, as a path */
+    function disc(wx, wy, rad) { for (var k = 0; k < 28; k++) { var t = k / 28 * 6.2832; loc(wx + Math.cos(t) * rad, wy + Math.sin(t) * rad); proj(lx, ly, 0.05); if (k) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); } ctx.closePath(); }
+    /* the runner: a soft ring on the ground that breathes, a ripple that spreads and fades, and a faint shadow */
+    function ring(x, y, tnow) {
+      var ph = reduced ? 0.35 : (tnow * 0.8) % 1, ac = '224,122,58';
+      ctx.beginPath(); disc(x + 0.5, y + 0.4, 3); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
+      ctx.beginPath(); disc(x, y, 2); ctx.fillStyle = 'rgba(' + ac + ',0.16)'; ctx.fill();
+      loc(x, y); proj(lx, ly, 0.05); var u = ss;
+      ctx.beginPath(); disc(x, y, 2.05 + 0.25 * Math.sin(ph * 6.2832)); ctx.strokeStyle = 'rgba(' + ac + ',0.95)'; ctx.lineWidth = Math.max(2, u * 0.45); ctx.stroke();
+      ctx.beginPath(); disc(x, y, 2.4 + ph * 4.2); ctx.strokeStyle = 'rgba(' + ac + ',' + (0.5 * (1 - ph)) + ')'; ctx.lineWidth = Math.max(1.2, u * 0.3 * (1 - ph * 0.5)); ctx.stroke();
+    }
+    /* the part of the route already run, strongest near the runner and fading behind */
+    function travelled(i, x, y, here, back, alpha, wd) {
+      var si = 0; if (isFinite(back)) { si = i; while (si > 0 && CUM[si] > here - back) si--; }
+      ctx.globalAlpha = alpha;
+      runs.forEach(function (q) {
+        if (q.a > i || q.e < si) return;
+        var a0 = Math.max(q.a, si), e0 = Math.min(q.e, i), m = e0 - a0 + 1, cur = q.e > i; if (m < 1) return;
+        var arr = new Float32Array(2 * m + (cur ? 2 : 0)), t; for (t = 0; t < 2 * m; t++) arr[t] = q.p[2 * (a0 - q.a) + t];
+        if (cur) { arr[2 * m] = x; arr[2 * m + 1] = y; }
+        ctx.beginPath(); ribbon(arr, wd); fillAll(BAND[q.b]);
       });
       ctx.globalAlpha = 1;
     }
@@ -212,23 +225,13 @@
         ctx.beginPath(); ribbons(S.lines.minor, 170 * q, 1.7); fillAll(pal.minor); ctx.beginPath(); ribbons(S.lines.major, 230 * q, 3.3); fillAll(pal.major);
       }
       ctx.beginPath(); ribbon(flat, 1.4); fillAll(pal.trail);
-      runs.forEach(function (q) {
-        if (q.a > i) return;
-        var arr = q.p;
-        if (q.e > i) { var m = i - q.a + 1; arr = new Float32Array(2 * m + 2); for (var t = 0; t < 2 * m; t++) arr[t] = q.p[t]; arr[2 * m] = x; arr[2 * m + 1] = y; }
-        ctx.beginPath(); ribbon(arr, 2.1); fillAll(BAND[q.b]);
-      });
+      var here = CUM[i] + r * (CUM[i + 1] - CUM[i]);
+      travelled(i, x, y, here, 260, 0.42, 2.1); travelled(i, x, y, here, 90, 0.7, 2.3); travelled(i, x, y, here, 36, 1, 2.6);
       if (S && q > 0.55) buildings(110 * q);
       floaters(T0 / 1000);
       /* a haze where the ground meets the sky, drawn over the far shapes */
       var hz = ctx.createLinearGradient(0, HY - 2, 0, HY + h * 0.3); hz.addColorStop(0, pal.sky1); hz.addColorStop(1, dark ? 'rgba(23,32,27,0)' : 'rgba(230,233,227,0)'); ctx.fillStyle = hz; ctx.fillRect(0, HY - 2, w, h * 0.3 + 2);
-      /* footprints, one every few units along the path behind the runner */
-      var STRIDE = 5, here = CUM[i] + r * (CUM[i + 1] - CUM[i]);
-      for (var mIx = Math.floor(here / STRIDE), n = 0; mIx >= 0 && n < 10; mIx--, n++) {
-        var dd = mIx * STRIDE, j = i; while (j > 0 && CUM[j] > dd) j--;
-        var sg = (CUM[j + 1] - CUM[j]) || 1, u = (dd - CUM[j]) / sg;
-        foot(run.x[j] + (run.x[j + 1] - run.x[j]) * u, run.y[j] + (run.y[j + 1] - run.y[j]) * u, Math.atan2(run.y[j + 1] - run.y[j], run.x[j + 1] - run.x[j]), mIx % 2 ? 1 : -1, Math.max(0, 1 - (here - dd) / (STRIDE * 10)) * 0.95);
-      }
+      ring(x, y, T0 / 1000);
       ema = ema * 0.9 + (performance.now() - T0) * 0.1; if (ema > 14 && q > 0.4) { q -= 0.15; ema = 6; }
     }
     size();
@@ -331,8 +334,9 @@
       seek(MT[bi]);
     });
 
+    var autoOn = false, autoStarted = false;
     var chips = $('.rl-chips', rep);
-    [60, 120, 300].forEach(function (v) { var b = el('button', v === speed ? 'on' : '', v + '×'); b.type = 'button'; b.onclick = function (e) { e.stopPropagation(); speed = v; $$('button', chips).forEach(function (x) { x.classList.toggle('on', x === b); }); }; chips.appendChild(b); });
+    [60, 120, 300].forEach(function (v) { var b = el('button', v === speed ? 'on' : '', v + '×'); b.type = 'button'; b.onclick = function (e) { e.stopPropagation(); autoOn = false; speed = v; $$('button', chips).forEach(function (x) { x.classList.toggle('on', x === b); }); }; chips.appendChild(b); });
     function idxAt(t) { var lo = 0, hi = N - 1; while (lo < hi) { var m = (lo + hi) >> 1; if (MT[m] < t) lo = m + 1; else hi = m; } return lo; }
     function frac(t) { var i = Math.max(1, idxAt(t)), a = MT[i - 1], b = MT[i]; return i - 1 + (b > a ? (t - a) / (b - a) : 0); }
     function show() {
@@ -365,23 +369,23 @@
       function shut() { b.remove(); }
       b.onclick = function (e) { if (e.target.closest('.rl-lb-x') || e.target === b) shut(); else if (e.target.closest('.rl-lb-p')) openBox((i + pinsBy.length - 1) % pinsBy.length); else if (e.target.closest('.rl-lb-n')) openBox((i + 1) % pinsBy.length); else if (e.target.closest('.rl-lb-go')) { var gi = groups.findIndex(function (g) { return g.items.indexOf(p) >= 0; }); shut(); closeFan(); goGroup(gi); rep.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); } };
     }
-    function seek(t) { pos = Math.max(0, Math.min(total, t)); hold = 0; pop.hidden = true; cam.snap(); show(); }
+    function seek(t) { autoOn = false; pos = Math.max(0, Math.min(total, t)); hold = 0; pop.hidden = true; cam.snap(); show(); }
     function tick(now) {
       if (!playing) { last = 0; return; }
       var dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now;
       if (hold > 0) { hold -= dt; if (hold <= 0) pop.hidden = true; } else {
         var np = pos + dt * speed;
         for (var n = 0; n < groups.length; n++) if (groups[n].mt > pos && groups[n].mt <= np) { np = groups[n].mt; hold = 3.5; pop.innerHTML = popHtml(groups[n]); pop.hidden = false; break; }
-        pos = np; if (pos >= total) { pos = total; playing = false; playLbl.textContent = 'tap to replay'; }
+        pos = np; if (pos >= total) { pos = total; playing = false; playLbl.textContent = 'tap to replay'; autoOn = false; }
       }
       show(); requestAnimationFrame(tick);
     }
     function toggle() { playing = !playing; playLbl.textContent = playing ? 'tap to pause' : 'tap to play'; if (playing) { if (pos >= total) pos = 0; last = 0; requestAnimationFrame(tick); } }
-    $('.rl-cam', rep).addEventListener('click', toggle);
+    $('.rl-cam', rep).addEventListener('click', function () { autoOn = false; toggle(); });
     function lineSeek(e) { var r = line.getBoundingClientRect(); seek((e.clientX - r.left) / r.width * total); }
     line.addEventListener('pointerdown', function (e) { lineSeek(e); line.setPointerCapture(e.pointerId); line.onpointermove = lineSeek; });
     line.addEventListener('pointerup', function () { line.onpointermove = null; });
-    rep.addEventListener('keydown', function (e) { if (e.key === ' ') { e.preventDefault(); toggle(); } else if (e.key === 'ArrowRight') { e.preventDefault(); seek(pos + 60); } else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(pos - 60); } });
+    rep.addEventListener('keydown', function (e) { if (e.key === ' ') { e.preventDefault(); autoOn = false; toggle(); } else if (e.key === 'ArrowRight') { e.preventDefault(); seek(pos + 60); } else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(pos - 60); } });
     $$('.rl-splits tbody tr', host).forEach(function (r) { r.style.cursor = 'pointer'; r.onclick = function () { var k = +r.getAttribute('data-km'), j = run.d.findIndex(function (v) { return v >= (k - 1) * 1000; }); seek(MT[Math.max(0, j)]); }; });
     new ResizeObserver(function () { cam.size(); show(); }).observe($('.rl-cam', rep));
 
@@ -398,6 +402,12 @@
       });
     }
     charts(); addEventListener('resize', charts);
+    /* the replay plays itself once, when it is mostly on screen; any touch of the controls, or the end, hands it over */
+    if (!reduced && window.IntersectionObserver) new IntersectionObserver(function (es) {
+      var rt = es[0].intersectionRatio;
+      if (rt >= 0.6) { if (!autoStarted && pos === 0) { autoStarted = true; autoOn = true; speed = 300; $$('button', chips).forEach(function (x) { x.classList.toggle('on', x.textContent === '300×'); }); toggle(); } else if (autoOn && !playing && pos < total) toggle(); }
+      else if (rt < 0.2 && autoOn && playing) toggle();
+    }, { threshold: [0.2, 0.6] }).observe($('.rl-cam', rep));
     show(); pop.addEventListener('click', function (e) { var b = e.target.closest('[data-i]'); if (b) { e.stopPropagation(); openBox(+b.getAttribute('data-i')); } }); D.addEventListener('keydown', function (e) { var lb = $('.rl-lb'); if (!lb) return; if (e.key === 'Escape') lb.remove(); else if (e.key === 'ArrowRight') $('.rl-lb-n', lb).click(); else if (e.key === 'ArrowLeft') $('.rl-lb-p', lb).click(); }); D.addEventListener('click', function (e) { if (!e.target.closest('.rl-fan') && !e.target.closest('#rl-map')) closeFan(); });
     new MutationObserver(function () { var d2 = isDark(host); if (d2 !== dark) { dark = d2; drawOverview(); show(); } }).observe(D.documentElement, { attributes: true, attributeFilter: ['data-scheme'] });
   }

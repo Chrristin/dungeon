@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.33.0
+
+- **The footprints are gone.** The runner is now a soft orange ring on the ground that breathes, with a ripple that spreads outward and fades, a faint shadow, and a faint tint inside it, in the same colour as the marker on the route map. The route already run is strongest near the runner and fades behind: full strength for the last 36 units, most of the way to 90, a faint trace beyond that. With reduced motion the ring holds still.
+- **The replay plays itself once.** When the cam is mostly on screen it starts by itself, at 300× (the 300× button lights up), and runs the whole route including the short stops at each photo. It pauses while it is scrolled off screen and carries on when it is back, and stops at the end (“tap to replay”). Any touch of the controls (tapping the cam, the speed buttons, the progress line, a split, a chart, a pin, a key) hands it over to the visitor for good. With reduced motion it does not start by itself.
+- Looked at in Chrome, at 1,200 px and 390 px, in light mode only: the ring, the fading trail, the auto-start at both widths and the pause at a photo. Not seen on a real phone, in Safari or Firefox, or in dark mode; the extra drawing for the trail has not been timed.
+
 ## 2.32.0
 
 - **Photos on a run.** A run can carry photos. In the chase cam each one is a quiet, slightly translucent picture floating at the side of the road, in perspective, with a soft shadow and a small numbered dot; it fades in as you approach and out behind you, bobs very slightly, turns toward the runner, and holds still with reduced motion. Photos within 0.35 km of each other are one pin and float as a fanned pair. On the route map a pin is a round photo (with a count when it holds more than one) that fans out into its photos when clicked; a click on a photo opens it full size, with previous, next, Escape and arrow keys, its title, who took it and a button that jumps the replay there. The replay pauses at each pin for a few seconds and shows a card at the cam’s top right. A strip of every photo sits under the replay, so the photos can be reached without the map.
