@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.34.1
+
+- **The run page’s map block is tidier.** The heart-rate key is now a small vertical panel on the map itself (bottom-left, with a “bpm” heading and the five ranges), which also ends the “bpm” that dropped onto a line of its own. It ignores clicks, so tapping the map still jumps the replay. The full “Map data © OpenStreetMap contributors” line moved to the foot of the page, after the records, and the map carries a tiny “© OpenStreetMap” in its bottom-right corner.
+- **The progress line and its time are gone.** Jumping around still works by clicking the route map, the pace, heart-rate and cadence charts, a row in the kilometre table, a photo or pin, and with the left and right arrow keys; Space plays and pauses.
+- Looked at in Chrome on all three runs at 1,200px, and on the Georgian Run at 390px: the key, the corner credit, the credit at the foot, and no sideways scrolling. Not on a real phone, in Safari or Firefox, or in dark mode.
+
 ## 2.34.0
 
 - **Photos in a post line up with the text.** From 1,100px up, the text of a post is a centred column, but an older rule (`.gh-content figure`) set every image’s side margins to zero, so regular images sat against the left edge: 36px further left than the text and 70px short on the right (measured on a live post at 1,280px). They now sit in the same centred column. Wide and full-width images from the editor, and floated images, are unchanged.
