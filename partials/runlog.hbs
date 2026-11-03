@@ -9,7 +9,7 @@
     <div class="store-intro gh-content">{{content}}</div>
 </section>
 {{/post}}
-<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.36.1">
+<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.36.2">
 <div class="rl-wrap">
     <div class="rl-top">
         <div class="rl-index" data-src="{{asset "data/runs/index.json"}}" data-runs-url="{{@site.url}}/runs/" aria-live="polite"><p class="rl-wait">Loading the runlog…</p></div>
@@ -41,4 +41,4 @@
     {{!-- Each run post's featured image, by its address name, for the run cards that have no photo of their own (runlog.js reads it). Only published posts are listed. --}}
     {{#get "posts" filter="tag:hash-run" limit="50"}}<script type="application/json" id="rl-covers">{ {{#foreach posts}}"{{slug}}": "{{#if feature_image}}{{img_url feature_image size="m"}}{{/if}}"{{#unless @last}}, {{/unless}}{{/foreach}} }</script>{{else}}<script type="application/json" id="rl-covers">{}</script>{{/get}}
 </div>
-<script src="{{asset "js/runlog.js"}}&r=2.36.1" defer></script>
+<script src="{{asset "js/runlog.js"}}&r=2.36.2" defer></script>

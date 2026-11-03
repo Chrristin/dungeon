@@ -449,13 +449,15 @@
       if (!idx.length) return;
       var r = idx[0], host = plot || a;
       /* the plot counts activities across every log (runs now, badminton and others later), not Ghost pages */
-      if (plot) { var st = $('.plot-status', plot), mt = $('.plot-meter', plot), n = idx.length; if (st) st.textContent = n + (n === 1 ? ' activity' : ' activities'); if (mt) $$('i', mt).forEach(function (cell, i) { cell.classList.toggle('is-on', i < Math.min(5, n)); }); }
+      /* another script writes this label too, and the last to write wins: so it is written again when the page has loaded */
+      function applyCount() { if (!plot) return; var st = $('.plot-status', plot), mt = $('.plot-meter', plot), n = idx.length; if (st) st.textContent = n + (n === 1 ? ' activity' : ' activities'); if (mt) $$('i', mt).forEach(function (cell, i) { cell.classList.toggle('is-on', i < Math.min(5, n)); }); }
+      applyCount(); if (D.readyState !== 'complete') addEventListener('load', applyCount); setTimeout(applyCount, 1500);
       a.classList.add('is-runlog'); if (plot) plot.classList.add('is-takeover');
       var kind = $('.plot-page-kind', a), line = $('.plot-page-line', a), title = $('.plot-page-title', a);
       if (kind) kind.textContent = 'Runlog · ' + short(r.start);
       if (title) title.textContent = r.title;
       if (line) line.innerHTML = '<span>' + r.km.toFixed(2) + ' km</span><span>' + clock(r.durationS) + '</span><span>' + pace(r.paceS) + ' /km</span><span>' + r.hrAvg + ' bpm</span><span class="rl-so"></span>';
-      host.insertAdjacentHTML('afterbegin', '<span class="rl-bg" aria-hidden="true">' + thumb(r) + '<canvas></canvas></span><span class="rl-shade" aria-hidden="true"></span>');
+      host.insertAdjacentHTML('afterbegin', '<span class="rl-bg" aria-hidden="true">' + routeSvg(r, 26) + '<canvas></canvas></span><span class="rl-shade" aria-hidden="true"></span>');
       var go = function () {
         Promise.all([getJSON(W.root + r.slug + '.json' + W.q), getJSON(W.root + r.slug + '.map.json' + W.q).catch(function () { return null; })]).then(function (res) {
           var run = res[0], cv = $('canvas', host), cam = Cam(cv, run, res[1], { maxDpr: 1.75 }), vis = true, f = 0, last = 0, N = run.x.length, so = $('.rl-so', a), still = reduced;
@@ -464,10 +466,10 @@
           if (still) { f = N * 0.4; cam.draw(f, true); host.classList.add('is-live'); return; }
           function loop(now) { requestAnimationFrame(loop); if (!vis || D.hidden) { last = 0; return; } if (last && now - last < 32) return; var dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now; f += dt * 13; if (f > N - 12) f = 0; cam.draw(f, true); if (so) so.textContent = (run.d[Math.floor(f)] / 1000).toFixed(1) + ' km so far'; }
           cam.draw(0, true); host.classList.add('is-live'); requestAnimationFrame(loop);
-        }).catch(function () { /* the picture stays */ });
+        }).catch(function (e) { if (window.console) console.warn('Runlog card: the live picture failed', e); });
       };
       if (window.requestIdleCallback) requestIdleCallback(function () { setTimeout(go, 400); }); else setTimeout(go, 1500);
-    }).catch(function () { /* the plain row stays */ });
+    }).catch(function (e) { if (window.console) console.warn('Runlog card failed', e); });
   }
 
   function boot() {

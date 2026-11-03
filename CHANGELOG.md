@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.36.2
+
+- **The Movement card draws its chase cam again.** Since 2.35.0 the card showed its title and stats on a black background: the Runlog script still called a small route-picture function that the 2.35.0 rewrite of the index page had deleted, so it failed just before adding the map layer, and its error handler hid the failure. It now draws the coloured route with the function that exists, and the live chase cam fades in over it once the page is idle, as before.
+- **“3 activities” no longer reverts to “sprouting”.** Another script writes that label at page load too, and whichever wrote last won, so it depended on timing. The Runlog script now writes it again once the page has loaded.
+- **Failures on the card are no longer silent;** they are written to the browser’s console. The whole script was also checked for any other name that does not exist (none).
+- Checked in Chrome on a copy of the card, with a rival script that overwrites the label 0.4 seconds in: the canvas was read back pixel by pixel (nine distinct colours across 40 sample points at 1,280px, seven at 390px, none blank), the cam was visible in the screenshot, and the label read “3 activities” at both widths with no sideways scrolling. Not on the live homepage, in light mode, Safari or Firefox.
+
 ## 2.36.1
 
 - **Writing shows the posts’ pictures as circles, as on a plot.** Under the caption there is a row of small round copies of each post’s featured image (200px, loaded lazily), each opening its post. Pointing at one lifts it and wobbles it once, dims the others and lights its row; pointing at a row (or tabbing to it) lifts its picture, for the first five posts. A post with no featured image gets a small dot, and a post tagged `#evergreen`, `#growing`, `#budding` or `#seedling` gets the growth-stage ring, as on the plots.
