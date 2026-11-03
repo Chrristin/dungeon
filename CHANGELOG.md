@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.36.1
+
+- **Writing shows the posts’ pictures as circles, as on a plot.** Under the caption there is a row of small round copies of each post’s featured image (200px, loaded lazily), each opening its post. Pointing at one lifts it and wobbles it once, dims the others and lights its row; pointing at a row (or tabbing to it) lifts its picture, for the first five posts. A post with no featured image gets a small dot, and a post tagged `#evergreen`, `#growing`, `#budding` or `#seedling` gets the growth-stage ring, as on the plots.
+- **The caption is just “Writing”.** “posts tagged Movement” is gone.
+- Looked at in Chrome with three posts typed in by hand (one with no picture, one with a stage ring): the circles, the empty circle’s dot, and pointing at a circle (it scaled to 1.18, the others dimmed to half and its row turned mint). Not on the live page, on a phone, in Safari or Firefox.
+
 ## 2.36.0
 
 - **Writing sits beside the figures.** The top of the Runlog page is two columns: the stat tiles, the two charts and the records on the left (60%), and the Writing list on the right (40%), level with the top of the tiles. The run cards below it are the full width of the page column again, three across. On a tablet or phone it is one column: stats and charts, records, Writing, then the runs.

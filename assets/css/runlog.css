@@ -194,3 +194,18 @@
 .rl-writing-all { display: inline-block; margin-top: 0.7rem; font: 500 0.78rem var(--mono); color: #17191e; }
 .rl-runs-host { min-width: 0; }
 @media (max-width: 1100px) { .rl-top { grid-template-columns: minmax(0, 1fr); gap: 0; } .rl-writing { margin-top: 2.2rem; } }
+.rl-writing-card .plot-faces { margin: 0 0 0.8rem 4px; }
+/* Pointing at a row lifts its picture, as on a plot (the plots' own rules are tied to the plot card, so the first five are repeated here) */
+@media (hover: hover) {
+    .rl-writing-card:has(.plot-rows li:nth-child(1) a:is(:hover, :focus-visible)) .plot-face:nth-child(1),
+    .rl-writing-card:has(.plot-rows li:nth-child(2) a:is(:hover, :focus-visible)) .plot-face:nth-child(2),
+    .rl-writing-card:has(.plot-rows li:nth-child(3) a:is(:hover, :focus-visible)) .plot-face:nth-child(3),
+    .rl-writing-card:has(.plot-rows li:nth-child(4) a:is(:hover, :focus-visible)) .plot-face:nth-child(4),
+    .rl-writing-card:has(.plot-rows li:nth-child(5) a:is(:hover, :focus-visible)) .plot-face:nth-child(5) { z-index: 2; transform: scale(1.18); box-shadow: 0 0 0 3px var(--pc), 0 4px 12px rgba(0, 0, 0, 0.18); animation: plot-face-wobble 500ms ease-in-out; }
+    .rl-writing-card:has(.plot-rows li:nth-child(1) a:is(:hover, :focus-visible)) .plot-face:not(:nth-child(1)),
+    .rl-writing-card:has(.plot-rows li:nth-child(2) a:is(:hover, :focus-visible)) .plot-face:not(:nth-child(2)),
+    .rl-writing-card:has(.plot-rows li:nth-child(3) a:is(:hover, :focus-visible)) .plot-face:not(:nth-child(3)),
+    .rl-writing-card:has(.plot-rows li:nth-child(4) a:is(:hover, :focus-visible)) .plot-face:not(:nth-child(4)),
+    .rl-writing-card:has(.plot-rows li:nth-child(5) a:is(:hover, :focus-visible)) .plot-face:not(:nth-child(5)) { opacity: 0.5; }
+}
+.rl-writing-card .plot-face:not([data-stage]) i { background: rgba(23, 25, 30, 0.28); }

@@ -9,15 +9,19 @@
     <div class="store-intro gh-content">{{content}}</div>
 </section>
 {{/post}}
-<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.36.0">
+<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.36.1">
 <div class="rl-wrap">
     <div class="rl-top">
         <div class="rl-index" data-src="{{asset "data/runs/index.json"}}" data-runs-url="{{@site.url}}/runs/" aria-live="polite"><p class="rl-wait">Loading the runlog…</p></div>
         {{!-- Writing: the posts tagged Movement, newest first, as rows like a plot's (screen.css styles .plot-rows). Nothing is printed when there are none. The link to the tag page shows only when there are more posts than the list holds. --}}
-        {{#get "posts" filter="tag:movement" limit="8" order="published_at desc" as |movementPosts movementPage|}}{{#if movementPosts}}
+        {{#get "posts" filter="tag:movement" limit="8" order="published_at desc" include="tags" as |movementPosts movementPage|}}{{#if movementPosts}}
         <section class="rl-writing" aria-labelledby="rl-writing-h">
             <div class="rl-writing-card">
-                <h2 class="rl-wh" id="rl-writing-h">Writing <small>posts tagged Movement</small></h2>
+                <h2 class="rl-wh" id="rl-writing-h">Writing</h2>
+                {{!-- The posts' pictures, as on a plot: small round copies that open the post (screen.css styles .plot-faces); the rows below say the same, so screen readers skip them --}}
+                <div class="plot-faces" aria-hidden="true">
+                    {{#foreach movementPosts}}<a class="plot-face" href="{{url}}" tabindex="-1"{{#has tag="#evergreen"}} data-stage="evergreen"{{else has tag="#growing,#budding"}} data-stage="growing"{{else has tag="#seedling"}} data-stage="seedling"{{/has}}>{{#if feature_image}}<img src="{{img_url feature_image size="xs" format="webp"}}" alt="" width="44" height="44" loading="lazy" decoding="async">{{else}}<i></i>{{/if}}</a>{{/foreach}}
+                </div>
                 <ul class="plot-rows">
                     {{#foreach movementPosts}}
                     <li><a href="{{url}}">
@@ -37,4 +41,4 @@
     {{!-- Each run post's featured image, by its address name, for the run cards that have no photo of their own (runlog.js reads it). Only published posts are listed. --}}
     {{#get "posts" filter="tag:hash-run" limit="50"}}<script type="application/json" id="rl-covers">{ {{#foreach posts}}"{{slug}}": "{{#if feature_image}}{{img_url feature_image size="m"}}{{/if}}"{{#unless @last}}, {{/unless}}{{/foreach}} }</script>{{else}}<script type="application/json" id="rl-covers">{}</script>{{/get}}
 </div>
-<script src="{{asset "js/runlog.js"}}&r=2.36.0" defer></script>
+<script src="{{asset "js/runlog.js"}}&r=2.36.1" defer></script>
