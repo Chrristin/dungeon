@@ -313,13 +313,13 @@
       html += '<div class="rl-prog"><div class="rl-panel"><h3>Distance per week, km</h3><div class="rl-bars">' + wks.map(function (k) { var v = R.byWeek[k]; return '<div class="rl-bar"><i style="height:' + Math.max(3, v / mx * 100) + '%"></i><b>' + v.toFixed(1) + '</b><span>' + new Date(k + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }) + '</span></div>'; }).join('') + '</div></div>';
       html += '<div class="rl-panel"><h3>Pace per run</h3>' + (asc.length < 2 ? '<p class="rl-note">A line will be drawn here once there are two runs.</p>' : paceChart(asc)) + '</div></div>';
       html += recordsBlock(idx, null);
-      html += '<h2 class="rl-h">Runs <small>' + idx.length + ' so far</small></h2><div class="rl-runs">' + idx.map(function (r, i) {
+      var top = html; html = '<h2 class="rl-h">Runs <small>' + idx.length + ' so far</small></h2><div class="rl-runs">' + idx.map(function (r, i) {
         var stats = '<span class="rc-row"><span><b>' + r.km.toFixed(2) + '</b> km</span><span><b>' + clock(r.durationS) + '</b></span><span><b>' + pace(r.paceS) + '</b>/km</span><span><b>' + r.hrAvg + '</b> bpm</span></span>';
         var cv = r.cover || covers[r.slug] || '';
         if (cv) return '<a class="rc-card rc-photo" style="background-image:url(&quot;' + esc(cv) + '&quot;)" href="' + base + esc(r.slug) + '/"><span class="rc-meta">' + nice(r.start) + '</span><span class="rc-map">' + routeSvg(r) + '</span><span class="rc-body"><h3>' + esc(r.title) + '</h3>' + stats + '</span></a>';
         return '<a class="rc-card rc-plain rc-c' + (i % 3) + '" href="' + base + esc(r.slug) + '/"><span class="rc-meta">' + nice(r.start) + ' · ' + timeOfDay(r.start) + '</span><span class="rc-inset">' + routeSvg(r) + '</span><span class="rc-body"><h3>' + esc(r.title) + '</h3>' + stats + '</span></a>';
       }).join('') + '</div>';
-      host.innerHTML = html;
+      var runsHost = $('#rl-runs'); host.innerHTML = top; if (runsHost) runsHost.innerHTML = html; else host.innerHTML += html;
     }).catch(function () { host.innerHTML = '<p class="rl-wait">The runlog could not be loaded.</p>'; });
   }
 

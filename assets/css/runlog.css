@@ -126,9 +126,9 @@
 .rl-wrap { padding: 0; }
 .rl-h small { font: 400 0.72rem var(--mono); color: var(--graphite); margin-left: 0.7rem; letter-spacing: 0; }
 .rl-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.8rem; margin: 1.6rem 0 0; }
-.rl-tile { border-radius: 1rem; padding: 1rem 1.1rem 1.05rem; color: #17191e; min-width: 0; }
+.rl-tile { border-radius: 1rem; padding: 0.9rem 0.9rem 0.95rem; color: #17191e; min-width: 0; }
 .rl-tile dt { font: 0.68rem var(--mono); text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.7; }
-.rl-tile dd { margin: 0.25rem 0 0; font: 600 clamp(1.5rem, 2.4vw, 2.2rem)/1 var(--sans); letter-spacing: -0.03em; white-space: nowrap; }
+.rl-tile dd { margin: 0.25rem 0 0; font: 600 clamp(1.4rem, 1.55vw, 2rem)/1 var(--sans); letter-spacing: -0.03em; white-space: nowrap; }
 .rl-tile small { font: 400 0.8rem var(--mono); opacity: 0.7; letter-spacing: 0; }
 .rl-tile:nth-child(1) { background: #d3e4f1; } .rl-tile:nth-child(2) { background: #d6ebd5; } .rl-tile:nth-child(3) { background: #f3ebc3; } .rl-tile:nth-child(4) { background: #f6d9c3; } .rl-tile:nth-child(5) { background: #f2d3d6; }
 .rl-prog { display: grid; grid-template-columns: 2fr 1fr; gap: 0.8rem; margin-top: 0.8rem; }
@@ -165,9 +165,6 @@
 .rc-inset { display: block; margin: 0.8rem 1.1rem 0.2rem; height: 9.5rem; border-radius: 0.9rem; background: #171d1a; padding: 0.8rem; }
 .rc-c0 { background: #d6ebd5; } .rc-c1 { background: #d3e4f1; } .rc-c2 { background: #f6d9c3; }
 /* Writing: the Movement posts, as a list like a plot's */
-.rl-writing-card { --on-card: #17191e; --on-card-meta: rgba(23, 25, 30, 0.72); --on-card-rule: rgba(23, 25, 30, 0.2); background: #d6ebd5; color: #17191e; border-radius: 1rem; padding: 0.6rem 1.1rem 1rem; }
-.rl-writing-card .plot-rows { margin-top: 0.2rem; }
-.rl-writing-all { display: inline-block; margin-top: 0.6rem; font: 500 0.78rem var(--mono); color: #17191e; }
 /* The figures in the replay: fixed slots, so the box never changes width, and each digit rolls to its new value */
 .rl-readout > div > span { display: block; font: 0.6rem var(--mono); color: var(--graphite); text-transform: uppercase; }
 .rl-readout b { display: block; min-width: 0; }
@@ -185,3 +182,15 @@
     .rl-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .rl-prog { grid-template-columns: 1fr; }
 }
+
+/* The top block: the figures on the left (60%), Writing on the right (40%); the run cards under it at full width */
+.rl-top { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1.5rem; align-items: start; }
+.rl-top > .rl-index { min-width: 0; }
+.rl-writing { margin-top: 1.6rem; min-width: 0; }
+.rl-writing-card { --on-card: #17191e; --on-card-meta: rgba(23, 25, 30, 0.72); --on-card-rule: rgba(23, 25, 30, 0.2); background: #d6ebd5; color: #17191e; border-radius: 1rem; padding: 1rem 1.1rem 1rem; }
+.rl-wh { margin: 0 0 0.5rem; font: 500 0.72rem var(--mono); text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.8; }
+.rl-wh small { font: 400 0.68rem var(--mono); text-transform: none; letter-spacing: 0; margin-left: 0.5rem; opacity: 0.8; }
+.rl-writing-card .plot-rows { margin: 0; padding: 0 0.4rem; max-height: 26rem; overflow-x: hidden; overflow-y: auto; }
+.rl-writing-all { display: inline-block; margin-top: 0.7rem; font: 500 0.78rem var(--mono); color: #17191e; }
+.rl-runs-host { min-width: 0; }
+@media (max-width: 1100px) { .rl-top { grid-template-columns: minmax(0, 1fr); gap: 0; } .rl-writing { margin-top: 2.2rem; } }

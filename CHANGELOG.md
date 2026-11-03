@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.36.0
+
+- **Writing sits beside the figures.** The top of the Runlog page is two columns: the stat tiles, the two charts and the records on the left (60%), and the Writing list on the right (40%), level with the top of the tiles. The run cards below it are the full width of the page column again, three across. On a tablet or phone it is one column: stats and charts, records, Writing, then the runs.
+- **Writing is only as tall as its list.** It does not stretch to the height of the left column. A long list scrolls inside its own panel (it holds the eight newest posts) instead of making the block taller, and its heading is a small caption in the panel, like the chart panels’.
+- **“All posts about Movement” appears only when there is more to see.** The link to the Movement tag page is printed only when there are more posts than the list shows (it shows eight, so not yet).
+- The stat tiles are a little narrower and their numbers a little smaller to fit five across the left column (no number overflows); the records go three across there.
+- Looked at in Chrome at 1,601px and 390px, in dark mode, with the real run data and two Movement posts typed in by hand (measured: the figures at 238–890px, Writing at 914–1,348px, level with the tiles; the runs 238–1,348px; no sideways scrolling on the phone). Not on the live page, in light mode, on a real phone, in Safari or Firefox, or with more than eight posts.
+
 ## 2.35.1
 
 - **The separators in the replay readout sit on the line.** In 2.35.0 the colons and the point sat about 4px below the digits (a more specific rule for the readout’s bold text had turned each figure into a plain block, so the digit reels and the separators lined up on different baselines). Digits and separators now share one line, measured equal in all four figures; the box width is unchanged.

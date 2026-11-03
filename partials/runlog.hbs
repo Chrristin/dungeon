@@ -1,6 +1,7 @@
 {{!-- The Runlog index: totals, weekly distance, the records so far, and a card for every run. Drawn by assets/js/runlog.js
       from assets/data/runs/index.json, which extras/runlog/build.mjs writes. A run's own page is a post tagged #run at
-      /runs/<its slug>/ (docs/routes.yaml). See docs/runlog.md. Context: the page. --}}
+      /runs/<its slug>/ (docs/routes.yaml). The top block is two columns (60% the figures, 40% Writing: the posts tagged
+      Movement); the run cards are below it at full width. See docs/runlog.md. Context: the page. --}}
 {{#post}}
 <section class="statement statement--small store-head rl-head">
     <h1 class="statement-text">{{title}}</h1>
@@ -8,29 +9,32 @@
     <div class="store-intro gh-content">{{content}}</div>
 </section>
 {{/post}}
-<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.35.1">
+<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.36.0">
 <div class="rl-wrap">
-    <div class="rl-index" data-src="{{asset "data/runs/index.json"}}" data-runs-url="{{@site.url}}/runs/" aria-live="polite"><p class="rl-wait">Loading the runlog…</p></div>
+    <div class="rl-top">
+        <div class="rl-index" data-src="{{asset "data/runs/index.json"}}" data-runs-url="{{@site.url}}/runs/" aria-live="polite"><p class="rl-wait">Loading the runlog…</p></div>
+        {{!-- Writing: the posts tagged Movement, newest first, as rows like a plot's (screen.css styles .plot-rows). Nothing is printed when there are none. The link to the tag page shows only when there are more posts than the list holds. --}}
+        {{#get "posts" filter="tag:movement" limit="8" order="published_at desc" as |movementPosts movementPage|}}{{#if movementPosts}}
+        <section class="rl-writing" aria-labelledby="rl-writing-h">
+            <div class="rl-writing-card">
+                <h2 class="rl-wh" id="rl-writing-h">Writing <small>posts tagged Movement</small></h2>
+                <ul class="plot-rows">
+                    {{#foreach movementPosts}}
+                    <li><a href="{{url}}">
+                        <time class="code" datetime="{{date format="YYYY-MM-DD"}}" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</time>
+                        <span class="plot-row-title">{{title}}</span>
+                        <span class="plot-row-kind">{{t "post"}}</span>
+                    </a></li>
+                    {{/foreach}}
+                </ul>
+                {{#if movementPage.next}}<a class="rl-writing-all" href="{{@site.url}}/tag/movement/">All posts about Movement &rarr;</a>{{/if}}
+            </div>
+        </section>
+        {{/if}}{{/get}}
+    </div>
+    <div class="rl-runs-host" id="rl-runs"></div>
     <noscript><p class="rl-wait">This page needs JavaScript to show the runs.</p></noscript>
     {{!-- Each run post's featured image, by its address name, for the run cards that have no photo of their own (runlog.js reads it). Only published posts are listed. --}}
     {{#get "posts" filter="tag:hash-run" limit="50"}}<script type="application/json" id="rl-covers">{ {{#foreach posts}}"{{slug}}": "{{#if feature_image}}{{img_url feature_image size="m"}}{{/if}}"{{#unless @last}}, {{/unless}}{{/foreach}} }</script>{{else}}<script type="application/json" id="rl-covers">{}</script>{{/get}}
-    {{!-- Writing: the posts tagged Movement, newest first, as rows like a plot's (screen.css styles .plot-rows). Nothing is printed when there are none. --}}
-    {{#get "posts" filter="tag:movement" limit="8" order="published_at desc"}}{{#if posts}}
-    <section class="rl-writing" aria-labelledby="rl-writing-h">
-        <h2 class="rl-h" id="rl-writing-h">Writing <small>posts tagged Movement</small></h2>
-        <div class="rl-writing-card">
-            <ul class="plot-rows">
-                {{#foreach posts}}
-                <li><a href="{{url}}">
-                    <time class="code" datetime="{{date format="YYYY-MM-DD"}}" data-tag="{{#primary_tag}}{{slug}}{{/primary_tag}}" data-date="{{date format="YYMMDD"}}">#{{date format="YYMMDD"}}</time>
-                    <span class="plot-row-title">{{title}}</span>
-                    <span class="plot-row-kind">{{t "post"}}</span>
-                </a></li>
-                {{/foreach}}
-            </ul>
-            <a class="rl-writing-all" href="{{@site.url}}/tag/movement/">All posts about Movement &rarr;</a>
-        </div>
-    </section>
-    {{/if}}{{/get}}
 </div>
-<script src="{{asset "js/runlog.js"}}&r=2.35.1" defer></script>
+<script src="{{asset "js/runlog.js"}}&r=2.36.0" defer></script>
