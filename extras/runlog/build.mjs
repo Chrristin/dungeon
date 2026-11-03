@@ -2,7 +2,7 @@
 // Runlog builder: one GPX (and, if given, one OpenStreetMap extract) in, the theme's run data out.
 //
 //   node extras/runlog/build.mjs <run.gpx> --slug 2026-10-31-kochi-dawn-15k --title "Kochi Dawn 15K" \
-//        [--osm map.osm] [--fetch] [--pins pins.json] [--trim 0] [--sport run] [--out assets/data/runs]
+//        [--osm map.osm] [--fetch] [--pins pins.json] [--cover <pin number, from 0>] [--trim 0] [--sport run] [--out assets/data/runs]
 //
 // Writes <out>/<slug>.json (the run), <out>/<slug>.map.json (the map shapes, when an extract is given) and
 // updates <out>/index.json (one summary per run; the index page and the shared records are drawn from it).
@@ -105,13 +105,17 @@ if (pinsPath && pinsPath !== true) for (const p of JSON.parse(fs.readFileSync(pi
 
 const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
 const thumbStep = Math.max(1, Math.floor(keep.length / 140));
+const thumbPts = keep.filter((_, i) => i % thumbStep === 0);
+const coverIx = opt('cover', null), cover = coverIx !== null && coverIx !== true && run.pins[+coverIx] ? run.pins[+coverIx].src : '';
 const summary = {
   slug, title, start: run.start, km: run.km, durationS: run.durationS, paceS: Math.round(durationS / (officialM / 1000)),
   hrAvg: Math.round(avg(raw.map(p => p.hr))), hrMax: Math.max(...raw.map(p => p.hr)), cadAvg: Math.round(avg(raw.map(p => p.cad))),
   sport: String(opt('sport', 'run')), best: bestK, w: W, h: H,
-  thumb: keep.filter((_, i) => i % thumbStep === 0).flatMap((p) => P(p.la, p.lo)).map(Math.round)
+  thumb: thumbPts.flatMap((p) => P(p.la, p.lo)).map(Math.round),
+  thumbB: thumbPts.map(p => p.hr < 115 ? 0 : p.hr < 130 ? 1 : p.hr < 145 ? 2 : p.hr < 160 ? 3 : 4),
+  cover
 };
-run.summary = { ...summary, thumb: undefined };
+run.summary = { ...summary, thumb: undefined, thumbB: undefined };
 
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, slug + '.json'), JSON.stringify(run));

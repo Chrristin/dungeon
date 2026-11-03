@@ -254,41 +254,70 @@
   }
   function recordsBlock(idx, here) {
     var R = records(idx), cells = [];
-    function cell(k, v, unit, hit) { cells.push('<div class="rl-rec' + (hit ? ' is-this' : '') + '"><dt>' + k + '</dt><dd>' + v + (unit ? '<small> ' + unit + '</small>' : '') + '</dd>' + (hit ? '<span class="rl-rec-tag">this run</span>' : '') + '</div>'); }
-    cell('Total distance', R.total.toFixed(1), 'km'); cell('Runs', R.runs);
-    cell('Longest run', R.longest.km.toFixed(2), 'km', here && R.longest.slug === here);
-    if (R.fast[1]) cell('Fastest km', pace(R.fast[1].v), '/km', here && R.fast[1].slug === here);
-    [5, 10, 21].forEach(function (k) { if (R.fast[k]) cell('Fastest ' + (k === 21 ? 'half' : k + 'K'), clock(R.fast[k].v), '', here && R.fast[k].slug === here); });
-    cell('Biggest week', R.wkBest.v.toFixed(1), 'km'); cell('Longest streak', R.streak, R.streak === 1 ? 'day' : 'days');
+    function cell(c, k, v, unit, hit) { cells.push('<div class="rl-rec' + (hit ? ' is-this' : '') + '" style="--c:' + c + '"><dt>' + k + '</dt><dd>' + v + (unit ? '<small> ' + unit + '</small>' : '') + '</dd>' + (hit ? '<span class="rl-rec-tag">this run</span>' : '') + '</div>'); }
+    cell(BAND[1], 'Total distance', R.total.toFixed(1), 'km'); cell(BAND[0], 'Runs', R.runs);
+    cell(BAND[2], 'Longest run', R.longest.km.toFixed(2), 'km', here && R.longest.slug === here);
+    if (R.fast[1]) cell(BAND[3], 'Fastest km', pace(R.fast[1].v), '/km', here && R.fast[1].slug === here);
+    [[5, BAND[4]], [10, '#c0617d'], [21, '#8b6fc0']].forEach(function (f) { var k = f[0]; if (R.fast[k]) cell(f[1], 'Fastest ' + (k === 21 ? 'half' : k + 'K'), clock(R.fast[k].v), '', here && R.fast[k].slug === here); });
+    cell(BAND[2], 'Biggest week', R.wkBest.v.toFixed(1), 'km'); cell(BAND[1], 'Longest streak', R.streak, R.streak === 1 ? 'day' : 'days');
     return '<section class="rl-records" aria-label="Runlog so far"><h2 class="rl-h">Runlog so far</h2><dl class="rl-recs">' + cells.join('') + '</dl></section>';
   }
 
+  /* a figure that keeps its width: fixed slots, each digit a small reel that rolls to its new value */
+  function Odo(host, pattern) {
+    host.classList.add('od'); host.setAttribute('aria-hidden', 'true');
+    var slots = [];
+    pattern.split('').forEach(function (ch) {
+      if (ch === '#') { var d = el('span', 'od-d'), r = el('span', 'od-r', '<i>0</i><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i>8</i><i>9</i><i></i>'); d.appendChild(r); host.appendChild(d); slots.push({ r: r, last: -1 }); }
+      else { var c = el('span', 'od-c', ch); host.appendChild(c); slots.push({ c: c }); }
+    });
+    return function (str) {
+      var none = str === '–', si = str.length - 1, k, s, ch;
+      host.classList.toggle('od-none', none);
+      for (k = slots.length - 1; k >= 0; k--) {
+        s = slots[k]; ch = si >= 0 && !none ? str.charAt(si) : null;
+        if (s.r) { var idx = ch !== null && ch >= '0' && ch <= '9' ? +ch : 10; if (s.last !== idx) { s.last = idx; s.r.style.setProperty('--i', idx); } if (ch !== null) si--; }
+        else { s.c.style.visibility = ch !== null ? 'visible' : 'hidden'; if (ch !== null) si--; }
+      }
+    };
+  }
+
   /* ---- the index page ---- */
+  function routeSvg(r, sw) {
+    var t = r.thumb || [], b = r.thumbB || [], n = t.length / 2, s = '', cur = -1, d = '', i;
+    if (n < 2) return '';
+    for (i = 0; i < n; i++) {
+      var bb = b.length ? b[i] : 2;
+      if (bb !== cur) { if (cur >= 0) s += '<path d="' + d + '" stroke="' + BAND[cur] + '"/>'; cur = bb; d = i ? 'M' + t[2 * i - 2] + ' ' + t[2 * i - 1] + 'L' + t[2 * i] + ' ' + t[2 * i + 1] : 'M' + t[0] + ' ' + t[1]; } else d += 'L' + t[2 * i] + ' ' + t[2 * i + 1];
+    }
+    s += '<path d="' + d + '" stroke="' + BAND[cur] + '"/>';
+    return '<svg viewBox="-30 -30 ' + (r.w + 60) + ' ' + (r.h + 60) + '" fill="none" stroke-width="' + (sw || 24) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + s + '</svg>';
+  }
+  function paceChart(asc) {
+    var v = asc.map(function (r) { return r.paceS; }), mn = Math.min.apply(null, v), mx = Math.max.apply(null, v), n = v.length;
+    var pts = v.map(function (p, i) { return [20 + i * (260 / (n - 1)), 12 + (p - mn) / (mx - mn || 1) * 70]; });
+    var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0] + ' ' + p[1]; }).join(''), area = line + 'L' + pts[n - 1][0] + ' 100L' + pts[0][0] + ' 100Z';
+    return '<div class="rl-pacechart"><svg viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="rl-pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e07a3a" stop-opacity=".45"/><stop offset="1" stop-color="#e07a3a" stop-opacity="0"/></linearGradient></defs><path d="' + area + '" fill="url(#rl-pg)"/><path d="' + line + '" fill="none" stroke="#e07a3a" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg>' + pts.map(function (p, i) { return '<i class="rl-dot" style="left:' + (p[0] / 3) + '%;top:' + p[1] + '%;background:' + BAND[Math.min(4, i + 1)] + '"></i>'; }).join('') + '</div><p class="rl-note">' + pace(v[0]) + ' on the first run, ' + pace(v[n - 1]) + ' on the latest (per km).</p>';
+  }
   function renderIndex(host) {
     var src = host.getAttribute('data-src');
     getJSON(src).then(function (idx) {
       if (!idx.length) { host.innerHTML = '<p class="rl-wait">No runs yet.</p>'; return; }
       var R = records(idx), total = R.total, secs = idx.reduce(function (a, r) { return a + r.durationS; }, 0);
-      var since = idx[idx.length - 1].start;
-      var html = '<dl class="rl-stats"><div><dt>Runs</dt><dd>' + idx.length + '</dd></div><div><dt>Total</dt><dd>' + total.toFixed(1) + '<small> km</small></dd></div><div><dt>Longest</dt><dd>' + R.longest.km.toFixed(1) + '<small> km</small></dd></div><div><dt>Average pace</dt><dd>' + pace(secs / total) + '<small> /km</small></dd></div><div><dt>Since</dt><dd>' + short(since) + '</dd></div></dl>';
-      var wks = Object.keys(R.byWeek).sort().slice(-12), mx = Math.max.apply(null, wks.map(function (k) { return R.byWeek[k]; }));
-      html += '<div class="rl-progress"><div class="rl-panel"><h3>Distance per week, km</h3><div class="rl-bars">' + wks.map(function (k) { var v = R.byWeek[k]; return '<div class="rl-bar"><i style="height:' + Math.max(3, v / mx * 100) + '%"></i><b>' + v.toFixed(1) + '</b><span>' + new Date(k + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }) + '</span></div>'; }).join('') + '</div></div>';
-      var asc = idx.slice().reverse();
-      html += '<div class="rl-panel"><h3>Pace per run</h3>' + (asc.length < 3 ? '<p class="rl-note">A line will be drawn here once there are three runs.</p>' : paceLine(asc)) + '</div></div>';
+      var since = idx[idx.length - 1].start, base = host.getAttribute('data-runs-url') || '/runs/';
+      function tile(k, v, u) { return '<div class="rl-tile"><dt>' + k + '</dt><dd>' + v + (u ? '<small> ' + u + '</small>' : '') + '</dd></div>'; }
+      var html = '<dl class="rl-tiles">' + tile('Runs', idx.length) + tile('Total', total.toFixed(1), 'km') + tile('Longest', R.longest.km.toFixed(1), 'km') + tile('Average pace', pace(secs / total), '/km') + tile('Since', short(since)) + '</dl>';
+      var wks = Object.keys(R.byWeek).sort().slice(-12), mx = Math.max.apply(null, wks.map(function (k) { return R.byWeek[k]; })), asc = idx.slice().reverse();
+      html += '<div class="rl-prog"><div class="rl-panel"><h3>Distance per week, km</h3><div class="rl-bars">' + wks.map(function (k) { var v = R.byWeek[k]; return '<div class="rl-bar"><i style="height:' + Math.max(3, v / mx * 100) + '%"></i><b>' + v.toFixed(1) + '</b><span>' + new Date(k + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }) + '</span></div>'; }).join('') + '</div></div>';
+      html += '<div class="rl-panel"><h3>Pace per run</h3>' + (asc.length < 2 ? '<p class="rl-note">A line will be drawn here once there are two runs.</p>' : paceChart(asc)) + '</div></div>';
       html += recordsBlock(idx, null);
-      html += '<h2 class="rl-h">Runs</h2><div class="rl-grid">' + idx.map(function (r) {
-        return '<a class="rl-card" href="' + (host.getAttribute('data-runs-url') || '/runs/') + esc(r.slug) + '/"><span class="rl-meta">' + nice(r.start) + ' · ' + timeOfDay(r.start) + '</span><span class="rl-thumb">' + thumb(r) + '</span><h3>' + esc(r.title) + '</h3><span class="rl-row"><span><b>' + r.km.toFixed(2) + '</b> km</span><span><b>' + clock(r.durationS) + '</b></span><span><b>' + pace(r.paceS) + '</b>/km</span><span><b>' + r.hrAvg + '</b> bpm</span></span></a>';
+      html += '<h2 class="rl-h">Runs <small>' + idx.length + ' so far</small></h2><div class="rl-runs">' + idx.map(function (r, i) {
+        var stats = '<span class="rc-row"><span><b>' + r.km.toFixed(2) + '</b> km</span><span><b>' + clock(r.durationS) + '</b></span><span><b>' + pace(r.paceS) + '</b>/km</span><span><b>' + r.hrAvg + '</b> bpm</span></span>';
+        if (r.cover) return '<a class="rc-card rc-photo" style="background-image:url(&quot;' + esc(r.cover) + '&quot;)" href="' + base + esc(r.slug) + '/"><span class="rc-meta">' + nice(r.start) + '</span><span class="rc-map">' + routeSvg(r) + '</span><span class="rc-body"><h3>' + esc(r.title) + '</h3>' + stats + '</span></a>';
+        return '<a class="rc-card rc-plain rc-c' + (i % 3) + '" href="' + base + esc(r.slug) + '/"><span class="rc-meta">' + nice(r.start) + ' · ' + timeOfDay(r.start) + '</span><span class="rc-inset">' + routeSvg(r) + '</span><span class="rc-body"><h3>' + esc(r.title) + '</h3>' + stats + '</span></a>';
       }).join('') + '</div>';
       host.innerHTML = html;
     }).catch(function () { host.innerHTML = '<p class="rl-wait">The runlog could not be loaded.</p>'; });
-  }
-  function thumb(r) {
-    var t = r.thumb || [], d = 'M' + t[0] + ' ' + t[1]; for (var i = 2; i < t.length; i += 2) d += 'L' + t[i] + ' ' + t[i + 1];
-    return '<svg viewBox="-30 -30 ' + (r.w + 60) + ' ' + (r.h + 60) + '" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
-  }
-  function paceLine(asc) {
-    var v = asc.map(function (r) { return r.paceS; }), mn = Math.min.apply(null, v), mx = Math.max.apply(null, v) || 1;
-    return '<svg class="rl-spark" viewBox="0 0 120 40"><polyline fill="none" stroke="#e07a3a" stroke-width="2" points="' + v.map(function (p, i) { return (i * 120 / (v.length - 1)) + ',' + (36 - (mx - p) / (mx - mn || 1) * 32); }).join(' ') + '"/></svg><p class="rl-note">' + pace(v[0]) + ' on the first run, ' + pace(v[v.length - 1]) + ' on the latest (per km).</p>';
   }
 
   /* ---- a run's own page ---- */
@@ -303,7 +332,7 @@
     var paceAt = function (i) { var j = i; while (j > 0 && run.t[i] - run.t[j] < 60) j--; var dd = run.d[i] - run.d[j]; return dd > 5 ? (run.t[i] - run.t[j]) / dd * 1000 : null; };
     var pc = run.x.map(function (_, i) { return paceAt(i); });
     var html = '<dl class="rl-stats"><div><dt>Distance</dt><dd>' + run.km.toFixed(2) + '<small> km</small></dd></div><div><dt>Time</dt><dd>' + clock(run.durationS) + '</dd></div><div><dt>Pace</dt><dd>' + pace(S.paceS) + '<small> /km</small></dd></div><div><dt>Heart rate</dt><dd>' + S.hrAvg + '<small> avg, ' + S.hrMax + ' max</small></dd></div><div><dt>Cadence</dt><dd>' + S.cadAvg + '<small> spm</small></dd></div></dl>';
-    html += '<h2 class="rl-h">Watch the run</h2><div class="rl-replay" tabindex="0" aria-label="Replay of the run. Space plays and pauses, the arrow keys move a minute."><div class="rl-stage"><div class="rl-cam"><canvas></canvas><div class="rl-readout"><div><span>km</span><b data-r="km">0.00</b></div><div><span>time</span><b data-r="t">0:00</b></div><div><span>pace</span><b data-r="p">–</b></div><div><span>bpm</span><b data-r="hr">–</b></div></div><div class="rl-pop" hidden></div><div class="rl-chips" role="group" aria-label="Speed"></div><span class="rl-state">tap to play</span></div><div class="rl-side"><div class="rl-map" id="rl-map"></div><ul class="rl-key" aria-label="Heart rate colours, beats per minute"><li class="rl-key-h">bpm</li>' + [['under 115', 0], ['115–129', 1], ['130–144', 2], ['145–159', 3], ['160+', 4]].map(function (k) { return '<li><i style="background:' + BAND[k[1]] + '"></i>' + k[0] + '</li>'; }).join('') + '</ul>' + (M ? '<a class="rl-osm" href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>' : '') + '</div></div></div>';
+    html += '<h2 class="rl-h">Watch the run</h2><div class="rl-replay" tabindex="0" aria-label="Replay of the run. Space plays and pauses, the arrow keys move a minute."><div class="rl-stage"><div class="rl-cam"><canvas></canvas><div class="rl-readout"><div><span>km</span><b data-r="km"></b></div><div><span>time</span><b data-r="t"></b></div><div><span>pace</span><b data-r="p"></b></div><div><span>bpm</span><b data-r="hr"></b></div></div><div class="rl-pop" hidden></div><div class="rl-chips" role="group" aria-label="Speed"></div><span class="rl-state">tap to play</span></div><div class="rl-side"><div class="rl-map" id="rl-map"></div><ul class="rl-key" aria-label="Heart rate colours, beats per minute"><li class="rl-key-h">bpm</li>' + [['under 115', 0], ['115–129', 1], ['130–144', 2], ['145–159', 3], ['160+', 4]].map(function (k) { return '<li><i style="background:' + BAND[k[1]] + '"></i>' + k[0] + '</li>'; }).join('') + '</ul>' + (M ? '<a class="rl-osm" href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>' : '') + '</div></div></div>';
     html += '<h2 class="rl-h">Pace, heart rate, cadence</h2><div class="rl-charts"><div class="rl-chart" data-c="p"><span>pace /km</span><canvas></canvas><i></i></div><div class="rl-chart" data-c="hr"><span>heart rate</span><canvas></canvas><i></i></div><div class="rl-chart" data-c="cad"><span>cadence</span><canvas></canvas><i></i></div></div>';
     html += '<h2 class="rl-h">Kilometre splits</h2><table class="rl-splits"><thead><tr><th>km</th><th>pace</th><th>bpm</th><th></th></tr></thead><tbody>' + (function () { var fs = run.splits.map(function (s) { return s.s / (s.part ? s.part / 1000 : 1); }), lo = Math.min.apply(null, fs), hi = Math.max.apply(null, fs); return run.splits.map(function (s, i) { return '<tr data-km="' + (s.part ? run.km : s.km) + '"><td>' + (s.part ? (s.km - 1 + s.part / 1000).toFixed(1) : s.km) + '</td><td>' + pace(fs[i]) + '</td><td>' + s.hr + '</td><td><i style="width:' + (100 - (fs[i] - lo) / (hi - lo || 1) * 70) + '%"></i></td></tr>'; }).join(''); })() + '</tbody></table>';
     html += recordsBlock(idx, run.slug);
@@ -340,10 +369,11 @@
     [60, 120, 300].forEach(function (v) { var b = el('button', v === speed ? 'on' : '', v + '×'); b.type = 'button'; b.onclick = function (e) { e.stopPropagation(); autoOn = false; speed = v; $$('button', chips).forEach(function (x) { x.classList.toggle('on', x === b); }); }; chips.appendChild(b); });
     function idxAt(t) { var lo = 0, hi = N - 1; while (lo < hi) { var m = (lo + hi) >> 1; if (MT[m] < t) lo = m + 1; else hi = m; } return lo; }
     function frac(t) { var i = Math.max(1, idxAt(t)), a = MT[i - 1], b = MT[i]; return i - 1 + (b > a ? (t - a) / (b - a) : 0); }
+    var od = {}; [['km', '##.##'], ['t', total >= 3600 ? '#:##:##' : '##:##'], ['p', '##:##'], ['hr', '###']].forEach(function (f) { od[f[0]] = Odo($('[data-r=' + f[0] + ']', rep), f[1]); });
     function show() {
       var f = frac(pos), i = Math.min(N - 1, Math.round(f));
       cam.draw(f, dark);
-      $('[data-r=km]', rep).textContent = (run.d[i] / 1000).toFixed(2); $('[data-r=t]', rep).textContent = clock(run.t[i]); $('[data-r=p]', rep).textContent = pc[i] ? pace(pc[i]) : '–'; $('[data-r=hr]', rep).textContent = run.hr[i];
+      od.km((run.d[i] / 1000).toFixed(2)); od.t(clock(run.t[i])); od.p(pc[i] ? pace(pc[i]) : '–'); od.hr(String(run.hr[i]));
       var i0 = Math.min(N - 2, Math.floor(f)), r0 = f - i0, hx = run.x[i0] + (run.x[i0 + 1] - run.x[i0]) * r0, hy = run.y[i0] + (run.y[i0 + 1] - run.y[i0]) * r0;
       var here = $('.rl-here', mapSvg); if (here) here.setAttribute('transform', 'translate(' + hx + ' ' + hy + ') rotate(' + (cam.ang() * 180 / Math.PI + 90) + ')');
       var mp = $('.rl-mp', mapSvg); if (mp) mp.setAttribute('stroke-dasharray', (cam.cum[i0] + r0 * (cam.cum[i0 + 1] - cam.cum[i0])) + ' 999999');
