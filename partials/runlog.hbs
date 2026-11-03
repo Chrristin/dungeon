@@ -8,10 +8,12 @@
     <div class="store-intro gh-content">{{content}}</div>
 </section>
 {{/post}}
-<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.35.0">
+<link rel="stylesheet" href="{{asset "css/runlog.css"}}&r=2.35.1">
 <div class="rl-wrap">
     <div class="rl-index" data-src="{{asset "data/runs/index.json"}}" data-runs-url="{{@site.url}}/runs/" aria-live="polite"><p class="rl-wait">Loading the runlog…</p></div>
     <noscript><p class="rl-wait">This page needs JavaScript to show the runs.</p></noscript>
+    {{!-- Each run post's featured image, by its address name, for the run cards that have no photo of their own (runlog.js reads it). Only published posts are listed. --}}
+    {{#get "posts" filter="tag:hash-run" limit="50"}}<script type="application/json" id="rl-covers">{ {{#foreach posts}}"{{slug}}": "{{#if feature_image}}{{img_url feature_image size="m"}}{{/if}}"{{#unless @last}}, {{/unless}}{{/foreach}} }</script>{{else}}<script type="application/json" id="rl-covers">{}</script>{{/get}}
     {{!-- Writing: the posts tagged Movement, newest first, as rows like a plot's (screen.css styles .plot-rows). Nothing is printed when there are none. --}}
     {{#get "posts" filter="tag:movement" limit="8" order="published_at desc"}}{{#if posts}}
     <section class="rl-writing" aria-labelledby="rl-writing-h">
@@ -31,4 +33,4 @@
     </section>
     {{/if}}{{/get}}
 </div>
-<script src="{{asset "js/runlog.js"}}&r=2.35.0" defer></script>
+<script src="{{asset "js/runlog.js"}}&r=2.35.1" defer></script>

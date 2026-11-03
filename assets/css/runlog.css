@@ -171,6 +171,7 @@
 /* The figures in the replay: fixed slots, so the box never changes width, and each digit rolls to its new value */
 .rl-readout > div > span { display: block; font: 0.6rem var(--mono); color: var(--graphite); text-transform: uppercase; }
 .rl-readout b { display: block; min-width: 0; }
+.rl-readout .od { display: inline-flex; }
 .od { position: relative; display: inline-flex; font: 600 1.05rem/1.25 var(--sans); font-variant-numeric: tabular-nums; }
 .od-d { display: inline-block; width: 0.6em; height: 1.25em; overflow: hidden; }
 .od-r { display: flex; flex-direction: column; transform: translateY(calc(var(--i, 10) * -1.25em)); transition: transform 0.22s cubic-bezier(0.3, 0.7, 0.3, 1); }

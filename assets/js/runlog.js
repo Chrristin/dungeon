@@ -305,6 +305,8 @@
       if (!idx.length) { host.innerHTML = '<p class="rl-wait">No runs yet.</p>'; return; }
       var R = records(idx), total = R.total, secs = idx.reduce(function (a, r) { return a + r.durationS; }, 0);
       var since = idx[idx.length - 1].start, base = host.getAttribute('data-runs-url') || '/runs/';
+      /* a run's card picture: a photo from the run, else the featured image of its post in Ghost (the page passes them in), else none */
+      var covers = {}; try { covers = JSON.parse(($('#rl-covers') || {}).textContent || '{}') || {}; } catch (e) { covers = {}; }
       function tile(k, v, u) { return '<div class="rl-tile"><dt>' + k + '</dt><dd>' + v + (u ? '<small> ' + u + '</small>' : '') + '</dd></div>'; }
       var html = '<dl class="rl-tiles">' + tile('Runs', idx.length) + tile('Total', total.toFixed(1), 'km') + tile('Longest', R.longest.km.toFixed(1), 'km') + tile('Average pace', pace(secs / total), '/km') + tile('Since', short(since)) + '</dl>';
       var wks = Object.keys(R.byWeek).sort().slice(-12), mx = Math.max.apply(null, wks.map(function (k) { return R.byWeek[k]; })), asc = idx.slice().reverse();
@@ -313,7 +315,8 @@
       html += recordsBlock(idx, null);
       html += '<h2 class="rl-h">Runs <small>' + idx.length + ' so far</small></h2><div class="rl-runs">' + idx.map(function (r, i) {
         var stats = '<span class="rc-row"><span><b>' + r.km.toFixed(2) + '</b> km</span><span><b>' + clock(r.durationS) + '</b></span><span><b>' + pace(r.paceS) + '</b>/km</span><span><b>' + r.hrAvg + '</b> bpm</span></span>';
-        if (r.cover) return '<a class="rc-card rc-photo" style="background-image:url(&quot;' + esc(r.cover) + '&quot;)" href="' + base + esc(r.slug) + '/"><span class="rc-meta">' + nice(r.start) + '</span><span class="rc-map">' + routeSvg(r) + '</span><span class="rc-body"><h3>' + esc(r.title) + '</h3>' + stats + '</span></a>';
+        var cv = r.cover || covers[r.slug] || '';
+        if (cv) return '<a class="rc-card rc-photo" style="background-image:url(&quot;' + esc(cv) + '&quot;)" href="' + base + esc(r.slug) + '/"><span class="rc-meta">' + nice(r.start) + '</span><span class="rc-map">' + routeSvg(r) + '</span><span class="rc-body"><h3>' + esc(r.title) + '</h3>' + stats + '</span></a>';
         return '<a class="rc-card rc-plain rc-c' + (i % 3) + '" href="' + base + esc(r.slug) + '/"><span class="rc-meta">' + nice(r.start) + ' · ' + timeOfDay(r.start) + '</span><span class="rc-inset">' + routeSvg(r) + '</span><span class="rc-body"><h3>' + esc(r.title) + '</h3>' + stats + '</span></a>';
       }).join('') + '</div>';
       host.innerHTML = html;

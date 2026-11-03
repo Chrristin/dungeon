@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.35.1
+
+- **The separators in the replay readout sit on the line.** In 2.35.0 the colons and the point sat about 4px below the digits (a more specific rule for the readout’s bold text had turned each figure into a plain block, so the digit reels and the separators lined up on different baselines). Digits and separators now share one line, measured equal in all four figures; the box width is unchanged.
+- **A run’s card can use its post’s featured image.** The picture on a run card is, in order: a photo from the run, the featured image of the run’s post in Ghost (the Runlog page passes each published run post’s image, a 1,200px copy, to the script), or none (the pastel card). Set or change a run’s featured image in Ghost and its card follows, with no release. The Variable Intensity Workout, which has no photos of its own, now shows its featured image.
+- Looked at in Chrome at 1,601px: the cards with a featured image and the readout measured on a copy of the page. Not seen with the real Ghost list on the live Runlog page, on a phone, in Safari or Firefox.
+
 ## 2.35.0
 
 - **The figures in the replay keep their width, and roll.** The box over the cam (km, time, pace, bpm) used to grow and shrink with the digits. Each figure now has fixed slots wide enough for its longest value (the time has an hour slot only on runs of an hour or more), set in fixed-width digits, so the box is 251px whichever value it holds. Each digit is a small reel that rolls to its new value in about a fifth of a second, like an odometer, and does not roll with reduced motion.
