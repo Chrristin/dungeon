@@ -49,7 +49,7 @@ reached without the map or the cam.
 
 ## Data
 
-- **index.json**: one summary per run, newest first: `slug, title, start (local, ISO), km, durationS, paceS, hrAvg, hrMax,
+- **index.json**: one summary per run, newest first: `slug, title, sport (run), start (local, ISO), km, durationS, paceS, hrAvg, hrMax,
   cadAvg, best {1,5,10,21: seconds}, w, h, thumb [x,y,...]`. The index page, records and homepage box all read it.
 - **<slug>.json**: `x, y` (route in a space 1000 units on its longer side), `d` metres, `t` seconds, `mt` seconds on the
   replay's clock (stops of 10 s or more count for almost nothing), `hr`, `cad`, one entry every 5 s; `splits`, `stops`,

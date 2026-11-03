@@ -2,7 +2,7 @@
 // Runlog builder: one GPX (and, if given, one OpenStreetMap extract) in, the theme's run data out.
 //
 //   node extras/runlog/build.mjs <run.gpx> --slug 2026-10-31-kochi-dawn-15k --title "Kochi Dawn 15K" \
-//        [--osm map.osm] [--fetch] [--pins pins.json] [--trim 0] [--out assets/data/runs]
+//        [--osm map.osm] [--fetch] [--pins pins.json] [--trim 0] [--sport run] [--out assets/data/runs]
 //
 // Writes <out>/<slug>.json (the run), <out>/<slug>.map.json (the map shapes, when an extract is given) and
 // updates <out>/index.json (one summary per run; the index page and the shared records are drawn from it).
@@ -108,7 +108,7 @@ const thumbStep = Math.max(1, Math.floor(keep.length / 140));
 const summary = {
   slug, title, start: run.start, km: run.km, durationS: run.durationS, paceS: Math.round(durationS / (officialM / 1000)),
   hrAvg: Math.round(avg(raw.map(p => p.hr))), hrMax: Math.max(...raw.map(p => p.hr)), cadAvg: Math.round(avg(raw.map(p => p.cad))),
-  best: bestK, w: W, h: H,
+  sport: String(opt('sport', 'run')), best: bestK, w: W, h: H,
   thumb: keep.filter((_, i) => i % thumbStep === 0).flatMap((p) => P(p.la, p.lo)).map(Math.round)
 };
 run.summary = { ...summary, thumb: undefined };

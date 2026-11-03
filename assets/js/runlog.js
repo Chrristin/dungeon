@@ -419,6 +419,8 @@
     getJSON(src).then(function (idx) {
       if (!idx.length) return;
       var r = idx[0], host = plot || a;
+      /* the plot counts activities across every log (runs now, badminton and others later), not Ghost pages */
+      if (plot) { var st = $('.plot-status', plot), mt = $('.plot-meter', plot), n = idx.length; if (st) st.textContent = n + (n === 1 ? ' activity' : ' activities'); if (mt) $$('i', mt).forEach(function (cell, i) { cell.classList.toggle('is-on', i < Math.min(5, n)); }); }
       a.classList.add('is-runlog'); if (plot) plot.classList.add('is-takeover');
       var kind = $('.plot-page-kind', a), line = $('.plot-page-line', a), title = $('.plot-page-title', a);
       if (kind) kind.textContent = 'Runlog · ' + short(r.start);

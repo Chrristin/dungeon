@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.34.0
+
+- **Photos in a post line up with the text.** From 1,100px up, the text of a post is a centred column, but an older rule (`.gh-content figure`) set every image’s side margins to zero, so regular images sat against the left edge: 36px further left than the text and 70px short on the right (measured on a live post at 1,280px). They now sit in the same centred column. Wide and full-width images from the editor, and floated images, are unchanged.
+- **The text itself looks centred.** Left-aligned text ends its lines about 33px short of its box on average, so a column that is centred in the maths looked left-heavy (84px of margin on the left, about 115px on the right, as measured). Text, lists, quotes and headings now sit 1rem to the right from 1,100px up, which makes the visual margins equal (100px and 101px measured); images stay centred. Also `text-wrap: pretty` on reading text and `balance` on headings, which help in Chrome, Edge and Safari and are ignored elsewhere. Hyphenation was tried and made no difference.
+- **The Movement card counts activities.** It said “1 page” (the theme’s count of Ghost pages in a plot). It now shows the number of activities across every log, “3 activities” today, with the meter lit one cell for each, up to five. Each run’s summary now carries a `sport` field (`run`), ready for the badminton log.
+- **A third run: Variable Intensity Workout** (3 Nov 2026, 6.85 km, 59:40), four sets of moderate, tempo and hard. The page shows what was actually run; the sets are not drawn over the data, because the run did not follow the plan end to end.
+- Looked at in Chrome, at 1,280px (and the new run’s page at the same width): the post spacing was measured on the live post with the same rules applied, the card in a copy of the plot’s markup. Not seen on a phone, in Safari or Firefox, and not on an older post.
+
 ## 2.33.1
 
 - **The “← Runlog” link no longer sits on the photo.** On a run’s page the link at the top had no space under it, so the hero picture started right at its baseline. It now has the same gap as the watchlist item pages (a little over 1 rem).

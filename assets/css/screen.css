@@ -885,6 +885,17 @@ body.has-everything .colophon-secondary { display: none; }
 
 /* Browsers indent <figure> by 40px each side by default; Ghost's image and embed cards are figures */
 .gh-content figure { margin-left: 0; margin-right: 0; }
+/* From 1,100px the text of a post is a centred column (60rem). This rule used to leave regular images against the left edge,
+   36px out of line with the text and 70px short on the right; they sit in the same centred column now. Floated images keep
+   their own margins (more specific rules below). */
+@media (min-width: 1100px) { .panel-content.gh-content > figure { margin-left: auto; margin-right: auto; } }
+/* Reading text is left-aligned, so its right edge is ragged: lines end about 33px short of the box on average (measured on
+   the live post at 1,280px), and the column looked left-heavy even though the box is centred. Text, lists and headings sit
+   1rem (about half that) to the right, so the margins look equal (100px and 101px measured); images stay centred. */
+@media (min-width: 1100px) { .panel-content.gh-content > :is(p, ul, ol, blockquote, h2, h3, h4) { position: relative; left: 1rem; } }
+/* Fewer short last lines in reading text, and headings that break evenly (browsers without it ignore this) */
+.panel-content > :is(p, ul, ol, blockquote) { text-wrap: pretty; }
+.panel-content > :is(h2, h3, h4) { text-wrap: balance; }
 
 /* Embeds sized to their container (notes, months and posts) */
 .scatter-body iframe, .now-body iframe, .panel-content iframe { max-width: 100%; border: 0; border-radius: 10px; }
