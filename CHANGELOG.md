@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.36.3
+
+- **The lists of cards have no holes under the short cards.** On the home page, the pages after it, the tag and author pages and the Ratings page, the cards sat in rows, so a short card left a gap under it as tall as the tallest card beside it (on a wide screen up to 210 px of empty space, 67 px on average). The cards now pack straight under each other in their columns, the way the Scatter wall already did: each card takes as many 4 px rows as it is tall, plus the usual gap, and a later card moves up into the first hole it fits in. The gap between stacked cards is a steady 44 to 47 px everywhere. The page is 230 px shorter on a wide screen (7,510 to 7,280 px) and 195 px shorter at 1,280 px. The rows no longer start on one line, and the order within a row can shift a little (a card may sit in a different column than before). On a phone or a narrow window, where the list is one column, nothing changes, and without scripts the list keeps its rows.
+- Checked in Chrome and in Safari's engine (WebKit): the gaps measured before and after at four widths, a card opening in place and closing again (every card back exactly where it was), resizing from four columns to one and back, the second page of the list and a tag page, the smoke tests (62 of 62), and the Ratings page is exactly as tall as before. Not checked in Firefox or on a real phone.
+
 ## 2.36.2
 
 - **The Movement card draws its chase cam again.** Since 2.35.0 the card showed its title and stats on a black background: the Runlog script still called a small route-picture function that the 2.35.0 rewrite of the index page had deleted, so it failed just before adding the map layer, and its error handler hid the failure. It now draws the coloured route with the function that exists, and the live chase cam fades in over it once the page is idle, as before.

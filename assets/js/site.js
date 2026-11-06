@@ -723,6 +723,33 @@
     wallCards.forEach(function (card) { sizeCard(card); ro.observe(card); });
   }
 
+  // The card lists (home, tag and author pages, the Ratings page): the same packing as the Scatter wall, so a short card leaves no
+  // hole under it. Only when the list has two or more columns; on a phone it stays the plain single column. Without this script
+  // the list keeps its rows.
+  [].forEach.call(document.querySelectorAll('.cards'), function (list) {
+    if (!('ResizeObserver' in window)) return;
+    var ROW = 4, queuedList = false;
+    function gapNow() { // the list's own vertical gap (--wall-gap in the stylesheet), measured, because row-gap is 0 while packed
+      var probe = document.createElement('i'); probe.style.cssText = 'position:absolute;visibility:hidden;height:var(--wall-gap)';
+      list.appendChild(probe); var g = probe.offsetHeight; list.removeChild(probe); return g;
+    }
+    function packList() {
+      queuedList = false;
+      var kids = [].slice.call(list.children).filter(function (c) { return c.nodeType === 1; });
+      var cols = getComputedStyle(list).gridTemplateColumns.split(' ').length;
+      if (cols < 2) { list.classList.remove('is-wall'); kids.forEach(function (c) { c.style.gridRowEnd = ''; }); return; }
+      list.classList.add('is-wall');
+      var gap = gapNow();
+      // measure every card first, then set every span: measuring between writes would make the browser lay the page out again each time
+      var spans = kids.map(function (c) { var h = c.offsetHeight; return h ? Math.ceil((h + gap) / ROW) : 0; });
+      kids.forEach(function (c, i) { c.style.gridRowEnd = spans[i] ? 'span ' + spans[i] : ''; });
+    }
+    var roList = new ResizeObserver(function () { if (queuedList) return; queuedList = true; requestAnimationFrame(packList); });
+    [].forEach.call(list.children, function (c) { if (c.nodeType === 1) roList.observe(c); });
+    roList.observe(list);
+    packList();
+  });
+
   // Scatter wall entrance: each note fades up into place as it scrolls into view, with a
   // random short delay so they arrive staggered rather than all at once or in strict order.
   var scatterWall = document.querySelector('.scatter');
