@@ -1,0 +1,428 @@
+#!/bin/bash
+# caretaker: looks after the containers on the NAS from the MacBook.
+#
+#   caretaker watch      every few minutes: is everything up? first aid, then the doctor agent
+#   caretaker update     nightly: new images, applied by the update agent, rolled back if they break
+#   caretaker builds     failed GitHub builds, fixed by the builds agent in a pull request
+#   caretaker status     what it has been doing
+#   caretaker test       check the NAS connection and send a test notification
+#   caretaker pause | resume
+#   caretaker approve <id> | ignore <container>
+#   caretaker nas <verb> talk to the gate on the NAS yourself (caretaker nas help)
+#
+# Written for the bash 3.2 that macOS ships. See ../README.md.
+
+set -u
+SELF=$0
+[ -L "$SELF" ] && SELF=$(readlink "$SELF")
+KIT=$(cd "$(dirname "$SELF")/.." && pwd)
+CH=${CARETAKER_HOME:-$HOME/.caretaker}
+STATE=$CH/state
+LOGS=$CH/logs
+TAB=$'\t'
+
+mkdir -p "$STATE/count" "$STATE/asked" "$STATE/approved" "$STATE/builds" "$LOGS/runs" "$CH/work/empty"
+
+# ---------- settings ----------
+NAS_HOST=; NAS_USER=; NAS_PORT=22; NAS_KEY=$HOME/.ssh/caretaker_ed25519
+NTFY_SERVER=https://ntfy.sh; NTFY_TOPIC=; NTFY_REPLY_TOPIC=; NTFY_TOKEN=
+URLS=; IGNORE=; DISK_WARN=90; UNKNOWN_VERSION=ask; REPOS=; BUILD_ALLOW=
+MODEL=; MAX_BUDGET_USD=3; AGENT_MINUTES=30; DOCTOR_COOLDOWN_MIN=360
+# shellcheck disable=SC1091
+[ -f "$CH/config.env" ] && . "$CH/config.env"
+CLAUDE=${CLAUDE:-claude}
+
+JOB=${CARETAKER_JOB:-${1:-}}
+log() { echo "$(date '+%Y-%m-%d %H:%M:%S') [$JOB] $*" >> "$LOGS/$(date +%Y-%m).log"; }
+die() { echo "caretaker: $*" >&2; exit 1; }
+
+# ---------- small tools ----------
+
+fresh() {                                # fresh <file> <minutes>: does it exist and is it newer
+  [ -e "$1" ] && [ -n "$(find "$1" -mmin "-$2" 2>/dev/null)" ]
+}
+key() { echo "$1" | tr -c 'A-Za-z0-9_.\n-' '_'; }
+bump() {                                 # count a problem seen again; prints the new count
+  local f; f=$STATE/count/$(key "$1")
+  local n=0; [ -f "$f" ] && n=$(cat "$f")
+  n=$((n + 1)); echo "$n" > "$f"; echo "$n"
+}
+count() { local f; f=$STATE/count/$(key "$1"); if [ -f "$f" ]; then cat "$f"; else echo 0; fi; }
+clear_count() { rm -f "$STATE/count/$(key "$1")"; }
+ignored() { case " $IGNORE " in *" $1 "*) return 0 ;; esac; return 1; }
+online() { curl -fsS -m 10 -o /dev/null "${ONLINE_URL:-http://captive.apple.com/hotspot-detect.html}" 2>/dev/null; }
+
+lock() {                                 # one job at a time changes things
+  local l=$STATE/lock
+  if mkdir "$l" 2>/dev/null; then echo $$ > "$l/pid"; trap 'rm -rf "$STATE/lock"' EXIT; return 0; fi
+  local pid; pid=$(cat "$l/pid" 2>/dev/null)
+  [ "$pid" = $$ ] && return 0
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then return 1; fi
+  rm -rf "$l"; lock
+}
+
+# ---------- telling you ----------
+
+notify() {                               # notify [-p priority] [-t title] [-a actions] message
+  local prio=default title="Caretaker" actions=
+  while [ $# -gt 1 ]; do
+    case $1 in
+      -p) prio=$2; shift 2 ;;
+      -t) title=$2; shift 2 ;;
+      -a) actions=$2; shift 2 ;;
+      *) break ;;
+    esac
+  done
+  local msg=$*
+  log "notify ($prio) $title: $msg"
+  if [ -n "$NTFY_TOPIC" ]; then
+    local args=(-fsS -m 20 -o /dev/null -H "Title: $title" -H "Priority: $prio")
+    [ -n "$NTFY_TOKEN" ] && args+=(-H "Authorization: Bearer $NTFY_TOKEN")
+    [ -n "$actions" ] && args+=(-H "Actions: $actions")
+    curl "${args[@]}" --data-binary "$msg" "$NTFY_SERVER/$NTFY_TOPIC" 2>>"$LOGS/curl.err" && return 0
+    log "the push did not go out"
+  fi
+  if command -v osascript >/dev/null 2>&1; then
+    osascript -e 'on run a' -e 'display notification (item 1 of a) with title (item 2 of a)' -e 'end run' "$msg" "$title" >/dev/null 2>&1
+  fi
+  return 0
+}
+
+id_ok() { case $1 in ''|-*|*[!a-z0-9A-Z_.-]*) return 1 ;; esac; return 0; }
+
+ask() {                                  # ask <id> <title> <question>: a push with Approve / Not now
+  local id=$1 title=$2; shift 2
+  id_ok "$id" || die "ask: the id may hold letters, digits, - _ . only"
+  if fresh "$STATE/asked/$id" 10080; then echo "already asked about $id in the last 7 days; not asking again"; return 0; fi
+  touch "$STATE/asked/$id"
+  if [ -n "$NTFY_TOPIC" ] && [ -n "$NTFY_REPLY_TOPIC" ]; then
+    local to="$NTFY_SERVER/$NTFY_REPLY_TOPIC" auth=
+    [ -n "$NTFY_TOKEN" ] && auth=", headers.Authorization=Bearer $NTFY_TOKEN"
+    notify -p high -t "$title" -a "http, Approve, $to, method=POST, body=approve $id, clear=true$auth; http, Not now, $to, method=POST, body=skip $id, clear=true$auth" "$*"
+  else
+    notify -p high -t "$title" "$* To approve, run on the Mac: caretaker approve $id"
+  fi
+  echo "asked ($id). The answer is picked up by a later run; do not wait for it."
+}
+
+replies() {                              # collect Approve / Not now taps from the phone
+  [ -n "$NTFY_REPLY_TOPIC" ] || return 0
+  local args=(-fsS -m 20) out line mid msg verb id
+  [ -n "$NTFY_TOKEN" ] && args+=(-H "Authorization: Bearer $NTFY_TOKEN")
+  out=$(curl "${args[@]}" "$NTFY_SERVER/$NTFY_REPLY_TOPIC/json?poll=1&since=48h" 2>/dev/null) || return 0
+  touch "$STATE/replies.seen"
+  while IFS= read -r line; do
+    case $line in *'"event":"message"'*) ;; *) continue ;; esac
+    mid=$(echo "$line" | sed -n 's/.*"id":"\([A-Za-z0-9]*\)".*/\1/p')
+    msg=$(echo "$line" | sed -n 's/.*"message":"\([a-z]* [A-Za-z0-9_.-]*\)".*/\1/p')
+    [ -n "$mid" ] && [ -n "$msg" ] || continue
+    grep -qx "$mid" "$STATE/replies.seen" && continue
+    echo "$mid" >> "$STATE/replies.seen"
+    verb=${msg%% *}; id=${msg#* }
+    # only an answer to a question that was really asked counts
+    [ -e "$STATE/asked/$id" ] || { log "ignored a reply about '$id', which was never asked"; continue; }
+    case $verb in
+      approve) touch "$STATE/approved/$id"; log "approved: $id" ;;
+      skip) rm -f "$STATE/approved/$id"; touch "$STATE/asked/$id"; log "not now: $id" ;;
+    esac
+  done <<EOF
+$out
+EOF
+}
+
+approved() { fresh "$STATE/approved/$1" 4320; }     # an approval is good for 3 days
+
+# ---------- the NAS ----------
+
+nas_raw() {
+  if [ -n "${CARETAKER_GATE:-}" ]; then              # for trying the kit without a NAS
+    SSH_ORIGINAL_COMMAND="$*" sh "$CARETAKER_GATE"
+    return
+  fi
+  [ -n "$NAS_HOST" ] && [ -n "$NAS_USER" ] || die "set NAS_HOST and NAS_USER in $CH/config.env"
+  ssh -i "$NAS_KEY" -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=10 \
+      -o ServerAliveInterval=30 -o StrictHostKeyChecking=accept-new \
+      -p "$NAS_PORT" "$NAS_USER@$NAS_HOST" "$*"
+}
+
+# What each agent may ask of the NAS. A person at the Terminal (no role) may ask anything the
+# gate offers. Approval words are never taken from the caller: they are added here, from the
+# approvals you gave.
+nas() {
+  local role=${CARETAKER_ROLE:-} verb=${1:-help}
+  case $role in
+    '') ;;
+    doctor) case $verb in help|ping|host|ps|show|logs|start|restart|stacks|rollback) ;; *) die "the doctor may not '$verb'" ;; esac ;;
+    update) case $verb in help|ping|host|ps|show|logs|start|restart|stacks|rollback|updates|apply|prune) ;; *) die "the updater may not '$verb'" ;; esac ;;
+    *) die "this agent has no business on the NAS" ;;
+  esac
+  if [ "$verb" = apply ] && [ -n "$role" ]; then
+    local stack=${2:-}
+    id_ok "$stack" || die "apply needs a stack name"
+    local words= used=
+    approved "major-$stack" && { words="$words major-ok"; used="$used major-$stack"; }
+    if approved "unknown-$stack"; then words="$words unknown-ok"; used="$used unknown-$stack"
+    elif [ "$UNKNOWN_VERSION" = apply ]; then words="$words unknown-ok"
+    fi
+    log "apply $stack$words"
+    # shellcheck disable=SC2086
+    nas_raw apply "$stack" $words
+    local rc=$? u
+    # an approval is used up once; a question still waiting for its answer stays asked
+    [ $rc -eq 0 ] && for u in $used; do rm -f "$STATE/approved/$u" "$STATE/asked/$u"; done
+    return $rc
+  fi
+  case $verb in start|restart|rollback|prune) log "nas $*" ;; esac
+  nas_raw "$@"
+}
+
+# ---------- the agents ----------
+
+# run_agent <role> <prompt name> <working dir> <tools> <context> [allowed tool rule ...]
+run_agent() {
+  local role=$1 prompt=$2 dir=$3 tools=$4 context=$5; shift 5
+  command -v "$CLAUDE" >/dev/null 2>&1 || { notify -p high -t "Caretaker needs you" "The $role agent could not start: the claude command was not found. What it would have looked at: $context"; return 1; }
+  local out; out=$LOGS/runs/$(date +%Y%m%d-%H%M%S)-$role.txt
+  local args=(-p --permission-mode dontAsk --tools "$tools" --no-session-persistence --max-budget-usd "$MAX_BUDGET_USD")
+  [ -n "$MODEL" ] && args+=(--model "$MODEL")
+  args+=(--allowedTools "$@")
+  log "starting the $role agent ($out)"
+  {
+    cat "$KIT/prompts/common.md" "$KIT/prompts/$prompt.md"
+    printf '\n## This run\n\n%s\n' "$context"
+  } > "$out.prompt"
+  (
+    cd "$dir" || exit 1
+    export CARETAKER_ROLE=$role CARETAKER_JOB=$role CARETAKER_HOME=$CH PATH="$KIT/bin:$PATH"
+    exec "$CLAUDE" "${args[@]}" < "$out.prompt" > "$out" 2>&1
+  ) &
+  local pid=$! waited=0
+  while kill -0 $pid 2>/dev/null; do
+    sleep 5; waited=$((waited + 5))
+    if [ $waited -ge $((AGENT_MINUTES * 60)) ]; then kill $pid 2>/dev/null; log "the $role agent ran over $AGENT_MINUTES minutes and was stopped"; break; fi
+  done
+  wait $pid 2>/dev/null; local rc=$?
+  rm -f "$out.prompt"
+  log "the $role agent finished (exit $rc)"
+  if [ $rc -ne 0 ]; then
+    notify -p high -t "Caretaker needs you" "The $role agent stopped early (exit $rc). It was looking at: $context  Its notes are in $out"
+  fi
+  return $rc
+}
+
+# ---------- watch ----------
+
+cmd_watch() {
+  [ -e "$STATE/paused" ] && exit 0
+  replies
+  lock || exit 0                          # an agent is at work; it is watching already
+
+  local ps err
+  err=$STATE/ssh.err
+  if ! ps=$(nas ps 2>"$err"); then
+    online || { log "the Mac is offline; nothing checked"; exit 0; }
+    if [ "$(bump nas-unreachable)" = 2 ]; then
+      notify -p urgent -t "NAS is not answering" "No answer from the NAS over SSH twice in a row, while the Mac is online. $(tail -n 1 "$err")"
+    fi
+    exit 0
+  fi
+  [ "$(count nas-unreachable)" -ge 2 ] && notify -t "NAS is answering again" "The NAS is reachable over SSH again."
+  clear_count nas-unreachable
+
+  local problems="" back="" name stack image state health policy code restarts started kind n was id
+  while IFS=$TAB read -r name stack image state health policy code restarts started; do
+    [ -n "$name" ] || continue
+    ignored "$name" && continue
+    kind=
+    was=0; [ -f "$STATE/count/restarts.$(key "$name")" ] && was=$(cat "$STATE/count/restarts.$(key "$name")")
+    echo "$restarts" > "$STATE/count/restarts.$(key "$name")"
+    case $state in
+      restarting) kind="keeps crashing and restarting (exit code $code, $restarts restarts)" ;;
+      running)
+        if [ "$health" = unhealthy ]; then kind="is running but its health check fails"
+        elif [ $((restarts - was)) -ge 3 ]; then kind="restarted $((restarts - was)) times since the last check"
+        fi ;;
+      exited|dead)
+        case $policy in
+          always|unless-stopped)
+            # Docker restarts these whatever happens, so a stopped one was stopped by someone.
+            id=start-$(key "$name")
+            if approved "$id"; then
+              nas start "$name" >/dev/null 2>&1; rm -f "$STATE/approved/$id" "$STATE/asked/$id"
+              notify -t "Started $name" "$name was started, as you approved."
+            elif ! fresh "$STATE/asked/$id" 10080; then
+              ask "$id" "$name is stopped" "$name on the NAS is stopped, and it looks stopped by hand rather than crashed. Start it? If it should stay off, run 'caretaker ignore $name' on the Mac." >/dev/null
+            fi ;;
+          *)
+            case $code in
+              0|130|143) ;;                # finished, or was asked to stop
+              *)
+                n=$(bump "down.$name")
+                if [ "$n" = 1 ]; then
+                  log "$name is down (exit $code); starting it once"
+                  nas start "$name" >/dev/null 2>&1
+                  continue
+                fi
+                kind="crashed (exit code $code) and went down again after being started"
+                [ "$(count "sick.$name")" -ge 1 ] || bump "sick.$name" >/dev/null ;;
+            esac ;;
+        esac ;;
+    esac
+    if [ -n "$kind" ]; then
+      n=$(bump "sick.$name")
+      [ "$n" -ge 2 ] && problems="$problems- container $name (stack $stack, image $image) $kind
+"
+    else
+      [ "$(count "sick.$name")" -ge 2 ] && back="$back $name"
+      clear_count "sick.$name"
+      [ "$state" = running ] && clear_count "down.$name"
+    fi
+  done <<EOF
+$ps
+EOF
+
+  local u
+  for u in $URLS; do
+    if curl -fsSL -m 25 -o /dev/null "$u" 2>"$err"; then
+      [ "$(count "url.$u")" -ge 2 ] && back="$back $u"
+      clear_count "url.$u"
+    elif online; then
+      n=$(bump "url.$u")
+      [ "$n" -ge 2 ] && problems="$problems- $u does not answer from the Mac ($(tail -n 1 "$err"))
+"
+    fi
+  done
+
+  local pct mount
+  nas host 2>/dev/null | while read -r word pct mount; do
+    [ "$word" = disk ] || continue
+    if [ "$pct" -ge "$DISK_WARN" ] && ! fresh "$STATE/disk.$(key "$mount")" 1440; then
+      touch "$STATE/disk.$(key "$mount")"
+      notify -p high -t "NAS disk is filling up" "$mount on the NAS is $pct% full."
+    fi
+  done
+
+  [ -n "$back" ] && notify -t "Back up" "Working again:$back"
+
+  if [ -n "$problems" ]; then
+    local sig; sig=$STATE/doctor.$(echo "$problems" | cksum | tr -d ' ')
+    if fresh "$sig" "$DOCTOR_COOLDOWN_MIN"; then
+      log "still wrong, the doctor has been already: $(echo "$problems" | tr '\n' ' ')"
+    else
+      touch "$sig"
+      run_agent doctor doctor "$CH/work/empty" Bash "These problems were found just now:
+$problems" "Bash(caretaker nas *)" "Bash(caretaker notify *)" "Bash(caretaker ask *)" "Bash(sleep *)"
+    fi
+  fi
+  find "$STATE" -maxdepth 1 -name 'doctor.*' -mmin +2880 -exec rm -f {} + 2>/dev/null
+  return 0
+}
+
+# ---------- update ----------
+
+cmd_update() {
+  [ -e "$STATE/paused" ] && exit 0
+  replies
+  lock || { log "another job is running; trying again next time"; exit 0; }
+  local table
+  table=$(nas updates 2>"$STATE/ssh.err") || { log "could not reach the NAS: $(tail -n 1 "$STATE/ssh.err")"; exit 0; }
+  echo "$table" > "$STATE/updates.last"
+  local waiting; waiting=$(echo "$table" | awk -F "$TAB" '$4 == "new"')
+  if [ -z "$waiting" ]; then
+    log "nothing new ($(echo "$table" | grep -c .) containers checked)"
+    nas prune >/dev/null 2>&1
+    return 0
+  fi
+  local yes; yes=$(cd "$STATE/approved" && ls 2>/dev/null | tr '\n' ' ')
+  run_agent update update "$CH/work/empty" Bash "Containers with a new image waiting (name, stack, image, status, jump, current version, new version):
+$waiting
+
+Images without a version: UNKNOWN_VERSION=$UNKNOWN_VERSION.
+Approvals already given: ${yes:-none}.
+Containers to leave alone: ${IGNORE:-none}." \
+    "Bash(caretaker nas *)" "Bash(caretaker notify *)" "Bash(caretaker ask *)" "Bash(sleep *)"
+}
+
+# ---------- builds ----------
+
+cmd_builds() {
+  [ -e "$STATE/paused" ] && exit 0
+  [ -n "$REPOS" ] || exit 0
+  command -v gh >/dev/null 2>&1 || { log "gh is not installed; builds are not watched"; exit 0; }
+  online || exit 0
+  local repo branch runs id wf sha url dir open safe
+  for repo in $REPOS; do
+    branch=$(gh repo view "$repo" --json defaultBranchRef --jq .defaultBranchRef.name 2>/dev/null) || { log "cannot see $repo"; continue; }
+    # the latest finished run of each workflow on the main branch, where that run failed
+    runs=$(gh run list -R "$repo" -b "$branch" -L 30 --json databaseId,status,conclusion,workflowName,headSha,url \
+      --jq '[.[] | select(.status == "completed")] | group_by(.workflowName) | map(max_by(.databaseId)) | .[] | select(.conclusion == "failure") | [.databaseId, .workflowName, .headSha, .url] | @tsv' 2>/dev/null)
+    [ -n "$runs" ] || continue
+    safe=$(key "$repo")
+    mkdir -p "$STATE/builds/$safe"
+    while IFS=$TAB read -r id wf sha url; do
+      [ -n "$id" ] || continue
+      [ -e "$STATE/builds/$safe/$id" ] && continue
+      open=$(gh pr list -R "$repo" --state open --json headRefName --jq '[.[] | select(.headRefName | startswith("caretaker/"))] | length' 2>/dev/null)
+      if [ "${open:-0}" != 0 ]; then log "$repo: a caretaker pull request is still open; leaving run $id until it is dealt with"; continue; fi
+      lock || { log "another job is running; trying again next time"; exit 0; }
+      touch "$STATE/builds/$safe/$id"
+      dir=$CH/work/$safe
+      if [ ! -d "$dir/.git" ]; then gh repo clone "$repo" "$dir" >/dev/null 2>&1 || { log "could not clone $repo"; continue; }; fi
+      ( cd "$dir" && git fetch -q origin && git checkout -q -B "caretaker/fix-$id" "origin/$branch" && git reset -q --hard "origin/$branch" && git clean -qfd ) || { log "could not prepare $dir"; continue; }
+      # shellcheck disable=SC2086
+      run_agent builds builds "$dir" "Bash,Read,Edit,Write,Glob,Grep" "Repository: $repo
+Main branch: $branch (never push to it)
+Failed run: $id, workflow \"$wf\", commit $sha
+$url
+You are in a fresh clone, on the new branch caretaker/fix-$id." \
+        Read Edit Write Glob Grep "Bash(git *)" "Bash(gh run view *)" "Bash(gh run rerun *)" "Bash(gh run watch *)" "Bash(gh pr create *)" "Bash(gh pr view *)" \
+        "Bash(npm *)" "Bash(npx *)" "Bash(node *)" "Bash(caretaker notify *)" $BUILD_ALLOW \
+        --disallowedTools "Bash(git push --force*)" "Bash(git push -f*)" "Bash(git push * $branch)" "Bash(git push * $branch *)" "Bash(git push *:$branch*)" "Bash(git config *)" "Bash(git remote *)"
+    done <<EOF
+$runs
+EOF
+  done
+}
+
+# ---------- for you ----------
+
+cmd_status() {
+  if [ -e "$STATE/paused" ]; then echo "PAUSED (caretaker resume)"; else echo "active"; fi
+  echo "NAS: ${NAS_USER:-?}@${NAS_HOST:-?}   push: $(if [ -n "$NTFY_TOPIC" ]; then echo "$NTFY_SERVER/$NTFY_TOPIC"; else echo "macOS notifications only"; fi)"
+  echo "ignored: ${IGNORE:-none}"
+  echo "waiting for your answer: $(cd "$STATE/asked" && ls 2>/dev/null | tr '\n' ' ')"
+  echo "approved, not yet used:  $(cd "$STATE/approved" && ls 2>/dev/null | tr '\n' ' ')"
+  echo "--- last 25 lines of the log"
+  tail -n 25 "$LOGS/$(date +%Y-%m).log" 2>/dev/null
+}
+
+cmd_test() {
+  echo "NAS:"; nas ping && nas host
+  echo "Notification: sending one"; notify -t "Caretaker test" "If you can read this on your phone, notifications work."
+  echo "claude: $(command -v "$CLAUDE" || echo NOT FOUND)   gh: $(command -v gh || echo 'not found (only needed for builds)')"
+}
+
+case ${1:-help} in
+  watch) cmd_watch ;;
+  update) cmd_update ;;
+  builds) cmd_builds ;;
+  status) cmd_status ;;
+  test) cmd_test ;;
+  nas) shift; nas "$@" ;;
+  notify) shift; [ $# -ge 1 ] || die "notify [-p min|low|default|high|urgent] [-t title] message"; notify "$@" ;;
+  ask) shift; [ $# -ge 3 ] || die "ask <id> <title> <question>"; ask "$@" ;;
+  approve)
+    [ -z "${CARETAKER_ROLE:-}" ] || die "only you can approve"
+    id_ok "${2:-}" || die "approve <id>"; touch "$STATE/asked/$2" "$STATE/approved/$2"; echo "approved $2" ;;
+  ignore)
+    [ -z "${CARETAKER_ROLE:-}" ] || die "only you can do that"
+    id_ok "${2:-}" || die "ignore <container>"
+    if grep -q '^IGNORE=' "$CH/config.env" 2>/dev/null; then
+      sed -i.bak "s/^IGNORE=\"\\{0,1\\}\\([^\"]*\\)\"\\{0,1\\}\$/IGNORE=\"\\1 $2\"/" "$CH/config.env" && rm -f "$CH/config.env.bak"
+    else echo "IGNORE=\"$2\"" >> "$CH/config.env"
+    fi
+    echo "ignoring $2 from now on (IGNORE in $CH/config.env)" ;;
+  pause) [ -z "${CARETAKER_ROLE:-}" ] || die "only you can do that"; touch "$STATE/paused"; echo "paused: nothing is checked or changed until 'caretaker resume'" ;;
+  resume) rm -f "$STATE/paused"; echo "active again" ;;
+  *) sed -n '2,13p' "$SELF" | sed 's/^# \{0,1\}//' ;;
+esac
